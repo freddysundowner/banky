@@ -51,6 +51,27 @@ def post_mpesa_deposit_to_gl(tenant_session, member, amount: Decimal, trans_id: 
         print(f"[GL] Failed to post SunPay deposit to GL: {e}")
 
 
+def try_send_deposit_sms(tenant_session, member, amount, new_balance):
+    try:
+        from routes.sms import send_sms_with_template
+        if member.phone:
+            send_sms_with_template(
+                tenant_session,
+                "deposit_received",
+                member.phone,
+                f"{member.first_name} {member.last_name}",
+                {
+                    "name": member.first_name,
+                    "amount": str(amount),
+                    "balance": str(new_balance)
+                },
+                member_id=member.id
+            )
+            print(f"[SMS] Deposit notification sent to {member.phone}")
+    except Exception as e:
+        print(f"[SMS] Failed to send deposit notification: {e}")
+
+
 @router.post("/webhooks/sunpay/{org_id}")
 async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(get_db)):
     try:
@@ -114,6 +135,7 @@ async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(ge
                                 tenant_session.add(transaction)
                                 tenant_session.flush()
                                 existing.transaction_id = transaction.id
+                                try_send_deposit_sms(tenant_session, member, existing.amount, new_balance)
                                 print(f"[SunPay Webhook] Deposit credited to member {member.member_number}: {existing.amount}")
 
                         tenant_session.commit()
@@ -244,6 +266,7 @@ async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(ge
             tenant_session.commit()
 
             post_mpesa_deposit_to_gl(tenant_session, member, amount, ref_id)
+            try_send_deposit_sms(tenant_session, member, amount, new_balance)
 
             print(f"[SunPay Webhook] Deposit credited: {amount} to member {member.member_number}, new balance: {new_balance}")
             return {"status": "ok", "message": "Payment credited to savings"}

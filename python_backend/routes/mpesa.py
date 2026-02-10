@@ -237,6 +237,24 @@ async def mpesa_confirmation(org_id: str, request: Request, db: Session = Depend
             
             post_mpesa_deposit_to_gl(tenant_session, member, amount, trans_id)
             
+            try:
+                from routes.sms import send_sms_with_template
+                if member.phone:
+                    send_sms_with_template(
+                        tenant_session,
+                        "deposit_received",
+                        member.phone,
+                        f"{member.first_name} {member.last_name}",
+                        {
+                            "name": member.first_name,
+                            "amount": str(amount),
+                            "balance": str(new_balance)
+                        },
+                        member_id=member.id
+                    )
+            except Exception as e:
+                print(f"[SMS] Failed to send deposit notification: {e}")
+            
             return {"ResultCode": "0", "ResultDesc": "Accepted"}
         finally:
             tenant_session.close()
