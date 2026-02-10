@@ -1,0 +1,78 @@
+import { Menu, X } from 'lucide-react';
+import { Link } from 'wouter';
+import { useBranding } from '../context/BrandingContext';
+
+interface NavbarProps {
+  mobileMenuOpen: boolean;
+  setMobileMenuOpen: (open: boolean) => void;
+}
+
+export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProps) {
+  const { platform_name, theme_primary_color } = useBranding();
+
+  return (
+    <>
+      <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <Link href="/" className="flex items-center gap-2">
+              <span 
+                className="w-8 h-8 text-white rounded-lg flex items-center justify-center font-bold"
+                style={{ backgroundColor: theme_primary_color }}
+              >
+                {platform_name.charAt(0)}
+              </span>
+              <span className="text-xl font-bold text-gray-900">{platform_name}</span>
+            </Link>
+            
+            <div className="hidden md:flex items-center gap-8">
+              <a href="#features" className="text-gray-600 hover:text-gray-900 transition">Features</a>
+              <a href="#pricing" className="text-gray-600 hover:text-gray-900 transition">Pricing</a>
+              <Link href="/docs" className="text-gray-600 hover:text-gray-900 transition">Docs</Link>
+              <a href="#faq" className="text-gray-600 hover:text-gray-900 transition">FAQ</a>
+            </div>
+            
+            <div className="hidden md:flex items-center gap-4">
+              <a href="#demo" className="px-4 py-2 text-gray-700 hover:text-gray-900 transition">Live Demo</a>
+              <a 
+                href="#pricing" 
+                className="px-4 py-2 text-white rounded-lg transition"
+                style={{ backgroundColor: theme_primary_color }}
+              >
+                Get Started
+              </a>
+            </div>
+            
+            <button 
+              className="md:hidden p-2"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 top-16 bg-white z-40 md:hidden">
+          <div className="flex flex-col p-6 gap-4">
+            <a href="#features" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>Features</a>
+            <a href="#pricing" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
+            <Link href="/docs" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>Docs</Link>
+            <a href="#faq" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
+            <hr className="my-2" />
+            <a href="#demo" className="py-3 text-center border border-gray-300 rounded-lg" onClick={() => setMobileMenuOpen(false)}>Live Demo</a>
+            <a 
+              href="#pricing" 
+              className="py-3 text-center text-white rounded-lg" 
+              style={{ backgroundColor: theme_primary_color }}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Get Started
+            </a>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
