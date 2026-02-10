@@ -53,9 +53,11 @@ def post_mpesa_deposit_to_gl(tenant_session, member, amount: Decimal, trans_id: 
 async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(get_db)):
     try:
         data = await request.json()
+        print(f"[SunPay Webhook] Received for org {org_id}: {data}")
 
         org = db.query(Organization).filter(Organization.id == org_id).first()
         if not org or not org.connection_string:
+            print(f"[SunPay Webhook] Organization not found: {org_id}")
             return {"status": "error", "message": "Invalid organization"}
 
         tenant_ctx = TenantContext(org.connection_string, org_id)
@@ -70,6 +72,8 @@ async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(ge
             payment_type = data.get("paymentType", "stk")
             payer_name = data.get("payerName", "")
 
+            print(f"[SunPay Webhook] status={status}, amount={amount}, phone={phone}, mpesaRef={mpesa_ref}, txnId={transaction_id}")
+
             lookup_id = mpesa_ref or transaction_id
             if lookup_id:
                 existing = tenant_session.query(MpesaPayment).filter(
@@ -81,9 +85,38 @@ async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(ge
                     ).first()
                 if existing:
                     if existing.status != "credited" and status == "completed":
+                        print(f"[SunPay Webhook] Existing record found (status={existing.status}), completing deposit now")
                         existing.status = "credited"
                         existing.credited_at = datetime.utcnow()
+
+                        if not existing.transaction_id and existing.member_id:
+                            member = tenant_session.query(Member).filter(Member.id == existing.member_id).first()
+                            if member:
+                                current_balance = member.savings_balance or Decimal("0")
+                                new_balance = current_balance + existing.amount
+                                count = tenant_session.query(func.count(Transaction.id)).scalar() or 0
+                                code = f"TXN{count + 1:04d}"
+                                transaction = Transaction(
+                                    transaction_number=code,
+                                    member_id=member.id,
+                                    transaction_type="deposit",
+                                    account_type="savings",
+                                    amount=existing.amount,
+                                    balance_before=current_balance,
+                                    balance_after=new_balance,
+                                    payment_method="mpesa",
+                                    reference=lookup_id,
+                                    description=f"SunPay M-Pesa deposit from {existing.phone_number}"
+                                )
+                                member.savings_balance = new_balance
+                                tenant_session.add(transaction)
+                                tenant_session.flush()
+                                existing.transaction_id = transaction.id
+                                print(f"[SunPay Webhook] Deposit credited to member {member.member_number}: {existing.amount}")
+
                         tenant_session.commit()
+                        return {"status": "ok", "message": "Duplicate completed - deposit credited"}
+                    print(f"[SunPay Webhook] Duplicate payment, already status={existing.status}")
                     return {"status": "ok", "message": "Duplicate handled"}
 
             name_parts = payer_name.split(" ") if payer_name else []
@@ -100,9 +133,13 @@ async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(ge
                 ).first()
 
             if not member and phone:
-                member = tenant_session.query(Member).filter(
-                    Member.phone_number.like(f"%{phone[-9:]}")
-                ).first()
+                clean_phone = phone.replace("+", "").replace(" ", "")
+                if len(clean_phone) >= 9:
+                    member = tenant_session.query(Member).filter(
+                        Member.phone_number.like(f"%{clean_phone[-9:]}")
+                    ).first()
+
+            print(f"[SunPay Webhook] Member lookup: ref={account_ref}, phone={phone}, found={member is not None}")
 
             mpesa_enabled = get_org_setting(tenant_session, "mpesa_enabled", False)
 
@@ -124,18 +161,21 @@ async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(ge
             if status != "completed":
                 mpesa_payment.status = "failed" if status == "failed" else "pending"
                 tenant_session.commit()
+                print(f"[SunPay Webhook] Payment not completed (status={status}), saved as {mpesa_payment.status}")
                 return {"status": "ok", "message": f"Payment status: {status}"}
 
             if not mpesa_enabled:
                 mpesa_payment.status = "pending"
                 mpesa_payment.notes = "M-Pesa not enabled - payment logged but not credited"
                 tenant_session.commit()
+                print(f"[SunPay Webhook] M-Pesa not enabled, payment saved as pending")
                 return {"status": "ok", "message": "Logged but M-Pesa disabled"}
 
             if not member:
                 mpesa_payment.status = "unmatched"
                 mpesa_payment.notes = f"No member found for ref: {account_ref}, phone: {phone}"
                 tenant_session.commit()
+                print(f"[SunPay Webhook] No member found, saved as unmatched")
                 return {"status": "ok", "message": "Logged but member not found"}
 
             ref_id = mpesa_ref or transaction_id
@@ -149,6 +189,7 @@ async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(ge
                     mpesa_payment.notes = f"Loan repayment failed: {error}"
                     mpesa_payment.status = "pending"
                     tenant_session.commit()
+                    print(f"[SunPay Webhook] Loan repayment failed: {error}")
                     return {"status": "ok", "message": f"Payment logged: {error}"}
 
                 mpesa_payment.transaction_id = None
@@ -156,6 +197,7 @@ async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(ge
                 mpesa_payment.credited_at = datetime.utcnow()
                 mpesa_payment.notes = f"Applied to loan {loan.application_number}"
                 tenant_session.commit()
+                print(f"[SunPay Webhook] Applied to loan {loan.application_number}")
                 return {"status": "ok", "message": f"Payment applied to loan {loan.application_number}"}
 
             current_balance = member.savings_balance or Decimal("0")
@@ -201,13 +243,16 @@ async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(ge
 
             post_mpesa_deposit_to_gl(tenant_session, member, amount, ref_id)
 
+            print(f"[SunPay Webhook] Deposit credited: {amount} to member {member.member_number}, new balance: {new_balance}")
             return {"status": "ok", "message": "Payment credited to savings"}
         finally:
             tenant_session.close()
             tenant_ctx.close()
 
     except Exception as e:
+        import traceback
         print(f"[SunPay Webhook Error] {e}")
+        traceback.print_exc()
         return {"status": "error", "message": str(e)}
 
 

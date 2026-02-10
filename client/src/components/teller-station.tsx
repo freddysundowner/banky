@@ -453,7 +453,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
       
       const data = await res.json();
       if (data.success || res.ok) {
-        toast({ title: "M-Pesa prompt sent! Check member's phone to complete payment." });
+        toast({ title: "M-Pesa prompt sent! Deposit will reflect automatically once payment is confirmed." });
       } else {
         toast({ title: data.message || "Failed to send M-Pesa prompt", variant: "destructive" });
       }
@@ -1691,7 +1691,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
                         </div>
                       )}
 
-                      {canWrite ? (
+                      {canWrite && depositPaymentMethod !== "mpesa" ? (
                         <Button 
                           type="submit" 
                           className="w-full" 
@@ -1699,6 +1699,12 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
                         >
                           {depositMutation.isPending ? "Processing..." : "Record Deposit"}
                         </Button>
+                      ) : depositPaymentMethod === "mpesa" ? (
+                        depositMutation.isPending ? (
+                          <Button className="w-full" disabled>
+                            Processing deposit...
+                          </Button>
+                        ) : null
                       ) : (
                         <div className="p-3 bg-muted rounded-md text-sm text-muted-foreground flex items-center gap-2">
                           <Lock className="h-4 w-4" />
