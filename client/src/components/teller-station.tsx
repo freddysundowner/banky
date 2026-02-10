@@ -907,6 +907,13 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
     );
   }
 
+  const myActiveCounter = activeCounters?.find(c => c.staff_id === myStaffInfo?.id);
+  useEffect(() => {
+    if (!counterNumber && myActiveCounter) {
+      setCounterNumber(myActiveCounter.counter_number);
+    }
+  }, [myActiveCounter, counterNumber]);
+
   if (!counterNumber) {
     const getCounterStatus = (num: number) => {
       const taken = activeCounters?.find(c => c.counter_number === String(num));
