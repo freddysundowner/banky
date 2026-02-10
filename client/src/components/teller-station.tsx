@@ -352,8 +352,8 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
     mutationFn: async () => {
       if (!myStaffInfo?.branch_id) throw new Error("No branch assigned");
       let url = `/api/organizations/${organizationId}/queue-tickets/call-next?branch_id=${myStaffInfo.branch_id}`;
-      if (counterNumber) {
-        url += `&counter_number=${encodeURIComponent(counterNumber)}`;
+      if (effectiveCounterNumber) {
+        url += `&counter_number=${encodeURIComponent(effectiveCounterNumber)}`;
       }
       const res = await fetch(url, { method: "POST", credentials: "include" });
       if (!res.ok) throw new Error((await res.json()).detail || "Failed to call next");
@@ -362,7 +362,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
     onSuccess: (data) => {
       if (data.success) {
         toast({ title: "Calling Customer", description: `Ticket ${data.ticket.ticket_number} - ${data.ticket.member_name || "Guest"}` });
-        announceTicket(data.ticket.ticket_number, counterNumber || data.ticket.counter_number || "1");
+        announceTicket(data.ticket.ticket_number, effectiveCounterNumber || data.ticket.counter_number || "1");
       } else {
         toast({ title: "Queue Empty", description: data.message });
       }
@@ -908,13 +908,9 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
   }
 
   const myActiveCounter = activeCounters?.find(c => c.staff_id === myStaffInfo?.id);
-  useEffect(() => {
-    if (!counterNumber && myActiveCounter) {
-      setCounterNumber(myActiveCounter.counter_number);
-    }
-  }, [myActiveCounter, counterNumber]);
+  const effectiveCounterNumber = counterNumber || (myActiveCounter ? myActiveCounter.counter_number : null);
 
-  if (!counterNumber) {
+  if (!effectiveCounterNumber) {
     const getCounterStatus = (num: number) => {
       const taken = activeCounters?.find(c => c.counter_number === String(num));
       if (!taken) return null;
@@ -1069,7 +1065,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
           <div className="mb-3 p-2 border rounded-lg flex flex-wrap items-center justify-between gap-2 bg-card">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
-                <Badge variant="outline" className="text-xs font-bold">Counter {counterNumber}</Badge>
+                <Badge variant="outline" className="text-xs font-bold">Counter {effectiveCounterNumber}</Badge>
                 <Ticket className="h-4 w-4 text-primary" />
                 <span className="text-sm font-medium">Queue:</span>
                 <Badge variant="secondary" className="text-xs">{waitingCount} waiting</Badge>
