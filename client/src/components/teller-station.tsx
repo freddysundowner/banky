@@ -406,6 +406,12 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
   const depositPaymentMethod = depositForm.watch("payment_method");
   const [stkPushLoading, setStkPushLoading] = useState(false);
 
+  useEffect(() => {
+    if (depositPaymentMethod === "mpesa" && selectedMember?.phone) {
+      depositForm.setValue("mpesa_phone", selectedMember.phone);
+    }
+  }, [depositPaymentMethod, selectedMember]);
+
   const withdrawalForm = useForm<WithdrawalFormData>({
     resolver: zodResolver(withdrawalSchema),
     defaultValues: {
