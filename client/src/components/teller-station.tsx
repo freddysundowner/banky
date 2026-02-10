@@ -1687,7 +1687,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
                         </div>
                       )}
 
-                      {canWrite ? (
+                      {canWrite && depositPaymentMethod !== "mpesa" ? (
                         <Button 
                           type="submit" 
                           className="w-full" 
@@ -1695,7 +1695,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
                         >
                           {depositMutation.isPending ? "Processing..." : "Record Deposit"}
                         </Button>
-                      ) : (
+                      ) : depositPaymentMethod === "mpesa" ? null : (
                         <div className="p-3 bg-muted rounded-md text-sm text-muted-foreground flex items-center gap-2">
                           <Lock className="h-4 w-4" />
                           You don't have permission to process deposits
