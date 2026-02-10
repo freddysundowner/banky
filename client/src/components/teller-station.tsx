@@ -444,17 +444,18 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
     
     setStkPushLoading(true);
     try {
-      const result = await apiRequest("POST", `/api/organizations/${organizationId}/mpesa/stk-push`, {
+      const res = await apiRequest("POST", `/api/organizations/${organizationId}/mpesa/stk-push`, {
         phone,
         amount: parseFloat(amount),
         account_reference: selectedMember?.member_number || "Deposit",
         description: `Deposit for ${selectedMember?.first_name || "Member"}`
       });
       
-      if ((result as any).success) {
+      const data = await res.json();
+      if (data.success || res.ok) {
         toast({ title: "M-Pesa prompt sent! Check member's phone to complete payment." });
       } else {
-        toast({ title: (result as any).message || "Failed to send M-Pesa prompt", variant: "destructive" });
+        toast({ title: data.message || "Failed to send M-Pesa prompt", variant: "destructive" });
       }
     } catch (error: any) {
       toast({ title: error.message || "Failed to initiate M-Pesa", variant: "destructive" });
