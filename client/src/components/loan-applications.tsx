@@ -562,6 +562,7 @@ const statusColors: Record<string, "default" | "secondary" | "destructive" | "ou
   approved: "default",
   rejected: "destructive",
   cancelled: "outline",
+  pending_disbursement: "outline",
   disbursed: "default",
   completed: "default",
   defaulted: "destructive",
@@ -730,13 +731,14 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
 
   const disburseMutation = useMutation({
     mutationFn: async ({ id, method, account, phone }: { id: string; method: string; account?: string; phone?: string }) => {
-      return apiRequest("POST", `/api/organizations/${organizationId}/loan-applications/${id}/disburse`, { 
+      const res = await apiRequest("POST", `/api/organizations/${organizationId}/loan-applications/${id}/disburse`, { 
         disbursement_method: method,
         disbursement_account: account,
         disbursement_phone: phone
       });
+      return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "loan-applications"] });
       queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "loans"] });
       queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "members"] });
@@ -747,7 +749,11 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
       setDisbursePhone("");
       setDisburseConfirmed(false);
       setSelectedLoan(null);
-      toast({ title: "Loan disbursed successfully" });
+      if (data?.status === "pending_disbursement") {
+        toast({ title: "M-Pesa disbursement initiated", description: "The loan will be marked as disbursed once M-Pesa confirms the payment was sent successfully." });
+      } else {
+        toast({ title: "Loan disbursed successfully" });
+      }
     },
     onError: (error: unknown) => {
       toast({ title: "Failed to disburse loan", description: getErrorMessage(error), variant: "destructive" });

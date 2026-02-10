@@ -67,7 +67,7 @@ async def c2b_expect(tenant_session, amount: Decimal, external_ref: str, callbac
         return response.json()
 
 
-async def b2c_payment(tenant_session, phone: str, amount: Decimal, remarks: str = "", occasion: str = "") -> dict:
+async def b2c_payment(tenant_session, phone: str, amount: Decimal, remarks: str = "", occasion: str = "", callback_url: str = "") -> dict:
     api_key = get_sunpay_api_key(tenant_session)
 
     payload = {
@@ -78,6 +78,8 @@ async def b2c_payment(tenant_session, phone: str, amount: Decimal, remarks: str 
         payload["remarks"] = remarks
     if occasion:
         payload["occasion"] = occasion
+    if callback_url:
+        payload["callbackUrl"] = callback_url
 
     async with httpx.AsyncClient(timeout=30.0) as client:
         response = await client.post(
@@ -88,7 +90,7 @@ async def b2c_payment(tenant_session, phone: str, amount: Decimal, remarks: str 
         if response.status_code >= 400:
             error_data = response.json() if response.headers.get("content-type", "").startswith("application/json") else {"error": response.text}
             return {"success": False, "error": error_data, "status_code": response.status_code}
-        return response.json()
+        return {**response.json(), "success": True}
 
 
 async def reverse_transaction(tenant_session, transaction_id: str, amount: Decimal, receiver_party: str, remarks: str = "", occasion: str = "") -> dict:

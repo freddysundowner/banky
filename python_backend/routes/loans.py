@@ -426,13 +426,20 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
         loan.amount_disbursed = net_amount
         loan.outstanding_balance = outstanding_balance
         loan.interest_deducted_upfront = deduct_interest_upfront
-        loan.monthly_repayment = monthly_repayment  # Update monthly repayment if needed
+        loan.monthly_repayment = monthly_repayment
         loan.amount_repaid = Decimal("0")
-        loan.status = "disbursed"
-        loan.disbursed_at = datetime.utcnow()
         freq_days = {"daily": 1, "weekly": 7, "bi_weekly": 14, "monthly": 30}
         product_freq = getattr(product, 'repayment_frequency', 'monthly') if product else 'monthly'
         loan.next_payment_date = (datetime.utcnow() + timedelta(days=freq_days.get(product_freq, 30))).date()
+        
+        is_mpesa = data.disbursement_method == "mpesa" and data.disbursement_phone
+        
+        if is_mpesa:
+            loan.status = "pending_disbursement"
+            loan.disbursed_at = None
+        else:
+            loan.status = "disbursed"
+            loan.disbursed_at = datetime.utcnow()
         
         txn_count = tenant_session.query(func.count(Transaction.id)).scalar() or 0
         txn_code = f"TXN{txn_count + 1:04d}"
@@ -445,6 +452,10 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
             amount=net_amount,
             description=f"Loan disbursement for {loan.application_number}"
         )
+        
+        if is_mpesa:
+            transaction.description = f"Loan disbursement (pending M-Pesa) for {loan.application_number}"
+        
         tenant_session.add(transaction)
         
         from services.instalment_service import generate_instalment_schedule
@@ -453,12 +464,11 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
         tenant_session.commit()
         tenant_session.refresh(loan)
         
-        # Post to General Ledger
-        if member:
+        if not is_mpesa and member:
             post_disbursement_to_gl(tenant_session, loan, member, data.disbursement_method, deduct_interest_upfront)
         
         mpesa_b2c_result = None
-        if data.disbursement_method == "mpesa" and data.disbursement_phone:
+        if is_mpesa:
             try:
                 from models.tenant import OrganizationSettings
                 gateway_setting = tenant_session.query(OrganizationSettings).filter(
@@ -470,13 +480,20 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
                 if phone.startswith("0"):
                     phone = "254" + phone[1:]
 
+                import os
+                public_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+                if public_domain:
+                    callback_url = f"https://{public_domain}/api/webhooks/sunpay/{org_id}"
+                else:
+                    callback_url = ""
+
                 if gateway == "sunpay":
                     from services.sunpay import b2c_payment
-                    import asyncio
                     mpesa_b2c_result = await b2c_payment(
                         tenant_session, phone, net_amount,
                         remarks=f"Loan disbursement {loan.application_number}",
-                        occasion=loan.application_number
+                        occasion=f"DISBURSE:{loan.id}",
+                        callback_url=callback_url
                     )
                 else:
                     from routes.mpesa import initiate_b2c_disbursement
@@ -485,13 +502,44 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
                         remarks=f"Loan disbursement {loan.application_number}",
                         occasion=loan.application_number
                     )
+                    if mpesa_b2c_result and mpesa_b2c_result.get("success"):
+                        loan.status = "disbursed"
+                        loan.disbursed_at = datetime.utcnow()
+                        transaction.description = f"Loan disbursement for {loan.application_number}"
+                        tenant_session.commit()
+                        if member:
+                            post_disbursement_to_gl(tenant_session, loan, member, data.disbursement_method, deduct_interest_upfront)
+                    
                 print(f"[M-Pesa B2C] Disbursement for {loan.application_number}: {mpesa_b2c_result}")
+                
+                if mpesa_b2c_result and not mpesa_b2c_result.get("success"):
+                    loan.status = "approved"
+                    loan.disbursed_at = None
+                    loan.amount_disbursed = None
+                    loan.outstanding_balance = None
+                    loan.amount_repaid = None
+                    loan.next_payment_date = None
+                    from models.tenant import LoanInstalment
+                    tenant_session.query(LoanInstalment).filter(LoanInstalment.loan_id == loan.id).delete()
+                    tenant_session.delete(transaction)
+                    tenant_session.commit()
+                    print(f"[M-Pesa B2C] Reverted loan {loan.application_number} back to approved due to B2C failure")
+                    
             except Exception as e:
                 print(f"[M-Pesa B2C] Failed to send disbursement for {loan.application_number}: {e}")
+                loan.status = "approved"
+                loan.disbursed_at = None
+                loan.amount_disbursed = None
+                loan.outstanding_balance = None
+                loan.amount_repaid = None
+                loan.next_payment_date = None
+                from models.tenant import LoanInstalment
+                tenant_session.query(LoanInstalment).filter(LoanInstalment.loan_id == loan.id).delete()
+                tenant_session.delete(transaction)
+                tenant_session.commit()
                 mpesa_b2c_result = {"success": False, "error": str(e)}
 
-        # Send SMS notification for loan disbursement
-        if member and member.phone:
+        if not is_mpesa and member and member.phone:
             try_send_sms(
                 tenant_session,
                 "loan_disbursed",
