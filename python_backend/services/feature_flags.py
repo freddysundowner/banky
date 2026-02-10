@@ -34,7 +34,7 @@ class Feature(str, Enum):
 PLAN_FEATURES: Dict[str, Set[str]] = {
     "starter": {
         Feature.CORE_BANKING, Feature.MEMBERS, Feature.SAVINGS, Feature.SHARES,
-        Feature.LOANS, Feature.TELLER_STATION, Feature.AUDIT_LOGS
+        Feature.LOANS, Feature.TELLER_STATION, Feature.AUDIT_LOGS, Feature.MPESA_INTEGRATION
     },
     "growth": {
         Feature.CORE_BANKING, Feature.MEMBERS, Feature.SAVINGS, Feature.SHARES,
