@@ -434,12 +434,11 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
         
         is_mpesa = data.disbursement_method == "mpesa" and data.disbursement_phone
         
+        loan.disbursed_at = datetime.utcnow()
         if is_mpesa:
             loan.status = "pending_disbursement"
-            loan.disbursed_at = None
         else:
             loan.status = "disbursed"
-            loan.disbursed_at = datetime.utcnow()
         
         txn_count = tenant_session.query(func.count(Transaction.id)).scalar() or 0
         txn_code = f"TXN{txn_count + 1:04d}"
