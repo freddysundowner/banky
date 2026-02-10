@@ -147,13 +147,13 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
   const saasPlans = plans?.filter(p => p.pricing_model === 'saas') || plans || [];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-x-hidden">
       <div>
         <h1 className="text-xl md:text-2xl font-bold">Subscription Plans</h1>
         <p className="text-sm md:text-base text-muted-foreground">Choose the plan that best fits your organization's needs</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
+      <div className="grid gap-4 md:gap-6" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 260px), 1fr))' }}>
         {saasPlans.map((plan) => {
           const colors = PLAN_COLORS[plan.plan_type] || PLAN_COLORS.starter;
           const isPopular = plan.plan_type === 'growth';
