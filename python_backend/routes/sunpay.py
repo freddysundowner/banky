@@ -60,7 +60,7 @@ async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(ge
             print(f"[SunPay Webhook] Organization not found: {org_id}")
             return {"status": "error", "message": "Invalid organization"}
 
-        tenant_ctx = TenantContext(org.connection_string, org_id)
+        tenant_ctx = TenantContext(org.connection_string)
         tenant_session = tenant_ctx.create_session()
 
         try:
