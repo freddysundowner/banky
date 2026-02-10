@@ -20,19 +20,20 @@ router = APIRouter()
 def post_mpesa_deposit_to_gl(tenant_session, member, amount: Decimal, trans_id: str):
     """Post M-Pesa deposit to General Ledger"""
     try:
-        from accounting.service import AccountingService, post_transaction
+        from accounting.service import AccountingService, post_member_deposit
         
         svc = AccountingService(tenant_session)
         svc.seed_default_accounts()
         
         member_name = f"{member.first_name} {member.last_name}"
         
-        post_transaction(
+        post_member_deposit(
             svc,
             member_id=str(member.id),
-            transaction_type="deposit",
             amount=amount,
+            account_type="savings",
             payment_method="mpesa",
+            transaction_id=trans_id,
             description=f"M-Pesa deposit - {member_name} - {trans_id}"
         )
         print(f"[GL] Posted M-Pesa deposit to GL: {trans_id}")
