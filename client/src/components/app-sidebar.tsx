@@ -18,6 +18,9 @@ import {
   CalendarDays,
   BookOpen,
   ClipboardList,
+  Crown,
+  AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useFeatures, FEATURES } from "@/hooks/use-features";
@@ -168,7 +171,7 @@ export function AppSidebar() {
   });
   
   const organizationId = memberships?.[0]?.organizationId;
-  const { hasFeature, isLoading } = useFeatures(organizationId);
+  const { hasFeature, isLoading, subscriptionStatus, plan, isTrial, isExpired, trialDaysRemaining } = useFeatures(organizationId);
   
   const filterNavItems = (items: NavItem[]) => {
     if (isLoading) return items;
@@ -291,7 +294,38 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="border-t border-sidebar-border p-2">
+      <SidebarFooter className="border-t border-sidebar-border p-2 space-y-1">
+        {subscriptionStatus && (
+          <Link href="/upgrade">
+            <div className={`rounded-md px-3 py-2 text-xs cursor-pointer transition-colors ${
+              isExpired 
+                ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-900/50'
+                : isTrial 
+                  ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/50'
+                  : 'bg-green-50 dark:bg-green-900/30 text-green-800 dark:text-green-200 hover:bg-green-100 dark:hover:bg-green-900/50'
+            }`}>
+              <div className="flex items-center gap-1.5">
+                {isExpired ? (
+                  <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+                ) : isTrial ? (
+                  <Sparkles className="h-3.5 w-3.5 flex-shrink-0" />
+                ) : (
+                  <Crown className="h-3.5 w-3.5 flex-shrink-0" />
+                )}
+                <span className="font-medium capitalize">{plan} Plan</span>
+              </div>
+              <p className="mt-0.5 leading-tight">
+                {isExpired 
+                  ? 'Subscription expired - Upgrade now'
+                  : isTrial 
+                    ? `Trial: ${trialDaysRemaining} day${trialDaysRemaining !== 1 ? 's' : ''} remaining`
+                    : subscriptionStatus.status === 'active' 
+                      ? 'Active subscription'
+                      : 'View plans'}
+              </p>
+            </div>
+          </Link>
+        )}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={location === "/my-account"}>

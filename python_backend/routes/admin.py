@@ -737,6 +737,8 @@ DEFAULT_PLATFORM_SETTINGS = [
     {"key": "theme_secondary_color", "value": "#64748b", "type": "string", "description": "Secondary color for supporting elements"},
     {"key": "theme_accent_color", "value": "#10b981", "type": "string", "description": "Accent color for success states and highlights"},
     {"key": "theme_sidebar_color", "value": "#1e293b", "type": "string", "description": "Background color for sidebars"},
+    {"key": "subscription_sunpay_api_key", "value": "", "type": "string", "description": "SunPay API key for processing subscription payments via M-Pesa"},
+    {"key": "subscription_mpesa_paybill", "value": "", "type": "string", "description": "M-Pesa Paybill/Till number displayed to customers for subscription payments"},
 ]
 
 def initialize_platform_settings(db: Session):

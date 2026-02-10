@@ -43,6 +43,15 @@ The frontend is built with React 18 and TypeScript, utilizing Shadcn UI componen
     - Service module: `python_backend/services/sunpay.py`, Routes: `python_backend/routes/sunpay.py`
     - **M-Pesa Loan Repayment**: STK Push with loan_id auto-applies payment to the loan via webhook. Paybill deposits go to savings. Shared loan service: `python_backend/services/mpesa_loan_service.py`
     - **M-Pesa Loan Disbursement**: When disbursing via M-Pesa, B2C is called (SunPay or Daraja based on gateway setting). The unified STK Push endpoint (`/api/organizations/{org_id}/mpesa/stk-push`) auto-routes to the correct gateway.
+- **Subscription Payments (M-Pesa)**: Organizations pay for subscription plans via M-Pesa STK Push.
+    - Uses platform-level SunPay API key (configured in Admin Panel > Settings as `subscription_sunpay_api_key`)
+    - Flow: Select plan → Enter phone → STK Push → Webhook confirms → Subscription activated
+    - Model: `SubscriptionPayment` in master database tracks all payment attempts
+    - Routes: `python_backend/routes/subscription_payments.py` (initiate payment, check status, history)
+    - Webhook: `/api/webhooks/subscription-payment` processes SunPay callbacks, uses `SUB:{payment_id}` external ref format
+    - Frontend: Upgrade page (`client/src/pages/upgrade.tsx`) with M-Pesa payment dialog and real-time polling
+    - Sidebar shows subscription status (trial/active/expired) with link to upgrade page
+    - Trial banner has "Upgrade Now" button that navigates to plans page
 - **Operations**: SMS notifications with templates, analytics dashboards for performance insights, HR management (staff lock/unlock, performance reviews), audit logs for complete traceability, and configurable organization settings.
 - **Automation**: Includes a cron-based script for processing matured fixed deposits with options for regular maturity or auto-rollover.
 - **Loan Notifications**: Automated SMS notifications via cron (`python_backend/cron_loan_notifications.py`):

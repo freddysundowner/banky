@@ -93,6 +93,30 @@ class PlatformSettings(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+class SubscriptionPayment(Base):
+    __tablename__ = "subscription_payments"
+    
+    id = Column(String, primary_key=True, default=generate_uuid)
+    organization_id = Column(String, ForeignKey("organizations.id"), nullable=False)
+    plan_id = Column(String, ForeignKey("subscription_plans.id"))
+    amount = Column(Numeric(10, 2), nullable=False)
+    currency = Column(String(10), default="KES")
+    payment_method = Column(String(50), default="mpesa")
+    payment_reference = Column(String(100))
+    mpesa_checkout_id = Column(String(100))
+    mpesa_receipt = Column(String(100))
+    phone_number = Column(String(20))
+    status = Column(String(50), default="pending")
+    billing_period = Column(String(20), default="monthly")
+    period_start = Column(DateTime)
+    period_end = Column(DateTime)
+    metadata_json = Column(JSON, default=dict)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    organization = relationship("Organization")
+    plan = relationship("SubscriptionPlan")
+
 class AdminUser(Base):
     __tablename__ = "admin_users"
     

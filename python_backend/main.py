@@ -41,6 +41,7 @@ from routes.expenses import router as expenses_router
 from accounting.routes import router as accounting_router
 from routes.admin import router as admin_router
 from routes.features import router as features_router
+from routes.subscription_payments import router as subscription_payments_router
 from models.database import engine, Base
 from middleware.audit import AuditMiddleware
 
@@ -295,10 +296,94 @@ app.include_router(expenses_router, prefix="/api", tags=["Expenses"])
 app.include_router(accounting_router, prefix="/api/organizations", tags=["Accounting"])
 app.include_router(admin_router, prefix="/api", tags=["Admin"])
 app.include_router(features_router, prefix="/api/organizations", tags=["Features"])
+app.include_router(subscription_payments_router, prefix="/api/organizations", tags=["Subscription Payments"])
 
 @app.get("/api/health")
 async def health_check():
     return {"status": "healthy", "service": "BANKY API", "backend": "python"}
+
+@app.post("/api/webhooks/subscription-payment", tags=["Webhooks"])
+async def subscription_payment_webhook(request: Request):
+    from models.database import SessionLocal
+    from models.master import SubscriptionPayment, OrganizationSubscription, SubscriptionPlan
+    from datetime import datetime, timedelta
+
+    try:
+        payload = await request.json()
+    except Exception:
+        return {"status": "error", "message": "Invalid JSON"}
+
+    print(f"[Subscription Webhook] Received: {payload}")
+
+    external_ref = payload.get("externalRef", payload.get("ExternalRef", ""))
+    result_code = str(payload.get("resultCode", payload.get("ResultCode", "")))
+    receipt = payload.get("mpesaRef", payload.get("MpesaRef", payload.get("receipt", "")))
+
+    if not external_ref or not external_ref.startswith("SUB:"):
+        print(f"[Subscription Webhook] Not a subscription payment: {external_ref}")
+        return {"status": "ignored"}
+
+    payment_id = external_ref.replace("SUB:", "")
+
+    db = SessionLocal()
+    try:
+        payment = db.query(SubscriptionPayment).filter(SubscriptionPayment.id == payment_id).first()
+        if not payment:
+            print(f"[Subscription Webhook] Payment not found: {payment_id}")
+            return {"status": "error", "message": "Payment not found"}
+
+        if result_code == "0":
+            payment.status = "completed"
+            payment.mpesa_receipt = receipt
+            payment.payment_reference = receipt
+
+            now = datetime.utcnow()
+            if payment.billing_period == "annual":
+                period_days = 365
+            else:
+                period_days = 30
+
+            payment.period_start = now
+            payment.period_end = now + timedelta(days=period_days)
+
+            sub = db.query(OrganizationSubscription).filter(
+                OrganizationSubscription.organization_id == payment.organization_id
+            ).first()
+
+            if sub:
+                sub.plan_id = payment.plan_id
+                sub.status = "active"
+                if sub.end_date and sub.end_date > now:
+                    sub.end_date = sub.end_date + timedelta(days=period_days)
+                else:
+                    sub.start_date = now
+                    sub.end_date = now + timedelta(days=period_days)
+                print(f"[Subscription Webhook] Activated subscription for org {payment.organization_id}, plan {payment.plan_id}, until {sub.end_date}")
+            else:
+                new_sub = OrganizationSubscription(
+                    organization_id=payment.organization_id,
+                    plan_id=payment.plan_id,
+                    status="active",
+                    start_date=now,
+                    end_date=now + timedelta(days=period_days)
+                )
+                db.add(new_sub)
+                print(f"[Subscription Webhook] Created new subscription for org {payment.organization_id}")
+
+            db.commit()
+            return {"status": "success", "message": "Subscription activated"}
+        else:
+            payment.status = "failed"
+            db.commit()
+            print(f"[Subscription Webhook] Payment failed: resultCode={result_code}")
+            return {"status": "failed"}
+
+    except Exception as e:
+        db.rollback()
+        print(f"[Subscription Webhook] Error: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        db.close()
 
 @app.get("/api/public/plans", tags=["Public"])
 async def get_public_plans():

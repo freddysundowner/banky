@@ -655,6 +655,7 @@ export default function Home() {
           isTrial={isTrial}
           trialDaysRemaining={trialDaysRemaining}
           message={trialMessage}
+          onUpgrade={() => setActiveSection("upgrade")}
         />
         <div className="flex flex-1 overflow-hidden">
         <Sidebar>

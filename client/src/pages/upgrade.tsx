@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Check, Loader2, Sparkles, Crown, Mail, Send } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Check, Loader2, Sparkles, Crown, Mail, Send, Smartphone, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
@@ -42,6 +43,12 @@ const PLAN_COLORS: Record<string, { bg: string; border: string; badge: string }>
 export default function UpgradePage({ organizationId }: UpgradePageProps) {
   const { toast } = useToast();
   const [showContactDialog, setShowContactDialog] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
+  const [phone, setPhone] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState<"idle" | "sending" | "waiting" | "success" | "failed">("idle");
+  const [currentPaymentId, setCurrentPaymentId] = useState<string | null>(null);
   const [contactForm, setContactForm] = useState({
     name: "",
     email: "",
@@ -69,6 +76,106 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
       return res.json();
     }
   });
+
+  useEffect(() => {
+    if (paymentStatus !== "waiting" || !currentPaymentId) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(
+          `/api/organizations/${organizationId}/subscription/check-payment/${currentPaymentId}`,
+          { credentials: "include" }
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (data.status === "completed") {
+          setPaymentStatus("success");
+          clearInterval(interval);
+          queryClient.invalidateQueries({ queryKey: ["plans", organizationId] });
+          queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "features"] });
+          toast({
+            title: "Payment Successful!",
+            description: `Your subscription has been activated. Receipt: ${data.mpesa_receipt || "confirmed"}`
+          });
+        } else if (data.status === "failed") {
+          setPaymentStatus("failed");
+          clearInterval(interval);
+        }
+      } catch {
+      }
+    }, 3000);
+
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+      if (paymentStatus === "waiting") {
+        setPaymentStatus("idle");
+        toast({
+          title: "Payment Timeout",
+          description: "We haven't received confirmation yet. If you paid, it may take a moment to process.",
+          variant: "destructive"
+        });
+      }
+    }, 120000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [paymentStatus, currentPaymentId, organizationId]);
+
+  const handlePayWithMpesa = async () => {
+    if (!selectedPlan || !phone) return;
+
+    setPaymentStatus("sending");
+    try {
+      const res = await fetch(`/api/organizations/${organizationId}/subscription/pay-mpesa`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          plan_id: selectedPlan.id,
+          phone: phone,
+          billing_period: billingPeriod
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setPaymentStatus("failed");
+        toast({
+          title: "Payment Failed",
+          description: data.detail || "Failed to initiate payment",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setCurrentPaymentId(data.payment_id);
+      setPaymentStatus("waiting");
+      toast({
+        title: "Check Your Phone",
+        description: data.message
+      });
+    } catch {
+      setPaymentStatus("failed");
+      toast({
+        title: "Error",
+        description: "Failed to initiate payment. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const openPaymentDialog = (plan: Plan) => {
+    setSelectedPlan(plan);
+    setBillingPeriod("monthly");
+    setPhone("");
+    setPaymentStatus("idle");
+    setCurrentPaymentId(null);
+    setShowPaymentDialog(true);
+  };
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,34 +215,6 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
     }
   };
 
-  const upgradeMutation = useMutation({
-    mutationFn: async (planId: string) => {
-      const res = await fetch(`/api/organizations/${organizationId}/upgrade`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ plan_id: planId })
-      });
-      if (!res.ok) throw new Error("Failed to upgrade");
-      return res.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Plan Updated",
-        description: data.message
-      });
-      queryClient.invalidateQueries({ queryKey: ["plans", organizationId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "features"] });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update plan. Please try again.",
-        variant: "destructive"
-      });
-    }
-  });
-
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
@@ -145,6 +224,11 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
   }
 
   const saasPlans = plans?.filter(p => p.pricing_model === 'saas') || plans || [];
+  const paymentAmount = selectedPlan
+    ? billingPeriod === "annual" && selectedPlan.annual_price > 0
+      ? selectedPlan.annual_price
+      : selectedPlan.monthly_price
+    : 0;
 
   return (
     <div className="space-y-6 overflow-x-hidden">
@@ -236,20 +320,22 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
               </CardContent>
 
               <div className="p-4 md:p-6 pt-0 mt-auto">
-                <Button
-                  className="w-full"
-                  size="lg"
-                  variant={plan.is_current ? "outline" : plan.is_upgrade ? "default" : "secondary"}
-                  disabled={plan.is_current || upgradeMutation.isPending}
-                  onClick={() => upgradeMutation.mutate(plan.id)}
-                >
-                  {upgradeMutation.isPending && upgradeMutation.variables === plan.id ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : null}
-                  {plan.is_current ? "Current Plan" : 
-                   plan.is_upgrade ? "Upgrade Now" : 
-                   plan.is_downgrade ? "Downgrade" : "Select Plan"}
-                </Button>
+                {plan.is_current ? (
+                  <Button className="w-full" size="lg" variant="outline" disabled>
+                    Current Plan
+                  </Button>
+                ) : (
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    variant={plan.is_upgrade ? "default" : "secondary"}
+                    onClick={() => openPaymentDialog(plan)}
+                  >
+                    <Smartphone className="h-4 w-4 mr-2" />
+                    {plan.is_upgrade ? "Upgrade with M-Pesa" : 
+                     plan.is_downgrade ? "Switch Plan" : "Select Plan"}
+                  </Button>
+                )}
               </div>
             </Card>
           );
@@ -274,6 +360,137 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
           </Button>
         </CardContent>
       </Card>
+
+      <Dialog open={showPaymentDialog} onOpenChange={(open) => {
+        if (!open && paymentStatus === "waiting") return;
+        setShowPaymentDialog(open);
+        if (!open) {
+          setPaymentStatus("idle");
+          setCurrentPaymentId(null);
+        }
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Smartphone className="h-5 w-5 text-green-600" />
+              Pay with M-Pesa
+            </DialogTitle>
+            <DialogDescription>
+              {selectedPlan && `Subscribe to ${selectedPlan.name} plan`}
+            </DialogDescription>
+          </DialogHeader>
+
+          {paymentStatus === "success" ? (
+            <div className="flex flex-col items-center py-6 gap-4">
+              <CheckCircle2 className="h-16 w-16 text-green-500" />
+              <div className="text-center">
+                <h3 className="text-lg font-semibold">Payment Successful!</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Your {selectedPlan?.name} subscription is now active.
+                </p>
+              </div>
+              <Button onClick={() => setShowPaymentDialog(false)} className="mt-2">
+                Done
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {selectedPlan && (
+                <div className="rounded-lg border p-4 bg-muted/30">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">{selectedPlan.name} Plan</span>
+                    <Badge variant="outline" className="capitalize">{billingPeriod}</Badge>
+                  </div>
+                  <div className="text-2xl font-bold mt-1">
+                    KES {paymentAmount.toLocaleString()}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      /{billingPeriod === "annual" ? "year" : "month"}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {selectedPlan && selectedPlan.annual_price > 0 && (
+                <div className="space-y-2">
+                  <Label>Billing Period</Label>
+                  <Select value={billingPeriod} onValueChange={(v) => setBillingPeriod(v as "monthly" | "annual")} disabled={paymentStatus !== "idle"}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">Monthly (${selectedPlan.monthly_price}/mo)</SelectItem>
+                      <SelectItem value="annual">
+                        Annual (${selectedPlan.annual_price}/yr - Save {Math.round((1 - selectedPlan.annual_price / (selectedPlan.monthly_price * 12)) * 100)}%)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="mpesa-phone">M-Pesa Phone Number</Label>
+                <Input
+                  id="mpesa-phone"
+                  type="tel"
+                  placeholder="0712345678"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  disabled={paymentStatus !== "idle" && paymentStatus !== "failed"}
+                />
+                <p className="text-xs text-muted-foreground">
+                  A payment prompt will be sent to this number
+                </p>
+              </div>
+
+              {paymentStatus === "waiting" && (
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
+                  <Loader2 className="h-5 w-5 animate-spin text-yellow-600 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                      Waiting for M-Pesa confirmation...
+                    </p>
+                    <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                      Check your phone and enter your M-Pesa PIN
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {paymentStatus === "failed" && (
+                <div className="p-3 rounded-lg bg-red-50 border border-red-200 dark:bg-red-900/20 dark:border-red-800">
+                  <p className="text-sm text-red-700 dark:text-red-300">
+                    Payment failed or was cancelled. Please try again.
+                  </p>
+                </div>
+              )}
+
+              <Button
+                className="w-full"
+                size="lg"
+                disabled={!phone || paymentStatus === "sending" || paymentStatus === "waiting"}
+                onClick={handlePayWithMpesa}
+              >
+                {paymentStatus === "sending" ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Sending to phone...
+                  </>
+                ) : paymentStatus === "waiting" ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Awaiting payment...
+                  </>
+                ) : (
+                  <>
+                    <Smartphone className="h-4 w-4 mr-2" />
+                    Pay KES {paymentAmount.toLocaleString()} via M-Pesa
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showContactDialog} onOpenChange={setShowContactDialog}>
         <DialogContent className="sm:max-w-lg">
