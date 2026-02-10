@@ -290,7 +290,12 @@ async def sunpay_stk_push_endpoint(org_id: str, request: Request, user=Depends(g
         if phone.startswith("0"):
             phone = "254" + phone[1:]
 
-        callback_url = f"{str(request.base_url).rstrip('/')}/api/webhooks/sunpay/{org_id}"
+        import os
+        public_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+        if public_domain:
+            callback_url = f"https://{public_domain}/api/webhooks/sunpay/{org_id}"
+        else:
+            callback_url = f"{str(request.base_url).rstrip('/')}/api/webhooks/sunpay/{org_id}"
         result = await stk_push(tenant_session, phone, amount, external_ref, callback_url)
         return result
     except HTTPException:
@@ -320,7 +325,12 @@ async def sunpay_c2b_expect_endpoint(org_id: str, request: Request, user=Depends
         if not external_ref:
             raise HTTPException(status_code=400, detail="External reference (member/account number) is required")
 
-        callback_url = f"{str(request.base_url).rstrip('/')}/api/webhooks/sunpay/{org_id}"
+        import os
+        public_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+        if public_domain:
+            callback_url = f"https://{public_domain}/api/webhooks/sunpay/{org_id}"
+        else:
+            callback_url = f"{str(request.base_url).rstrip('/')}/api/webhooks/sunpay/{org_id}"
         result = await c2b_expect(tenant_session, amount, external_ref, callback_url)
         return result
     except HTTPException:

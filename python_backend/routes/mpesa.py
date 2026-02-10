@@ -618,7 +618,12 @@ async def trigger_stk_push(org_id: str, request: Request, user=Depends(get_curre
 
         if gateway == "sunpay":
             from services.sunpay import stk_push as sunpay_stk_push
-            callback_url = f"{str(request.base_url).rstrip('/')}/api/webhooks/sunpay/{org_id}"
+            import os
+            public_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+            if public_domain:
+                callback_url = f"https://{public_domain}/api/webhooks/sunpay/{org_id}"
+            else:
+                callback_url = f"{str(request.base_url).rstrip('/')}/api/webhooks/sunpay/{org_id}"
             result = await sunpay_stk_push(tenant_session, phone, amount, account_reference, callback_url)
             if isinstance(result, dict) and result.get("success") is not None:
                 return result
