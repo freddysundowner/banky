@@ -149,11 +149,11 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Subscription Plans</h1>
-        <p className="text-muted-foreground">Choose the plan that best fits your organization's needs</p>
+        <h1 className="text-xl md:text-2xl font-bold">Subscription Plans</h1>
+        <p className="text-sm md:text-base text-muted-foreground">Choose the plan that best fits your organization's needs</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-4 md:gap-6">
         {saasPlans.map((plan) => {
           const colors = PLAN_COLORS[plan.plan_type] || PLAN_COLORS.starter;
           const isPopular = plan.plan_type === 'growth';
@@ -161,32 +161,32 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
           return (
             <Card 
               key={plan.id} 
-              className={`relative flex flex-col ${plan.is_current ? 'ring-2 ring-primary shadow-lg' : 'hover:shadow-md transition-shadow'}`}
+              className={`relative flex flex-col mt-4 ${plan.is_current ? 'ring-2 ring-primary shadow-lg' : 'hover:shadow-md transition-shadow'}`}
             >
               {plan.is_current && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-primary text-primary-foreground shadow-sm">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                  <Badge className="bg-primary text-primary-foreground shadow-sm whitespace-nowrap">
                     <Crown className="w-3 h-3 mr-1" />
                     Current Plan
                   </Badge>
                 </div>
               )}
               {isPopular && !plan.is_current && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-blue-600 text-white shadow-sm">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                  <Badge className="bg-blue-600 text-white shadow-sm whitespace-nowrap">
                     <Sparkles className="w-3 h-3 mr-1" />
                     Popular
                   </Badge>
                 </div>
               )}
               
-              <CardHeader className={`${colors.bg} rounded-t-lg border-b ${colors.border}`}>
+              <CardHeader className={`${colors.bg} rounded-t-lg border-b ${colors.border} p-4 md:p-6`}>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg capitalize">{plan.name}</CardTitle>
+                  <CardTitle className="text-base md:text-lg capitalize">{plan.name}</CardTitle>
                 </div>
                 <CardDescription className="pt-2">
-                  <span className="text-3xl font-bold text-foreground">${plan.monthly_price}</span>
-                  <span className="text-muted-foreground">/month</span>
+                  <span className="text-2xl md:text-3xl font-bold text-foreground">${plan.monthly_price}</span>
+                  <span className="text-muted-foreground text-sm">/month</span>
                 </CardDescription>
                 {plan.annual_price > 0 && (
                   <p className="text-xs text-muted-foreground">
@@ -195,26 +195,26 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                 )}
               </CardHeader>
               
-              <CardContent className="flex-1 pt-6">
-                <div className="space-y-6">
+              <CardContent className="flex-1 pt-4 md:pt-6 p-4 md:p-6">
+                <div className="space-y-4 md:space-y-6">
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-muted-foreground">Limits</h4>
-                    <div className="grid grid-cols-1 gap-2 text-sm">
-                      <div className="flex justify-between py-1.5 px-3 bg-muted/50 rounded">
-                        <span className="text-muted-foreground">Members</span>
-                        <span className="font-medium">
+                    <div className="grid grid-cols-1 gap-1.5 md:gap-2 text-sm">
+                      <div className="flex justify-between py-1 md:py-1.5 px-2 md:px-3 bg-muted/50 rounded">
+                        <span className="text-muted-foreground text-xs md:text-sm">Members</span>
+                        <span className="font-medium text-xs md:text-sm">
                           {plan.max_members >= 999999 ? 'Unlimited' : plan.max_members.toLocaleString()}
                         </span>
                       </div>
-                      <div className="flex justify-between py-1.5 px-3 bg-muted/50 rounded">
-                        <span className="text-muted-foreground">Staff</span>
-                        <span className="font-medium">
+                      <div className="flex justify-between py-1 md:py-1.5 px-2 md:px-3 bg-muted/50 rounded">
+                        <span className="text-muted-foreground text-xs md:text-sm">Staff</span>
+                        <span className="font-medium text-xs md:text-sm">
                           {plan.max_staff >= 999999 ? 'Unlimited' : plan.max_staff}
                         </span>
                       </div>
-                      <div className="flex justify-between py-1.5 px-3 bg-muted/50 rounded">
-                        <span className="text-muted-foreground">Branches</span>
-                        <span className="font-medium">
+                      <div className="flex justify-between py-1 md:py-1.5 px-2 md:px-3 bg-muted/50 rounded">
+                        <span className="text-muted-foreground text-xs md:text-sm">Branches</span>
+                        <span className="font-medium text-xs md:text-sm">
                           {plan.max_branches >= 999999 ? 'Unlimited' : plan.max_branches}
                         </span>
                       </div>
@@ -223,11 +223,11 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
 
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-muted-foreground">Features</h4>
-                    <ul className="space-y-2">
+                    <ul className="space-y-1.5 md:space-y-2">
                       {(plan.features?.enabled || []).slice(0, 6).map((feature: string, i: number) => (
-                        <li key={i} className="flex items-start gap-2 text-sm">
-                          <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                          <span>{feature}</span>
+                        <li key={i} className="flex items-start gap-1.5 md:gap-2 text-xs md:text-sm">
+                          <Check className="h-3.5 w-3.5 md:h-4 md:w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                          <span className="break-words min-w-0">{feature}</span>
                         </li>
                       ))}
                     </ul>
@@ -235,7 +235,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                 </div>
               </CardContent>
 
-              <div className="p-6 pt-0 mt-auto">
+              <div className="p-4 md:p-6 pt-0 mt-auto">
                 <Button
                   className="w-full"
                   size="lg"
@@ -257,16 +257,16 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
       </div>
 
       <Card className="bg-gradient-to-r from-slate-900 to-slate-800 text-white">
-        <CardContent className="flex flex-col md:flex-row items-center justify-between gap-4 py-6">
-          <div>
-            <h3 className="text-lg font-semibold">Need a custom solution?</h3>
-            <p className="text-slate-300 text-sm">
+        <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-3 md:gap-4 p-4 md:py-6">
+          <div className="text-center sm:text-left">
+            <h3 className="text-base md:text-lg font-semibold">Need a custom solution?</h3>
+            <p className="text-slate-300 text-xs md:text-sm">
               Contact our sales team for Enterprise pricing and custom development options.
             </p>
           </div>
           <Button 
             variant="secondary" 
-            className="whitespace-nowrap"
+            className="whitespace-nowrap w-full sm:w-auto"
             onClick={() => setShowContactDialog(true)}
           >
             <Mail className="h-4 w-4 mr-2" />
@@ -288,7 +288,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
           </DialogHeader>
           
           <form onSubmit={handleContactSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Your Name *</Label>
                 <Input
