@@ -6,7 +6,7 @@ from models.database import get_db
 from models.tenant import Member, Transaction, OrganizationSettings, LoanApplication, LoanGuarantor, AuditLog, Staff
 from schemas.tenant import MemberCreate, MemberUpdate, MemberResponse
 from routes.auth import get_current_user
-from routes.common import generate_code, get_tenant_session_context, require_permission, require_role
+from routes.common import generate_code, generate_account_number, get_tenant_session_context, require_permission, require_role
 
 def try_send_sms(tenant_session, template_type: str, phone: str, name: str, context: dict, member_id=None, loan_id=None):
     """Try to send SMS, fail silently if SMS not configured"""
@@ -124,10 +124,7 @@ async def create_member(
         except PlanLimitExceededError as e:
             raise HTTPException(status_code=403, detail=e.message)
         
-        member_number = generate_code(tenant_session, Member, "member_number", "MB")
-        
         member_data = data.model_dump()
-        member_data['member_number'] = member_number
         member_data['status'] = 'pending'
         
         # Server-side branch enforcement: override branch_id for restricted users
@@ -136,6 +133,12 @@ async def create_member(
             member_data['branch_id'] = staff_branch_id
         elif not member_data.get('branch_id'):
             raise HTTPException(status_code=400, detail="Branch is required")
+        
+        from models.tenant import Branch as TenantBranch
+        branch = tenant_session.query(TenantBranch).filter(TenantBranch.id == member_data['branch_id']).first()
+        branch_code = branch.code if branch else "BR01"
+        member_number = generate_account_number(tenant_session, branch_code)
+        member_data['member_number'] = member_number
         
         member = Member(**member_data)
         tenant_session.add(member)

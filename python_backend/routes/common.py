@@ -20,6 +20,63 @@ def generate_code(db: Session, model, column_name: str, prefix: str) -> str:
     count = db.query(func.count(getattr(model, 'id'))).scalar() or 0
     return f"{prefix}{count + 1:02d}"
 
+
+def _luhn_check_digit(number_str: str) -> int:
+    """Calculate a Luhn check digit for the given numeric string."""
+    digits = [int(d) for d in number_str]
+    odd_sum = sum(digits[-1::-2])
+    even_digits = digits[-2::-2]
+    even_sum = 0
+    for d in even_digits:
+        doubled = d * 2
+        even_sum += doubled - 9 if doubled > 9 else doubled
+    total = odd_sum + even_sum
+    return (10 - (total % 10)) % 10
+
+
+def _extract_branch_number(branch_code: str) -> str:
+    """Extract numeric part from branch code (e.g. 'BR01' -> '01', 'BR12' -> '12')."""
+    nums = ''.join(c for c in branch_code if c.isdigit())
+    if nums:
+        return nums.zfill(2)[-2:]
+    return "01"
+
+
+def generate_account_number(db: Session, branch_code: str) -> str:
+    """
+    Generate a bank-style 10-digit account number.
+    
+    Format: BB-SSSSSSS-C
+      BB      = 2-digit branch code (from branch code field)
+      SSSSSSS = 7-digit sequential number (per-branch)
+      C       = 1-digit Luhn check digit
+    
+    Example: 0100000015  (branch 01, member 1, check digit 5)
+    """
+    from models.tenant import Member
+    
+    branch_num = _extract_branch_number(branch_code)
+    
+    prefix = branch_num
+    existing = db.query(Member.member_number).filter(
+        Member.member_number.like(f"{prefix}%")
+    ).all()
+    
+    max_seq = 0
+    for (mn,) in existing:
+        if mn and len(mn) == 10 and mn[:2] == prefix:
+            try:
+                seq = int(mn[2:9])
+                if seq > max_seq:
+                    max_seq = seq
+            except ValueError:
+                continue
+    
+    next_seq = max_seq + 1
+    base = f"{prefix}{next_seq:07d}"
+    check = _luhn_check_digit(base)
+    return f"{base}{check}"
+
 class StaffMembership:
     """Synthetic membership object for staff users."""
     def __init__(self, staff, organization_id=None):
