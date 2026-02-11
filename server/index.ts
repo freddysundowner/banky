@@ -19,11 +19,20 @@ if (isDev) {
     env: process.env
   });
 
-  vite.on("error", (e) => { console.error(e); process.exit(1); });
-  vite.on("close", (c) => { py.kill("SIGTERM"); process.exit(c || 0); });
+  console.log("Starting Admin Panel on port 3001...");
+  const admin = spawn("npx", ["vite", "--port", "3001", "--host"], {
+    cwd: `${process.cwd()}/admin-client`,
+    stdio: "inherit",
+    env: process.env
+  });
 
-  process.on("SIGTERM", () => { vite.kill("SIGTERM"); py.kill("SIGTERM"); });
-  process.on("SIGINT", () => { vite.kill("SIGINT"); py.kill("SIGINT"); });
+  admin.on("error", (e) => { console.error("Admin panel error:", e); });
+
+  vite.on("error", (e) => { console.error(e); process.exit(1); });
+  vite.on("close", (c) => { py.kill("SIGTERM"); admin.kill("SIGTERM"); process.exit(c || 0); });
+
+  process.on("SIGTERM", () => { vite.kill("SIGTERM"); py.kill("SIGTERM"); admin.kill("SIGTERM"); });
+  process.on("SIGINT", () => { vite.kill("SIGINT"); py.kill("SIGINT"); admin.kill("SIGINT"); });
 } else {
   py.on("close", (c) => process.exit(c || 0));
   process.on("SIGTERM", () => py.kill("SIGTERM"));
