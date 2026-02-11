@@ -353,19 +353,19 @@ async def subscription_payment_webhook(request: Request):
             if sub:
                 sub.plan_id = payment.plan_id
                 sub.status = "active"
-                if sub.end_date and sub.end_date > now:
-                    sub.end_date = sub.end_date + timedelta(days=period_days)
+                if sub.current_period_end and sub.current_period_end > now:
+                    sub.current_period_end = sub.current_period_end + timedelta(days=period_days)
                 else:
-                    sub.start_date = now
-                    sub.end_date = now + timedelta(days=period_days)
-                print(f"[Subscription Webhook] Activated subscription for org {payment.organization_id}, plan {payment.plan_id}, until {sub.end_date}")
+                    sub.current_period_start = now
+                    sub.current_period_end = now + timedelta(days=period_days)
+                print(f"[Subscription Webhook] Activated subscription for org {payment.organization_id}, plan {payment.plan_id}, until {sub.current_period_end}")
             else:
                 new_sub = OrganizationSubscription(
                     organization_id=payment.organization_id,
                     plan_id=payment.plan_id,
                     status="active",
-                    start_date=now,
-                    end_date=now + timedelta(days=period_days)
+                    current_period_start=now,
+                    current_period_end=now + timedelta(days=period_days)
                 )
                 db.add(new_sub)
                 print(f"[Subscription Webhook] Created new subscription for org {payment.organization_id}")

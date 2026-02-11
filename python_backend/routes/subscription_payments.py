@@ -162,14 +162,77 @@ def get_subscription_payments(organization_id: str, auth=Depends(get_current_use
     } for p in payments]
 
 
+def activate_subscription(db: Session, payment: SubscriptionPayment, receipt: str = ""):
+    now = datetime.utcnow()
+    payment.status = "completed"
+    payment.mpesa_receipt = receipt
+    payment.payment_reference = receipt
+    period_days = 365 if payment.billing_period == "annual" else 30
+    payment.period_start = now
+    payment.period_end = now + timedelta(days=period_days)
+
+    sub = db.query(OrganizationSubscription).filter(
+        OrganizationSubscription.organization_id == payment.organization_id
+    ).first()
+
+    if sub:
+        sub.plan_id = payment.plan_id
+        sub.status = "active"
+        if sub.current_period_end and sub.current_period_end > now:
+            sub.current_period_end = sub.current_period_end + timedelta(days=period_days)
+        else:
+            sub.current_period_start = now
+            sub.current_period_end = now + timedelta(days=period_days)
+    else:
+        new_sub = OrganizationSubscription(
+            organization_id=payment.organization_id,
+            plan_id=payment.plan_id,
+            status="active",
+            current_period_start=now,
+            current_period_end=now + timedelta(days=period_days)
+        )
+        db.add(new_sub)
+
+    db.commit()
+    print(f"[Subscription] Activated for org {payment.organization_id}, plan {payment.plan_id}")
+
+
 @router.get("/{organization_id}/subscription/check-payment/{payment_id}")
-def check_payment_status(organization_id: str, payment_id: str, auth=Depends(get_current_user), db: Session = Depends(get_db)):
+async def check_payment_status_endpoint(organization_id: str, payment_id: str, auth=Depends(get_current_user), db: Session = Depends(get_db)):
     payment = db.query(SubscriptionPayment).filter(
         SubscriptionPayment.id == payment_id,
         SubscriptionPayment.organization_id == organization_id
     ).first()
     if not payment:
         raise HTTPException(status_code=404, detail="Payment not found")
+
+    if payment.status == "awaiting_payment" and payment.mpesa_checkout_id:
+        try:
+            api_key = get_platform_sunpay_key(db)
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                resp = await client.get(
+                    f"{SUNPAY_BASE_URL}/payments/{payment.mpesa_checkout_id}",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json"
+                    }
+                )
+                if resp.status_code < 400:
+                    data = resp.json()
+                    result_code = str(data.get("resultCode", data.get("ResultCode", "")))
+                    receipt = data.get("mpesaRef", data.get("MpesaRef", data.get("receipt", "")))
+                    status_field = str(data.get("status", "")).lower()
+
+                    if result_code == "0" or status_field in ("completed", "success"):
+                        activate_subscription(db, payment, receipt or "")
+                        print(f"[Subscription Poll] Payment {payment_id} confirmed via API query")
+                    elif result_code and result_code != "0" and result_code != "":
+                        if status_field in ("failed", "cancelled"):
+                            payment.status = "failed"
+                            db.commit()
+                            print(f"[Subscription Poll] Payment {payment_id} failed: {result_code}")
+        except Exception as e:
+            print(f"[Subscription Poll] Error querying SunPay: {e}")
 
     return {
         "status": payment.status,
