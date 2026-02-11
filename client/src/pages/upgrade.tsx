@@ -269,12 +269,12 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                   <CardTitle className="text-base md:text-lg capitalize">{plan.name}</CardTitle>
                 </div>
                 <CardDescription className="pt-2">
-                  <span className="text-2xl md:text-3xl font-bold text-foreground">${plan.monthly_price}</span>
+                  <span className="text-2xl md:text-3xl font-bold text-foreground">KES {plan.monthly_price.toLocaleString()}</span>
                   <span className="text-muted-foreground text-sm">/month</span>
                 </CardDescription>
                 {plan.annual_price > 0 && (
                   <p className="text-xs text-muted-foreground">
-                    or ${plan.annual_price}/year (save {Math.round((1 - plan.annual_price / (plan.monthly_price * 12)) * 100)}%)
+                    or KES {plan.annual_price.toLocaleString()}/year (save {Math.round((1 - plan.annual_price / (plan.monthly_price * 12)) * 100)}%)
                   </p>
                 )}
               </CardHeader>
@@ -418,9 +418,9 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="monthly">Monthly (${selectedPlan.monthly_price}/mo)</SelectItem>
+                      <SelectItem value="monthly">Monthly (KES {selectedPlan.monthly_price.toLocaleString()}/mo)</SelectItem>
                       <SelectItem value="annual">
-                        Annual (${selectedPlan.annual_price}/yr - Save {Math.round((1 - selectedPlan.annual_price / (selectedPlan.monthly_price * 12)) * 100)}%)
+                        Annual (KES {selectedPlan.annual_price.toLocaleString()}/yr - Save {Math.round((1 - selectedPlan.annual_price / (selectedPlan.monthly_price * 12)) * 100)}%)
                       </SelectItem>
                     </SelectContent>
                   </Select>
