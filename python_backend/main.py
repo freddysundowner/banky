@@ -385,6 +385,110 @@ async def subscription_payment_webhook(request: Request):
     finally:
         db.close()
 
+
+@app.post("/api/webhooks/stripe-subscription", tags=["Webhooks"])
+async def stripe_subscription_webhook(request: Request):
+    from models.database import SessionLocal
+    from models.master import SubscriptionPayment, OrganizationSubscription
+    from routes.subscription_payments import activate_subscription
+    from datetime import datetime, timedelta
+
+    try:
+        payload = await request.json()
+    except Exception:
+        return {"status": "error", "message": "Invalid JSON"}
+
+    print(f"[Stripe Webhook] Received event type: {payload.get('type', 'unknown')}")
+
+    event_type = payload.get("type", "")
+    if event_type != "checkout.session.completed":
+        return {"status": "ignored"}
+
+    session_data = payload.get("data", {}).get("object", {})
+    session_id = session_data.get("id", "")
+    payment_status = session_data.get("payment_status", "")
+    metadata = session_data.get("metadata", {})
+    payment_id = metadata.get("payment_id", "")
+
+    if not payment_id:
+        print(f"[Stripe Webhook] No payment_id in metadata")
+        return {"status": "ignored"}
+
+    db = SessionLocal()
+    try:
+        payment = db.query(SubscriptionPayment).filter(SubscriptionPayment.id == payment_id).first()
+        if not payment:
+            print(f"[Stripe Webhook] Payment not found: {payment_id}")
+            return {"status": "error", "message": "Payment not found"}
+
+        if payment_status == "paid":
+            payment_intent = session_data.get("payment_intent", session_id)
+            payment.stripe_payment_intent_id = payment_intent
+            activate_subscription(db, payment, str(payment_intent))
+            print(f"[Stripe Webhook] Activated subscription for payment {payment_id}")
+            return {"status": "success"}
+        else:
+            payment.status = "failed"
+            db.commit()
+            return {"status": "failed"}
+    except Exception as e:
+        db.rollback()
+        print(f"[Stripe Webhook] Error: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        db.close()
+
+
+@app.post("/api/webhooks/paystack-subscription", tags=["Webhooks"])
+async def paystack_subscription_webhook(request: Request):
+    from models.database import SessionLocal
+    from models.master import SubscriptionPayment
+    from routes.subscription_payments import activate_subscription
+
+    try:
+        payload = await request.json()
+    except Exception:
+        return {"status": "error", "message": "Invalid JSON"}
+
+    print(f"[Paystack Webhook] Received event: {payload.get('event', 'unknown')}")
+
+    event = payload.get("event", "")
+    if event != "charge.success":
+        return {"status": "ignored"}
+
+    tx_data = payload.get("data", {})
+    reference = tx_data.get("reference", "")
+    status = tx_data.get("status", "")
+
+    if not reference.startswith("BANKY-SUB-"):
+        print(f"[Paystack Webhook] Not a subscription payment: {reference}")
+        return {"status": "ignored"}
+
+    payment_id = reference.replace("BANKY-SUB-", "")
+
+    db = SessionLocal()
+    try:
+        payment = db.query(SubscriptionPayment).filter(SubscriptionPayment.id == payment_id).first()
+        if not payment:
+            print(f"[Paystack Webhook] Payment not found: {payment_id}")
+            return {"status": "error", "message": "Payment not found"}
+
+        if status == "success":
+            activate_subscription(db, payment, reference)
+            print(f"[Paystack Webhook] Activated subscription for payment {payment_id}")
+            return {"status": "success"}
+        else:
+            payment.status = "failed"
+            db.commit()
+            return {"status": "failed"}
+    except Exception as e:
+        db.rollback()
+        print(f"[Paystack Webhook] Error: {e}")
+        return {"status": "error", "message": str(e)}
+    finally:
+        db.close()
+
+
 @app.get("/api/public/plans", tags=["Public"])
 async def get_public_plans():
     """

@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Check, Loader2, Sparkles, Crown, Mail, Send, Smartphone, CheckCircle2 } from "lucide-react";
+import { Check, Loader2, Sparkles, Crown, Mail, Send, Smartphone, CheckCircle2, CreditCard, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
@@ -19,6 +19,10 @@ interface Plan {
   pricing_model: string;
   monthly_price: number;
   annual_price: number;
+  usd_monthly_price: number;
+  usd_annual_price: number;
+  ngn_monthly_price: number;
+  ngn_annual_price: number;
   max_members: number;
   max_staff: number;
   max_branches: number;
@@ -32,6 +36,7 @@ interface UpgradePageProps {
   organizationId: string;
 }
 
+type PaymentMethod = "mpesa" | "stripe" | "paystack";
 
 const PLAN_COLORS: Record<string, { bg: string; border: string; badge: string }> = {
   starter: { bg: "bg-slate-50", border: "border-slate-200", badge: "bg-slate-100 text-slate-700" },
@@ -40,12 +45,41 @@ const PLAN_COLORS: Record<string, { bg: string; border: string; badge: string }>
   enterprise: { bg: "bg-amber-50", border: "border-amber-200", badge: "bg-amber-100 text-amber-700" }
 };
 
+const PAYMENT_METHODS: { id: PaymentMethod; label: string; currency: string; icon: typeof Smartphone; description: string }[] = [
+  { id: "mpesa", label: "M-Pesa", currency: "KES", icon: Smartphone, description: "Pay via M-Pesa STK Push" },
+  { id: "stripe", label: "Card (Visa/Mastercard)", currency: "USD", icon: CreditCard, description: "Pay with debit or credit card" },
+  { id: "paystack", label: "Paystack", currency: "NGN", icon: Globe, description: "Pay with card, bank, or USSD (Nigeria)" },
+];
+
+function getPaymentAmount(plan: Plan, method: PaymentMethod, period: "monthly" | "annual"): number {
+  if (method === "stripe") {
+    return period === "annual" && plan.usd_annual_price > 0 ? plan.usd_annual_price : plan.usd_monthly_price;
+  }
+  if (method === "paystack") {
+    return period === "annual" && plan.ngn_annual_price > 0 ? plan.ngn_annual_price : plan.ngn_monthly_price;
+  }
+  return period === "annual" && plan.annual_price > 0 ? plan.annual_price : plan.monthly_price;
+}
+
+function getCurrency(method: PaymentMethod): string {
+  if (method === "stripe") return "USD";
+  if (method === "paystack") return "NGN";
+  return "KES";
+}
+
+function formatAmount(amount: number, currency: string): string {
+  if (currency === "USD") return `$${amount.toLocaleString()}`;
+  if (currency === "NGN") return `NGN ${amount.toLocaleString()}`;
+  return `KES ${amount.toLocaleString()}`;
+}
+
 export default function UpgradePage({ organizationId }: UpgradePageProps) {
   const { toast } = useToast();
   const [showContactDialog, setShowContactDialog] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("mpesa");
   const [phone, setPhone] = useState("");
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "sending" | "waiting" | "success" | "failed">("idle");
   const [currentPaymentId, setCurrentPaymentId] = useState<string | null>(null);
@@ -96,7 +130,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
           queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "features"] });
           toast({
             title: "Payment Successful!",
-            description: `Your subscription has been activated. Receipt: ${data.mpesa_receipt || "confirmed"}`
+            description: `Your subscription has been activated.`
           });
         } else if (data.status === "failed") {
           setPaymentStatus("failed");
@@ -168,9 +202,110 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
     }
   };
 
+  const handlePayWithStripe = async () => {
+    if (!selectedPlan) return;
+
+    setPaymentStatus("sending");
+    try {
+      const res = await fetch(`/api/organizations/${organizationId}/subscription/pay-stripe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          plan_id: selectedPlan.id,
+          billing_period: billingPeriod
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setPaymentStatus("failed");
+        toast({
+          title: "Payment Failed",
+          description: data.detail || "Failed to initiate Stripe checkout",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setCurrentPaymentId(data.payment_id);
+      setPaymentStatus("waiting");
+
+      if (data.checkout_url) {
+        window.open(data.checkout_url, "_blank");
+        toast({
+          title: "Stripe Checkout Opened",
+          description: "Complete your payment in the new tab. This page will update automatically."
+        });
+      }
+    } catch {
+      setPaymentStatus("failed");
+      toast({
+        title: "Error",
+        description: "Failed to initiate payment. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handlePayWithPaystack = async () => {
+    if (!selectedPlan) return;
+
+    setPaymentStatus("sending");
+    try {
+      const res = await fetch(`/api/organizations/${organizationId}/subscription/pay-paystack`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          plan_id: selectedPlan.id,
+          billing_period: billingPeriod
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setPaymentStatus("failed");
+        toast({
+          title: "Payment Failed",
+          description: data.detail || "Failed to initiate Paystack payment",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setCurrentPaymentId(data.payment_id);
+      setPaymentStatus("waiting");
+
+      if (data.authorization_url) {
+        window.open(data.authorization_url, "_blank");
+        toast({
+          title: "Paystack Payment Opened",
+          description: "Complete your payment in the new tab. This page will update automatically."
+        });
+      }
+    } catch {
+      setPaymentStatus("failed");
+      toast({
+        title: "Error",
+        description: "Failed to initiate payment. Please try again.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handlePay = () => {
+    if (paymentMethod === "mpesa") handlePayWithMpesa();
+    else if (paymentMethod === "stripe") handlePayWithStripe();
+    else if (paymentMethod === "paystack") handlePayWithPaystack();
+  };
+
   const openPaymentDialog = (plan: Plan) => {
     setSelectedPlan(plan);
     setBillingPeriod("monthly");
+    setPaymentMethod("mpesa");
     setPhone("");
     setPaymentStatus("idle");
     setCurrentPaymentId(null);
@@ -224,11 +359,9 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
   }
 
   const saasPlans = plans?.filter(p => p.pricing_model === 'saas') || plans || [];
-  const paymentAmount = selectedPlan
-    ? billingPeriod === "annual" && selectedPlan.annual_price > 0
-      ? selectedPlan.annual_price
-      : selectedPlan.monthly_price
-    : 0;
+  const currency = getCurrency(paymentMethod);
+  const paymentAmount = selectedPlan ? getPaymentAmount(selectedPlan, paymentMethod, billingPeriod) : 0;
+  const hasAnnualPrice = selectedPlan ? getPaymentAmount(selectedPlan, paymentMethod, "annual") > 0 : false;
 
   return (
     <div className="space-y-6 overflow-x-hidden">
@@ -272,11 +405,14 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                   <span className="text-2xl md:text-3xl font-bold text-foreground">KES {plan.monthly_price.toLocaleString()}</span>
                   <span className="text-muted-foreground text-sm">/month</span>
                 </CardDescription>
-                {plan.annual_price > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    or KES {plan.annual_price.toLocaleString()}/year (save {Math.round((1 - plan.annual_price / (plan.monthly_price * 12)) * 100)}%)
-                  </p>
-                )}
+                <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                  {plan.usd_monthly_price > 0 && (
+                    <span className="text-xs text-muted-foreground">${plan.usd_monthly_price}/mo</span>
+                  )}
+                  {plan.ngn_monthly_price > 0 && (
+                    <span className="text-xs text-muted-foreground">NGN {plan.ngn_monthly_price.toLocaleString()}/mo</span>
+                  )}
+                </div>
               </CardHeader>
               
               <CardContent className="flex-1 pt-4 md:pt-6 p-4 md:p-6">
@@ -331,8 +467,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                     variant={plan.is_upgrade ? "default" : "secondary"}
                     onClick={() => openPaymentDialog(plan)}
                   >
-                    <Smartphone className="h-4 w-4 mr-2" />
-                    {plan.is_upgrade ? "Upgrade with M-Pesa" : 
+                    {plan.is_upgrade ? "Upgrade Now" : 
                      plan.is_downgrade ? "Switch Plan" : "Select Plan"}
                   </Button>
                 )}
@@ -369,14 +504,13 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
           setCurrentPaymentId(null);
         }
       }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Smartphone className="h-5 w-5 text-green-600" />
-              Pay with M-Pesa
+            <DialogTitle>
+              Subscribe to {selectedPlan?.name}
             </DialogTitle>
             <DialogDescription>
-              {selectedPlan && `Subscribe to ${selectedPlan.name} plan`}
+              Choose your preferred payment method
             </DialogDescription>
           </DialogHeader>
 
@@ -395,6 +529,32 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
             </div>
           ) : (
             <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Payment Method</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  {PAYMENT_METHODS.map((m) => {
+                    const Icon = m.icon;
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => { setPaymentMethod(m.id); setPaymentStatus("idle"); }}
+                        disabled={paymentStatus === "sending" || paymentStatus === "waiting"}
+                        className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border-2 transition-all text-center ${
+                          paymentMethod === m.id
+                            ? "border-primary bg-primary/5"
+                            : "border-muted hover:border-muted-foreground/30"
+                        } ${paymentStatus === "sending" || paymentStatus === "waiting" ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                      >
+                        <Icon className={`h-5 w-5 ${paymentMethod === m.id ? "text-primary" : "text-muted-foreground"}`} />
+                        <span className="text-xs font-medium">{m.label}</span>
+                        <span className="text-[10px] text-muted-foreground">{m.currency}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {selectedPlan && (
                 <div className="rounded-lg border p-4 bg-muted/30">
                   <div className="flex justify-between items-center">
@@ -402,7 +562,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                     <Badge variant="outline" className="capitalize">{billingPeriod}</Badge>
                   </div>
                   <div className="text-2xl font-bold mt-1">
-                    KES {paymentAmount.toLocaleString()}
+                    {formatAmount(paymentAmount, currency)}
                     <span className="text-sm font-normal text-muted-foreground">
                       /{billingPeriod === "annual" ? "year" : "month"}
                     </span>
@@ -410,7 +570,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                 </div>
               )}
 
-              {selectedPlan && selectedPlan.annual_price > 0 && (
+              {hasAnnualPrice && (
                 <div className="space-y-2">
                   <Label>Billing Period</Label>
                   <Select value={billingPeriod} onValueChange={(v) => setBillingPeriod(v as "monthly" | "annual")} disabled={paymentStatus !== "idle"}>
@@ -418,39 +578,47 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="monthly">Monthly (KES {selectedPlan.monthly_price.toLocaleString()}/mo)</SelectItem>
+                      <SelectItem value="monthly">
+                        Monthly ({formatAmount(selectedPlan ? getPaymentAmount(selectedPlan, paymentMethod, "monthly") : 0, currency)}/mo)
+                      </SelectItem>
                       <SelectItem value="annual">
-                        Annual (KES {selectedPlan.annual_price.toLocaleString()}/yr - Save {Math.round((1 - selectedPlan.annual_price / (selectedPlan.monthly_price * 12)) * 100)}%)
+                        Annual ({formatAmount(selectedPlan ? getPaymentAmount(selectedPlan, paymentMethod, "annual") : 0, currency)}/yr)
                       </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               )}
 
-              <div className="space-y-2">
-                <Label htmlFor="mpesa-phone">M-Pesa Phone Number</Label>
-                <Input
-                  id="mpesa-phone"
-                  type="tel"
-                  placeholder="0712345678"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  disabled={paymentStatus !== "idle" && paymentStatus !== "failed"}
-                />
-                <p className="text-xs text-muted-foreground">
-                  A payment prompt will be sent to this number
-                </p>
-              </div>
+              {paymentMethod === "mpesa" && (
+                <div className="space-y-2">
+                  <Label htmlFor="mpesa-phone">M-Pesa Phone Number</Label>
+                  <Input
+                    id="mpesa-phone"
+                    type="tel"
+                    placeholder="0712345678"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    disabled={paymentStatus !== "idle" && paymentStatus !== "failed"}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    A payment prompt will be sent to this number
+                  </p>
+                </div>
+              )}
 
               {paymentStatus === "waiting" && (
                 <div className="flex items-center gap-3 p-3 rounded-lg bg-yellow-50 border border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800">
                   <Loader2 className="h-5 w-5 animate-spin text-yellow-600 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                      Waiting for M-Pesa confirmation...
+                      {paymentMethod === "mpesa" 
+                        ? "Waiting for M-Pesa confirmation..."
+                        : "Waiting for payment confirmation..."}
                     </p>
                     <p className="text-xs text-yellow-600 dark:text-yellow-400">
-                      Check your phone and enter your M-Pesa PIN
+                      {paymentMethod === "mpesa"
+                        ? "Check your phone and enter your M-Pesa PIN"
+                        : "Complete the payment in the opened tab"}
                     </p>
                   </div>
                 </div>
@@ -467,13 +635,18 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
               <Button
                 className="w-full"
                 size="lg"
-                disabled={!phone || paymentStatus === "sending" || paymentStatus === "waiting"}
-                onClick={handlePayWithMpesa}
+                disabled={
+                  (paymentMethod === "mpesa" && !phone) ||
+                  paymentStatus === "sending" ||
+                  paymentStatus === "waiting" ||
+                  paymentAmount === 0
+                }
+                onClick={handlePay}
               >
                 {paymentStatus === "sending" ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Sending to phone...
+                    Processing...
                   </>
                 ) : paymentStatus === "waiting" ? (
                   <>
@@ -482,8 +655,10 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                   </>
                 ) : (
                   <>
-                    <Smartphone className="h-4 w-4 mr-2" />
-                    Pay KES {paymentAmount.toLocaleString()} via M-Pesa
+                    {paymentMethod === "mpesa" && <Smartphone className="h-4 w-4 mr-2" />}
+                    {paymentMethod === "stripe" && <CreditCard className="h-4 w-4 mr-2" />}
+                    {paymentMethod === "paystack" && <Globe className="h-4 w-4 mr-2" />}
+                    Pay {formatAmount(paymentAmount, currency)}
                   </>
                 )}
               </Button>

@@ -234,7 +234,244 @@ async def check_payment_status_endpoint(organization_id: str, payment_id: str, a
         except Exception as e:
             print(f"[Subscription Poll] Error querying SunPay: {e}")
 
+    if payment.status == "awaiting_payment" and payment.stripe_session_id:
+        try:
+            from services.stripe_service import retrieve_session
+            session = await retrieve_session(payment.stripe_session_id)
+            if session.payment_status == "paid":
+                receipt = session.payment_intent if hasattr(session, 'payment_intent') else session.id
+                activate_subscription(db, payment, str(receipt))
+                print(f"[Subscription Poll] Stripe payment {payment_id} confirmed")
+            elif session.status == "expired":
+                payment.status = "failed"
+                db.commit()
+        except Exception as e:
+            print(f"[Subscription Poll] Error querying Stripe: {e}")
+
+    if payment.status == "awaiting_payment" and payment.paystack_reference:
+        try:
+            from services.paystack_service import verify_transaction
+            result = await verify_transaction(db, payment.paystack_reference)
+            if result.get("success") and result.get("status") == "success":
+                activate_subscription(db, payment, payment.paystack_reference)
+                print(f"[Subscription Poll] Paystack payment {payment_id} confirmed")
+            elif result.get("status") in ("failed", "abandoned"):
+                payment.status = "failed"
+                db.commit()
+        except Exception as e:
+            print(f"[Subscription Poll] Error querying Paystack: {e}")
+
     return {
         "status": payment.status,
-        "mpesa_receipt": payment.mpesa_receipt
+        "mpesa_receipt": payment.mpesa_receipt,
+        "payment_method": payment.payment_method
     }
+
+
+@router.post("/{organization_id}/subscription/pay-stripe")
+async def initiate_stripe_payment(organization_id: str, data: dict, auth=Depends(get_current_user), db: Session = Depends(get_db)):
+    org = db.query(Organization).filter(Organization.id == organization_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    if not auth.is_staff:
+        membership = db.query(OrganizationMember).filter(
+            OrganizationMember.organization_id == organization_id,
+            OrganizationMember.user_id == auth.user.id,
+            OrganizationMember.is_owner == True
+        ).first()
+        if not membership:
+            raise HTTPException(status_code=403, detail="Only organization owners can make subscription payments")
+
+    plan_id = data.get("plan_id")
+    billing_period = data.get("billing_period", "monthly")
+
+    if not plan_id:
+        raise HTTPException(status_code=400, detail="plan_id is required")
+
+    plan = db.query(SubscriptionPlan).filter(SubscriptionPlan.id == plan_id).first()
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+
+    if billing_period == "annual" and plan.usd_annual_price and float(plan.usd_annual_price) > 0:
+        amount_usd = float(plan.usd_annual_price)
+        period_days = 365
+    else:
+        amount_usd = float(plan.usd_monthly_price)
+        period_days = 30
+        billing_period = "monthly"
+
+    if amount_usd <= 0:
+        raise HTTPException(status_code=400, detail="USD price not set for this plan. Contact admin.")
+
+    amount_cents = int(amount_usd * 100)
+
+    payment = SubscriptionPayment(
+        organization_id=organization_id,
+        plan_id=plan_id,
+        amount=Decimal(str(amount_usd)),
+        currency="USD",
+        payment_method="stripe",
+        billing_period=billing_period,
+        status="pending"
+    )
+    db.add(payment)
+    db.commit()
+    db.refresh(payment)
+
+    public_domain = os.environ.get("REPLIT_DEV_DOMAIN", "") or os.environ.get("REPL_SLUG", "")
+    if public_domain and not public_domain.startswith("http"):
+        base_url = f"https://{public_domain}"
+    else:
+        base_url = public_domain or "http://localhost:5000"
+
+    try:
+        from services.stripe_service import create_checkout_session
+        session = await create_checkout_session(
+            amount_cents=amount_cents,
+            currency="usd",
+            plan_name=plan.name,
+            success_url=f"{base_url}/dashboard?payment=success&payment_id={payment.id}",
+            cancel_url=f"{base_url}/upgrade?payment=cancelled",
+            metadata={
+                "payment_id": payment.id,
+                "organization_id": organization_id,
+                "plan_id": plan_id,
+                "billing_period": billing_period
+            }
+        )
+
+        payment.stripe_session_id = session.id
+        payment.status = "awaiting_payment"
+        db.commit()
+
+        print(f"[Subscription] Stripe session created for org {org.name}, plan {plan.name}, amount ${amount_usd}")
+
+        return {
+            "success": True,
+            "checkout_url": session.url,
+            "payment_id": payment.id,
+            "session_id": session.id
+        }
+
+    except Exception as e:
+        payment.status = "failed"
+        db.commit()
+        print(f"[Subscription] Stripe error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to create Stripe checkout session")
+
+
+@router.post("/{organization_id}/subscription/pay-paystack")
+async def initiate_paystack_payment(organization_id: str, data: dict, auth=Depends(get_current_user), db: Session = Depends(get_db)):
+    org = db.query(Organization).filter(Organization.id == organization_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    if not auth.is_staff:
+        membership = db.query(OrganizationMember).filter(
+            OrganizationMember.organization_id == organization_id,
+            OrganizationMember.user_id == auth.user.id,
+            OrganizationMember.is_owner == True
+        ).first()
+        if not membership:
+            raise HTTPException(status_code=403, detail="Only organization owners can make subscription payments")
+
+    plan_id = data.get("plan_id")
+    email = data.get("email", "")
+    billing_period = data.get("billing_period", "monthly")
+
+    if not plan_id or not email:
+        raise HTTPException(status_code=400, detail="plan_id and email are required")
+
+    plan = db.query(SubscriptionPlan).filter(SubscriptionPlan.id == plan_id).first()
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+
+    if billing_period == "annual" and plan.ngn_annual_price and float(plan.ngn_annual_price) > 0:
+        amount_ngn = float(plan.ngn_annual_price)
+        period_days = 365
+    else:
+        amount_ngn = float(plan.ngn_monthly_price)
+        period_days = 30
+        billing_period = "monthly"
+
+    if amount_ngn <= 0:
+        raise HTTPException(status_code=400, detail="NGN price not set for this plan. Contact admin.")
+
+    amount_kobo = int(amount_ngn * 100)
+
+    payment = SubscriptionPayment(
+        organization_id=organization_id,
+        plan_id=plan_id,
+        amount=Decimal(str(amount_ngn)),
+        currency="NGN",
+        payment_method="paystack",
+        billing_period=billing_period,
+        status="pending"
+    )
+    db.add(payment)
+    db.commit()
+    db.refresh(payment)
+
+    reference = f"BANKY-SUB-{payment.id}"
+
+    public_domain = os.environ.get("REPLIT_DEV_DOMAIN", "") or os.environ.get("REPL_SLUG", "")
+    if public_domain and not public_domain.startswith("http"):
+        callback_url = f"https://{public_domain}/upgrade?payment=success&payment_id={payment.id}"
+    else:
+        callback_url = f"{public_domain}/upgrade?payment=success&payment_id={payment.id}" if public_domain else ""
+
+    try:
+        from services.paystack_service import initialize_transaction
+        result = await initialize_transaction(
+            db=db,
+            email=email,
+            amount_kobo=amount_kobo,
+            currency="NGN",
+            reference=reference,
+            callback_url=callback_url,
+            metadata={
+                "payment_id": payment.id,
+                "organization_id": organization_id,
+                "plan_id": plan_id,
+                "billing_period": billing_period
+            }
+        )
+
+        if not result.get("success"):
+            payment.status = "failed"
+            db.commit()
+            raise HTTPException(status_code=400, detail=result.get("error", "Failed to initialize Paystack payment"))
+
+        payment.paystack_reference = reference
+        payment.paystack_access_code = result.get("access_code", "")
+        payment.status = "awaiting_payment"
+        db.commit()
+
+        print(f"[Subscription] Paystack transaction initialized for org {org.name}, plan {plan.name}, amount NGN {amount_ngn}")
+
+        return {
+            "success": True,
+            "authorization_url": result["authorization_url"],
+            "payment_id": payment.id,
+            "reference": reference
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        payment.status = "failed"
+        db.commit()
+        print(f"[Subscription] Paystack error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to initialize Paystack payment")
+
+
+@router.get("/{organization_id}/subscription/stripe-key")
+async def get_stripe_publishable_key(organization_id: str, auth=Depends(get_current_user)):
+    try:
+        from services.stripe_service import get_stripe_credentials
+        creds = await get_stripe_credentials()
+        return {"publishable_key": creds["publishable_key"]}
+    except Exception as e:
+        print(f"[Stripe] Error fetching publishable key: {e}")
+        return {"publishable_key": ""}

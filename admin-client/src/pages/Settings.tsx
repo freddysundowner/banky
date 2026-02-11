@@ -292,14 +292,69 @@ export default function Settings() {
                 </div>
 
                 <div className="border-t border-gray-200 pt-8">
-                  <h3 className="text-md font-semibold text-gray-900 mb-3">How It Works</h3>
+                  <h3 className="text-md font-semibold text-gray-900 mb-3">How M-Pesa Works</h3>
                   <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600">
                     <li>An organization owner goes to <strong>Subscription Plans</strong> and selects a plan</li>
-                    <li>They enter their M-Pesa phone number and click <strong>Pay</strong></li>
+                    <li>They choose <strong>M-Pesa</strong> as payment method and enter their phone number</li>
                     <li>An STK Push prompt is sent to their phone via SunPay</li>
                     <li>After entering their M-Pesa PIN, a webhook confirms the payment</li>
                     <li>The subscription is automatically activated for the plan's billing period</li>
                   </ol>
+                </div>
+
+                <div className="border-t border-gray-200 pt-8">
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                    </svg>
+                    Stripe (Card Payments - USD)
+                  </h2>
+                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-100 mb-4">
+                    <p className="text-sm text-blue-700">
+                      Stripe is managed via the Replit integration. API keys are automatically configured.
+                      Organizations can pay for subscriptions using credit/debit cards in USD.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200 pt-8">
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
+                    <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    Paystack (NGN Payments)
+                  </h2>
+                  <p className="text-sm text-gray-500 mb-4">Configure Paystack for Nigerian Naira subscription payments</p>
+
+                  <div className="grid gap-6">
+                    <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Paystack Secret Key
+                      </label>
+                      <input
+                        type="password"
+                        value={getValue('paystack_secret_key')}
+                        onChange={(e) => handleChange('paystack_secret_key', e.target.value)}
+                        placeholder="sk_live_..."
+                        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-mono text-sm"
+                      />
+                      <p className="text-sm text-gray-500 mt-2">Get your API keys from <a href="https://dashboard.paystack.com/#/settings/developer" target="_blank" rel="noopener noreferrer" className="underline font-medium text-teal-600">Paystack Dashboard</a></p>
+                    </div>
+
+                    <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Paystack Public Key
+                      </label>
+                      <input
+                        type="text"
+                        value={getValue('paystack_public_key')}
+                        onChange={(e) => handleChange('paystack_public_key', e.target.value)}
+                        placeholder="pk_live_..."
+                        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-mono text-sm"
+                      />
+                      <p className="text-sm text-gray-500 mt-2">Used on the frontend for Paystack inline checkout (optional)</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}

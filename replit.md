@@ -49,9 +49,17 @@ The frontend is built with React 18 and TypeScript, utilizing Shadcn UI componen
     - Model: `SubscriptionPayment` in master database tracks all payment attempts
     - Routes: `python_backend/routes/subscription_payments.py` (initiate payment, check status, history)
     - Webhook: `/api/webhooks/subscription-payment` processes SunPay callbacks, uses `SUB:{payment_id}` external ref format
-    - Frontend: Upgrade page (`client/src/pages/upgrade.tsx`) with M-Pesa payment dialog and real-time polling
+    - Frontend: Upgrade page (`client/src/pages/upgrade.tsx`) with multi-gateway payment selector (M-Pesa/Stripe/Paystack), dynamic currency display, and real-time polling
     - Sidebar shows subscription status (trial/active/expired) with link to upgrade page
     - Trial banner has "Upgrade Now" button that navigates to plans page
+- **Multi-Gateway Subscription Payments**: Three payment gateways for subscription billing:
+    - **M-Pesa (KES)**: STK Push via SunPay, webhook at `/api/webhooks/subscription-payment`
+    - **Stripe (USD)**: Checkout Session via Replit connection API, webhook at `/api/webhooks/stripe-subscription`, service: `python_backend/services/stripe_service.py`
+    - **Paystack (NGN)**: Transaction initialization, webhook at `/api/webhooks/paystack-subscription`, service: `python_backend/services/paystack_service.py`
+    - Multi-currency pricing: Each plan has KES (monthly_price/annual_price), USD (usd_monthly_price/usd_annual_price), NGN (ngn_monthly_price/ngn_annual_price)
+    - SubscriptionPayment model tracks gateway, currency, stripe_session_id, paystack_reference
+    - Check-payment endpoint polls all 3 gateways as fallback when webhooks don't arrive
+    - Admin panel: Paystack API key in Settings, multi-currency fields in Plans management
 - **Operations**: SMS notifications with templates, analytics dashboards for performance insights, HR management (staff lock/unlock, performance reviews), audit logs for complete traceability, and configurable organization settings.
 - **Automation**: Includes a cron-based script for processing matured fixed deposits with options for regular maturity or auto-rollover.
 - **Loan Notifications**: Automated SMS notifications via cron (`python_backend/cron_loan_notifications.py`):
