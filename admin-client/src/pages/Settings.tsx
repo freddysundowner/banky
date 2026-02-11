@@ -15,7 +15,7 @@ interface Plan {
   plan_type: string
 }
 
-type TabType = 'general' | 'email' | 'appearance'
+type TabType = 'general' | 'payments' | 'email' | 'appearance'
 
 async function fetchSettings() {
   const res = await fetch('/api/admin/settings', { credentials: 'include' })
@@ -81,6 +81,11 @@ export default function Settings() {
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    )},
+    { id: 'payments' as TabType, label: 'M-Pesa', icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
       </svg>
     )},
     { id: 'email' as TabType, label: 'Email', icon: (
@@ -222,6 +227,79 @@ export default function Settings() {
                     </div>
                     <p className="text-sm text-gray-500 mt-2">Free trial before billing starts</p>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'payments' && (
+              <div className="space-y-8">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    M-Pesa Subscription Payments
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1">Configure M-Pesa payments for organization subscriptions via SunPay</p>
+                </div>
+
+                <div className="bg-green-50 rounded-lg p-5 border border-green-100">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-sm font-medium text-green-900">About SunPay</h4>
+                      <p className="text-sm text-green-700 mt-1">
+                        SunPay provides a simplified M-Pesa integration for processing subscription payments. 
+                        This is a <strong>platform-level</strong> API key, separate from individual organization M-Pesa settings.
+                        Get your API key at <a href="https://sunpay.co.ke" target="_blank" rel="noopener noreferrer" className="underline font-medium">sunpay.co.ke</a>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-6">
+                  <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      SunPay API Key
+                    </label>
+                    <input
+                      type="password"
+                      value={getValue('subscription_sunpay_api_key')}
+                      onChange={(e) => handleChange('subscription_sunpay_api_key', e.target.value)}
+                      placeholder="Enter your SunPay API key..."
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-mono text-sm"
+                    />
+                    <p className="text-sm text-gray-500 mt-2">Used to process M-Pesa STK Push payments when organizations subscribe or upgrade their plans</p>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      M-Pesa Paybill / Till Number
+                    </label>
+                    <input
+                      type="text"
+                      value={getValue('subscription_mpesa_paybill')}
+                      onChange={(e) => handleChange('subscription_mpesa_paybill', e.target.value)}
+                      placeholder="e.g. 174379"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                    />
+                    <p className="text-sm text-gray-500 mt-2">Displayed to customers on payment receipts (optional)</p>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200 pt-8">
+                  <h3 className="text-md font-semibold text-gray-900 mb-3">How It Works</h3>
+                  <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600">
+                    <li>An organization owner goes to <strong>Subscription Plans</strong> and selects a plan</li>
+                    <li>They enter their M-Pesa phone number and click <strong>Pay</strong></li>
+                    <li>An STK Push prompt is sent to their phone via SunPay</li>
+                    <li>After entering their M-Pesa PIN, a webhook confirms the payment</li>
+                    <li>The subscription is automatically activated for the plan's billing period</li>
+                  </ol>
                 </div>
               </div>
             )}
