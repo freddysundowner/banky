@@ -59,16 +59,16 @@ export default function Dashboard({ organizationId, organizationName }: Dashboar
 
   if (error) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Overview of {organizationName}</p>
+          <h1 className="text-xl md:text-2xl font-bold">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">Overview of {organizationName}</p>
         </div>
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <XCircle className="h-12 w-12 text-destructive mb-4" />
-            <h3 className="font-medium">Unable to load dashboard</h3>
-            <p className="text-sm text-muted-foreground">Please try again later</p>
+          <CardContent className="flex flex-col items-center justify-center py-8 md:py-12 text-center">
+            <XCircle className="h-10 w-10 md:h-12 md:w-12 text-destructive mb-3 md:mb-4" />
+            <h3 className="font-medium text-sm md:text-base">Unable to load dashboard</h3>
+            <p className="text-xs md:text-sm text-muted-foreground">Please try again later</p>
           </CardContent>
         </Card>
       </div>
@@ -76,23 +76,21 @@ export default function Dashboard({ organizationId, organizationName }: Dashboar
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Overview of {organizationName}</p>
+          <h1 className="text-xl md:text-2xl font-bold">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">Overview of {organizationName}</p>
         </div>
-        <RefreshButton
-          queryKeys={[["/api/organizations", organizationId, "analytics", "dashboard"]]}
-        />
+        <RefreshButton organizationId={organizationId} />
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         <div>
-          <h2 className="text-lg font-semibold mb-3">Organization</h2>
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+          <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-3">Organization</h2>
+          <div className="grid gap-3 md:gap-4 grid-cols-3">
             <StatCard
-              label="Total Members"
+              label="Members"
               value={data?.total_members}
               icon={Users}
               color="text-blue-600"
@@ -100,7 +98,7 @@ export default function Dashboard({ organizationId, organizationName }: Dashboar
               isLoading={isLoading}
             />
             <StatCard
-              label="Active Staff"
+              label="Staff"
               value={data?.total_staff}
               icon={UserCog}
               color="text-indigo-600"
@@ -119,8 +117,8 @@ export default function Dashboard({ organizationId, organizationName }: Dashboar
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold mb-3">Member Funds</h2>
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+          <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-3">Member Funds</h2>
+          <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2">
             <StatCard
               label="Total Savings"
               value={data ? formatAmount(data.total_savings) : undefined}
@@ -141,10 +139,10 @@ export default function Dashboard({ organizationId, organizationName }: Dashboar
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold mb-3">Loan Portfolio</h2>
-          <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+          <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-3">Loan Portfolio</h2>
+          <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
             <StatCard
-              label="Total Disbursed"
+              label="Disbursed"
               value={data ? formatAmount(data.total_disbursed) : undefined}
               icon={ArrowUpRight}
               color="text-orange-600"
@@ -152,7 +150,7 @@ export default function Dashboard({ organizationId, organizationName }: Dashboar
               isLoading={isLoading}
             />
             <StatCard
-              label="Outstanding Balance"
+              label="Outstanding"
               value={data ? formatAmount(data.total_outstanding) : undefined}
               icon={CircleDollarSign}
               color="text-red-600"
@@ -160,7 +158,7 @@ export default function Dashboard({ organizationId, organizationName }: Dashboar
               isLoading={isLoading}
             />
             <StatCard
-              label="Total Collected"
+              label="Collected"
               value={data ? formatAmount(data.total_repaid) : undefined}
               icon={ArrowDownRight}
               color="text-green-600"
@@ -179,10 +177,10 @@ export default function Dashboard({ organizationId, organizationName }: Dashboar
         </div>
 
         <div>
-          <h2 className="text-lg font-semibold mb-3">Loan Applications</h2>
-          <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+          <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-3">Loan Applications</h2>
+          <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
             <StatCard
-              label="Total Applications"
+              label="Total"
               value={data?.total_loans}
               icon={FileText}
               color="text-purple-600"
@@ -218,17 +216,17 @@ export default function Dashboard({ organizationId, organizationName }: Dashboar
 
         {data && data.default_count > 0 && (
           <Card className="border-destructive/50 bg-destructive/5">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-destructive">
-                <AlertTriangle className="h-5 w-5" />
+            <CardHeader className="pb-2 md:pb-3 px-4 md:px-6 pt-4 md:pt-6">
+              <CardTitle className="flex items-center gap-2 text-destructive text-sm md:text-base">
+                <AlertTriangle className="h-4 w-4 md:h-5 md:w-5" />
                 Defaults & Collections
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-4">
+            <CardContent className="px-4 md:px-6 pb-4 md:pb-6">
+              <div className="flex items-center gap-3 md:gap-4">
                 <div>
-                  <p className="text-3xl font-bold text-destructive">{data.default_count}</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-2xl md:text-3xl font-bold text-destructive">{data.default_count}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">
                     {data.default_count === 1 ? "loan" : "loans"} currently overdue or in collection
                   </p>
                 </div>
@@ -257,18 +255,18 @@ function StatCard({
   isLoading: boolean;
 }) {
   return (
-    <Card>
-      <CardContent className="flex items-center gap-4 p-6">
-        <div className={`rounded-full p-3 ${bgColor}`}>
-          <Icon className={`h-5 w-5 ${color}`} />
+    <Card className="overflow-hidden">
+      <CardContent className="flex items-center gap-2.5 md:gap-4 p-3 md:p-5">
+        <div className={`rounded-full p-2 md:p-3 ${bgColor} flex-shrink-0`}>
+          <Icon className={`h-4 w-4 md:h-5 md:w-5 ${color}`} />
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           {isLoading ? (
-            <Skeleton className="h-7 w-20 mb-1" />
+            <Skeleton className="h-5 md:h-7 w-16 md:w-20 mb-0.5 md:mb-1" />
           ) : (
-            <p className="text-xl sm:text-2xl font-bold break-all">{value ?? 0}</p>
+            <p className="text-base sm:text-lg md:text-2xl font-bold truncate">{value ?? 0}</p>
           )}
-          <p className="text-sm text-muted-foreground">{label}</p>
+          <p className="text-[11px] md:text-sm text-muted-foreground truncate">{label}</p>
         </div>
       </CardContent>
     </Card>
