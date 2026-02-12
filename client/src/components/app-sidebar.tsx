@@ -1,4 +1,5 @@
 import { useLocation, Link } from "wouter";
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   LayoutDashboard,
@@ -160,10 +161,14 @@ const systemNavItems: NavItem[] = [
 export function AppSidebar() {
   const [location] = useLocation();
   const { user, isAuthenticated } = useAuth();
-  const { isMobile, setOpenMobile } = useSidebar();
+  const { setOpenMobile, openMobile } = useSidebar();
+
+  useEffect(() => {
+    setOpenMobile(false);
+  }, [location]);
 
   const closeMobileSidebar = () => {
-    if (isMobile) setOpenMobile(false);
+    setOpenMobile(false);
   };
   
   const { data: memberships } = useQuery<OrganizationMembership[]>({
