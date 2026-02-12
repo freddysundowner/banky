@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Check, Loader2, Sparkles, Crown, Mail, Send, Smartphone, CheckCircle2, CreditCard, Globe, Building } from "lucide-react";
+import { Check, Loader2, Sparkles, Crown, Mail, Send, Smartphone, CheckCircle2, CreditCard, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
@@ -57,7 +57,6 @@ const PLAN_COLORS: Record<string, { bg: string; border: string }> = {
 
 const PAYSTACK_CHANNELS: { id: PaystackChannel; label: string; icon: typeof CreditCard; description: string }[] = [
   { id: "card", label: "Card", icon: CreditCard, description: "Visa, Mastercard, Verve" },
-  { id: "bank_transfer", label: "Bank Transfer", icon: Building, description: "Pay via bank transfer" },
   { id: "mobile_money", label: "Mobile Money", icon: Smartphone, description: "M-Pesa, MTN MoMo, Airtel" },
 ];
 
