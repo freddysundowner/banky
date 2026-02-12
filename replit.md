@@ -62,6 +62,7 @@ The frontend is built with React 18 and TypeScript, utilizing Shadcn UI componen
     - Admin panel: Paystack API key in Settings, multi-currency fields in Plans management
 - **Operations**: SMS notifications with templates, analytics dashboards for performance insights, HR management (staff lock/unlock, performance reviews), audit logs for complete traceability, and configurable organization settings.
 - **Automation**: Includes a cron-based script for processing matured fixed deposits with options for regular maturity or auto-rollover.
+- **Auto Loan Deduction**: Cron job (`python_backend/cron_auto_loan_deduction.py`) auto-deducts loan repayments from member savings on instalment due dates. Enabled per-org via `auto_loan_deduction` setting in Settings > Loans tab.
 - **Loan Notifications**: Automated SMS notifications via cron (`python_backend/cron_loan_notifications.py`):
   - **Due Today Reminder**: SMS sent ~1 hour before instalment is due (run with `due_today` mode)
   - **Overdue Notice**: SMS sent after instalment becomes overdue/defaulted (run with `overdue` mode)

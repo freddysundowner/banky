@@ -274,6 +274,20 @@ export default function SettingsPage({ organizationId }: SettingsPageProps) {
                     Maximum number of loans a member can guarantee at once
                   </p>
                 </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Auto Loan Deduction from Savings</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Automatically deduct loan repayments from member savings accounts on the instalment due date
+                    </p>
+                  </div>
+                  <Switch
+                    checked={getBoolValue("auto_loan_deduction")}
+                    onCheckedChange={(checked) => updateSetting("auto_loan_deduction", String(checked))}
+                    data-testid="switch-auto-loan-deduction"
+                  />
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
