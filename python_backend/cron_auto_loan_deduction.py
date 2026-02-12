@@ -110,14 +110,15 @@ def process_auto_deductions(org_id: str, org_name: str, connection_string: str):
                     session, loan, deduction_amount
                 )
 
-                actual_loan_payment = deduction_amount - overpayment
-                actual_savings_deducted = actual_loan_payment
+                actual_loan_payment = principal_amount + interest_amount + penalty_amount
+                if actual_loan_payment <= 0:
+                    continue
 
                 balance_before = member.savings_balance or Decimal("0")
-                member.savings_balance = balance_before - actual_savings_deducted
+                member.savings_balance = balance_before - actual_loan_payment
 
-                rep_count = session.query(func.count(LoanRepayment.id)).scalar() or 0
-                code = f"REP{rep_count + 1:04d}"
+                unique_suffix = uuid.uuid4().hex[:8]
+                code = f"REP-{unique_suffix}"
                 auto_ref = f"AUTO-{today.strftime('%Y%m%d')}-{loan.application_number}"
 
                 repayment = LoanRepayment(
@@ -153,14 +154,12 @@ def process_auto_deductions(org_id: str, org_name: str, connection_string: str):
                         LoanDefault.status.in_(["overdue", "in_collection"])
                     ).update({"status": "resolved", "resolved_at": datetime.utcnow()}, synchronize_session="fetch")
 
-                unique_suffix = uuid.uuid4().hex[:8]
-
                 withdrawal_txn = Transaction(
                     transaction_number=f"ATXN-{unique_suffix}-W",
                     member_id=str(member.id),
                     transaction_type="withdrawal",
                     account_type="savings",
-                    amount=actual_savings_deducted,
+                    amount=actual_loan_payment,
                     balance_before=balance_before,
                     balance_after=member.savings_balance,
                     payment_method="auto_deduction",
@@ -189,7 +188,7 @@ def process_auto_deductions(org_id: str, org_name: str, connection_string: str):
                     entity_id=str(loan.id),
                     old_values={"savings_balance": str(balance_before)},
                     new_values={
-                        "deducted_amount": str(actual_savings_deducted),
+                        "deducted_amount": str(actual_loan_payment),
                         "savings_balance_after": str(member.savings_balance),
                         "loan_outstanding": str(loan.outstanding_balance),
                         "repayment_number": code,
@@ -210,7 +209,7 @@ def process_auto_deductions(org_id: str, org_name: str, connection_string: str):
                     if member.phone:
                         sms_vars = {
                             "name": member.first_name,
-                            "amount": str(deduction_amount),
+                            "amount": str(actual_loan_payment),
                             "balance": str(loan.outstanding_balance or 0)
                         }
                         try_send_sms(
@@ -225,7 +224,7 @@ def process_auto_deductions(org_id: str, org_name: str, connection_string: str):
                 except Exception as sms_err:
                     print(f"  [SMS] Warning: Failed to send SMS: {sms_err}")
 
-                print(f"  Deducted KES {deduction_amount} from {member.first_name} {member.last_name} savings for loan {loan.application_number}")
+                print(f"  Deducted KES {actual_loan_payment} from {member.first_name} {member.last_name} savings for loan {loan.application_number}")
                 deducted_count += 1
                 processed_loans.add(instalment.loan_id)
 
