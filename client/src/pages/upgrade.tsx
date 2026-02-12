@@ -59,7 +59,7 @@ const PAYSTACK_CHANNELS: { id: PaystackChannel; label: string; icon: typeof Cred
   { id: "card", label: "Card", icon: CreditCard, description: "Visa, Mastercard, Verve" },
   { id: "bank_transfer", label: "Bank Transfer", icon: Building, description: "Pay via bank transfer" },
   { id: "ussd", label: "USSD", icon: Hash, description: "Pay with USSD code" },
-  { id: "mobile_money", label: "Mobile Money", icon: Smartphone, description: "MTN MoMo, Airtel Money" },
+  { id: "mobile_money", label: "Mobile Money", icon: Smartphone, description: "M-Pesa, MTN MoMo, Airtel" },
   { id: "qr", label: "QR Code", icon: Wallet, description: "Scan to pay" },
 ];
 
