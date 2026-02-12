@@ -35,6 +35,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 interface OrganizationMembership {
@@ -159,6 +160,11 @@ const systemNavItems: NavItem[] = [
 export function AppSidebar() {
   const [location] = useLocation();
   const { user, isAuthenticated } = useAuth();
+  const { isMobile, setOpenMobile } = useSidebar();
+
+  const closeMobileSidebar = () => {
+    if (isMobile) setOpenMobile(false);
+  };
   
   const { data: memberships } = useQuery<OrganizationMembership[]>({
     queryKey: ["/api/organizations/my"],
@@ -205,7 +211,7 @@ export function AppSidebar() {
               {filteredMainNav.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={location === item.url}>
-                    <Link href={item.url} data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                    <Link href={item.url} data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`} onClick={closeMobileSidebar}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </Link>
@@ -224,7 +230,7 @@ export function AppSidebar() {
                 {filteredLoanNav.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={location === item.url}>
-                      <Link href={item.url} data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                      <Link href={item.url} data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`} onClick={closeMobileSidebar}>
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
                       </Link>
@@ -244,7 +250,7 @@ export function AppSidebar() {
                 {filteredFinanceNav.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={location === item.url}>
-                      <Link href={item.url} data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                      <Link href={item.url} data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`} onClick={closeMobileSidebar}>
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
                       </Link>
@@ -264,7 +270,7 @@ export function AppSidebar() {
                 {filteredOperationsNav.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild isActive={location === item.url}>
-                      <Link href={item.url} data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                      <Link href={item.url} data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`} onClick={closeMobileSidebar}>
                         <item.icon className="h-4 w-4" />
                         <span>{item.title}</span>
                       </Link>
@@ -283,7 +289,7 @@ export function AppSidebar() {
               {filteredSystemNav.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={location === item.url}>
-                    <Link href={item.url} data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                    <Link href={item.url} data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, '-')}`} onClick={closeMobileSidebar}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </Link>
@@ -296,7 +302,7 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border p-2 space-y-1">
         {subscriptionStatus && (
-          <Link href="/upgrade">
+          <Link href="/upgrade" onClick={closeMobileSidebar}>
             <div className={`rounded-md px-3 py-2 text-xs cursor-pointer transition-colors ${
               isExpired 
                 ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-900/50'
@@ -329,7 +335,7 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild isActive={location === "/my-account"}>
-              <Link href="/my-account" data-testid="nav-my-account">
+              <Link href="/my-account" data-testid="nav-my-account" onClick={closeMobileSidebar}>
                 <User className="h-4 w-4" />
                 <span>My Account</span>
               </Link>
