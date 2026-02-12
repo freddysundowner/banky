@@ -519,9 +519,9 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
     mutationFn: async (data: RepaymentFormData) => {
       return apiRequest("POST", `/api/organizations/${organizationId}/repayments`, {
         loan_id: data.loan_id,
-        amount_paid: parseFloat(data.amount),
+        amount: parseFloat(data.amount),
         payment_method: data.payment_method,
-        reference_number: data.reference,
+        reference: data.reference,
       });
     },
     onSuccess: () => {
