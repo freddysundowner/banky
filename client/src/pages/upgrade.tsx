@@ -114,6 +114,15 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
     }
   });
 
+  const { data: enabledGateways } = useQuery<{ mpesa: boolean; stripe: boolean; paystack: boolean }>({
+    queryKey: ["enabled-gateways"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/public/enabled-gateways");
+      if (!res.ok) return { mpesa: true, stripe: true, paystack: true };
+      return res.json();
+    }
+  });
+
   useEffect(() => {
     if (paymentStatus !== "waiting" || !currentPaymentId) return;
 
@@ -216,7 +225,9 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
   const openPaymentDialog = (plan: Plan) => {
     setSelectedPlan(plan);
     setBillingPeriod("monthly");
-    setGateway("mpesa");
+    const gw = enabledGateways || { mpesa: true, stripe: true, paystack: true };
+    const firstEnabled: Gateway = gw.mpesa ? "mpesa" : gw.paystack ? "paystack" : gw.stripe ? "stripe" : "mpesa";
+    setGateway(firstEnabled);
     setPaystackChannel("card");
     setPhone("");
     setEmail("");
@@ -260,6 +271,14 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
   const saasPlans = plans?.filter(p => p.pricing_model === "saas") || plans || [];
   const paymentAmount = selectedPlan ? getPlanPrice(selectedPlan, gateway, billingPeriod) : 0;
   const showAnnual = selectedPlan ? hasAnnualForGateway(selectedPlan, gateway) : false;
+
+  const allGateways: { id: Gateway; label: string; sub: string; icon: typeof Smartphone; color: string }[] = [
+    { id: "mpesa", label: "M-Pesa", sub: "KES", icon: Smartphone, color: "text-green-600" },
+    { id: "paystack", label: "Paystack", sub: "NGN", icon: Globe, color: "text-blue-600" },
+    { id: "stripe", label: "Stripe", sub: "USD", icon: CreditCard, color: "text-purple-600" },
+  ];
+  const gw = enabledGateways || { mpesa: true, stripe: true, paystack: true };
+  const availableGateways = allGateways.filter(g => gw[g.id]);
 
   return (
     <div className="space-y-6 overflow-x-hidden">
@@ -397,12 +416,8 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
               {/* Step 1: Gateway Selection */}
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Payment Gateway</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  {([
-                    { id: "mpesa" as Gateway, label: "M-Pesa", sub: "KES", icon: Smartphone, color: "text-green-600" },
-                    { id: "paystack" as Gateway, label: "Paystack", sub: "NGN", icon: Globe, color: "text-blue-600" },
-                    { id: "stripe" as Gateway, label: "Stripe", sub: "USD", icon: CreditCard, color: "text-purple-600" },
-                  ]).map((g) => {
+                <div className={`grid gap-2 ${availableGateways.length === 1 ? 'grid-cols-1' : availableGateways.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                  {availableGateways.map((g) => {
                     const Icon = g.icon;
                     const active = gateway === g.id;
                     return (

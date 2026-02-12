@@ -40,6 +40,26 @@ def get_public_branding(db: Session = Depends(get_db)):
     
     return result
 
+@router.get("/public/enabled-gateways")
+def get_enabled_gateways(db: Session = Depends(get_db)):
+    """Get which payment gateways are enabled (no auth required)"""
+    initialize_platform_settings(db)
+    
+    gateway_keys = ["gateway_mpesa_enabled", "gateway_stripe_enabled", "gateway_paystack_enabled"]
+    settings = db.query(PlatformSettings).filter(
+        PlatformSettings.setting_key.in_(gateway_keys)
+    ).all()
+    
+    result = {}
+    for s in settings:
+        result[s.setting_key] = s.setting_value == "true"
+    
+    return {
+        "mpesa": result.get("gateway_mpesa_enabled", True),
+        "stripe": result.get("gateway_stripe_enabled", True),
+        "paystack": result.get("gateway_paystack_enabled", True),
+    }
+
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
@@ -743,6 +763,9 @@ DEFAULT_PLATFORM_SETTINGS = [
     {"key": "theme_sidebar_color", "value": "#1e293b", "type": "string", "description": "Background color for sidebars"},
     {"key": "subscription_sunpay_api_key", "value": "", "type": "string", "description": "SunPay API key for processing subscription payments via M-Pesa"},
     {"key": "subscription_mpesa_paybill", "value": "", "type": "string", "description": "M-Pesa Paybill/Till number displayed to customers for subscription payments"},
+    {"key": "gateway_mpesa_enabled", "value": "true", "type": "boolean", "description": "Enable M-Pesa (KES) as a subscription payment gateway"},
+    {"key": "gateway_stripe_enabled", "value": "true", "type": "boolean", "description": "Enable Stripe (USD) as a subscription payment gateway"},
+    {"key": "gateway_paystack_enabled", "value": "true", "type": "boolean", "description": "Enable Paystack (NGN) as a subscription payment gateway"},
 ]
 
 def initialize_platform_settings(db: Session):

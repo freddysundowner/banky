@@ -235,6 +235,43 @@ export default function Settings() {
               <div className="space-y-8">
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    Payment Gateway Toggles
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1">Enable or disable payment gateways shown to organizations on the upgrade page</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[
+                    { key: 'gateway_mpesa_enabled', label: 'M-Pesa', currency: 'KES', activeClass: 'border-green-300 bg-green-50' },
+                    { key: 'gateway_stripe_enabled', label: 'Stripe', currency: 'USD', activeClass: 'border-blue-300 bg-blue-50' },
+                    { key: 'gateway_paystack_enabled', label: 'Paystack', currency: 'NGN', activeClass: 'border-teal-300 bg-teal-50' },
+                  ].map((gw) => {
+                    const isEnabled = getValue(gw.key) === 'true' || getValue(gw.key) === '';
+                    return (
+                      <div key={gw.key} className={`rounded-lg border-2 p-4 transition-all ${isEnabled ? gw.activeClass : 'border-gray-200 bg-gray-50 opacity-60'}`}>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium text-gray-900">{gw.label}</h4>
+                            <p className="text-xs text-gray-500">{gw.currency}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleChange(gw.key, isEnabled ? 'false' : 'true')}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isEnabled ? 'bg-green-500' : 'bg-gray-300'}`}
+                          >
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="border-t border-gray-200 pt-8">
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                     <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
