@@ -908,20 +908,21 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
     );
   }
 
-  const myActiveCounter = activeCounters?.find(c => c.staff_id === myStaffInfo?.id);
+  const effectiveStaffId = isAdmin && selectedTellerId ? selectedTellerId : myStaffInfo?.id;
+  const myActiveCounter = activeCounters?.find(c => c.staff_id === effectiveStaffId);
   const effectiveCounterNumber = counterNumber || (myActiveCounter ? myActiveCounter.counter_number : null);
 
   if (!effectiveCounterNumber) {
     const getCounterStatus = (num: number) => {
       const taken = activeCounters?.find(c => c.counter_number === String(num));
       if (!taken) return null;
-      if (taken.staff_id === myStaffInfo?.id) return { mine: true, name: "You" };
+      if (taken.staff_id === effectiveStaffId) return { mine: true, name: "You" };
       return { mine: false, name: taken.staff_name || "Another teller" };
     };
     const isCounterInputTaken = () => {
       if (!counterInput.trim()) return false;
       const taken = activeCounters?.find(c => c.counter_number === counterInput.trim());
-      return taken && taken.staff_id !== myStaffInfo?.id;
+      return taken && taken.staff_id !== effectiveStaffId;
     };
 
     return (
@@ -980,7 +981,9 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
                 disabled={!counterInput.trim() || !!isCounterInputTaken()}
                 onClick={async () => {
                   try {
-                    const res = await fetch(`/api/organizations/${organizationId}/floats/set-counter?counter_number=${encodeURIComponent(counterInput.trim())}`, {
+                    const params = new URLSearchParams({ counter_number: counterInput.trim() });
+                    if (isAdmin && selectedTellerId) params.set("staff_id", selectedTellerId);
+                    const res = await fetch(`/api/organizations/${organizationId}/floats/set-counter?${params.toString()}`, {
                       method: "POST",
                       credentials: "include",
                     });

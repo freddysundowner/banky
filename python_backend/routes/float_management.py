@@ -298,7 +298,8 @@ async def set_counter_number(
     org_id: str,
     user = Depends(get_current_user),
     db: Session = Depends(get_db),
-    counter_number: str = None
+    counter_number: str = None,
+    staff_id: str = None
 ):
     """Set counter number on teller's float for today"""
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
@@ -306,7 +307,10 @@ async def set_counter_number(
     session = tenant_ctx.create_session()
     
     try:
-        staff = session.query(Staff).filter(Staff.email == user.email).first()
+        if staff_id:
+            staff = session.query(Staff).filter(Staff.id == staff_id).first()
+        else:
+            staff = session.query(Staff).filter(Staff.email == user.email).first()
         if not staff:
             raise HTTPException(status_code=404, detail="Staff not found")
         
