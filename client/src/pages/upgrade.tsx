@@ -38,6 +38,15 @@ interface UpgradePageProps {
 
 type Gateway = "mpesa" | "stripe" | "paystack";
 type PaystackChannel = "card" | "bank" | "ussd" | "mobile_money" | "bank_transfer" | "qr";
+type PaystackCurrency = "KES" | "NGN" | "GHS" | "ZAR" | "USD";
+
+const PAYSTACK_CURRENCIES: { id: PaystackCurrency; label: string; symbol: string }[] = [
+  { id: "KES", label: "KES - Kenyan Shilling", symbol: "KES " },
+  { id: "NGN", label: "NGN - Nigerian Naira", symbol: "NGN " },
+  { id: "USD", label: "USD - US Dollar", symbol: "$" },
+  { id: "GHS", label: "GHS - Ghanaian Cedi", symbol: "GHS " },
+  { id: "ZAR", label: "ZAR - South African Rand", symbol: "ZAR " },
+];
 
 const PLAN_COLORS: Record<string, { bg: string; border: string }> = {
   starter: { bg: "bg-slate-50", border: "border-slate-200" },
@@ -50,34 +59,47 @@ const PAYSTACK_CHANNELS: { id: PaystackChannel; label: string; icon: typeof Cred
   { id: "card", label: "Card", icon: CreditCard, description: "Visa, Mastercard, Verve" },
   { id: "bank_transfer", label: "Bank Transfer", icon: Building, description: "Pay via bank transfer" },
   { id: "ussd", label: "USSD", icon: Hash, description: "Pay with USSD code" },
-  { id: "mobile_money", label: "Mobile Money", icon: Smartphone, description: "MTN, Airtel, etc." },
+  { id: "mobile_money", label: "Mobile Money", icon: Smartphone, description: "MTN MoMo, Airtel Money" },
   { id: "qr", label: "QR Code", icon: Wallet, description: "Scan to pay" },
 ];
 
-function getPlanPrice(plan: Plan, gateway: Gateway, period: "monthly" | "annual"): number {
+function getPlanPrice(plan: Plan, gateway: Gateway, period: "monthly" | "annual", paystackCurrency?: PaystackCurrency): number {
   if (gateway === "stripe") {
     return period === "annual" && plan.usd_annual_price > 0 ? plan.usd_annual_price : plan.usd_monthly_price;
   }
   if (gateway === "paystack") {
+    if (paystackCurrency === "KES") {
+      return period === "annual" && plan.annual_price > 0 ? plan.annual_price : plan.monthly_price;
+    }
+    if (paystackCurrency === "USD") {
+      return period === "annual" && plan.usd_annual_price > 0 ? plan.usd_annual_price : plan.usd_monthly_price;
+    }
     return period === "annual" && plan.ngn_annual_price > 0 ? plan.ngn_annual_price : plan.ngn_monthly_price;
   }
   return period === "annual" && plan.annual_price > 0 ? plan.annual_price : plan.monthly_price;
 }
 
-function getCurrencySymbol(gateway: Gateway): string {
+function getCurrencySymbol(gateway: Gateway, paystackCurrency?: PaystackCurrency): string {
   if (gateway === "stripe") return "$";
-  if (gateway === "paystack") return "NGN ";
+  if (gateway === "paystack") {
+    const curr = PAYSTACK_CURRENCIES.find(c => c.id === paystackCurrency);
+    return curr ? curr.symbol : "KES ";
+  }
   return "KES ";
 }
 
-function formatPrice(amount: number, gateway: Gateway): string {
-  const sym = getCurrencySymbol(gateway);
+function formatPrice(amount: number, gateway: Gateway, paystackCurrency?: PaystackCurrency): string {
+  const sym = getCurrencySymbol(gateway, paystackCurrency);
   return `${sym}${amount.toLocaleString()}`;
 }
 
-function hasAnnualForGateway(plan: Plan, gateway: Gateway): boolean {
+function hasAnnualForGateway(plan: Plan, gateway: Gateway, paystackCurrency?: PaystackCurrency): boolean {
   if (gateway === "stripe") return plan.usd_annual_price > 0;
-  if (gateway === "paystack") return plan.ngn_annual_price > 0;
+  if (gateway === "paystack") {
+    if (paystackCurrency === "KES") return plan.annual_price > 0;
+    if (paystackCurrency === "USD") return plan.usd_annual_price > 0;
+    return plan.ngn_annual_price > 0;
+  }
   return plan.annual_price > 0;
 }
 
@@ -89,6 +111,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
   const [gateway, setGateway] = useState<Gateway>("mpesa");
   const [paystackChannel, setPaystackChannel] = useState<PaystackChannel>("card");
+  const [paystackCurrency, setPaystackCurrency] = useState<PaystackCurrency>("KES");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "sending" | "waiting" | "success" | "failed">("idle");
@@ -191,7 +214,8 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
             plan_id: selectedPlan.id,
             email,
             billing_period: billingPeriod,
-            channels: [paystackChannel]
+            channels: [paystackChannel],
+            currency: paystackCurrency
           })
         });
       }
@@ -269,12 +293,12 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
   }
 
   const saasPlans = plans?.filter(p => p.pricing_model === "saas") || plans || [];
-  const paymentAmount = selectedPlan ? getPlanPrice(selectedPlan, gateway, billingPeriod) : 0;
-  const showAnnual = selectedPlan ? hasAnnualForGateway(selectedPlan, gateway) : false;
+  const paymentAmount = selectedPlan ? getPlanPrice(selectedPlan, gateway, billingPeriod, paystackCurrency) : 0;
+  const showAnnual = selectedPlan ? hasAnnualForGateway(selectedPlan, gateway, paystackCurrency) : false;
 
   const allGateways: { id: Gateway; label: string; sub: string; icon: typeof Smartphone; color: string }[] = [
     { id: "mpesa", label: "M-Pesa", sub: "KES", icon: Smartphone, color: "text-green-600" },
-    { id: "paystack", label: "Paystack", sub: "NGN", icon: Globe, color: "text-blue-600" },
+    { id: "paystack", label: "Paystack", sub: "Multi-currency", icon: Globe, color: "text-blue-600" },
     { id: "stripe", label: "Stripe", sub: "USD", icon: CreditCard, color: "text-purple-600" },
   ];
   const gw = enabledGateways || { mpesa: true, stripe: true, paystack: true };
@@ -439,7 +463,28 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                 </div>
               </div>
 
-              {/* Step 2: Paystack Channel Selection */}
+              {/* Step 2: Paystack Currency Selection */}
+              {gateway === "paystack" && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Currency</Label>
+                  <Select
+                    value={paystackCurrency}
+                    onValueChange={(v) => setPaystackCurrency(v as PaystackCurrency)}
+                    disabled={paymentStatus === "sending" || paymentStatus === "waiting"}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PAYSTACK_CURRENCIES.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Step 3: Paystack Channel Selection */}
               {gateway === "paystack" && (
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Payment Method</Label>
@@ -477,7 +522,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                     <Badge variant="outline" className="capitalize">{billingPeriod}</Badge>
                   </div>
                   <div className="text-2xl font-bold mt-1">
-                    {formatPrice(paymentAmount, gateway)}
+                    {formatPrice(paymentAmount, gateway, paystackCurrency)}
                     <span className="text-sm font-normal text-muted-foreground">
                       /{billingPeriod === "annual" ? "year" : "month"}
                     </span>
@@ -500,10 +545,10 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="monthly">
-                        Monthly ({formatPrice(selectedPlan ? getPlanPrice(selectedPlan, gateway, "monthly") : 0, gateway)}/mo)
+                        Monthly ({formatPrice(selectedPlan ? getPlanPrice(selectedPlan, gateway, "monthly", paystackCurrency) : 0, gateway, paystackCurrency)}/mo)
                       </SelectItem>
                       <SelectItem value="annual">
-                        Annual ({formatPrice(selectedPlan ? getPlanPrice(selectedPlan, gateway, "annual") : 0, gateway)}/yr)
+                        Annual ({formatPrice(selectedPlan ? getPlanPrice(selectedPlan, gateway, "annual", paystackCurrency) : 0, gateway, paystackCurrency)}/yr)
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -585,7 +630,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                     {gateway === "mpesa" && <Smartphone className="h-4 w-4 mr-2" />}
                     {gateway === "stripe" && <CreditCard className="h-4 w-4 mr-2" />}
                     {gateway === "paystack" && <Globe className="h-4 w-4 mr-2" />}
-                    Pay {formatPrice(paymentAmount, gateway)}
+                    Pay {formatPrice(paymentAmount, gateway, paystackCurrency)}
                     {gateway === "stripe" && " with Card"}
                   </>
                 )}

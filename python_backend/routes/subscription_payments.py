@@ -380,6 +380,10 @@ async def initiate_paystack_payment(organization_id: str, data: dict, auth=Depen
     email = data.get("email", "")
     billing_period = data.get("billing_period", "monthly")
     channels = data.get("channels")
+    currency = data.get("currency", "NGN").upper()
+
+    if currency not in ("NGN", "KES", "GHS", "ZAR", "USD"):
+        raise HTTPException(status_code=400, detail="Unsupported currency for Paystack")
 
     if not plan_id or not email:
         raise HTTPException(status_code=400, detail="plan_id and email are required")
@@ -388,24 +392,41 @@ async def initiate_paystack_payment(organization_id: str, data: dict, auth=Depen
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
 
-    if billing_period == "annual" and plan.ngn_annual_price and float(plan.ngn_annual_price) > 0:
-        amount_ngn = float(plan.ngn_annual_price)
-        period_days = 365
+    if currency == "KES":
+        if billing_period == "annual" and plan.annual_price and float(plan.annual_price) > 0:
+            amount = float(plan.annual_price)
+            period_days = 365
+        else:
+            amount = float(plan.monthly_price)
+            period_days = 30
+            billing_period = "monthly"
+    elif currency == "USD":
+        if billing_period == "annual" and plan.usd_annual_price and float(plan.usd_annual_price) > 0:
+            amount = float(plan.usd_annual_price)
+            period_days = 365
+        else:
+            amount = float(plan.usd_monthly_price)
+            period_days = 30
+            billing_period = "monthly"
     else:
-        amount_ngn = float(plan.ngn_monthly_price)
-        period_days = 30
-        billing_period = "monthly"
+        if billing_period == "annual" and plan.ngn_annual_price and float(plan.ngn_annual_price) > 0:
+            amount = float(plan.ngn_annual_price)
+            period_days = 365
+        else:
+            amount = float(plan.ngn_monthly_price)
+            period_days = 30
+            billing_period = "monthly"
 
-    if amount_ngn <= 0:
-        raise HTTPException(status_code=400, detail="NGN price not set for this plan. Contact admin.")
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail=f"{currency} price not set for this plan. Contact admin.")
 
-    amount_kobo = int(amount_ngn * 100)
+    amount_minor = int(amount * 100)
 
     payment = SubscriptionPayment(
         organization_id=organization_id,
         plan_id=plan_id,
-        amount=Decimal(str(amount_ngn)),
-        currency="NGN",
+        amount=Decimal(str(amount)),
+        currency=currency,
         payment_method="paystack",
         billing_period=billing_period,
         status="pending"
@@ -427,8 +448,8 @@ async def initiate_paystack_payment(organization_id: str, data: dict, auth=Depen
         result = await initialize_transaction(
             db=db,
             email=email,
-            amount_kobo=amount_kobo,
-            currency="NGN",
+            amount_kobo=amount_minor,
+            currency=currency,
             reference=reference,
             callback_url=callback_url,
             metadata={
@@ -450,7 +471,7 @@ async def initiate_paystack_payment(organization_id: str, data: dict, auth=Depen
         payment.status = "awaiting_payment"
         db.commit()
 
-        print(f"[Subscription] Paystack transaction initialized for org {org.name}, plan {plan.name}, amount NGN {amount_ngn}")
+        print(f"[Subscription] Paystack transaction initialized for org {org.name}, plan {plan.name}, amount {currency} {amount}")
 
         return {
             "success": True,
