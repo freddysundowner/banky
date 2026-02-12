@@ -51,6 +51,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -189,6 +190,76 @@ const navItems = [
   { title: "Settings", value: "settings" as NavSection, icon: Settings, permissions: ["settings:read"], adminOnly: true },
   { title: "My Account", value: "my-account" as NavSection, icon: UserCircle, permissions: [], alwaysShow: true },
 ];
+
+function SidebarNavMenu({ items, activeSection, onSelect }: { 
+  items: typeof navItems, 
+  activeSection: NavSection, 
+  onSelect: (value: NavSection) => void 
+}) {
+  const { setOpenMobile } = useSidebar();
+  return (
+    <SidebarMenu>
+      {items.map((item) => (
+        <SidebarMenuItem key={item.value}>
+          <SidebarMenuButton
+            isActive={activeSection === item.value}
+            onClick={() => {
+              onSelect(item.value);
+              setOpenMobile(false);
+            }}
+            data-testid={`nav-${item.value}`}
+          >
+            <item.icon className="h-4 w-4" />
+            <span>{item.title}</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
+  );
+}
+
+function SidebarUpgradeFooter({ plan, isTrial, trialDaysRemaining, onUpgrade }: {
+  plan: string | undefined,
+  isTrial: boolean,
+  trialDaysRemaining: number,
+  onUpgrade: () => void
+}) {
+  const { setOpenMobile } = useSidebar();
+  return (
+    <SidebarFooter className="p-2">
+      <div 
+        className={`flex items-center justify-between px-3 py-2.5 rounded-lg border border-primary/20 bg-primary/5 cursor-pointer transition-all ${
+          plan !== 'enterprise' ? 'hover:bg-primary/10 hover:border-primary/40' : ''
+        }`}
+        onClick={() => {
+          if (plan !== 'enterprise') {
+            onUpgrade();
+            setOpenMobile(false);
+          }
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <span className={`px-2 py-0.5 text-xs rounded font-semibold ${
+            plan === 'professional' ? 'bg-purple-500 text-white' :
+            plan === 'growth' ? 'bg-blue-500 text-white' :
+            plan === 'enterprise' ? 'bg-amber-500 text-white' :
+            'bg-primary text-primary-foreground'
+          }`}>
+            {plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : 'Starter'}
+          </span>
+          {isTrial && trialDaysRemaining > 0 && (
+            <span className="text-xs font-medium text-primary">
+              {trialDaysRemaining}d trial
+            </span>
+          )}
+        </div>
+        {plan !== 'enterprise' && (
+          <ChevronRight className="h-4 w-4 text-primary" />
+        )}
+      </div>
+    </SidebarFooter>
+  );
+}
 
 export default function Home() {
   const { user, logout, isLoading: authLoading } = useAuth();
@@ -698,53 +769,22 @@ export default function Home() {
             <SidebarGroup>
               <SidebarGroupLabel>Menu</SidebarGroupLabel>
               <SidebarGroupContent>
-                <SidebarMenu>
-                  {filteredNavItems.map((item) => (
-                    <SidebarMenuItem key={item.value}>
-                      <SidebarMenuButton
-                        isActive={activeSection === item.value}
-                        onClick={() => setActiveSection(item.value)}
-                        data-testid={`nav-${item.value}`}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  ))}
-                </SidebarMenu>
+                <SidebarNavMenu 
+                  items={filteredNavItems} 
+                  activeSection={activeSection} 
+                  onSelect={setActiveSection} 
+                />
               </SidebarGroupContent>
             </SidebarGroup>
 
           </SidebarContent>
           
-          {/* Subscription Info */}
-          <SidebarFooter className="p-2">
-            <div 
-              className={`flex items-center justify-between px-3 py-2.5 rounded-lg border border-primary/20 bg-primary/5 cursor-pointer transition-all ${
-                plan !== 'enterprise' ? 'hover:bg-primary/10 hover:border-primary/40' : ''
-              }`}
-              onClick={() => plan !== 'enterprise' && setActiveSection("upgrade")}
-            >
-              <div className="flex items-center gap-2">
-                <span className={`px-2 py-0.5 text-xs rounded font-semibold ${
-                  plan === 'professional' ? 'bg-purple-500 text-white' :
-                  plan === 'growth' ? 'bg-blue-500 text-white' :
-                  plan === 'enterprise' ? 'bg-amber-500 text-white' :
-                  'bg-primary text-primary-foreground'
-                }`}>
-                  {plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : 'Starter'}
-                </span>
-                {isTrial && trialDaysRemaining > 0 && (
-                  <span className="text-xs font-medium text-primary">
-                    {trialDaysRemaining}d trial
-                  </span>
-                )}
-              </div>
-              {plan !== 'enterprise' && (
-                <ChevronRight className="h-4 w-4 text-primary" />
-              )}
-            </div>
-          </SidebarFooter>
+          <SidebarUpgradeFooter
+            plan={plan}
+            isTrial={isTrial}
+            trialDaysRemaining={trialDaysRemaining}
+            onUpgrade={() => setActiveSection("upgrade")}
+          />
         </Sidebar>
 
         <div className="flex flex-col flex-1 overflow-hidden">
