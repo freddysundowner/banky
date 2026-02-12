@@ -379,6 +379,7 @@ async def initiate_paystack_payment(organization_id: str, data: dict, auth=Depen
     plan_id = data.get("plan_id")
     email = data.get("email", "")
     billing_period = data.get("billing_period", "monthly")
+    channels = data.get("channels")
 
     if not plan_id or not email:
         raise HTTPException(status_code=400, detail="plan_id and email are required")
@@ -435,7 +436,8 @@ async def initiate_paystack_payment(organization_id: str, data: dict, auth=Depen
                 "organization_id": organization_id,
                 "plan_id": plan_id,
                 "billing_period": billing_period
-            }
+            },
+            channels=channels
         )
 
         if not result.get("success"):

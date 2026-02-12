@@ -37,7 +37,8 @@ async def initialize_transaction(
     currency: str,
     reference: str,
     callback_url: str = "",
-    metadata: dict = None
+    metadata: dict = None,
+    channels: list = None
 ) -> dict:
     secret_key = get_paystack_secret_key(db)
     
@@ -51,6 +52,8 @@ async def initialize_transaction(
         payload["callback_url"] = callback_url
     if metadata:
         payload["metadata"] = metadata
+    if channels:
+        payload["channels"] = channels
     
     async with httpx.AsyncClient(timeout=30.0) as client:
         resp = await client.post(
