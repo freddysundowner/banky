@@ -247,7 +247,7 @@ def main():
         for org in orgs:
             print(f"\n  [{org.name}]")
             try:
-                tenant_engine = create_engine(org.connection_string)
+                tenant_engine = create_engine(str(org.connection_string))
                 TenantSession = sessionmaker(bind=tenant_engine)
                 tenant_session = TenantSession()
 

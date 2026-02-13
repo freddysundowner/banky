@@ -34,7 +34,7 @@ def get_setting(session, key, default=None):
     return default
 
 
-def process_auto_deductions(org_id: str, org_name: str, connection_string: str):
+def process_auto_deductions(org_id, org_name, connection_string):
     """Process auto loan deductions for a single organization"""
     print(f"\n--- Processing organization: {org_name} ({org_id}) ---")
 
@@ -48,7 +48,6 @@ def process_auto_deductions(org_id: str, org_name: str, connection_string: str):
     deducted_count = 0
     skipped_count = 0
     error_count = 0
-    today = date.today()
 
     try:
         enabled = get_setting(session, "auto_loan_deduction", "false")
@@ -71,6 +70,7 @@ def process_auto_deductions(org_id: str, org_name: str, connection_string: str):
         except Exception:
             local_now = now
 
+        local_today = local_now.date()
         current_hour = local_now.hour
         current_minute = local_now.minute
         current_total = current_hour * 60 + current_minute
@@ -81,7 +81,7 @@ def process_auto_deductions(org_id: str, org_name: str, connection_string: str):
             return {"deducted": 0, "skipped": 0, "errors": 0}
 
         last_run = get_setting(session, "auto_loan_deduction_last_run", "")
-        today_str = local_now.strftime("%Y-%m-%d")
+        today_str = str(local_today)
         if last_run == today_str:
             print(f"  Already ran today ({today_str})")
             return {"deducted": 0, "skipped": 0, "errors": 0}
@@ -91,7 +91,7 @@ def process_auto_deductions(org_id: str, org_name: str, connection_string: str):
         ).filter(
             LoanApplication.status == "disbursed",
             LoanInstalment.status.in_(["pending", "partial", "overdue"]),
-            LoanInstalment.due_date <= today
+            LoanInstalment.due_date <= local_today
         ).order_by(
             LoanInstalment.due_date.asc()
         ).all()

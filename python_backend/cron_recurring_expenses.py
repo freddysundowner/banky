@@ -43,7 +43,7 @@ def advance_due_date(current_date: date, interval: str) -> date:
     return current_date + delta
 
 
-def process_organization_recurring(org_id: str, org_name: str, connection_string: str):
+def process_organization_recurring(org_id, org_name, connection_string):
     print(f"\n--- Processing recurring expenses: {org_name} ({org_id}) ---")
 
     try:

@@ -79,8 +79,8 @@ def run_job(job_name: str, job_config: dict):
     print(f"{'='*60}")
 
     try:
+        original_argv = sys.argv[:]
         if args:
-            original_argv = sys.argv[:]
             sys.argv = [module_name + ".py"] + args
 
         module = __import__(module_name)
@@ -90,8 +90,7 @@ def run_job(job_name: str, job_config: dict):
         else:
             print(f"  [WARN] Module {module_name} has no main() function")
 
-        if args:
-            sys.argv = original_argv
+        sys.argv = original_argv
 
         print(f"[{datetime.now().strftime('%H:%M:%S')}] Completed: {description}")
         return True
