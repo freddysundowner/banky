@@ -349,7 +349,7 @@ DEFAULT_SMS_TEMPLATES = [
     {
         "name": "Deposit Received",
         "template_type": "deposit_received",
-        "message_template": "Dear {{name}}, your deposit of {{currency}} {{amount}} has been received and credited to your account. Your new balance is {{currency}} {{balance}}. Thank you for saving with us."
+        "message_template": "Dear {{name}}, your deposit of {{currency}} {{amount}} has been received and credited to your account. Thank you for saving with us."
     },
     {
         "name": "Withdrawal Processed",
