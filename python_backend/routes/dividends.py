@@ -391,7 +391,7 @@ async def distribute_dividend(org_id: str, dividend_id: str, user=Depends(get_cu
         for md in member_dividends:
             if md.status == "credited":
                 member = tenant_session.query(Member).filter(Member.id == md.member_id).first()
-                if member and member.phone_number:
+                if member and member.phone:
                     try:
                         credited_to = "savings account" if md.credited_to == "savings" else "share capital"
                         currency = get_org_currency(tenant_session)

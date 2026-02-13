@@ -456,30 +456,33 @@ async def staff_login(data: StaffLogin, response: Response, db: Session = Depend
         staff.last_login = datetime.now()
         tenant_session.commit()
         
-        # Get or create master User for session management
-        user = get_user_by_email(db, data.email)
-        if not user:
-            # Create a master user entry for session management
-            user = create_user(db, data.email, f"{staff.first_name} {staff.last_name}", data.password)
+        token = create_staff_session(tenant_session, staff.id)
         
-        # Create session
-        token = create_session(db, user.id)
         response.set_cookie(
             key=SESSION_COOKIE_NAME,
-            value=token,
+            value=f"tenant:{org.id}:{token}",
             httponly=True,
             secure=IS_PRODUCTION,
             samesite="lax",
             max_age=7 * 24 * 60 * 60
         )
         
+        from models.tenant import Branch
+        branch = tenant_session.query(Branch).filter(Branch.id == staff.branch_id).first() if staff.branch_id else None
+        
         return {
-            "id": user.id,
-            "email": user.email,
-            "name": user.name,
+            "id": staff.id,
+            "email": staff.email,
+            "name": f"{staff.first_name} {staff.last_name}",
+            "first_name": staff.first_name,
+            "last_name": staff.last_name,
             "staff_id": staff.id,
             "role": staff.role,
-            "organizationId": data.organization_id
+            "isStaff": True,
+            "organizationId": data.organization_id,
+            "branchId": staff.branch_id,
+            "branchName": branch.name if branch else None,
+            "branchCode": branch.code if branch else None
         }
     finally:
         tenant_session.close()

@@ -522,7 +522,7 @@ async def reopen_float(
         
         # Reopen the float
         old_status = teller_float.status
-        teller_float.status = "active"
+        teller_float.status = "open"
         teller_float.closing_balance = None
         teller_float.physical_count = None
         teller_float.variance = None
