@@ -425,8 +425,9 @@ export default function Home() {
     mutationFn: async (data: CreateOrgFormData) => {
       return apiRequest("POST", "/api/organizations", data);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/organizations/my"] });
+    onSuccess: async () => {
+      setSelectedOrg(null);
+      await queryClient.invalidateQueries({ queryKey: ["/api/organizations/my"] });
       setShowCreateDialog(false);
       createForm.reset();
       toast({

@@ -45,6 +45,15 @@ export function useAuth() {
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/auth/user"], null);
+      queryClient.removeQueries({ queryKey: ["/api/organizations/my"] });
+      queryClient.removeQueries({ predicate: (query) => {
+        const key = query.queryKey;
+        return Array.isArray(key) && typeof key[0] === "string" && (
+          key[0].startsWith("/api/organizations") ||
+          key[0].startsWith("/api/auth/session") ||
+          key[0].startsWith("/api/auth/permissions")
+        );
+      }});
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
     },
   });
