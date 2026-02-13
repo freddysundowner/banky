@@ -16,7 +16,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Loader2, Plus, Pencil, Trash2, Shield, Lock, RotateCcw, ArrowLeft } from "lucide-react";
+import { Loader2, Plus, Pencil, Trash2, Shield, Lock, RotateCcw, ArrowLeft, BookOpen } from "lucide-react";
+import RolesDocumentation from "@/components/roles-documentation";
 import { useResourcePermissions, RESOURCES } from "@/hooks/use-resource-permissions";
 
 interface Role {
@@ -65,7 +66,7 @@ const PERMISSION_GROUPS = {
 
 export default function RolesManagement({ organizationId }: RolesManagementProps) {
   const { toast } = useToast();
-  const [viewMode, setViewMode] = useState<"list" | "form">("list");
+  const [viewMode, setViewMode] = useState<"list" | "form" | "docs">("list");
   const [editing, setEditing] = useState<Role | null>(null);
   const [formName, setFormName] = useState("");
   const [formDescription, setFormDescription] = useState("");
@@ -200,6 +201,10 @@ export default function RolesManagement({ organizationId }: RolesManagementProps
     );
   }
 
+  if (viewMode === "docs") {
+    return <RolesDocumentation onBack={() => setViewMode("list")} />;
+  }
+
   if (viewMode === "form") {
     return (
       <div className="space-y-6 pb-8">
@@ -316,6 +321,10 @@ export default function RolesManagement({ organizationId }: RolesManagementProps
           <p className="text-sm text-muted-foreground">Create custom roles and assign permissions</p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => setViewMode("docs")}>
+            <BookOpen className="h-4 w-4 mr-2" />
+            Permissions Guide
+          </Button>
           <RefreshButton organizationId={organizationId} />
           {canWrite && (
             <Button onClick={openCreateDialog}>
