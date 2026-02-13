@@ -265,7 +265,12 @@ async def get_loan(org_id: str, loan_id: str, user=Depends(get_current_user), db
 @router.put("/{org_id}/loans/{loan_id}/action")
 async def process_loan_action(org_id: str, loan_id: str, data: LoanApplicationAction, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin", "reviewer"])
+    if data.action == "approve":
+        require_permission(membership, "loans:approve")
+    elif data.action == "reject":
+        require_permission(membership, "loans:reject")
+    else:
+        require_permission(membership, "loans:process")
     tenant_session = tenant_ctx.create_session()
     try:
         loan = tenant_session.query(LoanApplication).filter(LoanApplication.id == loan_id).first()
@@ -364,7 +369,7 @@ async def process_loan_action(org_id: str, loan_id: str, data: LoanApplicationAc
 @router.post("/{org_id}/loans/{loan_id}/disburse")
 async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin", "accountant"])
+    require_permission(membership, "loans:process")
     tenant_session = tenant_ctx.create_session()
     try:
         loan = tenant_session.query(LoanApplication).filter(LoanApplication.id == loan_id).first()

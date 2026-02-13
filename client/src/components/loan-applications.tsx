@@ -589,7 +589,9 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
   const [rejectConfirmed, setRejectConfirmed] = useState(false);
   const [branchFilter, setBranchFilter] = useState<string>("all");
   const { canWrite, hasPermission } = useResourcePermissions(organizationId, RESOURCES.LOANS);
-  const canProcess = hasPermission("loans:process");
+  const canApprove = hasPermission("loans:approve");
+  const canReject = hasPermission("loans:reject");
+  const canDisburse = hasPermission("loans:process");
   const { hasFeature } = useFeatures(organizationId);
   const hasMpesa = hasFeature("mpesa_integration");
   const hasBankIntegration = hasFeature("bank_integration");
@@ -975,8 +977,7 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
               <Download className="h-4 w-4 mr-1" />
               <span className="hidden sm:inline">Statement</span>
             </Button>
-            {selectedLoan.status === "pending" && canProcess && (
-              <>
+            {selectedLoan.status === "pending" && canApprove && (
                 <Button
                   size="sm"
                   variant="default"
@@ -986,6 +987,8 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                   <Check className="h-4 w-4 mr-1" />
                   Approve
                 </Button>
+            )}
+            {selectedLoan.status === "pending" && canReject && (
                 <Button
                   size="sm"
                   variant="destructive"
@@ -995,9 +998,8 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                   <X className="h-4 w-4 mr-1" />
                   Reject
                 </Button>
-              </>
             )}
-            {selectedLoan.status === "approved" && canProcess && (
+            {selectedLoan.status === "approved" && canDisburse && (
               <Button
                 size="sm"
                 variant="default"
