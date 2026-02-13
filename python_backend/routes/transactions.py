@@ -391,6 +391,10 @@ async def create_transaction(org_id: str, data: TransactionCreate, user=Depends(
         
         # Send SMS notification for deposit/withdrawal
         if member.phone and data.transaction_type in ["deposit", "withdrawal"]:
+            currency_setting = tenant_session.query(OrganizationSettings).filter(
+                OrganizationSettings.setting_key == "currency"
+            ).first()
+            currency = currency_setting.setting_value if currency_setting else "KES"
             sms_template = "deposit_received" if data.transaction_type == "deposit" else "withdrawal_processed"
             try_send_sms(
                 tenant_session,
@@ -400,7 +404,8 @@ async def create_transaction(org_id: str, data: TransactionCreate, user=Depends(
                 {
                     "name": member.first_name,
                     "amount": str(data.amount),
-                    "balance": str(new_balance)
+                    "balance": str(new_balance),
+                    "currency": currency
                 },
                 member_id=member.id
             )
