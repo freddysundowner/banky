@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Save, Building2, Smartphone, Users, Clock, Shield, MessageSquare, Mail, Copy, CheckCircle2, Info } from "lucide-react";
+import { Loader2, Save, Building2, Smartphone, Users, Clock, Shield, MessageSquare, Mail, Copy, CheckCircle2, Info, Landmark } from "lucide-react";
 import RolesManagement from "@/components/roles-management";
 import { CURRENCIES, getCurrencySymbol } from "@/lib/currency";
 
@@ -132,6 +132,10 @@ export default function SettingsPage({ organizationId }: SettingsPageProps) {
                   <Building2 className="h-4 w-4" />
                   <span className="hidden sm:inline">General</span>
                 </TabsTrigger>
+                <TabsTrigger value="loans" className="relative h-12 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-3 font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none gap-2" data-testid="tab-loans">
+                  <Landmark className="h-4 w-4" />
+                  <span className="hidden sm:inline">Loans</span>
+                </TabsTrigger>
                 <TabsTrigger value="members" className="relative h-12 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-3 font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none gap-2" data-testid="tab-members">
                   <Users className="h-4 w-4" />
                   <span className="hidden sm:inline">Members</span>
@@ -246,6 +250,17 @@ export default function SettingsPage({ organizationId }: SettingsPageProps) {
                   </p>
                 </div>
 
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="loans" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Loan Settings</CardTitle>
+                <CardDescription>Configure loan application rules and automation</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Require Guarantors for Loans</Label>
