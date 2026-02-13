@@ -158,6 +158,9 @@ async def create_member(
         
         # Send welcome SMS to new member
         if member.phone:
+            from models.master import Organization
+            org = db.query(Organization).filter(Organization.id == org_id).first()
+            org_name = org.name if org else "our organization"
             try_send_sms(
                 tenant_session,
                 "welcome",
@@ -165,7 +168,8 @@ async def create_member(
                 f"{member.first_name} {member.last_name}",
                 {
                     "name": member.first_name,
-                    "member_number": member.member_number
+                    "member_number": member.member_number,
+                    "org_name": org_name
                 },
                 member_id=member.id
             )

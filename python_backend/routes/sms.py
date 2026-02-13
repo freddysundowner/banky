@@ -359,7 +359,7 @@ DEFAULT_SMS_TEMPLATES = [
     {
         "name": "Welcome Message",
         "template_type": "welcome",
-        "message_template": "Welcome to our Sacco, {{name}}! Your member number is {{member_number}}. We're excited to have you. For any assistance, please contact us."
+        "message_template": "Welcome to {{org_name}}, {{name}}! Your member number is {{member_number}}. We're excited to have you. For any assistance, please contact us."
     },
     {
         "name": "Loan Rejected",
