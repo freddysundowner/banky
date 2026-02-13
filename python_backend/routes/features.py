@@ -7,7 +7,7 @@ from models.database import get_db
 from models.master import Organization, OrganizationSubscription, SubscriptionPlan, OrganizationMember
 from services.feature_flags import (
     get_deployment_mode, get_license_key, get_feature_access_for_enterprise,
-    get_feature_access_for_saas, Feature, PLAN_FEATURES, PLAN_LIMITS
+    get_feature_access_for_saas, Feature, PLAN_FEATURES, PLAN_LIMITS, CORE_FEATURES
 )
 from routes.auth import get_current_user
 
@@ -133,10 +133,10 @@ def get_organization_features(organization_id: str, db: Session = Depends(get_db
             plan_features = subscription.plan.features.get("enabled")
     
     if plan_features:
-        features = plan_features
+        features = list(set(plan_features) | CORE_FEATURES)
     else:
         access = get_feature_access_for_saas(plan_type)
-        features = list(access.enabled_features)
+        features = list(access.enabled_features | CORE_FEATURES)
     
     return {
         "mode": "saas",

@@ -221,6 +221,8 @@ def generate_license_key(edition: str, org_name: str) -> str:
     return f"BANKY-{edition_code}-{year}-{unique}"
 
 
+CORE_FEATURES = {Feature.MPESA_INTEGRATION}
+
 def get_org_features(organization_id: str, db) -> Set[str]:
     from models.master import OrganizationSubscription
     
@@ -229,7 +231,7 @@ def get_org_features(organization_id: str, db) -> Set[str]:
     if mode == "enterprise":
         license_key = get_license_key()
         access = get_feature_access_for_enterprise(license_key)
-        return access.enabled_features
+        return access.enabled_features | CORE_FEATURES
     
     subscription = db.query(OrganizationSubscription).filter(
         OrganizationSubscription.organization_id == organization_id
@@ -239,10 +241,10 @@ def get_org_features(organization_id: str, db) -> Set[str]:
     if subscription and subscription.plan:
         plan_type = subscription.plan.plan_type
         if subscription.plan.features and subscription.plan.features.get("enabled"):
-            return set(subscription.plan.features.get("enabled"))
+            return set(subscription.plan.features.get("enabled")) | CORE_FEATURES
     
     access = get_feature_access_for_saas(plan_type)
-    return access.enabled_features
+    return access.enabled_features | CORE_FEATURES
 
 
 def check_org_feature(organization_id: str, feature: str, db) -> bool:
