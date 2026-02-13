@@ -33,7 +33,7 @@ async def create_loan_product(
     db: Session = Depends(get_db)
 ):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin"])
+    require_permission(membership, "loan_products:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         count = tenant_session.query(func.count(LoanProduct.id)).scalar() or 0
@@ -60,7 +60,7 @@ async def update_loan_product(
     db: Session = Depends(get_db)
 ):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin"])
+    require_permission(membership, "loan_products:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         product = tenant_session.query(LoanProduct).filter(LoanProduct.id == product_id).first()
@@ -88,7 +88,7 @@ async def delete_loan_product(
     db: Session = Depends(get_db)
 ):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin"])
+    require_permission(membership, "loan_products:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         product = tenant_session.query(LoanProduct).filter(LoanProduct.id == product_id).first()
