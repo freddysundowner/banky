@@ -44,8 +44,12 @@ export function useAuth() {
       await apiRequest("POST", "/api/auth/logout");
     },
     onSuccess: () => {
-      queryClient.clear();
       queryClient.setQueryData(["/api/auth/user"], null);
+      queryClient.removeQueries({ predicate: (query) => {
+        const key = query.queryKey;
+        if (Array.isArray(key) && key[0] === "/api/auth/user") return false;
+        return true;
+      }});
     },
   });
 
