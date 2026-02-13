@@ -126,7 +126,7 @@ const createOrgSchema = z.object({
   email: z.string().email("Invalid email").optional().or(z.literal("")),
   phone: z.string().optional(),
   address: z.string().optional(),
-  staffEmailDomain: z.string().optional(),
+  staffEmailDomain: z.string().min(3, "Staff email domain is required (e.g. mysacco.co.ke)"),
   deploymentMode: z.enum(["saas", "standalone"]),
   currency: z.string().default("KES"),
 });
@@ -600,7 +600,7 @@ export default function Home() {
                   name="staffEmailDomain"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Staff Email Domain</FormLabel>
+                      <FormLabel>Staff Email Domain <span className="text-destructive">*</span></FormLabel>
                       <FormControl>
                         <div className="flex items-center">
                           <span className="px-3 py-2 bg-muted border border-r-0 rounded-l-md text-muted-foreground text-sm">@</span>
@@ -614,7 +614,7 @@ export default function Home() {
                           />
                         </div>
                       </FormControl>
-                      <p className="text-xs text-muted-foreground">Staff login emails will use this domain (e.g. john@mysacco.co.ke)</p>
+                      <p className="text-xs text-muted-foreground">Work emails for staff will be generated using this domain (e.g. john@mysacco.co.ke)</p>
                       <FormMessage />
                     </FormItem>
                   )}
