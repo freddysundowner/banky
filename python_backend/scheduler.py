@@ -48,6 +48,11 @@ JOBS = {
         "interval_hours": 6,
         "description": "Process recurring expenses",
     },
+    "auto_loan_deduction": {
+        "module": "cron_auto_loan_deduction",
+        "interval_hours": 24,
+        "description": "Auto-deduct loan repayments from savings",
+    },
 }
 
 shutdown_requested = False

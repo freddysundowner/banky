@@ -11,6 +11,15 @@ const py = spawn("python", ["-m", "uvicorn", "main:app", "--host", "0.0.0.0", "-
 
 py.on("error", (e) => { console.error(e); process.exit(1); });
 
+console.log("Starting Background Scheduler...");
+const scheduler = spawn("python", ["scheduler.py"], {
+  cwd: `${process.cwd()}/python_backend`,
+  stdio: "inherit",
+  env: process.env
+});
+
+scheduler.on("error", (e) => { console.error("Scheduler error:", e); });
+
 if (isDev) {
   console.log("Starting Vite dev server on port 5000...");
   const vite = spawn("npx", ["vite", "--host", "0.0.0.0", "--port", "5000"], {
@@ -29,12 +38,12 @@ if (isDev) {
   admin.on("error", (e) => { console.error("Admin panel error:", e); });
 
   vite.on("error", (e) => { console.error(e); process.exit(1); });
-  vite.on("close", (c) => { py.kill("SIGTERM"); admin.kill("SIGTERM"); process.exit(c || 0); });
+  vite.on("close", (c) => { py.kill("SIGTERM"); admin.kill("SIGTERM"); scheduler.kill("SIGTERM"); process.exit(c || 0); });
 
-  process.on("SIGTERM", () => { vite.kill("SIGTERM"); py.kill("SIGTERM"); admin.kill("SIGTERM"); });
-  process.on("SIGINT", () => { vite.kill("SIGINT"); py.kill("SIGINT"); admin.kill("SIGINT"); });
+  process.on("SIGTERM", () => { vite.kill("SIGTERM"); py.kill("SIGTERM"); admin.kill("SIGTERM"); scheduler.kill("SIGTERM"); });
+  process.on("SIGINT", () => { vite.kill("SIGINT"); py.kill("SIGINT"); admin.kill("SIGINT"); scheduler.kill("SIGINT"); });
 } else {
-  py.on("close", (c) => process.exit(c || 0));
-  process.on("SIGTERM", () => py.kill("SIGTERM"));
-  process.on("SIGINT", () => py.kill("SIGINT"));
+  py.on("close", (c) => { scheduler.kill("SIGTERM"); process.exit(c || 0); });
+  process.on("SIGTERM", () => { py.kill("SIGTERM"); scheduler.kill("SIGTERM"); });
+  process.on("SIGINT", () => { py.kill("SIGINT"); scheduler.kill("SIGINT"); });
 }
