@@ -1716,7 +1716,13 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                 <FormField control={formInstance.control} name="product_id" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Loan Product <span className="text-destructive">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={(val) => {
+                      field.onChange(val);
+                      const selected = products?.find((p) => p.id === val);
+                      if (selected) {
+                        formInstance.setValue("term", selected.max_term_months);
+                      }
+                    }} value={field.value}>
                       <FormControl>
                         <SelectTrigger data-testid="select-application-product"><SelectValue placeholder="Select loan product..." /></SelectTrigger>
                       </FormControl>
