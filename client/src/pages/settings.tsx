@@ -303,6 +303,23 @@ export default function SettingsPage({ organizationId }: SettingsPageProps) {
                     data-testid="switch-auto-loan-deduction"
                   />
                 </div>
+
+                {getBoolValue("auto_loan_deduction") && (
+                  <div className="space-y-2 pl-4 border-l-2 border-primary/20">
+                    <Label htmlFor="auto_loan_deduction_time">Deduction Time</Label>
+                    <Input
+                      id="auto_loan_deduction_time"
+                      type="time"
+                      value={getValue("auto_loan_deduction_time") || "06:00"}
+                      onChange={(e) => updateSetting("auto_loan_deduction_time", e.target.value)}
+                      data-testid="input-auto-deduction-time"
+                      className="w-40"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      What time of day to run auto-deductions (based on your organization timezone)
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

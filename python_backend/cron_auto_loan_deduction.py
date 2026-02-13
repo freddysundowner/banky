@@ -56,6 +56,28 @@ def process_auto_deductions(org_id: str, org_name: str, connection_string: str):
             print(f"  Auto loan deduction is disabled for this organization")
             return {"deducted": 0, "skipped": 0, "errors": 0}
 
+        run_time = get_setting(session, "auto_loan_deduction_time", "06:00")
+        try:
+            run_hour, run_minute = map(int, run_time.split(":"))
+        except (ValueError, AttributeError):
+            run_hour, run_minute = 6, 0
+
+        now = datetime.utcnow()
+        tz_offset_str = get_setting(session, "timezone", "Africa/Nairobi")
+        try:
+            import zoneinfo
+            tz = zoneinfo.ZoneInfo(tz_offset_str)
+            local_now = now.replace(tzinfo=zoneinfo.ZoneInfo("UTC")).astimezone(tz)
+        except Exception:
+            local_now = now
+
+        current_hour = local_now.hour
+        current_minute = local_now.minute
+
+        if abs(current_hour * 60 + current_minute - (run_hour * 60 + run_minute)) > 30:
+            print(f"  Not yet time to run (scheduled at {run_time}, current local time {local_now.strftime('%H:%M')})")
+            return {"deducted": 0, "skipped": 0, "errors": 0}
+
         due_instalments = session.query(LoanInstalment).join(
             LoanApplication, LoanInstalment.loan_id == LoanApplication.id
         ).filter(

@@ -50,8 +50,9 @@ JOBS = {
     },
     "auto_loan_deduction": {
         "module": "cron_auto_loan_deduction",
-        "interval_hours": 24,
+        "interval_hours": 1,
         "description": "Auto-deduct loan repayments from savings",
+        "run_at_hour": True,
     },
 }
 
