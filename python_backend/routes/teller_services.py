@@ -13,6 +13,7 @@ from models.tenant import (
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission
 from services.feature_flags import check_org_feature
+from services.code_generator import generate_txn_code
 
 router = APIRouter()
 
@@ -180,8 +181,7 @@ async def cheque_deposit_action(
             setattr(member, balance_field, current_balance + cheque.amount)
             
             # Create transaction
-            count = tenant_session.query(func.count(Transaction.id)).scalar() or 0
-            code = f"TXN{count + 1:04d}"
+            code = generate_txn_code()
             
             transaction = Transaction(
                 transaction_number=code,
@@ -365,8 +365,7 @@ async def bank_transfer_action(
             current_balance = getattr(member, balance_field) or Decimal("0")
             new_balance = current_balance + transfer.amount
             
-            count = tenant_session.query(func.count(Transaction.id)).scalar() or 0
-            code = f"TXN{count + 1:04d}"
+            code = generate_txn_code()
             
             transaction = Transaction(
                 transaction_number=code,

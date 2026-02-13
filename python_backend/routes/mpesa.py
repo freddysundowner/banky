@@ -14,6 +14,7 @@ from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission
 from services.feature_flags import check_org_feature
 from services.mpesa_loan_service import apply_mpesa_payment_to_loan, find_loan_from_reference
+from services.code_generator import generate_txn_code
 
 router = APIRouter()
 
@@ -195,8 +196,7 @@ async def mpesa_confirmation(org_id: str, request: Request, db: Session = Depend
             current_balance = member.savings_balance or Decimal("0")
             new_balance = current_balance + amount
             
-            count = tenant_session.query(func.count(Transaction.id)).scalar() or 0
-            code = f"TXN{count + 1:04d}"
+            code = generate_txn_code()
             
             transaction = Transaction(
                 transaction_number=code,
@@ -452,8 +452,7 @@ async def credit_mpesa_payment(
         current_balance = getattr(member, balance_field) or Decimal("0")
         new_balance = current_balance + payment.amount
         
-        count = tenant_session.query(func.count(Transaction.id)).scalar() or 0
-        code = f"TXN{count + 1:04d}"
+        code = generate_txn_code()
         
         transaction = Transaction(
             transaction_number=code,

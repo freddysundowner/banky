@@ -10,6 +10,7 @@ from models.tenant import LoanApplication, LoanRepayment, LoanProduct, Transacti
 from schemas.tenant import LoanRepaymentCreate, LoanRepaymentResponse
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission
+from services.code_generator import generate_txn_code, generate_repayment_code
 
 gl_logger = logging.getLogger("accounting.gl")
 
@@ -149,8 +150,7 @@ async def create_repayment(org_id: str, data: LoanRepaymentCreate, user=Depends(
         
         actual_loan_payment = data.amount - overpayment
         
-        count = tenant_session.query(func.count(LoanRepayment.id)).scalar() or 0
-        code = f"REP{count + 1:04d}"
+        code = generate_repayment_code()
         
         repayment = LoanRepayment(
             repayment_number=code,
@@ -192,8 +192,7 @@ async def create_repayment(org_id: str, data: LoanRepaymentCreate, user=Depends(
                 LoanDefault.status.in_(["overdue", "in_collection"])
             ).update({"status": "resolved", "resolved_at": datetime.utcnow()}, synchronize_session="fetch")
         
-        txn_count = tenant_session.query(func.count(Transaction.id)).scalar() or 0
-        txn_code = f"TXN{txn_count + 1:04d}"
+        txn_code = generate_txn_code()
         transaction = Transaction(
             transaction_number=txn_code,
             member_id=loan.member_id,
@@ -213,9 +212,8 @@ async def create_repayment(org_id: str, data: LoanRepaymentCreate, user=Depends(
             balance_before = member.savings_balance or Decimal("0")
             member.savings_balance = balance_before + overpayment
             
-            txn_count2 = tenant_session.query(func.count(Transaction.id)).scalar() or 0
             overpay_txn = Transaction(
-                transaction_number=f"TXN{txn_count2 + 2:04d}",
+                transaction_number=generate_txn_code(),
                 member_id=loan.member_id,
                 transaction_type="deposit",
                 account_type="savings",

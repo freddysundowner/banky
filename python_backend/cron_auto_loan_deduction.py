@@ -9,10 +9,9 @@ Usage: python cron_auto_loan_deduction.py
 
 import os
 import sys
-import uuid
 from datetime import date, datetime
 from decimal import Decimal
-from sqlalchemy import create_engine, func
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -23,6 +22,7 @@ from models.tenant import (
 )
 from models.master import Organization
 from services.tenant_context import TenantContext
+from services.code_generator import generate_txn_code, generate_repayment_code
 
 
 def get_setting(session, key, default=None):
@@ -147,9 +147,8 @@ def process_auto_deductions(org_id, org_name, connection_string):
                 balance_before = member.savings_balance or Decimal("0")
                 member.savings_balance = balance_before - actual_loan_payment
 
-                unique_suffix = uuid.uuid4().hex[:8]
-                code = f"REP-{unique_suffix}"
-                auto_ref = f"AUTO-{today.strftime('%Y%m%d')}-{loan.application_number}"
+                code = generate_repayment_code()
+                auto_ref = f"AUTO-{local_today.strftime('%Y%m%d')}-{loan.application_number}"
 
                 repayment = LoanRepayment(
                     repayment_number=code,
@@ -185,7 +184,7 @@ def process_auto_deductions(org_id, org_name, connection_string):
                     ).update({"status": "resolved", "resolved_at": datetime.utcnow()}, synchronize_session="fetch")
 
                 withdrawal_txn = Transaction(
-                    transaction_number=f"ATXN-{unique_suffix}-W",
+                    transaction_number=generate_txn_code(),
                     member_id=str(member.id),
                     transaction_type="withdrawal",
                     account_type="savings",
@@ -198,7 +197,7 @@ def process_auto_deductions(org_id, org_name, connection_string):
                 )
 
                 repayment_txn = Transaction(
-                    transaction_number=f"ATXN-{unique_suffix}-R",
+                    transaction_number=generate_txn_code(),
                     member_id=str(member.id),
                     transaction_type="loan_repayment",
                     account_type="loan",

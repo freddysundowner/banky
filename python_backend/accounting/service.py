@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, and_, or_
 
 from .models import ChartOfAccounts, JournalEntry, JournalLine, FiscalPeriod, AccountType, ACCOUNT_TYPES
+from services.code_generator import generate_journal_code
 
 DEFAULT_ACCOUNTS = [
     {"code": "1000", "name": "Cash on Hand", "type": "asset", "is_system": True},
@@ -94,8 +95,7 @@ class AccountingService:
     
     def get_next_entry_number(self) -> str:
         """Generate next journal entry number"""
-        count = self.session.query(func.count(JournalEntry.id)).scalar() or 0
-        return f"JE{count + 1:06d}"
+        return generate_journal_code()
     
     def create_journal_entry(
         self,

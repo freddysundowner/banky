@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
+from sqlalchemy import and_
 from typing import List
 from decimal import Decimal
 from datetime import date
@@ -9,6 +9,7 @@ from models.tenant import Member, Transaction, OrganizationSettings, Staff, Audi
 from schemas.tenant import TransactionCreate, TransactionResponse
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission
+from services.code_generator import generate_txn_code
 import logging
 
 gl_logger = logging.getLogger("accounting.gl")
@@ -292,8 +293,7 @@ async def create_transaction(org_id: str, data: TransactionCreate, user=Depends(
         else:
             new_balance = current_balance - data.amount
         
-        count = tenant_session.query(func.count(Transaction.id)).scalar() or 0
-        code = f"TXN{count + 1:04d}"
+        code = generate_txn_code()
         
         effective_processor_id = teller_for_float if teller_for_float else processed_by_id
         

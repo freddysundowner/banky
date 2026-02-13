@@ -11,10 +11,9 @@ Usage: python cron_process_matured.py
 
 import os
 import sys
-import uuid
 from datetime import date
 from decimal import Decimal
-from sqlalchemy import create_engine, func
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from dateutil.relativedelta import relativedelta
 
@@ -23,6 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from models.tenant import TenantBase, MemberFixedDeposit, FixedDepositProduct, Member, Staff, Transaction, AuditLog
 from models.master import Organization
 from services.tenant_context import TenantContext
+from services.code_generator import generate_txn_code, generate_fd_code
 
 def create_audit_log(session, staff_id, action, entity_type, entity_id, old_values=None, new_values=None):
     audit_log = AuditLog(
@@ -74,9 +74,8 @@ def process_organization_deposits(org_id, org_name, connection_string):
                 if deposit.auto_rollover:
                     member.savings_balance = (member.savings_balance or Decimal("0")) + interest_to_pay
                     
-                    unique_suffix = uuid.uuid4().hex[:8]
                     interest_tx = Transaction(
-                        transaction_number=f"FDTXN-{unique_suffix}",
+                        transaction_number=generate_txn_code(),
                         member_id=deposit.member_id,
                         transaction_type="deposit",
                         account_type="savings",
@@ -95,7 +94,7 @@ def process_organization_deposits(org_id, org_name, connection_string):
                     deposit.actual_amount_paid = interest_to_pay
                     deposit.notes = (deposit.notes or "") + f"\nAuto-matured and rolled over on {today}"
                     
-                    new_deposit_number = f"FD-{uuid.uuid4().hex[:8]}"
+                    new_deposit_number = generate_fd_code()
                     
                     new_start_date = today
                     new_maturity_date = new_start_date + relativedelta(months=product.term_months)
@@ -146,9 +145,8 @@ def process_organization_deposits(org_id, org_name, connection_string):
                     
                     member.savings_balance = (member.savings_balance or Decimal("0")) + actual_amount
                     
-                    unique_suffix = uuid.uuid4().hex[:8]
                     payout_tx = Transaction(
-                        transaction_number=f"FDTXN-{unique_suffix}",
+                        transaction_number=generate_txn_code(),
                         member_id=deposit.member_id,
                         transaction_type="deposit",
                         account_type="savings",

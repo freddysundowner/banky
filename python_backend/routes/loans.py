@@ -9,6 +9,7 @@ from models.tenant import LoanApplication, LoanProduct, Member, LoanGuarantor, L
 from schemas.tenant import LoanApplicationCreate, LoanApplicationUpdate, LoanApplicationResponse, LoanApplicationAction, LoanDisbursement, LoanGuarantorCreate
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission, require_role
+from services.code_generator import generate_txn_code
 
 def try_send_sms(tenant_session, template_type: str, phone: str, name: str, context: dict, member_id=None, loan_id=None):
     """Try to send SMS, fail silently if SMS not configured"""
@@ -440,8 +441,7 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
         else:
             loan.status = "disbursed"
         
-        txn_count = tenant_session.query(func.count(Transaction.id)).scalar() or 0
-        txn_code = f"TXN{txn_count + 1:04d}"
+        txn_code = generate_txn_code()
         
         transaction = Transaction(
             transaction_number=txn_code,

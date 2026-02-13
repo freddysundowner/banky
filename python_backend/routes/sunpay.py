@@ -14,6 +14,7 @@ from services.sunpay import (
     stk_push, c2b_expect, b2c_payment, reverse_transaction, check_payment_status
 )
 from services.mpesa_loan_service import apply_mpesa_payment_to_loan, find_loan_from_reference
+from services.code_generator import generate_txn_code
 
 router = APIRouter()
 
@@ -198,8 +199,7 @@ async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(ge
                             if member:
                                 current_balance = member.savings_balance or Decimal("0")
                                 new_balance = current_balance + existing.amount
-                                count = tenant_session.query(func.count(Transaction.id)).scalar() or 0
-                                code = f"TXN{count + 1:04d}"
+                                code = generate_txn_code()
                                 transaction = Transaction(
                                     transaction_number=code,
                                     member_id=member.id,
@@ -308,8 +308,7 @@ async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(ge
             current_balance = member.savings_balance or Decimal("0")
             new_balance = current_balance + amount
 
-            count = tenant_session.query(func.count(Transaction.id)).scalar() or 0
-            code = f"TXN{count + 1:04d}"
+            code = generate_txn_code()
 
             transaction = Transaction(
                 transaction_number=code,

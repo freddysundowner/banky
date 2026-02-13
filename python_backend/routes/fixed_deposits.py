@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 from decimal import Decimal
@@ -15,6 +14,7 @@ from schemas.tenant import (
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission
 from services.feature_flags import check_org_feature
+from services.code_generator import generate_txn_code, generate_fd_code
 
 gl_logger = logging.getLogger("accounting.gl")
 
@@ -214,8 +214,7 @@ async def create_deposit(org_id: str, data: MemberFixedDepositCreate, user=Depen
         if product.max_amount and data.principal_amount > product.max_amount:
             raise HTTPException(status_code=400, detail=f"Maximum amount is {get_org_currency(tenant_session)} {product.max_amount}")
         
-        count = tenant_session.query(func.count(MemberFixedDeposit.id)).scalar() or 0
-        deposit_number = f"FD{count + 1:05d}"
+        deposit_number = generate_fd_code()
         
         start_date = date.today()
         maturity_date = start_date + relativedelta(months=product.term_months)
@@ -228,15 +227,12 @@ async def create_deposit(org_id: str, data: MemberFixedDepositCreate, user=Depen
         
         funding_source = data.funding_source or "cash"
         
-        tx_count = tenant_session.query(func.count(Transaction.id)).scalar() or 0
-        
         if funding_source == "savings":
             if (member.savings_balance or Decimal("0")) < data.principal_amount:
                 raise HTTPException(status_code=400, detail="Insufficient savings balance")
             member.savings_balance = (member.savings_balance or Decimal("0")) - data.principal_amount
             
-            tx_count += 1
-            withdrawal_tx_number = f"TXN{tx_count:06d}"
+            withdrawal_tx_number = generate_txn_code()
             
             withdrawal_tx = Transaction(
                 transaction_number=withdrawal_tx_number,
@@ -272,8 +268,7 @@ async def create_deposit(org_id: str, data: MemberFixedDepositCreate, user=Depen
         
         member.deposits_balance = (member.deposits_balance or Decimal("0")) + data.principal_amount
         
-        tx_count += 1
-        fd_tx_number = f"TXN{tx_count:06d}"
+        fd_tx_number = generate_txn_code()
         
         fd_transaction = Transaction(
             transaction_number=fd_tx_number,
@@ -436,9 +431,7 @@ async def close_deposit(org_id: str, deposit_id: str, data: FixedDepositCloseReq
         
         member.savings_balance = (member.savings_balance or Decimal("0")) + actual_amount
         
-        tx_count = tenant_session.query(func.count(Transaction.id)).scalar() or 0
-        tx_count += 1
-        close_tx_number = f"TXN{tx_count:06d}"
+        close_tx_number = generate_txn_code()
         
         close_tx = Transaction(
             transaction_number=close_tx_number,
@@ -518,10 +511,8 @@ async def process_matured_deposits(org_id: str, user=Depends(get_current_user), 
                 if deposit.auto_rollover:
                     member.savings_balance = (member.savings_balance or Decimal("0")) + interest_to_pay
                     
-                    tx_count = tenant_session.query(func.count(Transaction.id)).scalar() or 0
-                    tx_count += 1
                     interest_tx = Transaction(
-                        transaction_number=f"TXN{tx_count:06d}",
+                        transaction_number=generate_txn_code(),
                         member_id=deposit.member_id,
                         transaction_type="deposit",
                         account_type="savings",
@@ -541,8 +532,7 @@ async def process_matured_deposits(org_id: str, user=Depends(get_current_user), 
                     deposit.actual_amount_paid = interest_to_pay
                     deposit.notes = (deposit.notes or "") + f"\nMatured and rolled over on {today}"
                     
-                    fd_count = tenant_session.query(func.count(MemberFixedDeposit.id)).scalar() or 0
-                    new_deposit_number = f"FD{fd_count + 1:05d}"
+                    new_deposit_number = generate_fd_code()
                     
                     new_start_date = today
                     new_maturity_date = new_start_date + relativedelta(months=product.term_months)
@@ -599,10 +589,8 @@ async def process_matured_deposits(org_id: str, user=Depends(get_current_user), 
                     
                     member.savings_balance = (member.savings_balance or Decimal("0")) + actual_amount
                     
-                    tx_count = tenant_session.query(func.count(Transaction.id)).scalar() or 0
-                    tx_count += 1
                     payout_tx = Transaction(
-                        transaction_number=f"TXN{tx_count:06d}",
+                        transaction_number=generate_txn_code(),
                         member_id=deposit.member_id,
                         transaction_type="deposit",
                         account_type="savings",
