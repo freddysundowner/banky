@@ -8,7 +8,7 @@ from models.database import get_db
 from models.tenant import LoanApplication, LoanProduct, Member, LoanGuarantor, LoanExtraCharge, Transaction, Staff
 from schemas.tenant import LoanApplicationCreate, LoanApplicationUpdate, LoanApplicationResponse, LoanApplicationAction, LoanDisbursement, LoanGuarantorCreate
 from routes.auth import get_current_user
-from routes.common import get_tenant_session_context, require_permission, require_role
+from routes.common import get_tenant_session_context, require_permission, require_any_permission, require_role
 from services.code_generator import generate_txn_code
 
 def try_send_sms(tenant_session, template_type: str, phone: str, name: str, context: dict, member_id=None, loan_id=None):
