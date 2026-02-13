@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, func
 from decimal import Decimal
 from models.database import get_db
-from models.tenant import Member, Transaction, OrganizationSettings, LoanApplication, LoanGuarantor, AuditLog, Staff
+from models.tenant import Member, Transaction, OrganizationSettings, LoanApplication, LoanGuarantor, AuditLog, Staff, SMSNotification
 from schemas.tenant import MemberCreate, MemberUpdate, MemberResponse
 from routes.auth import get_current_user
 from routes.common import generate_code, generate_account_number, get_tenant_session_context, require_permission, require_role
@@ -364,12 +364,19 @@ async def delete_member(
         if guarantor_obligations > 0:
             raise HTTPException(status_code=400, detail="Cannot delete member with active guarantor obligations")
         
-        # Delete any pending loan applications (rejected/cancelled)
+        tenant_session.query(SMSNotification).filter(
+            SMSNotification.member_id == member_id
+        ).delete()
+        
+        tenant_session.query(AuditLog).filter(
+            AuditLog.entity_type == "member",
+            AuditLog.entity_id == str(member.member_number)
+        ).delete()
+        
         tenant_session.query(LoanApplication).filter(
             LoanApplication.member_id == member_id
         ).delete()
         
-        # Delete any guarantor records where this member was a guarantor
         tenant_session.query(LoanGuarantor).filter(
             LoanGuarantor.guarantor_id == member_id
         ).delete()
