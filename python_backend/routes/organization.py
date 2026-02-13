@@ -36,7 +36,9 @@ async def create_organization(data: OrganizationCreate, user = Depends(get_curre
     # Auto-generate organization code
     code = generate_org_code(db)
     
-    staff_domain = data.staffEmailDomain.lstrip('@') if data.staffEmailDomain else None
+    staff_domain = data.staffEmailDomain.lstrip('@').strip() if data.staffEmailDomain else None
+    if staff_domain and '.' not in staff_domain:
+        staff_domain = f"{staff_domain}.com"
     
     org = Organization(
         name=data.name,
