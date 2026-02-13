@@ -159,13 +159,13 @@ def process_auto_deductions(org_id, org_name, connection_string):
                     penalty_amount=penalty_amount,
                     payment_method="auto_deduction",
                     reference=auto_ref,
-                    notes=f"Auto-deducted from savings on {today}",
+                    notes=f"Auto-deducted from savings on {local_today}",
                     payment_date=datetime.utcnow()
                 )
 
                 loan.amount_repaid = (loan.amount_repaid or Decimal("0")) + actual_loan_payment
                 loan.outstanding_balance = (loan.outstanding_balance or Decimal("0")) - actual_loan_payment
-                loan.last_payment_date = today
+                loan.last_payment_date = local_today
 
                 next_inst = session.query(LoanInstalment).filter(
                     LoanInstalment.loan_id == str(loan.id),

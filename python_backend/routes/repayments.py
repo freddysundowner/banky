@@ -147,6 +147,11 @@ async def create_repayment(org_id: str, data: LoanRepaymentCreate, user=Depends(
             )
         else:
             principal_amount, interest_amount, penalty_amount = calculate_payment_allocation(loan, data.amount, tenant_session)
+            outstanding = loan.outstanding_balance or Decimal("0")
+            total_allocated = principal_amount + interest_amount + penalty_amount
+            if total_allocated > outstanding and outstanding > 0:
+                overpayment = total_allocated - outstanding
+                principal_amount = principal_amount - overpayment
         
         actual_loan_payment = data.amount - overpayment
         
@@ -218,6 +223,8 @@ async def create_repayment(org_id: str, data: LoanRepaymentCreate, user=Depends(
                 transaction_type="deposit",
                 account_type="savings",
                 amount=overpayment,
+                balance_before=balance_before,
+                balance_after=member.savings_balance,
                 reference=data.reference,
                 description=f"Overpayment from loan {loan.application_number} credited to savings"
             )

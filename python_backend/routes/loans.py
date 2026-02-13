@@ -416,7 +416,7 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
             # Outstanding balance is just the principal (interest already paid)
             outstanding_balance = loan.amount
             # Recalculate monthly repayment as principal only / term
-            monthly_repayment = loan.amount / loan.term_months
+            monthly_repayment = loan.amount / loan.term_months if loan.term_months > 0 else loan.amount
         else:
             outstanding_balance = loan.total_repayment
             monthly_repayment = loan.monthly_repayment
