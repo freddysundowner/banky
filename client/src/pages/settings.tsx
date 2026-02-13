@@ -68,11 +68,30 @@ export default function SettingsPage({ organizationId }: SettingsPageProps) {
   const { toast } = useToast();
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [hasChanges, setHasChanges] = useState(false);
+  const [staffEmailDomain, setStaffEmailDomain] = useState("");
+  const [orgInfoChanged, setOrgInfoChanged] = useState(false);
 
   const { data: settingsData, isLoading } = useQuery<Setting[]>({
     queryKey: ["/api/organizations", organizationId, "settings"],
     enabled: !!organizationId,
   });
+
+  const { data: orgData } = useQuery<{ staff_email_domain?: string; name?: string }>({
+    queryKey: ["/api/organizations", organizationId, "info"],
+    queryFn: async () => {
+      const memberships = await fetch("/api/organizations/my", { credentials: "include" }).then(r => r.json());
+      const membership = memberships?.find((m: any) => m.organizationId === organizationId || m.organization?.id === organizationId);
+      if (membership?.organization) {
+        return { staff_email_domain: membership.organization.staff_email_domain, name: membership.organization.name };
+      }
+      return {};
+    },
+    enabled: !!organizationId,
+  });
+
+  if (orgData?.staff_email_domain && !staffEmailDomain && !orgInfoChanged) {
+    setStaffEmailDomain(orgData.staff_email_domain);
+  }
 
   const updateMutation = useMutation({
     mutationFn: async (updates: Record<string, string>) => {
@@ -85,6 +104,21 @@ export default function SettingsPage({ organizationId }: SettingsPageProps) {
     },
     onError: () => {
       toast({ title: "Failed to save settings", variant: "destructive" });
+    },
+  });
+
+  const updateOrgMutation = useMutation({
+    mutationFn: async (data: { staff_email_domain: string }) => {
+      return apiRequest("PATCH", `/api/organizations/${organizationId}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "info"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organizations/my"] });
+      toast({ title: "Staff email domain updated" });
+      setOrgInfoChanged(false);
+    },
+    onError: () => {
+      toast({ title: "Failed to update staff email domain", variant: "destructive" });
     },
   });
 
@@ -250,6 +284,47 @@ export default function SettingsPage({ organizationId }: SettingsPageProps) {
                   </p>
                 </div>
 
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Mail className="h-5 w-5" /> Staff Email Domain</CardTitle>
+                <CardDescription>The domain used to generate work emails for staff members (e.g. john@yourdomain.com)</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="staff_email_domain">Domain</Label>
+                  <div className="flex items-center">
+                    <span className="px-3 py-2 bg-muted border border-r-0 rounded-l-md text-muted-foreground text-sm">@</span>
+                    <Input
+                      id="staff_email_domain"
+                      value={staffEmailDomain?.replace('@', '') || ''}
+                      onChange={(e) => {
+                        setStaffEmailDomain(e.target.value.replace('@', ''));
+                        setOrgInfoChanged(true);
+                      }}
+                      placeholder="mysacco.co.ke"
+                      className="rounded-l-none"
+                    />
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    When you add new staff, their work email will be <span className="font-medium">username@{staffEmailDomain || 'yourdomain.com'}</span>
+                  </p>
+                </div>
+                {orgInfoChanged && (
+                  <Button
+                    onClick={() => updateOrgMutation.mutate({ staff_email_domain: staffEmailDomain })}
+                    disabled={updateOrgMutation.isPending || !staffEmailDomain}
+                    size="sm"
+                  >
+                    {updateOrgMutation.isPending ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</>
+                    ) : (
+                      <><Save className="mr-2 h-4 w-4" /> Save Domain</>
+                    )}
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

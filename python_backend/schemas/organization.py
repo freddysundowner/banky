@@ -17,6 +17,7 @@ class OrganizationUpdate(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     address: Optional[str] = None
+    staff_email_domain: Optional[str] = None
 
 class OrganizationResponse(BaseModel):
     id: str

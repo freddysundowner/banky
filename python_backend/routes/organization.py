@@ -190,6 +190,11 @@ async def update_organization(org_id: str, data: OrganizationUpdate, user = Depe
         raise HTTPException(status_code=404, detail="Organization not found")
     
     update_data = data.model_dump(exclude_unset=True)
+    if "staff_email_domain" in update_data and update_data["staff_email_domain"]:
+        domain = update_data["staff_email_domain"].lstrip('@').strip()
+        if domain and '.' not in domain:
+            domain = f"{domain}.com"
+        update_data["staff_email_domain"] = domain
     for key, value in update_data.items():
         setattr(org, key, value)
     
