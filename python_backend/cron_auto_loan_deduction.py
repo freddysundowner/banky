@@ -73,9 +73,17 @@ def process_auto_deductions(org_id: str, org_name: str, connection_string: str):
 
         current_hour = local_now.hour
         current_minute = local_now.minute
+        current_total = current_hour * 60 + current_minute
+        scheduled_total = run_hour * 60 + run_minute
 
-        if abs(current_hour * 60 + current_minute - (run_hour * 60 + run_minute)) > 30:
+        if current_total < scheduled_total:
             print(f"  Not yet time to run (scheduled at {run_time}, current local time {local_now.strftime('%H:%M')})")
+            return {"deducted": 0, "skipped": 0, "errors": 0}
+
+        last_run = get_setting(session, "auto_loan_deduction_last_run", "")
+        today_str = local_now.strftime("%Y-%m-%d")
+        if last_run == today_str:
+            print(f"  Already ran today ({today_str})")
             return {"deducted": 0, "skipped": 0, "errors": 0}
 
         due_instalments = session.query(LoanInstalment).join(
@@ -257,6 +265,20 @@ def process_auto_deductions(org_id: str, org_name: str, connection_string: str):
                 traceback.print_exc()
                 error_count += 1
                 processed_loans.add(instalment.loan_id)
+
+        last_run_setting = session.query(OrganizationSettings).filter(
+            OrganizationSettings.setting_key == "auto_loan_deduction_last_run"
+        ).first()
+        if last_run_setting:
+            last_run_setting.setting_value = today_str
+        else:
+            last_run_setting = OrganizationSettings(
+                setting_key="auto_loan_deduction_last_run",
+                setting_value=today_str
+            )
+            session.add(last_run_setting)
+        session.commit()
+        print(f"  Marked as run for {today_str}")
 
     except Exception as e:
         print(f"  Error: {e}")
