@@ -588,7 +588,8 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
   const [disburseConfirmed, setDisburseConfirmed] = useState(false);
   const [rejectConfirmed, setRejectConfirmed] = useState(false);
   const [branchFilter, setBranchFilter] = useState<string>("all");
-  const { canWrite } = useResourcePermissions(organizationId, RESOURCES.LOANS);
+  const { canWrite, hasPermission } = useResourcePermissions(organizationId, RESOURCES.LOANS);
+  const canProcess = hasPermission("loans:process");
   const { hasFeature } = useFeatures(organizationId);
   const hasMpesa = hasFeature("mpesa_integration");
   const hasBankIntegration = hasFeature("bank_integration");
@@ -974,7 +975,7 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
               <Download className="h-4 w-4 mr-1" />
               <span className="hidden sm:inline">Statement</span>
             </Button>
-            {selectedLoan.status === "pending" && (
+            {selectedLoan.status === "pending" && canProcess && (
               <>
                 <Button
                   size="sm"
@@ -996,7 +997,7 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                 </Button>
               </>
             )}
-            {selectedLoan.status === "approved" && (
+            {selectedLoan.status === "approved" && canProcess && (
               <Button
                 size="sm"
                 variant="default"
