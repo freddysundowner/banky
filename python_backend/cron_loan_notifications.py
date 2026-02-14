@@ -30,7 +30,7 @@ from sqlalchemy.orm import sessionmaker, joinedload
 from models.master import Organization
 from models.tenant import (
     TenantBase, LoanApplication, LoanInstalment, Member,
-    SMSNotification, SMSTemplate
+    SMSNotification, SMSTemplate, OrganizationSettings
 )
 from routes.sms import send_sms, process_template
 
@@ -80,10 +80,18 @@ def send_with_template(tenant_session, template_type, phone, name, context,
     return result.get("success", False)
 
 
+def get_org_currency(tenant_session):
+    setting = tenant_session.query(OrganizationSettings).filter(
+        OrganizationSettings.setting_key == "currency"
+    ).first()
+    return setting.setting_value if setting else "KES"
+
+
 def process_due_today(tenant_session, org_name):
     today = date.today()
     sent = 0
     skipped = 0
+    currency = get_org_currency(tenant_session)
 
     loans = tenant_session.query(LoanApplication).options(
         joinedload(LoanApplication.member)
@@ -124,6 +132,8 @@ def process_due_today(tenant_session, org_name):
         context = {
             "name": member.first_name,
             "amount": f"{amount_due:,.2f}",
+            "currency": currency,
+            "loan_number": loan.application_number,
             "due_date": str(today),
             "balance": f"{loan.outstanding_balance:,.2f}"
         }
@@ -149,6 +159,7 @@ def process_overdue(tenant_session, org_name):
     today = date.today()
     sent = 0
     skipped = 0
+    currency = get_org_currency(tenant_session)
 
     loans = tenant_session.query(LoanApplication).options(
         joinedload(LoanApplication.member)
@@ -193,6 +204,8 @@ def process_overdue(tenant_session, org_name):
         context = {
             "name": member.first_name,
             "amount": f"{amount_overdue:,.2f}",
+            "currency": currency,
+            "loan_number": loan.application_number,
             "due_date": str(earliest_overdue.due_date),
             "balance": f"{loan.outstanding_balance:,.2f}",
             "days_overdue": str(days_overdue)
