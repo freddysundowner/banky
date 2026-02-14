@@ -526,15 +526,18 @@ async def export_loans(org_id: str, export_type: str = "all", status: str = None
             is_overdue = days_overdue > 0
             is_due_today = next_due == today if next_due else False
             
+            currency_cols = {8, 9, 10, 12}
             for col_idx, value in enumerate(row_data, 1):
                 cell = ws.cell(row=row_idx, column=col_idx, value=value)
                 cell.border = thin_border
+                if col_idx in currency_cols and isinstance(value, (int, float)):
+                    cell.number_format = '#,##0.00'
                 if is_overdue:
                     cell.fill = overdue_fill
                 elif is_due_today:
                     cell.fill = due_today_fill
         
-        col_widths = [14, 22, 14, 16, 16, 24, 18, 16, 16, 14, 14, 14, 12, 12]
+        col_widths = [14, 22, 16, 18, 16, 26, 24, 18, 18, 16, 16, 16, 14, 14]
         for idx, width in enumerate(col_widths, 1):
             col_letter = ws.cell(row=4, column=idx).column_letter
             ws.column_dimensions[col_letter].width = width
