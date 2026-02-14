@@ -60,10 +60,31 @@ def check_and_create_defaults(tenant_session):
     overdue_loans = tenant_session.query(LoanApplication).options(
         joinedload(LoanApplication.loan_product)
     ).filter(
-        LoanApplication.status == "disbursed",
-        LoanApplication.next_payment_date < today,
+        LoanApplication.status.in_(["disbursed", "defaulted", "restructured"]),
         LoanApplication.outstanding_balance > 0
     ).all()
+    
+    from models.tenant import LoanInstalment
+    all_loan_ids_str = [str(loan.id) for loan in overdue_loans]
+    if all_loan_ids_str:
+        past_due_insts_check = tenant_session.query(LoanInstalment).filter(
+            LoanInstalment.loan_id.in_(all_loan_ids_str),
+            LoanInstalment.due_date < today,
+            LoanInstalment.status.in_(["pending", "partial"])
+        ).all()
+        for inst in past_due_insts_check:
+            if inst.status == "pending":
+                inst.status = "overdue"
+        if past_due_insts_check:
+            tenant_session.flush()
+    
+    overdue_loans = [l for l in overdue_loans if any(
+        tenant_session.query(LoanInstalment).filter(
+            LoanInstalment.loan_id == str(l.id),
+            LoanInstalment.due_date < today,
+            LoanInstalment.status.in_(["overdue", "partial"])
+        ).first() is not None for _ in [1]
+    )]
     
     if not overdue_loans:
         return
@@ -75,21 +96,16 @@ def check_and_create_defaults(tenant_session):
     ).all()
     defaults_by_loan = {d.loan_id: d for d in existing_defaults}
     
-    from models.tenant import LoanInstalment
-    all_loan_ids_str = [str(lid) for lid in loan_ids]
-    past_due_insts = tenant_session.query(LoanInstalment).filter(
-        LoanInstalment.loan_id.in_(all_loan_ids_str),
-        LoanInstalment.due_date < today,
-        LoanInstalment.status.in_(["pending", "partial"])
-    ).all()
-    for inst in past_due_insts:
-        if inst.status == "pending":
-            inst.status = "overdue"
-    
     for loan in overdue_loans:
         existing_default = defaults_by_loan.get(loan.id)
         
-        days_overdue = (today - loan.next_payment_date).days
+        earliest_overdue = tenant_session.query(LoanInstalment).filter(
+            LoanInstalment.loan_id == str(loan.id),
+            LoanInstalment.status.in_(["overdue", "partial"]),
+            LoanInstalment.due_date < today
+        ).order_by(LoanInstalment.due_date.asc()).first()
+        
+        days_overdue = (today - earliest_overdue.due_date).days if earliest_overdue else (today - loan.next_payment_date).days if loan.next_payment_date else 0
         overdue_insts = tenant_session.query(LoanInstalment).filter(
             LoanInstalment.loan_id == str(loan.id),
             LoanInstalment.status.in_(["overdue", "partial"]),
@@ -232,23 +248,41 @@ async def get_due_today(org_id: str, user=Depends(get_current_user), db: Session
     try:
         today = date.today()
         
-        due_today_loans = tenant_session.query(LoanApplication).options(
+        from models.tenant import LoanInstalment
+        
+        active_statuses = ["disbursed", "defaulted", "restructured"]
+        
+        active_loans = tenant_session.query(LoanApplication).options(
             joinedload(LoanApplication.member),
             joinedload(LoanApplication.loan_product)
         ).filter(
-            LoanApplication.status == "disbursed",
-            LoanApplication.next_payment_date == today,
+            LoanApplication.status.in_(active_statuses),
             LoanApplication.outstanding_balance > 0
         ).all()
         
-        overdue_loans = tenant_session.query(LoanApplication).options(
-            joinedload(LoanApplication.member),
-            joinedload(LoanApplication.loan_product)
-        ).filter(
-            LoanApplication.status == "disbursed",
-            LoanApplication.next_payment_date < today,
-            LoanApplication.outstanding_balance > 0
-        ).all()
+        active_loan_ids = [str(l.id) for l in active_loans]
+        
+        due_today_insts = []
+        overdue_insts_list = []
+        if active_loan_ids:
+            due_today_insts = tenant_session.query(LoanInstalment).filter(
+                LoanInstalment.loan_id.in_(active_loan_ids),
+                LoanInstalment.due_date == today,
+                LoanInstalment.status.in_(["pending", "partial", "overdue"])
+            ).all()
+            
+            overdue_insts_list = tenant_session.query(LoanInstalment).filter(
+                LoanInstalment.loan_id.in_(active_loan_ids),
+                LoanInstalment.due_date < today,
+                LoanInstalment.status.in_(["pending", "partial", "overdue"])
+            ).all()
+        
+        due_today_loan_ids = set(i.loan_id for i in due_today_insts)
+        overdue_loan_ids = set(i.loan_id for i in overdue_insts_list)
+        
+        loans_by_id = {str(l.id): l for l in active_loans}
+        due_today_loans = [loans_by_id[lid] for lid in due_today_loan_ids if lid in loans_by_id]
+        overdue_loans = [loans_by_id[lid] for lid in overdue_loan_ids if lid in loans_by_id]
         
         def serialize_loan(loan, is_overdue):
             instalment = loan.monthly_repayment or Decimal("0")
@@ -257,9 +291,6 @@ async def get_due_today(org_id: str, user=Depends(get_current_user), db: Session
             if loan.loan_product:
                 freq = getattr(loan.loan_product, "repayment_frequency", "monthly") or "monthly"
             
-            days_overdue = (today - loan.next_payment_date).days if is_overdue else 0
-            
-            from models.tenant import LoanInstalment
             if is_overdue:
                 overdue_insts = tenant_session.query(LoanInstalment).filter(
                     LoanInstalment.loan_id == str(loan.id),
@@ -273,9 +304,12 @@ async def get_due_today(org_id: str, user=Depends(get_current_user), db: Session
                         (i.paid_principal + i.paid_interest + i.paid_penalty)
                         for i in overdue_insts
                     )
+                    days_overdue = (today - overdue_insts[0].due_date).days if overdue_insts else 0
                 else:
                     amount_due = float(instalment)
+                    days_overdue = (today - loan.next_payment_date).days if loan.next_payment_date and loan.next_payment_date < today else 0
             else:
+                days_overdue = 0
                 due_inst = tenant_session.query(LoanInstalment).filter(
                     LoanInstalment.loan_id == str(loan.id),
                     LoanInstalment.due_date == today,
