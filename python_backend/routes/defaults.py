@@ -52,87 +52,85 @@ def calculate_overdue_for_loan(loan):
     return min(amount_owed, outstanding)
 
 def check_and_create_defaults(tenant_session):
-    """Detect overdue loans (next_payment_date < today) and create/update default records.
-    Calculates overdue accounting for partial payments.
-    Optimized: batch-loads existing defaults to avoid N+1 queries."""
+    """Detect overdue loans and create/update default records.
+    Uses batched queries to avoid N+1 performance issues."""
     today = date.today()
-    
-    overdue_loans = tenant_session.query(LoanApplication).options(
+    from models.tenant import LoanInstalment
+    from collections import defaultdict
+
+    active_loans = tenant_session.query(LoanApplication).options(
         joinedload(LoanApplication.loan_product)
     ).filter(
         LoanApplication.status.in_(["disbursed", "defaulted", "restructured"]),
         LoanApplication.outstanding_balance > 0
     ).all()
-    
-    from models.tenant import LoanInstalment
-    all_loan_ids_str = [str(loan.id) for loan in overdue_loans]
-    if all_loan_ids_str:
-        past_due_insts_check = tenant_session.query(LoanInstalment).filter(
-            LoanInstalment.loan_id.in_(all_loan_ids_str),
-            LoanInstalment.due_date < today,
-            LoanInstalment.status.in_(["pending", "partial"])
-        ).all()
-        for inst in past_due_insts_check:
-            if inst.status == "pending":
-                inst.status = "overdue"
-        if past_due_insts_check:
-            tenant_session.flush()
-    
-    overdue_loans = [l for l in overdue_loans if any(
-        tenant_session.query(LoanInstalment).filter(
-            LoanInstalment.loan_id == str(l.id),
-            LoanInstalment.due_date < today,
-            LoanInstalment.status.in_(["overdue", "partial"])
-        ).first() is not None for _ in [1]
-    )]
-    
+
+    if not active_loans:
+        return
+
+    all_loan_ids_str = [str(loan.id) for loan in active_loans]
+
+    past_due_pending = tenant_session.query(LoanInstalment).filter(
+        LoanInstalment.loan_id.in_(all_loan_ids_str),
+        LoanInstalment.due_date < today,
+        LoanInstalment.status.in_(["pending", "partial"])
+    ).all()
+    for inst in past_due_pending:
+        if inst.status == "pending":
+            inst.status = "overdue"
+    if past_due_pending:
+        tenant_session.flush()
+
+    all_overdue_insts = tenant_session.query(LoanInstalment).filter(
+        LoanInstalment.loan_id.in_(all_loan_ids_str),
+        LoanInstalment.due_date < today,
+        LoanInstalment.status.in_(["overdue", "partial"])
+    ).order_by(LoanInstalment.due_date.asc()).all()
+
+    insts_by_loan = defaultdict(list)
+    for inst in all_overdue_insts:
+        insts_by_loan[inst.loan_id].append(inst)
+
+    overdue_loans = [l for l in active_loans if str(l.id) in insts_by_loan]
+
     if not overdue_loans:
         return
-    
+
     loan_ids = [loan.id for loan in overdue_loans]
     existing_defaults = tenant_session.query(LoanDefault).filter(
         LoanDefault.loan_id.in_(loan_ids),
         LoanDefault.status.in_(["overdue", "in_collection"])
     ).all()
     defaults_by_loan = {d.loan_id: d for d in existing_defaults}
-    
+
     for loan in overdue_loans:
         existing_default = defaults_by_loan.get(loan.id)
-        
-        earliest_overdue = tenant_session.query(LoanInstalment).filter(
-            LoanInstalment.loan_id == str(loan.id),
-            LoanInstalment.status.in_(["overdue", "partial"]),
-            LoanInstalment.due_date < today
-        ).order_by(LoanInstalment.due_date.asc()).first()
-        
-        days_overdue = (today - earliest_overdue.due_date).days if earliest_overdue else (today - loan.next_payment_date).days if loan.next_payment_date else 0
-        overdue_insts = tenant_session.query(LoanInstalment).filter(
-            LoanInstalment.loan_id == str(loan.id),
-            LoanInstalment.status.in_(["overdue", "partial"]),
-            LoanInstalment.due_date < today
-        ).all()
-        
-        if overdue_insts:
+        loan_insts = insts_by_loan.get(str(loan.id), [])
+
+        if loan_insts:
+            earliest_date = loan_insts[0].due_date
+            days_overdue = (today - earliest_date).days
             amount_overdue = sum(
                 (i.expected_principal + i.expected_interest + i.expected_penalty) -
                 (i.paid_principal + i.paid_interest + i.paid_penalty)
-                for i in overdue_insts
+                for i in loan_insts
             )
         else:
+            days_overdue = (today - loan.next_payment_date).days if loan.next_payment_date and loan.next_payment_date < today else 0
             amount_overdue = calculate_overdue_for_loan(loan)
-        
+
         if amount_overdue <= 0:
             if existing_default:
                 existing_default.status = "resolved"
                 existing_default.resolved_at = datetime.utcnow()
             continue
-        
+
         penalty_rate = Decimal("0")
         if loan.loan_product and loan.loan_product.late_payment_penalty:
             penalty_rate = loan.loan_product.late_payment_penalty
-        
+
         penalty_amount = amount_overdue * penalty_rate / Decimal("100")
-        
+
         if not existing_default:
             default_record = LoanDefault(
                 loan_id=loan.id,
@@ -146,7 +144,7 @@ def check_and_create_defaults(tenant_session):
             existing_default.days_overdue = days_overdue
             existing_default.amount_overdue = amount_overdue
             existing_default.penalty_amount = penalty_amount
-    
+
     tenant_session.commit()
 
 def serialize_default_with_loan(d):
@@ -208,6 +206,8 @@ async def get_defaults_summary(org_id: str, user=Depends(get_current_user), db: 
     require_permission(membership, "defaults:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
+        check_and_create_defaults(tenant_session)
+        
         active_filter = LoanDefault.status.in_(["overdue", "in_collection"])
         
         results = tenant_session.query(

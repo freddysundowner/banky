@@ -171,7 +171,7 @@ export default function DefaultsCollections({ organizationId }: DefaultsCollecti
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "active": return "destructive";
+      case "overdue": return "destructive";
       case "in_collection": return "secondary";
       case "resolved": return "default";
       case "written_off": return "outline";
@@ -198,7 +198,7 @@ export default function DefaultsCollections({ organizationId }: DefaultsCollecti
 
   const dueTodayLoans = dueTodayData?.due_today || [];
   const overdueLoansFromApi = dueTodayData?.overdue || [];
-  const totalDueToday = dueTodayLoans.reduce((sum, l) => sum + l.instalment_amount, 0);
+  const totalDueToday = dueTodayLoans.reduce((sum, l) => sum + l.amount_due, 0);
 
   return (
     <div className="space-y-6">
@@ -317,16 +317,18 @@ export default function DefaultsCollections({ organizationId }: DefaultsCollecti
         </CardContent>
       </Card>
 
-      {overdueLoansFromApi.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="h-5 w-5 text-orange-500" />
-              Overdue Instalments ({overdueLoansFromApi.length})
-            </CardTitle>
-            <CardDescription>Loans with missed payment dates that need attention</CardDescription>
-          </CardHeader>
-          <CardContent>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="h-5 w-5 text-orange-500" />
+            Overdue Instalments ({overdueLoansFromApi.length})
+          </CardTitle>
+          <CardDescription>Loans with missed payment dates that need attention</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isDueTodayLoading ? (
+            <Skeleton className="h-48" />
+          ) : overdueLoansFromApi.length > 0 ? (
             <div className="overflow-x-auto -mx-6 px-6">
               <Table>
                 <TableHeader>
@@ -367,9 +369,15 @@ export default function DefaultsCollections({ organizationId }: DefaultsCollecti
                 </TableBody>
               </Table>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <CheckCircle2 className="h-12 w-12 text-green-500 mb-4" />
+              <h3 className="font-medium">No overdue instalments</h3>
+              <p className="text-sm text-muted-foreground">All payments are on schedule</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -476,7 +484,7 @@ export default function DefaultsCollections({ organizationId }: DefaultsCollecti
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="overdue">Overdue</SelectItem>
                   <SelectItem value="in_collection">In Collection</SelectItem>
                   <SelectItem value="resolved">Resolved</SelectItem>
                   <SelectItem value="written_off">Written Off</SelectItem>
