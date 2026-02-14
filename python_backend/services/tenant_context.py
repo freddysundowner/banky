@@ -862,13 +862,19 @@ _session_factory_cache = {}
 
 def _get_cached_engine(connection_string: str):
     if connection_string not in _engine_cache:
+        connect_args = {}
+        if "neon" in connection_string or "neon.tech" in connection_string:
+            connect_args["connect_timeout"] = 10
+            connect_args["options"] = "-c statement_timeout=30000"
         _engine_cache[connection_string] = create_engine(
             connection_string,
             pool_size=5,
             max_overflow=10,
-            pool_recycle=300,
-            pool_pre_ping=True,
+            pool_recycle=600,
+            pool_pre_ping=False,
             pool_timeout=30,
+            pool_use_lifo=True,
+            connect_args=connect_args,
         )
     return _engine_cache[connection_string]
 
