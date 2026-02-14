@@ -383,9 +383,9 @@ export default function DefaultsCollections({ organizationId }: DefaultsCollecti
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <AlertTriangle className="h-5 w-5 text-destructive" />
-            Defaulted Loans
+            Active Defaults ({(defaults || []).filter(d => d.status !== "resolved" && d.status !== "written_off").length})
           </CardTitle>
-          <CardDescription>Loans formally flagged as defaulted with collection actions</CardDescription>
+          <CardDescription>Loans currently flagged as defaulted requiring collection action</CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -396,7 +396,7 @@ export default function DefaultsCollections({ organizationId }: DefaultsCollecti
               <h3 className="font-medium">Failed to load defaults</h3>
               <p className="text-sm text-muted-foreground">Please try again later</p>
             </div>
-          ) : defaults && defaults.length > 0 ? (
+          ) : (defaults || []).filter(d => d.status !== "resolved" && d.status !== "written_off").length > 0 ? (
             <div className="overflow-x-auto -mx-6 px-6">
             <Table>
               <TableHeader>
@@ -412,7 +412,7 @@ export default function DefaultsCollections({ organizationId }: DefaultsCollecti
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {defaults.map((def) => (
+                {(defaults || []).filter(d => d.status !== "resolved" && d.status !== "written_off").map((def) => (
                   <TableRow key={def.id} data-testid={`row-default-${def.id}`}>
                     <TableCell className="font-mono">{def.loan?.application_number || def.loan_id}</TableCell>
                     <TableCell>
@@ -461,12 +461,83 @@ export default function DefaultsCollections({ organizationId }: DefaultsCollecti
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <CheckCircle2 className="h-12 w-12 text-green-500 mb-4" />
-              <h3 className="font-medium">No overdue loans</h3>
+              <h3 className="font-medium">No active defaults</h3>
               <p className="text-sm text-muted-foreground">All loans are in good standing</p>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {(defaults || []).filter(d => d.status === "resolved" || d.status === "written_off").length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
+              Resolved Defaults ({(defaults || []).filter(d => d.status === "resolved" || d.status === "written_off").length})
+            </CardTitle>
+            <CardDescription>Previously defaulted loans that have been resolved or written off</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto -mx-6 px-6">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Loan #</TableHead>
+                    <TableHead>Member</TableHead>
+                    <TableHead>Days Overdue</TableHead>
+                    <TableHead className="text-right">Amount Overdue</TableHead>
+                    <TableHead className="text-right">Penalty</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(defaults || []).filter(d => d.status === "resolved" || d.status === "written_off").map((def) => (
+                    <TableRow key={def.id} className="opacity-75" data-testid={`row-resolved-${def.id}`}>
+                      <TableCell className="font-mono">{def.loan?.application_number || def.loan_id}</TableCell>
+                      <TableCell>
+                        {def.loan?.member ? `${def.loan.member.first_name} ${def.loan.member.last_name}` : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {def.days_overdue} {def.days_overdue === 1 ? 'day' : 'days'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(def.amount_overdue)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(def.penalty_amount)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusColor(def.status)} className="capitalize">
+                          {def.status.replace("_", " ")}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-2">
+                          {canWrite && (
+                            <Button variant="ghost" size="sm" onClick={() => openUpdateDialog(def)} data-testid={`button-update-resolved-${def.id}`}>
+                              Update
+                            </Button>
+                          )}
+                          {def.loan?.member?.phone && (
+                            <Button variant="ghost" size="icon" asChild>
+                              <a href={`tel:${def.loan.member.phone}`}>
+                                <Phone className="h-4 w-4" />
+                              </a>
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Dialog open={!!selectedDefault} onOpenChange={(open) => !open && setSelectedDefault(null)}>
         <DialogContent>
