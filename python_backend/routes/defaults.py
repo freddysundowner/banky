@@ -193,8 +193,8 @@ def check_and_create_defaults(tenant_session):
                         entry_date=today,
                         description=f"Late payment penalty - {loan.application_number} - {member_name} - {penalty_rate}% on overdue {amount_overdue}",
                         lines=lines,
-                        entry_type="auto",
-                        source="penalty_charge"
+                        source_type="penalty_charge",
+                        reference=f"PENALTY-{today.strftime('%Y%m%d')}-{loan.application_number}"
                     )
                 except Exception as gl_err:
                     print(f"  [GL] Warning: Failed to post penalty GL entry for {loan.application_number}: {gl_err}")

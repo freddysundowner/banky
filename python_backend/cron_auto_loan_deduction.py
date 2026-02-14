@@ -215,19 +215,20 @@ def process_auto_deductions(org_id, org_name, connection_string, force=False):
                         LoanDefault.loan_id == str(loan.id),
                         LoanDefault.status.in_(["overdue", "in_collection"])
                     ).update({"status": "resolved", "resolved_at": datetime.utcnow()}, synchronize_session="fetch")
-                elif loan.status == "defaulted":
+                else:
                     overdue_remaining = session.query(LoanInstalment).filter(
                         LoanInstalment.loan_id == str(loan.id),
                         LoanInstalment.status.in_(["overdue", "partial"]),
                         LoanInstalment.due_date <= local_today
                     ).count()
                     if overdue_remaining == 0:
-                        loan.status = "disbursed"
+                        if loan.status == "defaulted":
+                            loan.status = "disbursed"
+                            print(f"  Loan {loan.application_number} restored from defaulted to active (all overdue instalments cleared)")
                         session.query(LoanDefault).filter(
                             LoanDefault.loan_id == str(loan.id),
                             LoanDefault.status.in_(["overdue", "in_collection"])
                         ).update({"status": "resolved", "resolved_at": datetime.utcnow()}, synchronize_session="fetch")
-                        print(f"  Loan {loan.application_number} restored from defaulted to active (all overdue instalments cleared)")
 
                 audit_log = AuditLog(
                     staff_id=None,
@@ -272,7 +273,7 @@ def process_auto_deductions(org_id, org_name, connection_string, force=False):
                 except Exception as sms_err:
                     print(f"  [SMS] Warning: Failed to send SMS: {sms_err}")
 
-                print(f"  Deducted KES {total_deducted_for_loan} from {member.first_name} {member.last_name} savings for {instalments_paid} instalment(s) on loan {loan.application_number}")
+                print(f"  Deducted KES {actual_payment} from {member.first_name} {member.last_name} savings for {instalments_paid} instalment(s) on loan {loan.application_number}")
                 deducted_count += 1
 
             except Exception as e:
