@@ -773,9 +773,10 @@ def post_fixed_deposit_maturity(
     
     lines = [
         {"account_code": "2020", "debit": principal_amount, "credit": Decimal("0"), "member_id": member_id, "memo": "Fixed deposit principal"},
-        {"account_code": "5000", "debit": interest_amount, "credit": Decimal("0"), "member_id": member_id, "memo": "Interest expense"},
-        {"account_code": "2000", "debit": Decimal("0"), "credit": principal_amount + interest_amount, "member_id": member_id, "memo": "Transfer to savings"}
     ]
+    if interest_amount > 0:
+        lines.append({"account_code": "5000", "debit": interest_amount, "credit": Decimal("0"), "member_id": member_id, "memo": "Interest expense"})
+    lines.append({"account_code": "2000", "debit": Decimal("0"), "credit": principal_amount + interest_amount, "member_id": member_id, "memo": "Transfer to savings"})
     
     return accounting_service.create_journal_entry(
         entry_date=date.today(),
