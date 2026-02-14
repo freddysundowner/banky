@@ -376,9 +376,15 @@ async def seed_default_accounts(
         tenant_ctx.close()
 
 
+class OpeningBalanceLine(BaseModel):
+    account_code: str
+    amount: float
+    memo: Optional[str] = None
+
 class OpeningBalanceRequest(BaseModel):
     effective_date: Optional[date] = None
     notes: Optional[str] = None
+    lines: List[OpeningBalanceLine]
 
 
 @router.get("/{org_id}/accounting/opening-balances/preview")
@@ -387,9 +393,9 @@ async def preview_opening_balances(
     user=Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Preview what the opening balance journal entry would look like.
-    Compares actual member/loan/FD balances against what the GL currently has,
-    and shows only the differences that need to be posted."""
+    """Preview opening balance data per account.
+    Returns each account with its current GL balance and system-suggested balance
+    (from actual member/loan/FD data). Admin can use or override these values."""
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
     require_permission(membership, "settings:write", db)
     tenant_session = tenant_ctx.create_session()
@@ -398,7 +404,14 @@ async def preview_opening_balances(
         svc = AccountingService(tenant_session)
         svc.seed_default_accounts()
         
+        existing = tenant_session.query(JournalEntry).filter(
+            JournalEntry.source_type == "opening_balance"
+        ).first()
+        
         result = _calculate_opening_balance_gaps(tenant_session, svc)
+        result["already_posted"] = existing is not None
+        if existing:
+            result["existing_entry_number"] = existing.entry_number
         return result
     finally:
         tenant_session.close()
@@ -412,9 +425,9 @@ async def post_opening_balances(
     user=Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Post opening balance journal entry to reconcile GL with actual member data.
-    This creates a single balanced journal entry that captures any gaps between
-    the GL and actual member/loan/FD balances."""
+    """Post opening balance journal entry using admin-provided amounts per account.
+    The admin decides the amount for each account - they can use the system suggestion
+    or enter their own values based on their actual books."""
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
     require_permission(membership, "settings:write", db)
     tenant_session = tenant_ctx.create_session()
@@ -429,36 +442,76 @@ async def post_opening_balances(
                 detail="Opening balances have already been posted. To re-post, first reverse the existing opening balance entry."
             )
         
+        if not data.lines or len(data.lines) == 0:
+            raise HTTPException(status_code=400, detail="No opening balance lines provided.")
+        
         svc = AccountingService(tenant_session)
         svc.seed_default_accounts()
         
-        gaps = _calculate_opening_balance_gaps(tenant_session, svc)
+        account_map = {
+            "1000": {"name": "Cash on Hand", "type": "asset"},
+            "1010": {"name": "Cash at Bank", "type": "asset"},
+            "1100": {"name": "Loans Receivable", "type": "asset"},
+            "2000": {"name": "Member Savings", "type": "liability"},
+            "2010": {"name": "Member Shares", "type": "liability"},
+            "2020": {"name": "Member Fixed Deposits", "type": "liability"},
+        }
         
-        if not gaps["has_gaps"]:
-            return {"message": "No gaps found. GL already matches actual balances.", "journal_entry": None}
+        je_lines = []
+        total_debit = Decimal("0")
+        total_credit = Decimal("0")
         
-        lines = []
-        effective = data.effective_date or date.today()
-        
-        for item in gaps["lines"]:
-            if item["debit"] > 0 or item["credit"] > 0:
-                lines.append({
-                    "account_code": item["account_code"],
-                    "debit": Decimal(str(item["debit"])),
-                    "credit": Decimal(str(item["credit"])),
-                    "memo": item["memo"]
+        for line in data.lines:
+            amt = Decimal(str(line.amount))
+            if amt == 0:
+                continue
+            
+            info = account_map.get(line.account_code)
+            if not info:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Account code {line.account_code} is not supported for opening balances."
+                )
+            
+            memo = line.memo or f"Opening balance - {info['name']}"
+            
+            if info["type"] == "asset":
+                je_lines.append({
+                    "account_code": line.account_code,
+                    "debit": amt if amt > 0 else Decimal("0"),
+                    "credit": abs(amt) if amt < 0 else Decimal("0"),
+                    "memo": memo,
                 })
+                total_debit += amt if amt > 0 else Decimal("0")
+                total_credit += abs(amt) if amt < 0 else Decimal("0")
+            else:
+                je_lines.append({
+                    "account_code": line.account_code,
+                    "debit": abs(amt) if amt < 0 else Decimal("0"),
+                    "credit": amt if amt > 0 else Decimal("0"),
+                    "memo": memo,
+                })
+                total_credit += amt if amt > 0 else Decimal("0")
+                total_debit += abs(amt) if amt < 0 else Decimal("0")
         
-        if not lines:
-            return {"message": "No adjustments needed.", "journal_entry": None}
+        if not je_lines:
+            return {"message": "No adjustments needed - all amounts are zero.", "journal_entry": None}
         
-        notes_text = data.notes or "Opening balances to reconcile GL with imported member data"
+        if abs(total_debit - total_credit) > Decimal("0.01"):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Debits ({float(total_debit):,.2f}) must equal credits ({float(total_credit):,.2f}). The entry is out of balance by {float(abs(total_debit - total_credit)):,.2f}."
+            )
+        
+        effective = data.effective_date or date.today()
+        notes_text = data.notes or "Opening balances entered by administrator"
+        
         je = svc.create_journal_entry(
             entry_date=effective,
             description=f"Opening Balances - {notes_text}",
             source_type="opening_balance",
             source_id="opening_balance",
-            lines=lines
+            lines=je_lines
         )
         
         return {
@@ -467,9 +520,9 @@ async def post_opening_balances(
                 "id": je.id,
                 "entry_number": je.entry_number,
                 "entry_date": str(effective),
-                "total_debit": float(sum(Decimal(str(l["debit"])) for l in lines)),
-                "total_credit": float(sum(Decimal(str(l["credit"])) for l in lines)),
-                "line_count": len(lines)
+                "total_debit": float(total_debit),
+                "total_credit": float(total_credit),
+                "line_count": len(je_lines)
             }
         }
     finally:
@@ -637,8 +690,66 @@ def _calculate_opening_balance_gaps(tenant_session, svc: AccountingService):
         abs(g) > Decimal("0.01") for g in [savings_gap, shares_gap, loans_gap, fd_gap]
     )
     
+    accounts = [
+        {
+            "account_code": "2000",
+            "account_name": "Member Savings",
+            "account_type": "liability",
+            "current_gl_balance": float(gl_savings),
+            "suggested_balance": float(total_savings),
+            "gap": float(savings_gap),
+            "detail": f"{len(members)} active members",
+        },
+        {
+            "account_code": "2010",
+            "account_name": "Member Shares",
+            "account_type": "liability",
+            "current_gl_balance": float(gl_shares),
+            "suggested_balance": float(total_shares),
+            "gap": float(shares_gap),
+            "detail": f"{len(members)} active members",
+        },
+        {
+            "account_code": "1100",
+            "account_name": "Loans Receivable",
+            "account_type": "asset",
+            "current_gl_balance": float(gl_loans),
+            "suggested_balance": float(total_loan_outstanding),
+            "gap": float(loans_gap),
+            "detail": f"{len(active_loans)} active loans",
+        },
+        {
+            "account_code": "2020",
+            "account_name": "Member Fixed Deposits",
+            "account_type": "liability",
+            "current_gl_balance": float(gl_fds),
+            "suggested_balance": float(total_fd),
+            "gap": float(fd_gap),
+            "detail": f"{len(active_fds)} active deposits",
+        },
+        {
+            "account_code": "1010",
+            "account_name": "Cash at Bank",
+            "account_type": "asset",
+            "current_gl_balance": float(gl_balances["1010"]["net"]),
+            "suggested_balance": None,
+            "gap": None,
+            "detail": "Enter from your actual bank statement",
+        },
+        {
+            "account_code": "1000",
+            "account_name": "Cash on Hand",
+            "account_type": "asset",
+            "current_gl_balance": float(gl_balances.get("1000", {}).get("net", 0)),
+            "suggested_balance": None,
+            "gap": None,
+            "detail": "Enter from your physical cash count",
+        },
+    ]
+    
     return {
         "has_gaps": has_gaps,
+        "accounts": accounts,
         "summary": {
             "member_savings": {"actual": float(total_savings), "gl": float(gl_savings), "gap": float(savings_gap)},
             "member_shares": {"actual": float(total_shares), "gl": float(gl_shares), "gap": float(shares_gap)},

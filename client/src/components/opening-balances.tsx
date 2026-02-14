@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -29,28 +29,24 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert";
-import { Loader2, CheckCircle2, AlertTriangle, ArrowRightLeft, FileText } from "lucide-react";
+import { Loader2, CheckCircle2, AlertTriangle, ArrowRightLeft, Wand2, Pencil, RotateCcw, Info } from "lucide-react";
 
-interface GapSummary {
-  actual: number;
-  gl: number;
-  gap: number;
-}
-
-interface PreviewLine {
+interface AccountRow {
   account_code: string;
   account_name: string;
-  debit: number;
-  credit: number;
-  memo: string;
+  account_type: string;
+  current_gl_balance: number;
+  suggested_balance: number | null;
+  gap: number | null;
+  detail: string;
 }
 
 interface PreviewData {
   has_gaps: boolean;
-  summary: Record<string, GapSummary>;
-  lines: PreviewLine[];
-  total_debit: number;
-  total_credit: number;
+  already_posted: boolean;
+  existing_entry_number?: string;
+  accounts: AccountRow[];
+  summary: Record<string, { actual: number; gl: number; gap: number }>;
 }
 
 interface PostResult {
@@ -65,19 +61,17 @@ interface PostResult {
   } | null;
 }
 
+interface AccountEntry {
+  amount: string;
+  source: "none" | "suggested" | "manual";
+}
+
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(amount);
 }
-
-const categoryLabels: Record<string, string> = {
-  member_savings: "Member Savings",
-  member_shares: "Member Shares",
-  outstanding_loans: "Outstanding Loans",
-  fixed_deposits: "Fixed Deposits",
-};
 
 export default function OpeningBalances({ organizationId }: { organizationId: string }) {
   const { toast } = useToast();
@@ -86,19 +80,75 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
     new Date().toISOString().split("T")[0]
   );
   const [notes, setNotes] = useState("");
+  const [entries, setEntries] = useState<Record<string, AccountEntry>>({});
 
   const { data: preview, isLoading, isError, error, refetch } = useQuery<PreviewData>({
     queryKey: [`/api/organizations/${organizationId}/accounting/opening-balances/preview`],
   });
 
+  const updateEntry = (code: string, amount: string, source: "suggested" | "manual") => {
+    setEntries(prev => ({
+      ...prev,
+      [code]: { amount, source },
+    }));
+  };
+
+  const clearEntry = (code: string) => {
+    setEntries(prev => {
+      const next = { ...prev };
+      delete next[code];
+      return next;
+    });
+  };
+
+  const getEntryAmount = (code: string): number => {
+    const entry = entries[code];
+    if (!entry || entry.source === "none") return 0;
+    return parseFloat(entry.amount) || 0;
+  };
+
+  const totals = useMemo(() => {
+    if (!preview?.accounts) return { debit: 0, credit: 0, balanced: true };
+    let debit = 0;
+    let credit = 0;
+    for (const acct of preview.accounts) {
+      const amt = getEntryAmount(acct.account_code);
+      if (amt === 0) continue;
+      if (acct.account_type === "asset") {
+        if (amt > 0) debit += amt;
+        else credit += Math.abs(amt);
+      } else {
+        if (amt > 0) credit += amt;
+        else debit += Math.abs(amt);
+      }
+    }
+    return { debit, credit, balanced: Math.abs(debit - credit) < 0.01 };
+  }, [entries, preview?.accounts]);
+
+  const hasAnyEntries = Object.values(entries).some(e => e.source !== "none" && parseFloat(e.amount) !== 0);
+
   const postMutation = useMutation<PostResult, Error>({
     mutationFn: async () => {
+      const lines = (preview?.accounts || [])
+        .filter(acct => {
+          const entry = entries[acct.account_code];
+          return entry && entry.source !== "none" && parseFloat(entry.amount) !== 0;
+        })
+        .map(acct => ({
+          account_code: acct.account_code,
+          amount: parseFloat(entries[acct.account_code].amount),
+          memo: entries[acct.account_code].source === "suggested"
+            ? `Opening balance (system suggested) - ${acct.account_name}`
+            : `Opening balance (manually entered) - ${acct.account_name}`,
+        }));
+
       const res = await apiRequest(
         "POST",
         `/api/organizations/${organizationId}/accounting/opening-balances/post`,
         {
           effective_date: effectiveDate,
           notes: notes || undefined,
+          lines,
         }
       );
       return res.json();
@@ -109,6 +159,7 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
         description: data.message,
       });
       setShowConfirm(false);
+      setEntries({});
       refetch();
       queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/accounting`] });
     },
@@ -135,7 +186,7 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
       <div className="space-y-6">
         <PageHeader
           title="Opening Balances"
-          description="Reconcile the General Ledger with actual member, loan, and deposit data after bulk imports or migrations."
+          description="Set up your ledger with starting balances from your previous system."
         />
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
@@ -151,152 +202,247 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
     );
   }
 
-  const hasGaps = preview?.has_gaps ?? false;
+  const alreadyPosted = preview?.already_posted ?? false;
 
   return (
     <div className="space-y-6" data-testid="opening-balances-page">
       <PageHeader
         title="Opening Balances"
-        description="Reconcile the General Ledger with actual member, loan, and deposit data after bulk imports or migrations."
+        description="Set up your ledger with starting balances from your previous system or actual records."
       />
 
-      {!hasGaps && (
+      {alreadyPosted && (
         <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
           <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-          <AlertTitle className="text-green-800 dark:text-green-200">Ledger is Reconciled</AlertTitle>
+          <AlertTitle className="text-green-800 dark:text-green-200">Opening Balances Already Posted</AlertTitle>
           <AlertDescription className="text-green-700 dark:text-green-300">
-            The General Ledger matches all actual member savings, shares, outstanding loans, and fixed deposit balances. No adjustments are needed.
+            Opening balances were posted as entry {preview?.existing_entry_number}. To re-do them,
+            first reverse that journal entry from the Journal Entries page.
           </AlertDescription>
         </Alert>
       )}
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {preview?.summary && Object.entries(preview.summary).map(([key, val]) => (
-          <Card key={key} data-testid={`summary-card-${key}`}>
-            <CardHeader className="pb-2">
-              <CardDescription>{categoryLabels[key] || key}</CardDescription>
-              <CardTitle className="text-lg">
-                {formatCurrency(val.actual)}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">In Ledger</span>
-                <span>{formatCurrency(val.gl)}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm mt-1">
-                <span className="text-muted-foreground">Gap</span>
-                <Badge
-                  variant={Math.abs(val.gap) < 0.01 ? "outline" : "destructive"}
-                  className="font-mono"
-                  data-testid={`gap-badge-${key}`}
-                >
-                  {Math.abs(val.gap) < 0.01 ? "0.00" : formatCurrency(val.gap)}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      {!alreadyPosted && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertTitle>How this works</AlertTitle>
+          <AlertDescription>
+            For each account, the system shows what's currently in the ledger and the actual balance
+            from your member data. The "Adjustment Needed" column shows the difference. You can apply
+            the suggested adjustment or enter your own amount from your actual records (bank statements,
+            loan books, etc.). All entries must balance (debits = credits) before posting.
+          </AlertDescription>
+        </Alert>
+      )}
 
-      {hasGaps && preview?.lines && preview.lines.length > 0 && (
-        <>
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-muted-foreground" />
-                <CardTitle>Proposed Journal Entry</CardTitle>
-              </div>
-              <CardDescription>
-                This entry will bring the General Ledger in line with actual balances. Review the lines below before posting.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table data-testid="preview-table">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Account</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead className="text-right">Debit</TableHead>
-                    <TableHead className="text-right">Credit</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {preview.lines.map((line, idx) => (
-                    <TableRow key={idx} data-testid={`preview-line-${idx}`}>
-                      <TableCell>
-                        <div className="font-mono text-sm">{line.account_code}</div>
-                        <div className="text-xs text-muted-foreground">{line.account_name}</div>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
-                        {line.memo}
-                      </TableCell>
-                      <TableCell className="text-right font-mono">
-                        {line.debit > 0 ? formatCurrency(line.debit) : ""}
-                      </TableCell>
-                      <TableCell className="text-right font-mono">
-                        {line.credit > 0 ? formatCurrency(line.credit) : ""}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  <TableRow className="border-t-2 font-semibold">
-                    <TableCell colSpan={2} className="text-right">
-                      Total
+      <Card>
+        <CardHeader>
+          <CardTitle>Account Balances</CardTitle>
+          <CardDescription>
+            {alreadyPosted
+              ? "Current account status. Opening balances have already been recorded."
+              : "Set the opening balance for each account. Use the system suggestion or enter your own amount."
+            }
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table data-testid="accounts-table">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Account</TableHead>
+                <TableHead className="text-right">Current in Ledger</TableHead>
+                <TableHead className="text-right">Actual Balance</TableHead>
+                <TableHead className="text-right">Adjustment Needed</TableHead>
+                <TableHead className="text-right">Your Entry</TableHead>
+                <TableHead className="text-center">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {preview?.accounts.map((acct) => {
+                const entry = entries[acct.account_code];
+                const hasEntry = entry && entry.source !== "none";
+                const hasSuggestion = acct.suggested_balance !== null;
+                const gapExists = acct.gap !== null && Math.abs(acct.gap) > 0.01;
+
+                return (
+                  <TableRow key={acct.account_code} data-testid={`account-row-${acct.account_code}`}>
+                    <TableCell>
+                      <div className="font-mono text-sm font-medium">{acct.account_code}</div>
+                      <div className="text-sm">{acct.account_name}</div>
+                      <div className="text-xs text-muted-foreground">{acct.detail}</div>
                     </TableCell>
                     <TableCell className="text-right font-mono">
-                      {formatCurrency(preview.total_debit)}
+                      {formatCurrency(acct.current_gl_balance)}
                     </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {formatCurrency(preview.total_credit)}
+                    <TableCell className="text-right">
+                      {hasSuggestion ? (
+                        <span className="font-mono">{formatCurrency(acct.suggested_balance!)}</span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground italic">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {hasSuggestion && gapExists ? (
+                        <span className="font-mono text-orange-600 dark:text-orange-400">
+                          {formatCurrency(acct.gap!)}
+                        </span>
+                      ) : hasSuggestion ? (
+                        <Badge variant="outline" className="text-xs">None</Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground italic">Enter from records</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {alreadyPosted ? (
+                        <span className="text-muted-foreground">-</span>
+                      ) : hasEntry ? (
+                        <div className="flex items-center justify-end gap-2">
+                          {entry.source === "manual" ? (
+                            <Input
+                              type="number"
+                              step="0.01"
+                              className="w-36 text-right font-mono"
+                              value={entry.amount}
+                              onChange={(e) => updateEntry(acct.account_code, e.target.value, "manual")}
+                              data-testid={`input-amount-${acct.account_code}`}
+                            />
+                          ) : (
+                            <span className="font-mono font-medium">
+                              {formatCurrency(parseFloat(entry.amount) || 0)}
+                            </span>
+                          )}
+                          <Badge variant={entry.source === "suggested" ? "secondary" : "outline"} className="text-xs whitespace-nowrap">
+                            {entry.source === "suggested" ? "Suggested" : "Manual"}
+                          </Badge>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Not set</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {!alreadyPosted && (
+                        <div className="flex items-center justify-center gap-1">
+                          {hasSuggestion && gapExists && (!hasEntry || entry.source !== "suggested") && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => updateEntry(acct.account_code, String(acct.gap!), "suggested")}
+                              title="Apply the system-calculated adjustment amount"
+                              data-testid={`button-use-suggested-${acct.account_code}`}
+                            >
+                              <Wand2 className="h-3.5 w-3.5 mr-1" />
+                              Apply Adjustment
+                            </Button>
+                          )}
+                          {(!hasEntry || entry.source !== "manual") && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => updateEntry(acct.account_code, hasEntry ? entry.amount : "", "manual")}
+                              title="Enter your own amount"
+                              data-testid={`button-manual-${acct.account_code}`}
+                            >
+                              <Pencil className="h-3.5 w-3.5 mr-1" />
+                              Enter Manually
+                            </Button>
+                          )}
+                          {hasEntry && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => clearEntry(acct.account_code)}
+                              title="Clear this entry"
+                              data-testid={`button-clear-${acct.account_code}`}
+                            >
+                              <RotateCcw className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Post Opening Balances</CardTitle>
-              <CardDescription>
-                Set the effective date and optional notes, then post the journal entry. This action can only be done once.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="effective-date">Effective Date</Label>
-                  <Input
-                    id="effective-date"
-                    type="date"
-                    value={effectiveDate}
-                    onChange={(e) => setEffectiveDate(e.target.value)}
-                    data-testid="input-effective-date"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes (optional)</Label>
-                  <Input
-                    id="notes"
-                    placeholder="e.g. Migration from legacy system"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    data-testid="input-notes"
-                  />
+      {!alreadyPosted && hasAnyEntries && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Post Opening Balances</CardTitle>
+            <CardDescription>
+              Review the totals below. Debits must equal credits before you can post.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-6 p-4 rounded-lg bg-muted/50">
+              <div className="text-center">
+                <div className="text-xs text-muted-foreground uppercase tracking-wide">Total Debits</div>
+                <div className="text-lg font-mono font-semibold">{formatCurrency(totals.debit)}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xs text-muted-foreground uppercase tracking-wide">Total Credits</div>
+                <div className="text-lg font-mono font-semibold">{formatCurrency(totals.credit)}</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xs text-muted-foreground uppercase tracking-wide">Difference</div>
+                <div className={`text-lg font-mono font-semibold ${totals.balanced ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                  {formatCurrency(Math.abs(totals.debit - totals.credit))}
                 </div>
               </div>
-              <div className="flex justify-end">
-                <Button
-                  onClick={() => setShowConfirm(true)}
-                  data-testid="button-post-opening-balances"
-                >
-                  <ArrowRightLeft className="h-4 w-4 mr-2" />
-                  Post Opening Balances
-                </Button>
+              <Badge variant={totals.balanced ? "default" : "destructive"} className="ml-auto" data-testid="balance-status">
+                {totals.balanced ? "Balanced" : "Out of Balance"}
+              </Badge>
+            </div>
+
+            {!totals.balanced && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Entry Not Balanced</AlertTitle>
+                <AlertDescription>
+                  Total debits ({formatCurrency(totals.debit)}) do not equal total credits ({formatCurrency(totals.credit)}).
+                  Adjust your amounts so that debits and credits are equal. You may need to add a Cash at Bank or
+                  Cash on Hand amount to balance the entry.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="effective-date">Effective Date</Label>
+                <Input
+                  id="effective-date"
+                  type="date"
+                  value={effectiveDate}
+                  onChange={(e) => setEffectiveDate(e.target.value)}
+                  data-testid="input-effective-date"
+                />
               </div>
-            </CardContent>
-          </Card>
-        </>
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes (optional)</Label>
+                <Input
+                  id="notes"
+                  placeholder="e.g. Migration from legacy system"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  data-testid="input-notes"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button
+                onClick={() => setShowConfirm(true)}
+                disabled={!totals.balanced}
+                data-testid="button-post-opening-balances"
+              >
+                <ArrowRightLeft className="h-4 w-4 mr-2" />
+                Post Opening Balances
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
@@ -305,19 +451,38 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
             <DialogTitle>Confirm Opening Balance Entry</DialogTitle>
             <DialogDescription>
               This will create a journal entry for{" "}
-              <span className="font-semibold">{formatCurrency(preview?.total_debit ?? 0)}</span>{" "}
-              (debit = credit) effective {effectiveDate}. This action cannot be undone through this page.
+              <span className="font-semibold">{formatCurrency(totals.debit)}</span>{" "}
+              (debit = credit) effective {effectiveDate}. This action can only be done once.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-2">
-            <Alert>
-              <AlertTriangle className="h-4 w-4" />
-              <AlertTitle>One-time action</AlertTitle>
-              <AlertDescription>
-                Opening balances can only be posted once. If you need to adjust later, you would reverse the journal entry from the Journal Entries page and re-post.
-              </AlertDescription>
-            </Alert>
+          <div className="py-2 space-y-2">
+            <div className="text-sm text-muted-foreground">Accounts included:</div>
+            {preview?.accounts
+              .filter(a => {
+                const e = entries[a.account_code];
+                return e && e.source !== "none" && parseFloat(e.amount) !== 0;
+              })
+              .map(a => (
+                <div key={a.account_code} className="flex justify-between text-sm px-2">
+                  <span>{a.account_code} - {a.account_name}</span>
+                  <span className="font-mono">
+                    {formatCurrency(parseFloat(entries[a.account_code].amount))}
+                    <Badge variant="outline" className="ml-2 text-xs">
+                      {entries[a.account_code].source === "suggested" ? "Auto" : "Manual"}
+                    </Badge>
+                  </span>
+                </div>
+              ))
+            }
           </div>
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>One-time action</AlertTitle>
+            <AlertDescription>
+              Opening balances can only be posted once. If you need to adjust later, reverse the journal entry from
+              the Journal Entries page and re-post.
+            </AlertDescription>
+          </Alert>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowConfirm(false)} data-testid="button-cancel-post">
               Cancel
