@@ -21,7 +21,13 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollText, Search, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { ScrollText, Search, AlertCircle, ChevronLeft, ChevronRight, Eye } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface AuditLogsProps {
   organizationId: string;
@@ -65,6 +71,7 @@ export default function AuditLogs({ organizationId }: AuditLogsProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null);
   const pageSize = 20;
 
   // Debounce search to avoid too many API calls
@@ -228,12 +235,17 @@ export default function AuditLogs({ organizationId }: AuditLogsProps) {
                       <TableHead>Action</TableHead>
                       <TableHead className="hidden md:table-cell">Entity</TableHead>
                       <TableHead className="min-w-[200px] hidden lg:table-cell">Details</TableHead>
-                      <TableHead className="hidden md:table-cell">IP Address</TableHead>
+                      <TableHead className="hidden md:table-cell">View</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredLogs.map((log) => (
-                      <TableRow key={log.id} data-testid={`row-log-${log.id}`}>
+                      <TableRow 
+                        key={log.id} 
+                        data-testid={`row-log-${log.id}`} 
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => setSelectedLog(log)}
+                      >
                         <TableCell className="whitespace-nowrap hidden sm:table-cell">
                           {new Date(log.created_at).toLocaleString()}
                         </TableCell>
@@ -256,7 +268,11 @@ export default function AuditLogs({ organizationId }: AuditLogsProps) {
                             "-"
                           )}
                         </TableCell>
-                        <TableCell className="font-mono text-sm hidden md:table-cell">{log.ip_address || "-"}</TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setSelectedLog(log); }}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -307,6 +323,97 @@ export default function AuditLogs({ organizationId }: AuditLogsProps) {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={!!selectedLog} onOpenChange={(open) => !open && setSelectedLog(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ScrollText className="h-5 w-5" />
+              Audit Log Details
+            </DialogTitle>
+          </DialogHeader>
+          {selectedLog && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Date & Time</p>
+                  <p className="text-sm">{new Date(selectedLog.created_at).toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Performed By</p>
+                  <p className="text-sm">{selectedLog.staff ? `${selectedLog.staff.first_name} ${selectedLog.staff.last_name}` : "System"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Action</p>
+                  <Badge variant={getActionColor(selectedLog.action)}>{formatAction(selectedLog.action)}</Badge>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Entity Type</p>
+                  <p className="text-sm capitalize">{selectedLog.entity_type || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Entity ID</p>
+                  <p className="text-sm font-mono break-all">{selectedLog.entity_id || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">IP Address</p>
+                  <p className="text-sm font-mono">{selectedLog.ip_address || "-"}</p>
+                </div>
+              </div>
+
+              {selectedLog.details && selectedLog.details !== "-" && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Summary</p>
+                  <p className="text-sm bg-muted p-3 rounded-md">{selectedLog.details}</p>
+                </div>
+              )}
+
+              {selectedLog.old_values && Object.keys(selectedLog.old_values).length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Previous Values</p>
+                  <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded-md p-3 overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <tbody>
+                        {Object.entries(selectedLog.old_values).map(([key, value]) => (
+                          <tr key={key} className="border-b border-red-100 dark:border-red-900/50 last:border-0">
+                            <td className="py-1.5 pr-3 font-medium text-red-700 dark:text-red-400 whitespace-nowrap align-top">{key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}</td>
+                            <td className="py-1.5 text-red-600 dark:text-red-300 break-all">{typeof value === "object" ? JSON.stringify(value, null, 2) : String(value ?? "-")}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {selectedLog.new_values && Object.keys(selectedLog.new_values).length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">New Values</p>
+                  <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded-md p-3 overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <tbody>
+                        {Object.entries(selectedLog.new_values).map(([key, value]) => (
+                          <tr key={key} className="border-b border-green-100 dark:border-green-900/50 last:border-0">
+                            <td className="py-1.5 pr-3 font-medium text-green-700 dark:text-green-400 whitespace-nowrap align-top">{key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}</td>
+                            <td className="py-1.5 text-green-600 dark:text-green-300 break-all">{typeof value === "object" ? JSON.stringify(value, null, 2) : String(value ?? "-")}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {selectedLog.user_agent && (
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">User Agent</p>
+                  <p className="text-xs font-mono bg-muted p-2 rounded-md break-all">{selectedLog.user_agent}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

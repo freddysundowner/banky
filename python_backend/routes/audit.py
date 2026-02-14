@@ -41,67 +41,67 @@ def format_audit_details(log: AuditLog) -> str:
     details = []
     values = log.new_values or {}
     old_values = log.old_values or {}
+    currency = values.get('currency', 'KES')
     
-    # Transaction-related details
-    if 'amount' in values:
-        amount = values.get('amount', 0)
-        currency = values.get('currency', 'KES')
-        details.append(f"Amount: {currency} {amount:,.2f}" if isinstance(amount, (int, float)) else f"Amount: {currency} {amount}")
-    
-    if 'transaction_type' in values:
-        details.append(f"Type: {values['transaction_type']}")
-    
-    if 'account_type' in values:
-        details.append(f"Account: {values['account_type']}")
-    
-    # Member details
     if 'member_name' in values:
         details.append(f"Member: {values['member_name']}")
     elif 'member_number' in values:
         details.append(f"Member #: {values['member_number']}")
     
-    # Loan details
+    if 'first_name' in values and 'last_name' in values:
+        details.append(f"Name: {values['first_name']} {values['last_name']}")
+    elif 'name' in values:
+        details.append(f"Name: {values['name']}")
+
     if 'loan_number' in values:
         details.append(f"Loan #: {values['loan_number']}")
-    
+    if 'application_number' in values:
+        details.append(f"Application #: {values['application_number']}")
+    if 'deposit_number' in values:
+        details.append(f"Deposit #: {values['deposit_number']}")
+
+    if 'amount' in values:
+        amount = values.get('amount', 0)
+        details.append(f"Amount: {currency} {amount:,.2f}" if isinstance(amount, (int, float)) else f"Amount: {currency} {amount}")
     if 'principal' in values:
         principal = values.get('principal', 0)
         details.append(f"Principal: {currency} {principal:,.2f}" if isinstance(principal, (int, float)) else f"Principal: {principal}")
-    
-    # Status changes
+
+    if 'transaction_type' in values:
+        details.append(f"Type: {values['transaction_type']}")
+    if 'account_type' in values:
+        details.append(f"Account: {values['account_type']}")
+    if 'disbursement_method' in values:
+        details.append(f"Method: {values['disbursement_method']}")
+
     if 'status' in values:
         if 'status' in old_values:
             details.append(f"Status: {old_values['status']} → {values['status']}")
         else:
             details.append(f"Status: {values['status']}")
-    
-    # Name changes
-    if 'name' in values:
-        details.append(f"Name: {values['name']}")
-    
-    # Fixed deposit details
-    if 'deposit_number' in values:
-        details.append(f"Deposit #: {values['deposit_number']}")
-    
+
     if 'interest_rate' in values:
         details.append(f"Rate: {values['interest_rate']}%")
-    
-    # Balance info
+
     if 'new_balance' in values:
         balance = values.get('new_balance', 0)
         details.append(f"New Balance: {currency} {balance:,.2f}" if isinstance(balance, (int, float)) else f"New Balance: {balance}")
-    
-    # Reference/code
+
     if 'reference' in values:
         details.append(f"Ref: {values['reference']}")
     elif 'transaction_code' in values:
         details.append(f"Code: {values['transaction_code']}")
-    
-    # Login/logout details
+
     if 'email' in values and log.action in ['LOGIN', 'LOGOUT']:
+        details.append(f"Email: {values['email']}")
         if 'branch' in values and values['branch']:
             details.append(f"Branch: {values['branch']}")
-    
+
+    if 'phone' in values:
+        details.append(f"Phone: {values['phone']}")
+    if 'reason' in values:
+        details.append(f"Reason: {values['reason']}")
+
     return " | ".join(details) if details else "-"
 
 @router.get("/{org_id}/audit-logs")
