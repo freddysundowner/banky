@@ -679,6 +679,8 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
   const applications = paginatedLoans?.data;
   const pagination = paginatedLoans?.pagination;
 
+  const needsFormData = viewMode === "new" || viewMode === "edit";
+
   const { data: products } = useQuery<LoanProduct[]>({
     queryKey: ["/api/organizations", organizationId, "loan-products", "active"],
     queryFn: async () => {
@@ -686,6 +688,7 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
       if (!res.ok) throw new Error("Failed to fetch loan products");
       return res.json();
     },
+    enabled: needsFormData,
   });
 
   const { data: members } = useQuery<Member[]>({
@@ -695,6 +698,7 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
       if (!res.ok) throw new Error("Failed to fetch members");
       return res.json();
     },
+    enabled: needsFormData,
   });
 
   const form = useForm<ApplicationFormData>({
