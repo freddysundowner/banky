@@ -99,85 +99,99 @@ async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(ge
             print(f"[SunPay Webhook] status={status}, amount={amount}, phone={phone}, mpesaRef={mpesa_ref}, txnId={transaction_id}, paymentType={payment_type}")
 
             occasion = data.get("occasion", "")
+            loan = None
             if occasion and occasion.startswith("DISBURSE:"):
                 loan_id = occasion.replace("DISBURSE:", "")
-                print(f"[SunPay Webhook] B2C Disbursement callback for loan {loan_id}, status={status}")
-                
+                print(f"[SunPay Webhook] B2C Disbursement callback for loan {loan_id} (via occasion), status={status}")
+                loan = tenant_session.query(LoanApplication).filter(LoanApplication.id == loan_id).first()
+
+            if not loan and payment_type == "b2c":
+                clean_phone = phone.replace("+", "").replace(" ", "") if phone else ""
+                phone_suffix = clean_phone[-9:] if len(clean_phone) >= 9 else clean_phone
+                pending_loans = tenant_session.query(LoanApplication).filter(
+                    LoanApplication.status == "pending_disbursement",
+                    LoanApplication.amount_disbursed == amount
+                ).all()
+                for pl in pending_loans:
+                    pl_member = tenant_session.query(Member).filter(Member.id == pl.member_id).first()
+                    if pl_member and pl_member.phone:
+                        member_phone = pl_member.phone.replace("+", "").replace(" ", "")
+                        if member_phone[-9:] == phone_suffix:
+                            loan = pl
+                            print(f"[SunPay Webhook] B2C Disbursement matched loan {pl.application_number} by phone+amount, status={status}")
+                            break
+
+            if loan and loan.status == "pending_disbursement":
                 from routes.loans import post_disbursement_to_gl
                 
                 normalized_status = status.lower().strip()
                 is_success = normalized_status in ("completed", "success")
                 is_failure = normalized_status in ("failed", "reversed", "cancelled", "rejected", "error")
-                
-                loan = tenant_session.query(LoanApplication).filter(LoanApplication.id == loan_id).first()
-                if loan:
-                    if is_success and loan.status == "pending_disbursement":
-                        loan.status = "disbursed"
-                        loan.disbursed_at = datetime.utcnow()
-                        
-                        txn = tenant_session.query(Transaction).filter(
-                            Transaction.member_id == loan.member_id,
-                            Transaction.transaction_type == "loan_disbursement",
-                            Transaction.account_type == "loan",
-                            Transaction.amount == loan.amount_disbursed
-                        ).order_by(desc(Transaction.created_at)).first()
-                        if txn:
-                            txn.description = f"Loan disbursement for {loan.application_number}"
-                        
-                        tenant_session.commit()
-                        
-                        member = tenant_session.query(Member).filter(Member.id == loan.member_id).first()
-                        if member:
-                            try:
-                                post_disbursement_to_gl(tenant_session, loan, member, "mpesa", getattr(loan, 'interest_deducted_upfront', False))
-                            except Exception as gl_e:
-                                print(f"[GL] Failed to post disbursement to GL: {gl_e}")
-                            if member.phone:
-                                try:
-                                    from routes.sms import send_sms_with_template
-                                    send_sms_with_template(
-                                        tenant_session,
-                                        "loan_disbursed",
-                                        member.phone,
-                                        f"{member.first_name} {member.last_name}",
-                                        {
-                                            "name": member.first_name,
-                                            "amount": str(loan.amount_disbursed),
-                                            "loan_number": loan.application_number
-                                        },
-                                        member_id=member.id,
-                                        loan_id=loan.id
-                                    )
-                                except Exception as sms_e:
-                                    print(f"[SMS] Failed to send disbursement notification: {sms_e}")
-                        
-                        print(f"[SunPay Webhook] Loan {loan.application_number} marked as disbursed via M-Pesa B2C")
-                        return {"status": "ok", "message": "Disbursement confirmed"}
+
+                if is_success:
+                    loan.status = "disbursed"
+                    loan.disbursed_at = datetime.utcnow()
                     
-                    elif is_failure and loan.status == "pending_disbursement":
-                        loan.status = "approved"
-                        loan.disbursed_at = None
-                        loan.amount_disbursed = None
-                        loan.outstanding_balance = None
-                        loan.amount_repaid = None
-                        loan.next_payment_date = None
-                        tenant_session.query(LoanInstalment).filter(LoanInstalment.loan_id == loan.id).delete()
-                        txn = tenant_session.query(Transaction).filter(
-                            Transaction.member_id == loan.member_id,
-                            Transaction.transaction_type == "loan_disbursement",
-                            Transaction.account_type == "loan"
-                        ).order_by(desc(Transaction.created_at)).first()
-                        if txn:
-                            tenant_session.delete(txn)
-                        tenant_session.commit()
-                        print(f"[SunPay Webhook] Loan {loan.application_number} reverted to approved - M-Pesa B2C {normalized_status}")
-                        return {"status": "ok", "message": "Disbursement failed - loan reverted"}
-                    else:
-                        print(f"[SunPay Webhook] Loan {loan.application_number} status={loan.status}, callback status={normalized_status}, ignoring")
-                        return {"status": "ok", "message": "Ignored"}
+                    txn = tenant_session.query(Transaction).filter(
+                        Transaction.member_id == loan.member_id,
+                        Transaction.transaction_type == "loan_disbursement",
+                        Transaction.account_type == "loan",
+                        Transaction.amount == loan.amount_disbursed
+                    ).order_by(desc(Transaction.created_at)).first()
+                    if txn:
+                        txn.description = f"Loan disbursement for {loan.application_number}"
+                    
+                    tenant_session.commit()
+                    
+                    member = tenant_session.query(Member).filter(Member.id == loan.member_id).first()
+                    if member:
+                        try:
+                            post_disbursement_to_gl(tenant_session, loan, member, "mpesa", getattr(loan, 'interest_deducted_upfront', False))
+                        except Exception as gl_e:
+                            print(f"[GL] Failed to post disbursement to GL: {gl_e}")
+                        if member.phone:
+                            try:
+                                from routes.sms import send_sms_with_template
+                                send_sms_with_template(
+                                    tenant_session,
+                                    "loan_disbursed",
+                                    member.phone,
+                                    f"{member.first_name} {member.last_name}",
+                                    {
+                                        "name": member.first_name,
+                                        "amount": str(loan.amount_disbursed),
+                                        "loan_number": loan.application_number
+                                    },
+                                    member_id=member.id,
+                                    loan_id=loan.id
+                                )
+                            except Exception as sms_e:
+                                print(f"[SMS] Failed to send disbursement notification: {sms_e}")
+                    
+                    print(f"[SunPay Webhook] Loan {loan.application_number} marked as disbursed via M-Pesa B2C")
+                    return {"status": "ok", "message": "Disbursement confirmed"}
+                
+                elif is_failure:
+                    loan.status = "approved"
+                    loan.disbursed_at = None
+                    loan.amount_disbursed = None
+                    loan.outstanding_balance = None
+                    loan.amount_repaid = None
+                    loan.next_payment_date = None
+                    tenant_session.query(LoanInstalment).filter(LoanInstalment.loan_id == loan.id).delete()
+                    txn = tenant_session.query(Transaction).filter(
+                        Transaction.member_id == loan.member_id,
+                        Transaction.transaction_type == "loan_disbursement",
+                        Transaction.account_type == "loan"
+                    ).order_by(desc(Transaction.created_at)).first()
+                    if txn:
+                        tenant_session.delete(txn)
+                    tenant_session.commit()
+                    print(f"[SunPay Webhook] Loan {loan.application_number} reverted to approved - M-Pesa B2C {normalized_status}")
+                    return {"status": "ok", "message": "Disbursement failed - loan reverted"}
                 else:
-                    print(f"[SunPay Webhook] Loan {loan_id} not found for B2C callback")
-                    return {"status": "error", "message": "Loan not found"}
+                    print(f"[SunPay Webhook] Loan {loan.application_number} callback status={normalized_status}, ignoring")
+                    return {"status": "ok", "message": "Ignored"}
 
             lookup_id = mpesa_ref or transaction_id
             if lookup_id:
@@ -241,7 +255,7 @@ async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(ge
                 clean_phone = phone.replace("+", "").replace(" ", "")
                 if len(clean_phone) >= 9:
                     member = tenant_session.query(Member).filter(
-                        Member.phone_number.like(f"%{clean_phone[-9:]}")
+                        Member.phone.like(f"%{clean_phone[-9:]}")
                     ).first()
 
             print(f"[SunPay Webhook] Member lookup: ref={account_ref}, phone={phone}, found={member is not None}")
