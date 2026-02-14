@@ -215,6 +215,19 @@ def process_auto_deductions(org_id, org_name, connection_string, force=False):
                         LoanDefault.loan_id == str(loan.id),
                         LoanDefault.status.in_(["overdue", "in_collection"])
                     ).update({"status": "resolved", "resolved_at": datetime.utcnow()}, synchronize_session="fetch")
+                elif loan.status == "defaulted":
+                    overdue_remaining = session.query(LoanInstalment).filter(
+                        LoanInstalment.loan_id == str(loan.id),
+                        LoanInstalment.status.in_(["overdue", "partial"]),
+                        LoanInstalment.due_date <= local_today
+                    ).count()
+                    if overdue_remaining == 0:
+                        loan.status = "disbursed"
+                        session.query(LoanDefault).filter(
+                            LoanDefault.loan_id == str(loan.id),
+                            LoanDefault.status.in_(["overdue", "in_collection"])
+                        ).update({"status": "resolved", "resolved_at": datetime.utcnow()}, synchronize_session="fetch")
+                        print(f"  Loan {loan.application_number} restored from defaulted to active (all overdue instalments cleared)")
 
                 audit_log = AuditLog(
                     staff_id=None,
