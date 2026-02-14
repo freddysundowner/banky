@@ -533,232 +533,107 @@ async def post_opening_balances(
 
 
 def _calculate_opening_balance_gaps(tenant_session, svc: AccountingService):
-    """Calculate gaps between actual balances and GL balances."""
+    """Calculate gaps between actual balances and GL balances.
+    Dynamically pulls ALL accounts from Chart of Accounts."""
     
-    total_savings = Decimal("0")
-    total_shares = Decimal("0")
     members = tenant_session.query(Member).filter(Member.is_active == True).all()
-    for m in members:
-        total_savings += Decimal(str(m.savings_balance or 0))
-        total_shares += Decimal(str(m.shares_balance or 0))
+    total_savings = sum(Decimal(str(m.savings_balance or 0)) for m in members)
+    total_shares = sum(Decimal(str(m.shares_balance or 0)) for m in members)
     
     active_loans = tenant_session.query(LoanApplication).filter(
         LoanApplication.status.in_(["active", "disbursed", "overdue", "defaulted"])
     ).all()
-    total_loan_outstanding = Decimal("0")
-    for loan in active_loans:
-        total_loan_outstanding += Decimal(str(loan.outstanding_balance or 0))
+    total_loan_outstanding = sum(Decimal(str(loan.outstanding_balance or 0)) for loan in active_loans)
     
     active_fds = tenant_session.query(MemberFixedDeposit).filter(
         MemberFixedDeposit.status == "active"
     ).all()
-    total_fd = Decimal("0")
-    for fd in active_fds:
-        total_fd += Decimal(str(fd.principal_amount or 0))
+    total_fd = sum(Decimal(str(fd.principal_amount or 0)) for fd in active_fds)
     
-    gl_balances = {}
-    for code in ["1010", "1100", "2000", "2010", "2020"]:
-        account = tenant_session.query(ChartOfAccounts).filter(
-            ChartOfAccounts.code == code
-        ).first()
-        if account:
-            debit_total = tenant_session.query(func.coalesce(func.sum(JournalLine.debit), 0)).join(
-                JournalEntry, JournalLine.journal_entry_id == JournalEntry.id
-            ).filter(
-                JournalLine.account_id == account.id,
-                JournalEntry.status == "posted"
-            ).scalar()
-            credit_total = tenant_session.query(func.coalesce(func.sum(JournalLine.credit), 0)).join(
-                JournalEntry, JournalLine.journal_entry_id == JournalEntry.id
-            ).filter(
-                JournalLine.account_id == account.id,
-                JournalEntry.status == "posted"
-            ).scalar()
-            gl_balances[code] = {
-                "debit": Decimal(str(debit_total)),
-                "credit": Decimal(str(credit_total)),
-                "net": Decimal(str(debit_total)) - Decimal(str(credit_total))
-            }
+    suggestions = {
+        "2000": {"balance": total_savings, "detail": f"{len(members)} active members"},
+        "2010": {"balance": total_shares, "detail": f"{len(members)} active members"},
+        "1100": {"balance": total_loan_outstanding, "detail": f"{len(active_loans)} active loans"},
+        "2020": {"balance": total_fd, "detail": f"{len(active_fds)} active deposits"},
+    }
+    
+    all_accounts = tenant_session.query(ChartOfAccounts).filter(
+        ChartOfAccounts.is_active == True
+    ).order_by(ChartOfAccounts.code).all()
+    
+    accounts = []
+    has_gaps = False
+    
+    for acct in all_accounts:
+        debit_total = tenant_session.query(func.coalesce(func.sum(JournalLine.debit), 0)).join(
+            JournalEntry, JournalLine.journal_entry_id == JournalEntry.id
+        ).filter(
+            JournalLine.account_id == acct.id,
+            JournalEntry.status == "posted"
+        ).scalar()
+        credit_total = tenant_session.query(func.coalesce(func.sum(JournalLine.credit), 0)).join(
+            JournalEntry, JournalLine.journal_entry_id == JournalEntry.id
+        ).filter(
+            JournalLine.account_id == acct.id,
+            JournalEntry.status == "posted"
+        ).scalar()
+        
+        debit_dec = Decimal(str(debit_total))
+        credit_dec = Decimal(str(credit_total))
+        
+        if acct.account_type in ("asset", "expense"):
+            gl_balance = debit_dec - credit_dec
         else:
-            gl_balances[code] = {"debit": Decimal("0"), "credit": Decimal("0"), "net": Decimal("0")}
-    
-    gl_savings = gl_balances["2000"]["credit"] - gl_balances["2000"]["debit"]
-    gl_shares = gl_balances["2010"]["credit"] - gl_balances["2010"]["debit"]
-    gl_loans = gl_balances["1100"]["debit"] - gl_balances["1100"]["credit"]
-    gl_fds = gl_balances["2020"]["credit"] - gl_balances["2020"]["debit"]
-    
-    savings_gap = total_savings - gl_savings
-    shares_gap = total_shares - gl_shares
-    loans_gap = total_loan_outstanding - gl_loans
-    fd_gap = total_fd - gl_fds
-    
-    lines = []
-    balancing_amount = Decimal("0")
-    
-    if savings_gap > 0:
-        lines.append({
-            "account_code": "2000",
-            "account_name": "Member Savings",
-            "debit": 0,
-            "credit": float(savings_gap),
-            "memo": f"Opening balance - Member savings ({len(members)} members)"
-        })
-        balancing_amount += savings_gap
-    elif savings_gap < 0:
-        lines.append({
-            "account_code": "2000",
-            "account_name": "Member Savings",
-            "debit": float(abs(savings_gap)),
-            "credit": 0,
-            "memo": f"Opening balance adjustment - Member savings"
-        })
-        balancing_amount -= abs(savings_gap)
-    
-    if shares_gap > 0:
-        lines.append({
-            "account_code": "2010",
-            "account_name": "Member Shares",
-            "debit": 0,
-            "credit": float(shares_gap),
-            "memo": f"Opening balance - Member shares"
-        })
-        balancing_amount += shares_gap
-    elif shares_gap < 0:
-        lines.append({
-            "account_code": "2010",
-            "account_name": "Member Shares",
-            "debit": float(abs(shares_gap)),
-            "credit": 0,
-            "memo": f"Opening balance adjustment - Member shares"
-        })
-        balancing_amount -= abs(shares_gap)
-    
-    if loans_gap > 0:
-        lines.append({
-            "account_code": "1100",
-            "account_name": "Loans Receivable",
-            "debit": float(loans_gap),
-            "credit": 0,
-            "memo": f"Opening balance - Outstanding loans ({len(active_loans)} loans)"
-        })
-        balancing_amount -= loans_gap
-    elif loans_gap < 0:
-        lines.append({
-            "account_code": "1100",
-            "account_name": "Loans Receivable",
-            "debit": 0,
-            "credit": float(abs(loans_gap)),
-            "memo": f"Opening balance adjustment - Loans receivable"
-        })
-        balancing_amount += abs(loans_gap)
-    
-    if fd_gap > 0:
-        lines.append({
-            "account_code": "2020",
-            "account_name": "Member Fixed Deposits",
-            "debit": 0,
-            "credit": float(fd_gap),
-            "memo": f"Opening balance - Fixed deposits ({len(active_fds)} deposits)"
-        })
-        balancing_amount += fd_gap
-    elif fd_gap < 0:
-        lines.append({
-            "account_code": "2020",
-            "account_name": "Member Fixed Deposits",
-            "debit": float(abs(fd_gap)),
-            "credit": 0,
-            "memo": f"Opening balance adjustment - Fixed deposits"
-        })
-        balancing_amount -= abs(fd_gap)
-    
-    if balancing_amount > 0:
-        lines.append({
-            "account_code": "1010",
-            "account_name": "Cash at Bank",
-            "debit": float(balancing_amount),
-            "credit": 0,
-            "memo": "Opening balance - Cash at bank (balancing entry for member liabilities)"
-        })
-    elif balancing_amount < 0:
-        lines.append({
-            "account_code": "1010",
-            "account_name": "Cash at Bank",
-            "debit": 0,
-            "credit": float(abs(balancing_amount)),
-            "memo": "Opening balance adjustment - Cash at bank"
+            gl_balance = credit_dec - debit_dec
+        
+        suggested_balance = None
+        gap = None
+        detail = "Enter from your records"
+        
+        if acct.code in suggestions:
+            sug = suggestions[acct.code]
+            suggested_balance = float(sug["balance"])
+            gap = float(sug["balance"] - gl_balance)
+            detail = sug["detail"]
+            if abs(sug["balance"] - gl_balance) > Decimal("0.01"):
+                has_gaps = True
+        
+        accounts.append({
+            "account_code": acct.code,
+            "account_name": acct.name,
+            "account_type": acct.account_type,
+            "current_gl_balance": float(gl_balance),
+            "suggested_balance": suggested_balance,
+            "gap": gap,
+            "detail": detail,
         })
     
-    has_gaps = any(
-        abs(g) > Decimal("0.01") for g in [savings_gap, shares_gap, loans_gap, fd_gap]
-    )
-    
-    accounts = [
-        {
-            "account_code": "2000",
-            "account_name": "Member Savings",
-            "account_type": "liability",
-            "current_gl_balance": float(gl_savings),
-            "suggested_balance": float(total_savings),
-            "gap": float(savings_gap),
-            "detail": f"{len(members)} active members",
-        },
-        {
-            "account_code": "2010",
-            "account_name": "Member Shares",
-            "account_type": "liability",
-            "current_gl_balance": float(gl_shares),
-            "suggested_balance": float(total_shares),
-            "gap": float(shares_gap),
-            "detail": f"{len(members)} active members",
-        },
-        {
-            "account_code": "1100",
-            "account_name": "Loans Receivable",
-            "account_type": "asset",
-            "current_gl_balance": float(gl_loans),
-            "suggested_balance": float(total_loan_outstanding),
-            "gap": float(loans_gap),
-            "detail": f"{len(active_loans)} active loans",
-        },
-        {
-            "account_code": "2020",
-            "account_name": "Member Fixed Deposits",
-            "account_type": "liability",
-            "current_gl_balance": float(gl_fds),
-            "suggested_balance": float(total_fd),
-            "gap": float(fd_gap),
-            "detail": f"{len(active_fds)} active deposits",
-        },
-        {
-            "account_code": "1010",
-            "account_name": "Cash at Bank",
-            "account_type": "asset",
-            "current_gl_balance": float(gl_balances["1010"]["net"]),
-            "suggested_balance": None,
-            "gap": None,
-            "detail": "Enter from your actual bank statement",
-        },
-        {
-            "account_code": "1000",
-            "account_name": "Cash on Hand",
-            "account_type": "asset",
-            "current_gl_balance": float(gl_balances.get("1000", {}).get("net", 0)),
-            "suggested_balance": None,
-            "gap": None,
-            "detail": "Enter from your physical cash count",
-        },
-    ]
+    summary = {
+        "member_savings": {"actual": float(total_savings), "gl": float(suggestions["2000"]["balance"] if "2000" not in suggestions else 0), "gap": 0},
+        "member_shares": {"actual": float(total_shares), "gl": 0, "gap": 0},
+        "outstanding_loans": {"actual": float(total_loan_outstanding), "gl": 0, "gap": 0},
+        "fixed_deposits": {"actual": float(total_fd), "gl": 0, "gap": 0},
+    }
+    for a in accounts:
+        code = a["account_code"]
+        if code == "2000":
+            summary["member_savings"]["gl"] = a["current_gl_balance"]
+            summary["member_savings"]["gap"] = a["gap"] or 0
+        elif code == "2010":
+            summary["member_shares"]["gl"] = a["current_gl_balance"]
+            summary["member_shares"]["gap"] = a["gap"] or 0
+        elif code == "1100":
+            summary["outstanding_loans"]["gl"] = a["current_gl_balance"]
+            summary["outstanding_loans"]["gap"] = a["gap"] or 0
+        elif code == "2020":
+            summary["fixed_deposits"]["gl"] = a["current_gl_balance"]
+            summary["fixed_deposits"]["gap"] = a["gap"] or 0
     
     return {
         "has_gaps": has_gaps,
         "accounts": accounts,
-        "summary": {
-            "member_savings": {"actual": float(total_savings), "gl": float(gl_savings), "gap": float(savings_gap)},
-            "member_shares": {"actual": float(total_shares), "gl": float(gl_shares), "gap": float(shares_gap)},
-            "outstanding_loans": {"actual": float(total_loan_outstanding), "gl": float(gl_loans), "gap": float(loans_gap)},
-            "fixed_deposits": {"actual": float(total_fd), "gl": float(gl_fds), "gap": float(fd_gap)},
-        },
-        "lines": lines,
-        "total_debit": float(sum(Decimal(str(l["debit"])) for l in lines)),
-        "total_credit": float(sum(Decimal(str(l["credit"])) for l in lines)),
+        "summary": summary,
+        "lines": [],
+        "total_debit": 0,
+        "total_credit": 0,
     }
