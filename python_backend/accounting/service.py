@@ -29,6 +29,11 @@ DEFAULT_ACCOUNTS = [
     {"code": "2100", "name": "Interest Payable", "type": "liability", "is_system": True},
     {"code": "2200", "name": "Accounts Payable", "type": "liability", "is_system": True},
     {"code": "2300", "name": "Accrued Expenses", "type": "liability", "is_system": True},
+    {"code": "2400", "name": "PAYE Tax Payable", "type": "liability", "is_system": True},
+    {"code": "2410", "name": "NHIF Payable", "type": "liability", "is_system": True},
+    {"code": "2420", "name": "NSSF Payable", "type": "liability", "is_system": True},
+    {"code": "2430", "name": "Net Salary Payable", "type": "liability", "is_system": True},
+    {"code": "2440", "name": "Salary Advance Recovery", "type": "liability", "is_system": True},
     
     {"code": "3000", "name": "Share Capital", "type": "equity", "is_system": True},
     {"code": "3100", "name": "Retained Earnings", "type": "equity", "is_system": True},
@@ -785,6 +790,102 @@ def post_fixed_deposit_maturity(
         description=description,
         source_type="fixed_deposit_close",
         source_id=deposit_id,
+        created_by_id=created_by_id,
+        lines=lines
+    )
+
+def post_payroll_disbursement(
+    accounting_service: AccountingService,
+    period_id: str,
+    period_name: str,
+    total_gross: Decimal,
+    total_paye: Decimal,
+    total_nhif: Decimal,
+    total_nssf: Decimal,
+    total_loan_deductions: Decimal,
+    total_other_deductions: Decimal,
+    total_net: Decimal,
+    disbursement_method: str = "bank_transfer",
+    created_by_id: Optional[str] = None
+) -> JournalEntry:
+    """
+    Post journal entries for payroll disbursement.
+    
+    Debit: 5100 Salaries & Wages (gross salary - total cost to org)
+    Credit: 2400 PAYE Tax Payable (statutory - to be remitted)
+    Credit: 2410 NHIF Payable (statutory - to be remitted)
+    Credit: 2420 NSSF Payable (statutory - to be remitted)
+    Credit: 2440 Salary Advance Recovery (advance deductions)
+    Credit: 2300 Accrued Expenses (other deductions)
+    Credit: 1000/1010 Cash/Bank (net salary paid out)
+    """
+    lines = []
+
+    lines.append({
+        "account_code": "5100",
+        "debit": total_gross,
+        "credit": Decimal("0"),
+        "memo": f"Gross salaries - {period_name}"
+    })
+
+    if total_paye > 0:
+        lines.append({
+            "account_code": "2400",
+            "debit": Decimal("0"),
+            "credit": total_paye,
+            "memo": f"PAYE tax withheld - {period_name}"
+        })
+
+    if total_nhif > 0:
+        lines.append({
+            "account_code": "2410",
+            "debit": Decimal("0"),
+            "credit": total_nhif,
+            "memo": f"NHIF deduction - {period_name}"
+        })
+
+    if total_nssf > 0:
+        lines.append({
+            "account_code": "2420",
+            "debit": Decimal("0"),
+            "credit": total_nssf,
+            "memo": f"NSSF deduction - {period_name}"
+        })
+
+    if total_loan_deductions > 0:
+        lines.append({
+            "account_code": "2440",
+            "debit": Decimal("0"),
+            "credit": total_loan_deductions,
+            "memo": f"Salary advance/loan recovery - {period_name}"
+        })
+
+    if total_other_deductions > 0:
+        lines.append({
+            "account_code": "2300",
+            "debit": Decimal("0"),
+            "credit": total_other_deductions,
+            "memo": f"Other payroll deductions - {period_name}"
+        })
+
+    if disbursement_method == "cash":
+        pay_account = "1000"
+    else:
+        pay_account = "1010"
+
+    lines.append({
+        "account_code": pay_account,
+        "debit": Decimal("0"),
+        "credit": total_net,
+        "memo": f"Net salary paid - {period_name}"
+    })
+
+    return accounting_service.create_journal_entry(
+        entry_date=date.today(),
+        description=f"Payroll disbursement - {period_name}",
+        reference=period_id,
+        source_type="payroll",
+        source_id=period_id,
         created_by_id=created_by_id,
         lines=lines
     )

@@ -6,6 +6,7 @@ from decimal import Decimal
 from datetime import datetime, date, timedelta
 from pydantic import BaseModel
 from models.database import get_db
+from accounting.service import AccountingService, post_payroll_disbursement
 from models.tenant import (
     Staff, PerformanceReview, LoanApplication, Branch, Member, Transaction,
     LeaveType, LeaveBalance, LeaveRequest, Attendance,
@@ -1702,6 +1703,12 @@ async def disburse_payroll(org_id: str, period_id: str, data: DisbursementReques
         
         disbursed_count = 0
         total_disbursed = Decimal("0")
+        total_gross = Decimal("0")
+        total_paye = Decimal("0")
+        total_nhif = Decimal("0")
+        total_nssf = Decimal("0")
+        total_loan_deductions = Decimal("0")
+        total_other_deductions = Decimal("0")
         
         for ps in payslips:
             if data.method == "savings_account":
@@ -1727,6 +1734,12 @@ async def disburse_payroll(org_id: str, period_id: str, data: DisbursementReques
             ps.paid_at = datetime.utcnow()
             disbursed_count += 1
             total_disbursed += ps.net_salary
+            total_gross += ps.gross_salary or Decimal("0")
+            total_paye += ps.paye_tax or Decimal("0")
+            total_nhif += ps.nhif_deduction or Decimal("0")
+            total_nssf += ps.nssf_deduction or Decimal("0")
+            total_loan_deductions += ps.loan_deductions or Decimal("0")
+            total_other_deductions += (ps.other_deductions or Decimal("0")) + (ps.shortage_deductions or Decimal("0"))
             
             advances = tenant_session.query(SalaryAdvance).filter(
                 SalaryAdvance.staff_id == ps.staff_id,
@@ -1745,11 +1758,36 @@ async def disburse_payroll(org_id: str, period_id: str, data: DisbursementReques
         period.status = "paid"
         period.paid_at = datetime.utcnow()
         
+        acct_service = AccountingService(tenant_session)
+        acct_service.seed_default_accounts()
+        
+        staff_user = tenant_session.query(Staff).filter(Staff.email == user.email).first()
+        created_by = staff_user.id if staff_user else None
+        
+        try:
+            post_payroll_disbursement(
+                accounting_service=acct_service,
+                period_id=period_id,
+                period_name=period.name or pay_period_str,
+                total_gross=total_gross,
+                total_paye=total_paye,
+                total_nhif=total_nhif,
+                total_nssf=total_nssf,
+                total_loan_deductions=total_loan_deductions,
+                total_other_deductions=total_other_deductions,
+                total_net=total_disbursed,
+                disbursement_method=data.method,
+                created_by_id=created_by
+            )
+        except Exception as e:
+            print(f"Warning: Payroll accounting entry failed: {e}")
+        
         tenant_session.commit()
         
         return {
             "message": f"Disbursed salaries to {disbursed_count} staff",
             "total_disbursed": float(total_disbursed),
+            "total_gross": float(total_gross),
             "method": data.method
         }
     finally:
