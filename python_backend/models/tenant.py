@@ -215,6 +215,10 @@ class LoanProduct(TenantBase):
     max_term_months = Column(Integer, default=60)
     processing_fee = Column(Numeric(10, 4), default=0)
     insurance_fee = Column(Numeric(10, 4), default=0)
+    appraisal_fee = Column(Numeric(10, 4), default=0)
+    excise_duty_rate = Column(Numeric(10, 4), default=20)
+    credit_life_insurance_rate = Column(Numeric(10, 4), default=0)
+    credit_life_insurance_freq = Column(String(20), default="annual")
     late_payment_penalty = Column(Numeric(10, 4), default=0)
     grace_period_days = Column(Integer, default=0)
     requires_guarantor = Column(Boolean, default=False)
@@ -222,11 +226,11 @@ class LoanProduct(TenantBase):
     max_guarantors = Column(Integer, default=3)
     
     # Shares-based eligibility
-    shares_multiplier = Column(Numeric(5, 2), default=0)  # Loan amount = shares * multiplier (0 = no limit)
-    min_shares_required = Column(Numeric(15, 2), default=0)  # Minimum shares to qualify (0 = no requirement)
+    shares_multiplier = Column(Numeric(5, 2), default=0)
+    min_shares_required = Column(Numeric(15, 2), default=0)
     
     # Interest deduction option
-    deduct_interest_upfront = Column(Boolean, default=False)  # Deduct interest from principal before disbursement
+    deduct_interest_upfront = Column(Boolean, default=False)
     
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -248,6 +252,12 @@ class LoanApplication(TenantBase):
     monthly_repayment = Column(Numeric(15, 2))
     processing_fee = Column(Numeric(15, 2), default=0)
     insurance_fee = Column(Numeric(15, 2), default=0)
+    appraisal_fee = Column(Numeric(15, 2), default=0)
+    excise_duty = Column(Numeric(15, 2), default=0)
+    total_fees = Column(Numeric(15, 2), default=0)
+    credit_life_insurance_rate = Column(Numeric(10, 4), default=0)
+    credit_life_insurance_freq = Column(String(20), default="annual")
+    total_insurance = Column(Numeric(15, 2), default=0)
     status = Column(String(50), default="pending")
     purpose = Column(Text)
     rejection_reason = Column(Text)
@@ -368,10 +378,12 @@ class LoanInstalment(TenantBase):
     expected_principal = Column(Numeric(15, 2), nullable=False, default=0)
     expected_interest = Column(Numeric(15, 2), nullable=False, default=0)
     expected_penalty = Column(Numeric(15, 2), nullable=False, default=0)
+    expected_insurance = Column(Numeric(15, 2), nullable=False, default=0)
     
     paid_principal = Column(Numeric(15, 2), nullable=False, default=0)
     paid_interest = Column(Numeric(15, 2), nullable=False, default=0)
     paid_penalty = Column(Numeric(15, 2), nullable=False, default=0)
+    paid_insurance = Column(Numeric(15, 2), nullable=False, default=0)
     
     status = Column(String(20), default="pending")
     paid_at = Column(DateTime)

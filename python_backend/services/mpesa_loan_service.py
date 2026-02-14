@@ -45,11 +45,12 @@ def apply_mpesa_payment_to_loan(tenant_session, loan, member, amount: Decimal, m
     overpayment = Decimal("0")
     if has_instalments:
         from services.instalment_service import allocate_payment_to_instalments
-        principal_amount, interest_amount, penalty_amount, overpayment = allocate_payment_to_instalments(
+        principal_amount, interest_amount, penalty_amount, insurance_amount, overpayment = allocate_payment_to_instalments(
             tenant_session, loan, amount
         )
     else:
         principal_amount, interest_amount, penalty_amount = calculate_payment_allocation(loan, amount, tenant_session)
+        insurance_amount = Decimal("0")
 
     actual_loan_payment = amount - overpayment
 

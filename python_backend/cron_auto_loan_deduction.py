@@ -136,11 +136,11 @@ def process_auto_deductions(org_id, org_name, connection_string):
                 deduction_amount = min(savings, total_due)
 
                 from services.instalment_service import allocate_payment_to_instalments
-                principal_amount, interest_amount, penalty_amount, overpayment = allocate_payment_to_instalments(
+                principal_amount, interest_amount, penalty_amount, insurance_amount, overpayment = allocate_payment_to_instalments(
                     session, loan, deduction_amount
                 )
 
-                actual_loan_payment = principal_amount + interest_amount + penalty_amount
+                actual_loan_payment = principal_amount + interest_amount + penalty_amount + insurance_amount
                 if actual_loan_payment <= 0:
                     continue
 

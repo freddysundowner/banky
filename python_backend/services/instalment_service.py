@@ -3,9 +3,19 @@ from datetime import timedelta, date, datetime
 from models.tenant import LoanInstalment, LoanApplication, LoanProduct
 
 FREQ_DAYS = {"daily": 1, "weekly": 7, "bi_weekly": 14, "monthly": 30}
+PERIODS_PER_YEAR = {"daily": 365, "weekly": 52, "bi_weekly": 26, "monthly": 12}
+
+def _calc_insurance_for_period(balance, cli_rate, cli_freq, freq):
+    if not cli_rate or cli_rate <= 0:
+        return Decimal("0")
+    rate = Decimal(str(cli_rate)) / Decimal("100")
+    if cli_freq == "annual":
+        periods_yr = PERIODS_PER_YEAR.get(freq, 12)
+        return round(balance * rate / Decimal(str(periods_yr)), 2)
+    else:
+        return round(balance * rate, 2)
 
 def generate_instalment_schedule(tenant_session, loan: LoanApplication, product: LoanProduct):
-    """Generate instalment records when a loan is disbursed."""
     term = int(loan.term_months)
     if term <= 0:
         return []
@@ -16,41 +26,55 @@ def generate_instalment_schedule(tenant_session, loan: LoanApplication, product:
     deduct_upfront = bool(getattr(loan, 'interest_deducted_upfront', False))
     interest_type = getattr(product, 'interest_type', 'reducing_balance')
     
+    cli_rate = Decimal(str(getattr(loan, 'credit_life_insurance_rate', None) or 0))
+    cli_freq = getattr(loan, 'credit_life_insurance_freq', None) or "annual"
+    
     disbursed_date = loan.disbursed_at
     if hasattr(disbursed_date, 'date'):
         disbursed_date = disbursed_date.date()
     
     loan_amount = Decimal(str(loan.amount or 0))
     instalments = []
+    total_insurance = Decimal("0")
     
     if deduct_upfront:
         principal_per_period = loan_amount / term
+        balance = loan_amount
         for i in range(term):
             due = disbursed_date + timedelta(days=period_days * (i + 1))
+            ins_amount = _calc_insurance_for_period(balance, cli_rate, cli_freq, freq)
+            total_insurance += ins_amount
             inst = LoanInstalment(
                 loan_id=str(loan.id),
                 instalment_number=i + 1,
                 due_date=due,
                 expected_principal=round(principal_per_period, 2),
                 expected_interest=Decimal("0"),
+                expected_insurance=ins_amount,
                 status="pending"
             )
             instalments.append(inst)
+            balance -= principal_per_period
     elif interest_type == "flat":
         total_interest = Decimal(str(loan.total_interest or 0))
         interest_per_period = total_interest / term
         principal_per_period = loan_amount / term
+        balance = loan_amount
         for i in range(term):
             due = disbursed_date + timedelta(days=period_days * (i + 1))
+            ins_amount = _calc_insurance_for_period(balance, cli_rate, cli_freq, freq)
+            total_insurance += ins_amount
             inst = LoanInstalment(
                 loan_id=str(loan.id),
                 instalment_number=i + 1,
                 due_date=due,
                 expected_principal=round(principal_per_period, 2),
                 expected_interest=round(interest_per_period, 2),
+                expected_insurance=ins_amount,
                 status="pending"
             )
             instalments.append(inst)
+            balance -= principal_per_period
     else:
         periodic_rate = Decimal(str(loan.interest_rate or 0)) / Decimal("100")
         balance = loan_amount
@@ -59,6 +83,8 @@ def generate_instalment_schedule(tenant_session, loan: LoanApplication, product:
         for i in range(term):
             due = disbursed_date + timedelta(days=period_days * (i + 1))
             interest_portion = round(balance * periodic_rate, 2)
+            ins_amount = _calc_insurance_for_period(balance, cli_rate, cli_freq, freq)
+            total_insurance += ins_amount
             if i == term - 1:
                 principal_portion = balance
                 interest_portion = max(total_payment - balance, Decimal("0"))
@@ -73,6 +99,7 @@ def generate_instalment_schedule(tenant_session, loan: LoanApplication, product:
                 due_date=due,
                 expected_principal=round(max(principal_portion, Decimal("0")), 2),
                 expected_interest=round(max(interest_portion, Decimal("0")), 2),
+                expected_insurance=ins_amount,
                 status="pending"
             )
             instalments.append(inst)
@@ -92,6 +119,9 @@ def generate_instalment_schedule(tenant_session, loan: LoanApplication, product:
             if interest_diff != 0 and abs(interest_diff) < last_interest:
                 instalments[-1].expected_interest = last_interest + interest_diff
     
+    if total_insurance > 0:
+        loan.total_insurance = round(total_insurance, 2)
+    
     for inst in instalments:
         tenant_session.add(inst)
     
@@ -99,8 +129,6 @@ def generate_instalment_schedule(tenant_session, loan: LoanApplication, product:
 
 
 def regenerate_instalments_after_restructure(tenant_session, loan: LoanApplication, product: LoanProduct):
-    """Delete unpaid instalments and regenerate them for the new loan terms after restructuring.
-    Preserves paid/partial instalments and creates new ones for the remaining balance."""
     from sqlalchemy import and_
 
     completed_instalments = tenant_session.query(LoanInstalment).filter(
@@ -110,6 +138,7 @@ def regenerate_instalments_after_restructure(tenant_session, loan: LoanApplicati
 
     preserved_principal = sum(Decimal(str(i.expected_principal)) for i in completed_instalments)
     preserved_interest = sum(Decimal(str(i.expected_interest)) for i in completed_instalments)
+    preserved_insurance = sum(Decimal(str(getattr(i, 'expected_insurance', None) or 0)) for i in completed_instalments)
     paid_count = len(completed_instalments)
 
     tenant_session.query(LoanInstalment).filter(
@@ -126,6 +155,9 @@ def regenerate_instalments_after_restructure(tenant_session, loan: LoanApplicati
     interest_type = getattr(product, 'interest_type', 'reducing_balance')
     deduct_upfront = bool(getattr(loan, 'interest_deducted_upfront', False))
 
+    cli_rate = Decimal(str(getattr(loan, 'credit_life_insurance_rate', None) or 0))
+    cli_freq = getattr(loan, 'credit_life_insurance_freq', None) or "annual"
+
     loan_amount = Decimal(str(loan.amount or 0))
     remaining_principal = loan_amount - preserved_principal
     remaining_interest = Decimal(str(loan.total_interest or 0)) - preserved_interest
@@ -138,33 +170,45 @@ def regenerate_instalments_after_restructure(tenant_session, loan: LoanApplicati
         last_due_date = disbursed_date
 
     new_instalments = []
+    new_insurance_total = Decimal("0")
+
     if deduct_upfront:
         principal_per_period = remaining_principal / remaining_term
+        balance = remaining_principal
         for i in range(remaining_term):
             due = last_due_date + timedelta(days=period_days * (i + 1))
+            ins_amount = _calc_insurance_for_period(balance, cli_rate, cli_freq, freq)
+            new_insurance_total += ins_amount
             inst = LoanInstalment(
                 loan_id=str(loan.id),
                 instalment_number=paid_count + i + 1,
                 due_date=due,
                 expected_principal=round(principal_per_period, 2),
                 expected_interest=Decimal("0"),
+                expected_insurance=ins_amount,
                 status="pending"
             )
             new_instalments.append(inst)
+            balance -= principal_per_period
     elif interest_type == "flat":
         interest_per_period = remaining_interest / remaining_term if remaining_term > 0 else Decimal("0")
         principal_per_period = remaining_principal / remaining_term if remaining_term > 0 else Decimal("0")
+        balance = remaining_principal
         for i in range(remaining_term):
             due = last_due_date + timedelta(days=period_days * (i + 1))
+            ins_amount = _calc_insurance_for_period(balance, cli_rate, cli_freq, freq)
+            new_insurance_total += ins_amount
             inst = LoanInstalment(
                 loan_id=str(loan.id),
                 instalment_number=paid_count + i + 1,
                 due_date=due,
                 expected_principal=round(principal_per_period, 2),
                 expected_interest=round(interest_per_period, 2),
+                expected_insurance=ins_amount,
                 status="pending"
             )
             new_instalments.append(inst)
+            balance -= principal_per_period
     else:
         periodic_rate = Decimal(str(loan.interest_rate or 0)) / Decimal("100")
         balance = remaining_principal
@@ -173,6 +217,8 @@ def regenerate_instalments_after_restructure(tenant_session, loan: LoanApplicati
         for i in range(remaining_term):
             due = last_due_date + timedelta(days=period_days * (i + 1))
             interest_portion = round(balance * periodic_rate, 2)
+            ins_amount = _calc_insurance_for_period(balance, cli_rate, cli_freq, freq)
+            new_insurance_total += ins_amount
             if i == remaining_term - 1:
                 principal_portion = balance
             else:
@@ -186,6 +232,7 @@ def regenerate_instalments_after_restructure(tenant_session, loan: LoanApplicati
                 due_date=due,
                 expected_principal=round(max(principal_portion, Decimal("0")), 2),
                 expected_interest=round(max(interest_portion, Decimal("0")), 2),
+                expected_insurance=ins_amount,
                 status="pending"
             )
             new_instalments.append(inst)
@@ -204,6 +251,8 @@ def regenerate_instalments_after_restructure(tenant_session, loan: LoanApplicati
             if interest_diff != 0 and abs(interest_diff) < abs(last_interest or Decimal("1")):
                 new_instalments[-1].expected_interest = last_interest + interest_diff
 
+    loan.total_insurance = round(preserved_insurance + new_insurance_total, 2)
+
     for inst in new_instalments:
         tenant_session.add(inst)
 
@@ -211,13 +260,11 @@ def regenerate_instalments_after_restructure(tenant_session, loan: LoanApplicati
 
 
 def allocate_payment_to_instalments(tenant_session, loan: LoanApplication, payment_amount: Decimal):
-    """Allocate a payment to the earliest unpaid instalments.
-    Priority: penalties -> interest -> principal.
-    Returns (total_principal, total_interest, total_penalty, overpayment) allocated."""
     remaining = payment_amount
     total_principal = Decimal("0")
     total_interest = Decimal("0")
     total_penalty = Decimal("0")
+    total_insurance = Decimal("0")
     
     unpaid = tenant_session.query(LoanInstalment).filter(
         LoanInstalment.loan_id == str(loan.id),
@@ -242,6 +289,13 @@ def allocate_payment_to_instalments(tenant_session, loan: LoanApplication, payme
             remaining -= pay_interest
             total_interest += pay_interest
         
+        insurance_due = Decimal(str(getattr(inst, 'expected_insurance', None) or 0)) - Decimal(str(getattr(inst, 'paid_insurance', None) or 0))
+        if insurance_due > 0 and remaining > 0:
+            pay_insurance = min(remaining, insurance_due)
+            inst.paid_insurance = Decimal(str(getattr(inst, 'paid_insurance', None) or 0)) + pay_insurance
+            remaining -= pay_insurance
+            total_insurance += pay_insurance
+        
         principal_due = Decimal(str(inst.expected_principal or 0)) - Decimal(str(inst.paid_principal or 0))
         if principal_due > 0 and remaining > 0:
             pay_principal = min(remaining, principal_due)
@@ -249,19 +303,20 @@ def allocate_payment_to_instalments(tenant_session, loan: LoanApplication, payme
             remaining -= pay_principal
             total_principal += pay_principal
         
-        total_due = Decimal(str(inst.expected_principal or 0)) + Decimal(str(inst.expected_interest or 0)) + Decimal(str(inst.expected_penalty or 0))
-        total_paid = Decimal(str(inst.paid_principal or 0)) + Decimal(str(inst.paid_interest or 0)) + Decimal(str(inst.paid_penalty or 0))
+        total_due = (Decimal(str(inst.expected_principal or 0)) + Decimal(str(inst.expected_interest or 0)) + 
+                     Decimal(str(inst.expected_penalty or 0)) + Decimal(str(getattr(inst, 'expected_insurance', None) or 0)))
+        total_paid = (Decimal(str(inst.paid_principal or 0)) + Decimal(str(inst.paid_interest or 0)) + 
+                      Decimal(str(inst.paid_penalty or 0)) + Decimal(str(getattr(inst, 'paid_insurance', None) or 0)))
         if total_paid >= total_due:
             inst.status = "paid"
             inst.paid_at = datetime.utcnow()
         elif total_paid > 0:
             inst.status = "partial"
     
-    return total_principal, total_interest, total_penalty, remaining
+    return total_principal, total_interest, total_penalty, total_insurance, remaining
 
 
 def backfill_instalments_for_loan(tenant_session, loan: LoanApplication, product: LoanProduct):
-    """Generate instalment schedule for an existing disbursed loan and apply historical repayments."""
     from models.tenant import LoanRepayment
     
     existing = tenant_session.query(LoanInstalment).filter(
@@ -300,14 +355,22 @@ def backfill_instalments_for_loan(tenant_session, loan: LoanApplication, product
                 inst.paid_interest = Decimal(str(inst.paid_interest or 0)) + pay
                 remaining -= pay
             
+            insurance_due = Decimal(str(getattr(inst, 'expected_insurance', None) or 0)) - Decimal(str(getattr(inst, 'paid_insurance', None) or 0))
+            if insurance_due > 0 and remaining > 0:
+                pay = min(remaining, insurance_due)
+                inst.paid_insurance = Decimal(str(getattr(inst, 'paid_insurance', None) or 0)) + pay
+                remaining -= pay
+            
             principal_due = Decimal(str(inst.expected_principal or 0)) - Decimal(str(inst.paid_principal or 0))
             if principal_due > 0 and remaining > 0:
                 pay = min(remaining, principal_due)
                 inst.paid_principal = Decimal(str(inst.paid_principal or 0)) + pay
                 remaining -= pay
             
-            total_due = Decimal(str(inst.expected_principal or 0)) + Decimal(str(inst.expected_interest or 0)) + Decimal(str(inst.expected_penalty or 0))
-            total_paid = Decimal(str(inst.paid_principal or 0)) + Decimal(str(inst.paid_interest or 0)) + Decimal(str(inst.paid_penalty or 0))
+            total_due = (Decimal(str(inst.expected_principal or 0)) + Decimal(str(inst.expected_interest or 0)) + 
+                         Decimal(str(inst.expected_penalty or 0)) + Decimal(str(getattr(inst, 'expected_insurance', None) or 0)))
+            total_paid = (Decimal(str(inst.paid_principal or 0)) + Decimal(str(inst.paid_interest or 0)) + 
+                          Decimal(str(inst.paid_penalty or 0)) + Decimal(str(getattr(inst, 'paid_insurance', None) or 0)))
             if total_paid >= total_due:
                 inst.status = "paid"
                 inst.paid_at = rep.payment_date

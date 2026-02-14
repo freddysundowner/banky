@@ -101,11 +101,13 @@ interface ScheduleItem {
   due_date: string;
   principal: number;
   interest: number;
+  insurance?: number;
   total_payment: number;
   balance_after: number;
   paid_principal?: number;
   paid_interest?: number;
   paid_penalty?: number;
+  paid_insurance?: number;
   status?: string;
 }
 
@@ -200,12 +202,17 @@ function LoanSchedule({ organizationId, loanId }: { organizationId: string; loan
       <CardContent>
         <div className="overflow-x-auto -mx-6 px-6">
           <Table>
+            {(() => {
+              const hasInsurance = data.schedule.some(item => (item.insurance || 0) > 0);
+              return (
+              <>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-16">#</TableHead>
                 <TableHead>Due Date</TableHead>
                 <TableHead className="text-right">Principal</TableHead>
                 <TableHead className="text-right">Interest</TableHead>
+                {hasInsurance && <TableHead className="text-right">Insurance</TableHead>}
                 <TableHead className="text-right">Total</TableHead>
                 <TableHead className="text-right">Balance</TableHead>
                 <TableHead className="text-right">Paid</TableHead>
@@ -214,7 +221,7 @@ function LoanSchedule({ organizationId, loanId }: { organizationId: string; loan
             </TableHeader>
             <TableBody>
               {paginatedSchedule.map((item) => {
-                const totalPaid = (item.paid_principal || 0) + (item.paid_interest || 0) + (item.paid_penalty || 0);
+                const totalPaid = (item.paid_principal || 0) + (item.paid_interest || 0) + (item.paid_penalty || 0) + (item.paid_insurance || 0);
                 const statusColors: Record<string, string> = {
                   paid: "bg-green-100 text-green-800",
                   partial: "bg-yellow-100 text-yellow-800",
@@ -227,6 +234,7 @@ function LoanSchedule({ organizationId, loanId }: { organizationId: string; loan
                   <TableCell>{formatDate(item.due_date)}</TableCell>
                   <TableCell className="text-right">{formatCurrency(item.principal)}</TableCell>
                   <TableCell className="text-right">{formatCurrency(item.interest)}</TableCell>
+                  {hasInsurance && <TableCell className="text-right">{formatCurrency(item.insurance || 0)}</TableCell>}
                   <TableCell className="text-right font-medium">{formatCurrency(item.total_payment)}</TableCell>
                   <TableCell className="text-right">{formatCurrency(item.balance_after)}</TableCell>
                   <TableCell className="text-right">{formatCurrency(totalPaid)}</TableCell>
@@ -239,6 +247,9 @@ function LoanSchedule({ organizationId, loanId }: { organizationId: string; loan
                 );
               })}
             </TableBody>
+              </>
+              );
+            })()}
           </Table>
         </div>
         {totalPages > 1 && (
@@ -1068,6 +1079,30 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                   <div className="text-sm text-muted-foreground">Insurance Fee</div>
                   <div className="font-medium">{loan.insurance_fee ? `${parseFloat(loan.insurance_fee).toLocaleString()}` : "-"}</div>
                 </div>
+                {parseFloat(loan.appraisal_fee || "0") > 0 && (
+                  <div>
+                    <div className="text-sm text-muted-foreground">Appraisal Fee</div>
+                    <div className="font-medium">{parseFloat(loan.appraisal_fee).toLocaleString()}</div>
+                  </div>
+                )}
+                {parseFloat(loan.excise_duty || "0") > 0 && (
+                  <div>
+                    <div className="text-sm text-muted-foreground">Excise Duty</div>
+                    <div className="font-medium">{parseFloat(loan.excise_duty).toLocaleString()}</div>
+                  </div>
+                )}
+                {parseFloat(loan.total_fees || "0") > 0 && (
+                  <div>
+                    <div className="text-sm text-muted-foreground">Total Fees</div>
+                    <div className="font-medium">{parseFloat(loan.total_fees).toLocaleString()}</div>
+                  </div>
+                )}
+                {parseFloat(loan.total_insurance || "0") > 0 && (
+                  <div>
+                    <div className="text-sm text-muted-foreground">Credit Life Insurance</div>
+                    <div className="font-medium">{parseFloat(loan.total_insurance).toLocaleString()}</div>
+                  </div>
+                )}
               </div>
               {loan.extra_charges && (loan.extra_charges as any[]).length > 0 && (
                 <div className="mt-4 pt-4 border-t">
@@ -1601,6 +1636,11 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
     const periodicPayment = term > 0 ? (amount + totalInterest) / term : 0;
     const processingFee = product ? amount * (parseFloat(product.processing_fee || "0") / 100) : 0;
     const insuranceFee = product ? amount * (parseFloat(product.insurance_fee || "0") / 100) : 0;
+    const appraisalFee = product ? amount * (parseFloat((product as any).appraisal_fee || "0") / 100) : 0;
+    const baseFees = processingFee + insuranceFee + appraisalFee;
+    const exciseDutyRate = product ? parseFloat((product as any).excise_duty_rate || "20") / 100 : 0.2;
+    const exciseDuty = baseFees * exciseDutyRate;
+    const totalFees = baseFees + exciseDuty;
     const totalExtraCharges = extraCharges.reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
 
     return (
@@ -1744,6 +1784,8 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                           <div><span className="text-muted-foreground">Term Range:</span> {product.min_term_months} - {product.max_term_months} {freqInfo.period.toLowerCase()}</div>
                           <div><span className="text-muted-foreground">Processing Fee:</span> {formatPercent(product.processing_fee)}</div>
                           <div><span className="text-muted-foreground">Insurance Fee:</span> {formatPercent(product.insurance_fee)}</div>
+                          {parseFloat((product as any).appraisal_fee || "0") > 0 && <div><span className="text-muted-foreground">Appraisal Fee:</span> {formatPercent((product as any).appraisal_fee)}</div>}
+                          {parseFloat((product as any).credit_life_insurance_rate || "0") > 0 && <div><span className="text-muted-foreground">Credit Life Ins:</span> {formatPercent((product as any).credit_life_insurance_rate)}/yr</div>}
                         </div>
                         {product.requires_guarantor && (
                           <div className="mt-2 text-amber-600 dark:text-amber-400 font-medium">This product requires a guarantor</div>
@@ -1814,18 +1856,20 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                         <div className="text-lg font-bold">{(amount + totalInterest).toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
                       </div>
                     </div>
-                    {(processingFee > 0 || insuranceFee > 0 || totalExtraCharges > 0 || (product as any).deduct_interest_upfront) && (
+                    {(totalFees > 0 || totalExtraCharges > 0 || (product as any).deduct_interest_upfront) && (
                       <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-800 text-sm">
                         <div className="text-muted-foreground">Upfront Deductions (from disbursement):</div>
                         <div className="flex flex-wrap gap-4 mt-1">
                           {processingFee > 0 && <span>Processing: {processingFee.toLocaleString()}</span>}
                           {insuranceFee > 0 && <span>Insurance: {insuranceFee.toLocaleString()}</span>}
+                          {appraisalFee > 0 && <span>Appraisal: {appraisalFee.toLocaleString()}</span>}
+                          {exciseDuty > 0 && <span>Excise Duty: {Math.round(exciseDuty).toLocaleString()}</span>}
                           {totalExtraCharges > 0 && <span>Extra Charges: {totalExtraCharges.toLocaleString()}</span>}
                           {(product as any).deduct_interest_upfront && (
                             <span className="text-amber-600">Interest (Upfront): {totalInterest.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
                           )}
                           <span className="font-medium">
-                            Net Disbursement: {(amount - processingFee - insuranceFee - totalExtraCharges - ((product as any).deduct_interest_upfront ? totalInterest : 0)).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                            Net Disbursement: {(amount - totalFees - totalExtraCharges - ((product as any).deduct_interest_upfront ? totalInterest : 0)).toLocaleString(undefined, { maximumFractionDigits: 0 })}
                           </span>
                         </div>
                       </div>
@@ -2434,12 +2478,15 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
               const amount = parseFloat(loan?.amount || "0");
               const processingFee = parseFloat(loan?.processing_fee || "0");
               const insuranceFee = parseFloat(loan?.insurance_fee || "0");
+              const appraisalFeeDsb = parseFloat(loan?.appraisal_fee || "0");
+              const exciseDutyDsb = parseFloat(loan?.excise_duty || "0");
+              const totalFeesDsb = parseFloat(loan?.total_fees || "0");
               const totalInterest = parseFloat(loan?.total_interest || "0");
               const deductInterestUpfront = loanProduct?.deduct_interest_upfront || false;
               const interestDeduction = deductInterestUpfront ? totalInterest : 0;
               const loanExtraCharges = (loan?.extra_charges || []) as { id: string; charge_name: string; amount: string | number }[];
               const totalExtraChargesDisb = loanExtraCharges.reduce((sum: number, c: any) => sum + parseFloat(String(c.amount || "0")), 0);
-              const netDisbursement = amount - processingFee - insuranceFee - totalExtraChargesDisb - interestDeduction;
+              const netDisbursement = amount - totalFeesDsb - totalExtraChargesDisb - interestDeduction;
               
               return (
                 <>
@@ -2475,14 +2522,30 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                       <span className="text-muted-foreground">Loan Principal</span>
                       <span>{amount.toLocaleString()}</span>
                     </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Less: Processing Fee</span>
-                      <span className="text-red-600">-{processingFee.toLocaleString()}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Less: Insurance Fee</span>
-                      <span className="text-red-600">-{insuranceFee.toLocaleString()}</span>
-                    </div>
+                    {processingFee > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Less: Processing Fee</span>
+                        <span className="text-red-600">-{processingFee.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {insuranceFee > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Less: Insurance Fee</span>
+                        <span className="text-red-600">-{insuranceFee.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {appraisalFeeDsb > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Less: Appraisal Fee</span>
+                        <span className="text-red-600">-{appraisalFeeDsb.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {exciseDutyDsb > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Less: Excise Duty (20%)</span>
+                        <span className="text-red-600">-{exciseDutyDsb.toLocaleString()}</span>
+                      </div>
+                    )}
                     {loanExtraCharges.map((ec: any) => (
                       <div key={ec.id || ec.charge_name} className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Less: {ec.charge_name}</span>

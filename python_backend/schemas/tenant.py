@@ -330,14 +330,18 @@ class LoanProductCreate(BaseModel):
     max_term_months: Optional[int] = 60
     processing_fee: Optional[Decimal] = Decimal("0")
     insurance_fee: Optional[Decimal] = Decimal("0")
+    appraisal_fee: Optional[Decimal] = Decimal("0")
+    excise_duty_rate: Optional[Decimal] = Decimal("20")
+    credit_life_insurance_rate: Optional[Decimal] = Decimal("0")
+    credit_life_insurance_freq: Optional[str] = "annual"
     late_payment_penalty: Optional[Decimal] = Decimal("0")
     grace_period_days: Optional[int] = 0
     requires_guarantor: Optional[bool] = False
     min_guarantors: Optional[int] = 0
     max_guarantors: Optional[int] = 3
-    shares_multiplier: Optional[Decimal] = Decimal("0")  # Loan = shares * multiplier (0 = disabled)
-    min_shares_required: Optional[Decimal] = Decimal("0")  # Min shares to qualify (0 = disabled)
-    deduct_interest_upfront: Optional[bool] = False  # Deduct interest before disbursement
+    shares_multiplier: Optional[Decimal] = Decimal("0")
+    min_shares_required: Optional[Decimal] = Decimal("0")
+    deduct_interest_upfront: Optional[bool] = False
 
 class LoanProductUpdate(BaseModel):
     name: Optional[str] = None
@@ -351,6 +355,10 @@ class LoanProductUpdate(BaseModel):
     max_term_months: Optional[int] = None
     processing_fee: Optional[Decimal] = None
     insurance_fee: Optional[Decimal] = None
+    appraisal_fee: Optional[Decimal] = None
+    excise_duty_rate: Optional[Decimal] = None
+    credit_life_insurance_rate: Optional[Decimal] = None
+    credit_life_insurance_freq: Optional[str] = None
     late_payment_penalty: Optional[Decimal] = None
     grace_period_days: Optional[int] = None
     requires_guarantor: Optional[bool] = None
@@ -375,6 +383,10 @@ class LoanProductResponse(BaseModel):
     max_term_months: int
     processing_fee: Decimal = Decimal("0")
     insurance_fee: Decimal = Decimal("0")
+    appraisal_fee: Decimal = Decimal("0")
+    excise_duty_rate: Decimal = Decimal("20")
+    credit_life_insurance_rate: Decimal = Decimal("0")
+    credit_life_insurance_freq: str = "annual"
     late_payment_penalty: Decimal = Decimal("0")
     grace_period_days: int = 0
     requires_guarantor: bool = False
@@ -533,6 +545,12 @@ class LoanApplicationResponse(BaseModel):
     monthly_repayment: Optional[Decimal] = None
     processing_fee: Optional[Decimal] = None
     insurance_fee: Optional[Decimal] = None
+    appraisal_fee: Optional[Decimal] = None
+    excise_duty: Optional[Decimal] = None
+    total_fees: Optional[Decimal] = None
+    credit_life_insurance_rate: Optional[Decimal] = None
+    credit_life_insurance_freq: Optional[str] = None
+    total_insurance: Optional[Decimal] = None
     status: str
     purpose: Optional[str] = None
     rejection_reason: Optional[str] = None

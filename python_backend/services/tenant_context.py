@@ -4,7 +4,7 @@ from models.master import Organization, OrganizationMember
 from models.tenant import TenantBase
 
 _migrated_tenants = set()
-_migration_version = 11  # Increment to force re-migration
+_migration_version = 12  # Increment to force re-migration
 
 def _get_db_migration_version(engine):
     """Check the migration version stored in the tenant database"""
@@ -194,6 +194,10 @@ def run_tenant_schema_migration(engine):
             ("shares_multiplier", "NUMERIC(5,2) DEFAULT 3"),
             ("min_shares_required", "NUMERIC(15,2) DEFAULT 0"),
             ("deduct_interest_upfront", "BOOLEAN DEFAULT FALSE"),
+            ("appraisal_fee", "NUMERIC(10,4) DEFAULT 0"),
+            ("excise_duty_rate", "NUMERIC(10,4) DEFAULT 20"),
+            ("credit_life_insurance_rate", "NUMERIC(10,4) DEFAULT 0"),
+            ("credit_life_insurance_freq", "VARCHAR(20) DEFAULT 'annual'"),
             ("is_active", "BOOLEAN DEFAULT TRUE"),
             ("created_at", "TIMESTAMP DEFAULT NOW()"),
         ]
@@ -213,6 +217,12 @@ def run_tenant_schema_migration(engine):
             ("monthly_repayment", "NUMERIC(15,2)"),
             ("processing_fee", "NUMERIC(15,2) DEFAULT 0"),
             ("insurance_fee", "NUMERIC(15,2) DEFAULT 0"),
+            ("appraisal_fee", "NUMERIC(15,2) DEFAULT 0"),
+            ("excise_duty", "NUMERIC(15,2) DEFAULT 0"),
+            ("total_fees", "NUMERIC(15,2) DEFAULT 0"),
+            ("credit_life_insurance_rate", "NUMERIC(10,4) DEFAULT 0"),
+            ("credit_life_insurance_freq", "VARCHAR(20) DEFAULT 'annual'"),
+            ("total_insurance", "NUMERIC(15,2) DEFAULT 0"),
             ("status", "VARCHAR(50) DEFAULT 'pending'"),
             ("purpose", "TEXT"),
             ("rejection_reason", "TEXT"),
@@ -800,9 +810,11 @@ def run_tenant_schema_migration(engine):
             ("expected_principal", "NUMERIC(15,2) DEFAULT 0"),
             ("expected_interest", "NUMERIC(15,2) DEFAULT 0"),
             ("expected_penalty", "NUMERIC(15,2) DEFAULT 0"),
+            ("expected_insurance", "NUMERIC(15,2) DEFAULT 0"),
             ("paid_principal", "NUMERIC(15,2) DEFAULT 0"),
             ("paid_interest", "NUMERIC(15,2) DEFAULT 0"),
             ("paid_penalty", "NUMERIC(15,2) DEFAULT 0"),
+            ("paid_insurance", "NUMERIC(15,2) DEFAULT 0"),
             ("status", "VARCHAR(20) DEFAULT 'pending'"),
             ("paid_at", "TIMESTAMP"),
             ("created_at", "TIMESTAMP DEFAULT NOW()"),

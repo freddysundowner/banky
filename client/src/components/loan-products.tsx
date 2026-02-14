@@ -65,6 +65,10 @@ const productSchema = z.object({
   max_term_months: z.coerce.number().min(1, "Maximum term is required"),
   processing_fee: z.string().default("0"),
   insurance_fee: z.string().default("0"),
+  appraisal_fee: z.string().default("0"),
+  excise_duty_rate: z.string().default("20"),
+  credit_life_insurance_rate: z.string().default("0"),
+  credit_life_insurance_freq: z.enum(["annual", "per_period"]).default("annual"),
   late_payment_penalty: z.string().default("0"),
   grace_period_days: z.coerce.number().default(0),
   requires_guarantor: z.boolean().default(false),
@@ -124,6 +128,10 @@ export default function LoanProducts({ organizationId }: LoanProductsProps) {
       max_term_months: 12,
       processing_fee: "0",
       insurance_fee: "0",
+      appraisal_fee: "0",
+      excise_duty_rate: "20",
+      credit_life_insurance_rate: "0",
+      credit_life_insurance_freq: "annual",
       late_payment_penalty: "0",
       grace_period_days: 0,
       requires_guarantor: false,
@@ -221,6 +229,10 @@ export default function LoanProducts({ organizationId }: LoanProductsProps) {
       max_term_months: product.max_term_months,
       processing_fee: String(parseFloat((product as any).processing_fee) || 0),
       insurance_fee: String(parseFloat((product as any).insurance_fee) || 0),
+      appraisal_fee: String(parseFloat((product as any).appraisal_fee) || 0),
+      excise_duty_rate: String(parseFloat((product as any).excise_duty_rate) ?? 20),
+      credit_life_insurance_rate: String(parseFloat((product as any).credit_life_insurance_rate) || 0),
+      credit_life_insurance_freq: (product as any).credit_life_insurance_freq || "annual",
       late_payment_penalty: String(parseFloat((product as any).late_payment_penalty) || 0),
       grace_period_days: (product as any).grace_period_days || 0,
       requires_guarantor: product.requires_guarantor,
@@ -434,6 +446,50 @@ export default function LoanProducts({ organizationId }: LoanProductsProps) {
                       <FormMessage />
                     </FormItem>
                   )} />
+                  <FormField control={form.control} name="appraisal_fee" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Appraisal Fee (%)</FormLabel>
+                      <FormControl><Input {...field} type="number" step="0.01" placeholder="0" /></FormControl>
+                      <FormDescription>One-time valuation fee</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <FormField control={form.control} name="excise_duty_rate" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Excise Duty (%)</FormLabel>
+                      <FormControl><Input {...field} type="number" step="0.01" placeholder="20" /></FormControl>
+                      <FormDescription>Tax on fees (Kenya: 20%)</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="credit_life_insurance_rate" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Credit Life Insurance (%)</FormLabel>
+                      <FormControl><Input {...field} type="number" step="0.01" placeholder="0" /></FormControl>
+                      <FormDescription>Recurring on reducing balance</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="credit_life_insurance_freq" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>CLI Frequency</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger><SelectValue placeholder="Select frequency" /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="annual">Annual Rate</SelectItem>
+                          <SelectItem value="per_period">Per Period Rate</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>How the rate is applied</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-3">
                   <FormField control={form.control} name="late_payment_penalty" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Late Payment Penalty (%)</FormLabel>
@@ -580,8 +636,10 @@ export default function LoanProducts({ organizationId }: LoanProductsProps) {
                         <div className="text-xs space-y-0.5">
                           {parseFloat((product as any).processing_fee || 0) > 0 && <div>Proc: {formatPercent((product as any).processing_fee)}</div>}
                           {parseFloat((product as any).insurance_fee || 0) > 0 && <div>Ins: {formatPercent((product as any).insurance_fee)}</div>}
+                          {parseFloat((product as any).appraisal_fee || 0) > 0 && <div>Appr: {formatPercent((product as any).appraisal_fee)}</div>}
+                          {parseFloat((product as any).credit_life_insurance_rate || 0) > 0 && <div>CLI: {formatPercent((product as any).credit_life_insurance_rate)}/yr</div>}
                           {parseFloat((product as any).late_payment_penalty || 0) > 0 && <div>Late: {formatPercent((product as any).late_payment_penalty)}</div>}
-                          {!parseFloat((product as any).processing_fee || 0) && !parseFloat((product as any).insurance_fee || 0) && !parseFloat((product as any).late_payment_penalty || 0) && "-"}
+                          {!parseFloat((product as any).processing_fee || 0) && !parseFloat((product as any).insurance_fee || 0) && !parseFloat((product as any).appraisal_fee || 0) && !parseFloat((product as any).credit_life_insurance_rate || 0) && !parseFloat((product as any).late_payment_penalty || 0) && "-"}
                         </div>
                       </TableCell>
                       <TableCell className="hidden md:table-cell">

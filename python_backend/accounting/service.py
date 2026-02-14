@@ -632,7 +632,9 @@ def post_loan_disbursement(
     insurance_fee: Decimal,
     disbursement_method: str,
     description: str,
-    created_by_id: Optional[str] = None
+    created_by_id: Optional[str] = None,
+    appraisal_fee: Decimal = Decimal("0"),
+    excise_duty: Decimal = Decimal("0")
 ) -> JournalEntry:
     """Post journal entry for loan disbursement.
     
@@ -640,8 +642,9 @@ def post_loan_disbursement(
     - Debit Loans Receivable (1100) = principal
     - Credit Cash/Bank = net_disbursed (what member actually receives)
     - Credit Interest Income (4000) = interest_amount (if deducted upfront)
-    - Credit Fee Income (4010) = processing_fee
+    - Credit Fee Income (4010) = processing_fee + appraisal_fee
     - Credit Insurance Income (4030) = insurance_fee
+    - Credit Tax Payable (2200) = excise_duty
     """
     
     lines = [
@@ -656,11 +659,15 @@ def post_loan_disbursement(
     if interest_amount > 0:
         lines.append({"account_code": "4000", "debit": Decimal("0"), "credit": interest_amount, "member_id": member_id, "loan_id": loan_id, "memo": "Interest income (upfront)"})
     
-    if processing_fee > 0:
-        lines.append({"account_code": "4010", "debit": Decimal("0"), "credit": processing_fee, "member_id": member_id, "loan_id": loan_id, "memo": "Processing fee"})
+    total_fee_income = processing_fee + appraisal_fee
+    if total_fee_income > 0:
+        lines.append({"account_code": "4010", "debit": Decimal("0"), "credit": total_fee_income, "member_id": member_id, "loan_id": loan_id, "memo": "Fee income (processing + appraisal)"})
     
     if insurance_fee > 0:
         lines.append({"account_code": "4030", "debit": Decimal("0"), "credit": insurance_fee, "member_id": member_id, "loan_id": loan_id, "memo": "Insurance fee"})
+    
+    if excise_duty > 0:
+        lines.append({"account_code": "2200", "debit": Decimal("0"), "credit": excise_duty, "member_id": member_id, "loan_id": loan_id, "memo": "Excise duty on fees"})
     
     return accounting_service.create_journal_entry(
         entry_date=date.today(),

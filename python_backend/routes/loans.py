@@ -42,7 +42,9 @@ def post_disbursement_to_gl(tenant_session, loan, member, disbursement_method: s
             processing_fee=loan.processing_fee or Decimal("0"),
             insurance_fee=loan.insurance_fee or Decimal("0"),
             disbursement_method=disbursement_method,
-            description=f"Loan disbursement - {member_name} - {loan.application_number}"
+            description=f"Loan disbursement - {member_name} - {loan.application_number}",
+            appraisal_fee=loan.appraisal_fee or Decimal("0"),
+            excise_duty=loan.excise_duty or Decimal("0")
         )
         print(f"[GL] Posted disbursement to GL: {loan.application_number}, journal entry: {je.entry_number if je else 'None'}")
     except Exception as e:
@@ -169,10 +171,18 @@ async def create_loan(org_id: str, data: LoanApplicationCreate, user=Depends(get
         
         processing_fee = data.amount * (product.processing_fee or Decimal("0")) / Decimal("100")
         insurance_fee = data.amount * (product.insurance_fee or Decimal("0")) / Decimal("100")
+        appraisal_fee = data.amount * (getattr(product, 'appraisal_fee', None) or Decimal("0")) / Decimal("100")
+        
+        base_fees = processing_fee + insurance_fee + appraisal_fee
+        excise_duty_rate = getattr(product, 'excise_duty_rate', None) or Decimal("0")
+        excise_duty = round(base_fees * excise_duty_rate / Decimal("100"), 2)
+        total_fees = round(base_fees + excise_duty, 2)
+        
+        cli_rate = getattr(product, 'credit_life_insurance_rate', None) or Decimal("0")
+        cli_freq = getattr(product, 'credit_life_insurance_freq', None) or "annual"
         
         code = generate_code(tenant_session, "LN")
         
-        # Get current staff ID based on user email
         current_staff = tenant_session.query(Staff).filter(Staff.email == user.email).first()
         
         loan = LoanApplication(
@@ -185,8 +195,13 @@ async def create_loan(org_id: str, data: LoanApplicationCreate, user=Depends(get
             total_interest=calc["total_interest"],
             total_repayment=calc["total_repayment"],
             monthly_repayment=calc["monthly_repayment"],
-            processing_fee=processing_fee,
-            insurance_fee=insurance_fee,
+            processing_fee=round(processing_fee, 2),
+            insurance_fee=round(insurance_fee, 2),
+            appraisal_fee=round(appraisal_fee, 2),
+            excise_duty=excise_duty,
+            total_fees=total_fees,
+            credit_life_insurance_rate=cli_rate,
+            credit_life_insurance_freq=cli_freq,
             purpose=data.purpose,
             disbursement_method=data.disbursement_method,
             disbursement_account=data.disbursement_account,
@@ -410,7 +425,7 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
         if data.disbursement_method == "bank" and not data.disbursement_account:
             raise HTTPException(status_code=400, detail="Account number required for bank disbursement")
         
-        net_amount = loan.amount - (loan.processing_fee or Decimal("0")) - (loan.insurance_fee or Decimal("0"))
+        net_amount = loan.amount - (loan.total_fees or Decimal("0"))
         
         # Check if interest should be deducted upfront
         deduct_interest_upfront = getattr(product, 'deduct_interest_upfront', False) if product else False
@@ -464,6 +479,9 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
         
         from services.instalment_service import generate_instalment_schedule
         generate_instalment_schedule(tenant_session, loan, product)
+        
+        if loan.total_insurance and loan.total_insurance > 0:
+            loan.outstanding_balance = (loan.outstanding_balance or Decimal("0")) + loan.total_insurance
         
         tenant_session.commit()
         tenant_session.refresh(loan)
@@ -581,6 +599,9 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
                 "amount": float(net_amount),
                 "processing_fee": float(loan.processing_fee or 0),
                 "insurance_fee": float(loan.insurance_fee or 0),
+                "appraisal_fee": float(loan.appraisal_fee or 0),
+                "excise_duty": float(loan.excise_duty or 0),
+                "total_fees": float(loan.total_fees or 0),
                 "interest_deducted_upfront": deduct_interest_upfront,
                 "interest_deducted": float(loan.total_interest or 0) if deduct_interest_upfront else 0
             }
@@ -639,7 +660,12 @@ async def get_loan_summary(org_id: str, loan_id: str, user=Depends(get_current_u
                 "principal": float(loan.amount),
                 "interest": float(loan.total_interest or 0),
                 "interest_deducted_upfront": interest_deducted_upfront,
-                "fees": float((loan.processing_fee or Decimal("0")) + (loan.insurance_fee or Decimal("0"))),
+                "fees": float(loan.total_fees or 0),
+                "processing_fee": float(loan.processing_fee or 0),
+                "insurance_fee": float(loan.insurance_fee or 0),
+                "appraisal_fee": float(loan.appraisal_fee or 0),
+                "excise_duty": float(loan.excise_duty or 0),
+                "total_insurance": float(loan.total_insurance or 0),
                 "total_due": total_installments_due,
                 "amount_paid": float(loan.amount_repaid or 0),
                 "outstanding": float(loan.outstanding_balance or 0)
@@ -667,14 +693,16 @@ async def get_loan_instalments(org_id: str, loan_id: str, user=Depends(get_curre
             "expected_principal": float(i.expected_principal),
             "expected_interest": float(i.expected_interest),
             "expected_penalty": float(i.expected_penalty),
+            "expected_insurance": float(getattr(i, 'expected_insurance', None) or 0),
             "paid_principal": float(i.paid_principal),
             "paid_interest": float(i.paid_interest),
             "paid_penalty": float(i.paid_penalty),
-            "total_due": float(i.expected_principal + i.expected_interest + i.expected_penalty),
-            "total_paid": float(i.paid_principal + i.paid_interest + i.paid_penalty),
+            "paid_insurance": float(getattr(i, 'paid_insurance', None) or 0),
+            "total_due": float(i.expected_principal + i.expected_interest + i.expected_penalty + (getattr(i, 'expected_insurance', None) or 0)),
+            "total_paid": float(i.paid_principal + i.paid_interest + i.paid_penalty + (getattr(i, 'paid_insurance', None) or 0)),
             "balance": float(
-                (i.expected_principal + i.expected_interest + i.expected_penalty) -
-                (i.paid_principal + i.paid_interest + i.paid_penalty)
+                (i.expected_principal + i.expected_interest + i.expected_penalty + (getattr(i, 'expected_insurance', None) or 0)) -
+                (i.paid_principal + i.paid_interest + i.paid_penalty + (getattr(i, 'paid_insurance', None) or 0))
             ),
             "status": i.status,
             "paid_at": str(i.paid_at) if i.paid_at else None,
@@ -755,8 +783,18 @@ async def update_loan(org_id: str, loan_id: str, data: LoanApplicationUpdate, us
         
         processing_fee = loan.amount * (product.processing_fee or Decimal("0")) / Decimal("100")
         insurance_fee = loan.amount * (product.insurance_fee or Decimal("0")) / Decimal("100")
-        loan.processing_fee = processing_fee
-        loan.insurance_fee = insurance_fee
+        appraisal_fee = loan.amount * (getattr(product, 'appraisal_fee', None) or Decimal("0")) / Decimal("100")
+        loan.processing_fee = round(processing_fee, 2)
+        loan.insurance_fee = round(insurance_fee, 2)
+        loan.appraisal_fee = round(appraisal_fee, 2)
+        
+        base_fees = processing_fee + insurance_fee + appraisal_fee
+        excise_duty_rate = getattr(product, 'excise_duty_rate', None) or Decimal("0")
+        loan.excise_duty = round(base_fees * excise_duty_rate / Decimal("100"), 2)
+        loan.total_fees = round(base_fees + loan.excise_duty, 2)
+        
+        loan.credit_life_insurance_rate = getattr(product, 'credit_life_insurance_rate', None) or Decimal("0")
+        loan.credit_life_insurance_freq = getattr(product, 'credit_life_insurance_freq', None) or "annual"
         
         if loan.status in ["under_review", "cancelled", "rejected"]:
             loan.status = "pending"

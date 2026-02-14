@@ -150,11 +150,12 @@ async def create_repayment(org_id: str, data: LoanRepaymentCreate, user=Depends(
         overpayment = Decimal("0")
         if has_instalments:
             from services.instalment_service import allocate_payment_to_instalments
-            principal_amount, interest_amount, penalty_amount, overpayment = allocate_payment_to_instalments(
+            principal_amount, interest_amount, penalty_amount, insurance_amount, overpayment = allocate_payment_to_instalments(
                 tenant_session, loan, data.amount
             )
         else:
             principal_amount, interest_amount, penalty_amount = calculate_payment_allocation(loan, data.amount, tenant_session)
+            insurance_amount = Decimal("0")
             outstanding = loan.outstanding_balance or Decimal("0")
             total_allocated = principal_amount + interest_amount + penalty_amount
             if total_allocated > outstanding and outstanding > 0:
@@ -318,8 +319,10 @@ async def get_loan_schedule(org_id: str, loan_id: str, user=Depends(get_current_
 
         for inst in instalments:
             running_balance = max(Decimal("0"), running_balance - inst.expected_principal)
-            inst_total = inst.expected_principal + inst.expected_interest
-            inst_paid = inst.paid_principal + inst.paid_interest + inst.paid_penalty
+            inst_insurance = Decimal(str(getattr(inst, 'expected_insurance', None) or 0))
+            inst_total = inst.expected_principal + inst.expected_interest + inst_insurance
+            paid_insurance = Decimal(str(getattr(inst, 'paid_insurance', None) or 0))
+            inst_paid = inst.paid_principal + inst.paid_interest + inst.paid_penalty + paid_insurance
             total_expected += inst_total
             total_paid += inst_paid
             total_paid_principal += inst.paid_principal
@@ -341,11 +344,13 @@ async def get_loan_schedule(org_id: str, loan_id: str, user=Depends(get_current_
                 "due_date": str(inst.due_date),
                 "principal": float(inst.expected_principal),
                 "interest": float(inst.expected_interest),
+                "insurance": float(inst_insurance),
                 "total_payment": float(inst_total),
                 "balance_after": float(round(running_balance, 2)),
                 "paid_principal": float(inst.paid_principal),
                 "paid_interest": float(inst.paid_interest),
                 "paid_penalty": float(inst.paid_penalty),
+                "paid_insurance": float(paid_insurance),
                 "status": inst.status
             })
 
