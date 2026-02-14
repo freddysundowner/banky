@@ -35,6 +35,7 @@ The frontend is built with React 18 and TypeScript, utilizing Shadcn UI componen
     - **Transactions**: Supports deposits, withdrawals, and transfers across savings, shares, and fixed deposits.
     - **Defaults & Collections**: Automatic overdue detection, aging analysis, and collection tracking.
     - **Accounting Module**: A full double-entry bookkeeping system with a default Chart of Accounts, journal entries, General Ledger, and auto-posting for all financial operations. It generates Trial Balance, Income Statement, and Balance Sheet reports.
+    - **Payroll Accounting Integration**: Payroll disbursement auto-posts journal entries: Debit 5100 (Salaries & Wages) for gross salary, Credit 2400 (PAYE Tax Payable), 2410 (NHIF Payable), 2420 (NSSF Payable), 2440 (Salary Advance Recovery), and 1000/1010 (Cash/Bank) for net salary paid. All statutory deductions are tracked as liabilities until remitted.
 - **M-Pesa Payment Gateways**: Dual gateway support:
     - **Direct Daraja API**: Organizations connect directly to Safaricom's API with their own credentials (Consumer Key, Secret, Passkey)
     - **SunPay (Managed Gateway)**: Simplified M-Pesa integration via SunPay.co.ke - only requires an API key. Supports STK Push, C2B (Paybill), B2C (disbursements), and transaction reversals. Pricing: 1.5% per transaction.
