@@ -715,6 +715,11 @@ def delete_plan(plan_id: str, admin: AdminUser = Depends(require_admin), db: Ses
     db.commit()
     return {"message": "Plan deleted"}
 
+@router.get("/setup-status")
+def check_setup_status(db: Session = Depends(get_db)):
+    existing = db.query(AdminUser).first()
+    return {"admin_exists": existing is not None}
+
 @router.post("/setup")
 def initial_setup(data: dict, db: Session = Depends(get_db)):
     existing = db.query(AdminUser).first()

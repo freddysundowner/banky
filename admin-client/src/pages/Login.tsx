@@ -8,6 +8,12 @@ async function fetchBranding() {
   return res.json()
 }
 
+async function fetchSetupStatus() {
+  const res = await fetch('/api/admin/setup-status')
+  if (!res.ok) return { admin_exists: true }
+  return res.json()
+}
+
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -19,7 +25,13 @@ export default function Login() {
     queryFn: fetchBranding,
   })
 
+  const { data: setupStatus } = useQuery({
+    queryKey: ['setup-status'],
+    queryFn: fetchSetupStatus,
+  })
+
   const platformName = branding?.platform_name || 'BANKY'
+  const adminExists = setupStatus?.admin_exists !== false
 
   const loginMutation = useMutation({
     mutationFn: async () => {
@@ -91,11 +103,13 @@ export default function Login() {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <Link href="/setup" className="text-sm text-primary-600 hover:underline">
-            First time? Set up admin account
-          </Link>
-        </div>
+        {!adminExists && (
+          <div className="mt-6 text-center">
+            <Link href="/setup" className="text-sm text-primary-600 hover:underline">
+              First time? Set up admin account
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   )

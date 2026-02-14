@@ -1,10 +1,16 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Link } from 'wouter'
+import { Link, useLocation } from 'wouter'
 
 async function fetchBranding() {
   const res = await fetch('/api/public/branding')
   if (!res.ok) return { platform_name: 'BANKY' }
+  return res.json()
+}
+
+async function fetchSetupStatus() {
+  const res = await fetch('/api/admin/setup-status')
+  if (!res.ok) return { admin_exists: false }
   return res.json()
 }
 
@@ -14,13 +20,33 @@ export default function Setup() {
   const [name, setName] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const [, setLocation] = useLocation()
 
   const { data: branding } = useQuery({
     queryKey: ['branding'],
     queryFn: fetchBranding,
   })
 
+  const { data: setupStatus, isLoading: checkingStatus } = useQuery({
+    queryKey: ['setup-status'],
+    queryFn: fetchSetupStatus,
+  })
+
   const platformName = branding?.platform_name || 'BANKY'
+
+  useEffect(() => {
+    if (setupStatus?.admin_exists) {
+      setLocation('/')
+    }
+  }, [setupStatus, setLocation])
+
+  if (checkingStatus || setupStatus?.admin_exists) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="text-gray-500">Checking setup status...</div>
+      </div>
+    )
+  }
 
   const setupMutation = useMutation({
     mutationFn: async () => {
