@@ -9,6 +9,7 @@ from schemas.tenant import LoanRestructureCreate, LoanRestructureResponse
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission
 from services.instalment_service import regenerate_instalments_after_restructure
+from routes.loans import calculate_loan
 
 router = APIRouter()
 
@@ -36,29 +37,24 @@ def post_penalty_waiver_to_gl(tenant_session, loan, waived_amount: Decimal, reas
     except Exception as e:
         print(f"[GL] Failed to post penalty waiver to GL: {e}")
 
-def recalculate_loan(loan: LoanApplication, new_term: int = None, new_rate: Decimal = None, repayment_frequency: str = "monthly"):
+def recalculate_loan(loan: LoanApplication, product: LoanProduct, new_term: int = None, new_rate: Decimal = None):
+    """Recalculate loan using the same formula as initial loan creation, based on outstanding balance."""
     term = new_term or loan.term_months
     rate = new_rate if new_rate is not None else loan.interest_rate
     outstanding = loan.outstanding_balance or loan.amount
-    original_amount = loan.amount
-    interest_deducted_upfront = getattr(loan, 'interest_deducted_upfront', False)
-
-    periodic_rate = rate / Decimal("100")
+    interest_deducted_upfront = bool(getattr(loan, 'interest_deducted_upfront', False))
 
     if interest_deducted_upfront:
         periodic_payment = outstanding / term if term > 0 else Decimal("0")
-        total_repayment = outstanding
-        total_interest = Decimal("0")
-    else:
-        total_interest = original_amount * periodic_rate
-        total_repayment = original_amount + total_interest
-        periodic_payment = outstanding / term if term > 0 else Decimal("0")
+        return {
+            "monthly_repayment": round(periodic_payment, 2),
+            "total_repayment": round(outstanding, 2),
+            "total_interest": Decimal("0")
+        }
 
-    return {
-        "monthly_repayment": round(periodic_payment, 2),
-        "total_repayment": round(total_repayment, 2),
-        "total_interest": round(total_interest, 2)
-    }
+    interest_type = getattr(product, 'interest_type', 'reducing_balance') if product else 'reducing_balance'
+    freq = getattr(product, 'repayment_frequency', 'monthly') if product else 'monthly'
+    return calculate_loan(outstanding, term, rate, interest_type, freq)
 
 @router.get("/{org_id}/loans/{loan_id}/restructures")
 async def list_loan_restructures(org_id: str, loan_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
@@ -90,7 +86,6 @@ async def restructure_loan(org_id: str, loan_id: str, data: LoanRestructureCreat
             raise HTTPException(status_code=400, detail="Only active loans can be restructured")
 
         product = tenant_session.query(LoanProduct).filter(LoanProduct.id == loan.loan_product_id).first()
-        freq = getattr(product, 'repayment_frequency', 'monthly') if product else 'monthly'
 
         valid_types = ["extend_term", "reduce_installment", "adjust_interest", "waive_penalty", "grace_period"]
         if data.restructure_type not in valid_types:
@@ -109,7 +104,7 @@ async def restructure_loan(org_id: str, loan_id: str, data: LoanRestructureCreat
             if data.new_term_months <= loan.term_months:
                 raise HTTPException(status_code=400, detail="New term must be greater than current term")
             
-            recalc = recalculate_loan(loan, new_term=data.new_term_months, repayment_frequency=freq)
+            recalc = recalculate_loan(loan, product, new_term=data.new_term_months)
             restructure.new_term_months = data.new_term_months
             restructure.new_monthly_repayment = recalc["monthly_repayment"]
             
@@ -131,7 +126,7 @@ async def restructure_loan(org_id: str, loan_id: str, data: LoanRestructureCreat
                 loan.term_months = new_term
         
         elif data.restructure_type == "adjust_interest" and data.new_interest_rate is not None:
-            recalc = recalculate_loan(loan, new_rate=data.new_interest_rate, repayment_frequency=freq)
+            recalc = recalculate_loan(loan, product, new_rate=data.new_interest_rate)
             restructure.new_interest_rate = data.new_interest_rate
             restructure.new_monthly_repayment = recalc["monthly_repayment"]
             
@@ -187,7 +182,6 @@ async def preview_restructure(
             raise HTTPException(status_code=404, detail="Loan not found")
 
         product = tenant_session.query(LoanProduct).filter(LoanProduct.id == loan.loan_product_id).first()
-        sim_freq = getattr(product, 'repayment_frequency', 'monthly') if product else 'monthly'
 
         current = {
             "term_months": loan.term_months,
@@ -199,7 +193,7 @@ async def preview_restructure(
         new_term = new_term_months or loan.term_months
         new_rate = Decimal(str(new_interest_rate)) if new_interest_rate else loan.interest_rate
         
-        recalc = recalculate_loan(loan, new_term=new_term, new_rate=new_rate, repayment_frequency=sim_freq)
+        recalc = recalculate_loan(loan, product, new_term=new_term, new_rate=new_rate)
         
         proposed = {
             "term_months": new_term,
