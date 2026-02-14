@@ -112,6 +112,33 @@ export default function MemberStatementPage({ organizationId, memberId, onBack }
     },
   });
 
+  const formatTxType = (type: string) => {
+    const labels: Record<string, string> = {
+      deposit: "Deposit",
+      withdrawal: "Withdrawal",
+      transfer: "Transfer",
+      loan_disbursement: "Loan Disbursement",
+      loan_repayment: "Loan Repayment",
+      penalty_charge: "Late Penalty",
+      auto_deduction: "Auto Deduction",
+      interest_posting: "Interest Posting",
+      dividend_payment: "Dividend Payment",
+      share_purchase: "Share Purchase",
+      share_sale: "Share Sale",
+      fixed_deposit: "Fixed Deposit",
+      fd_withdrawal: "FD Withdrawal",
+      fd_interest: "FD Interest",
+    };
+    return labels[type] || type.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  };
+
+  const getTxBadgeVariant = (type: string): "default" | "destructive" | "secondary" | "outline" => {
+    if (type === "deposit" || type === "loan_disbursement" || type === "dividend_payment" || type === "fd_interest" || type === "interest_posting") return "default";
+    if (type === "penalty_charge") return "destructive";
+    if (type === "withdrawal" || type === "loan_repayment" || type === "auto_deduction") return "secondary";
+    return "outline";
+  };
+
   const filteredTransactions = transactions?.filter(tx => {
     if (startDate && new Date(tx.created_at) < new Date(startDate)) return false;
     if (endDate && new Date(tx.created_at) > new Date(endDate + "T23:59:59")) return false;
@@ -139,7 +166,10 @@ export default function MemberStatementPage({ organizationId, memberId, onBack }
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
         th { background-color: #f5f5f5; font-weight: bold; }
         .deposit { color: green; }
-        .withdrawal { color: red; }
+        .withdrawal, .penalty_charge { color: red; }
+        .loan_repayment { color: #2563eb; }
+        .loan_disbursement { color: #7c3aed; }
+        .transfer { color: #d97706; }
         .footer { margin-top: 20px; text-align: center; font-size: 11px; color: #999; }
         @media print { body { -webkit-print-color-adjust: exact; } }
       </style>
@@ -195,7 +225,7 @@ export default function MemberStatementPage({ organizationId, memberId, onBack }
                 <tr>
                   <td>${new Date(tx.created_at).toLocaleDateString()}</td>
                   <td>${tx.transaction_number}</td>
-                  <td class="${tx.transaction_type}">${tx.transaction_type.toUpperCase()}</td>
+                  <td class="${tx.transaction_type}">${formatTxType(tx.transaction_type)}</td>
                   <td>${tx.account_type}</td>
                   <td class="${tx.transaction_type}">${symbol} ${Number(tx.amount).toLocaleString()}</td>
                   <td>${symbol} ${Number(tx.balance_after).toLocaleString()}</td>
@@ -339,13 +369,13 @@ export default function MemberStatementPage({ organizationId, memberId, onBack }
                     </TableCell>
                     <TableCell className="font-mono text-sm">{tx.transaction_number}</TableCell>
                     <TableCell>
-                      <Badge variant={tx.transaction_type === "deposit" ? "default" : "destructive"}>
-                        {tx.transaction_type}
+                      <Badge variant={getTxBadgeVariant(tx.transaction_type)}>
+                        {formatTxType(tx.transaction_type)}
                       </Badge>
                     </TableCell>
                     <TableCell className="capitalize">{tx.account_type}</TableCell>
-                    <TableCell className={`text-right font-medium ${tx.transaction_type === "deposit" ? "text-green-600" : "text-red-600"}`}>
-                      {tx.transaction_type === "deposit" ? "+" : "-"}{symbol} {Number(tx.amount).toLocaleString()}
+                    <TableCell className={`text-right font-medium ${["deposit", "loan_disbursement", "dividend_payment", "fd_interest", "interest_posting"].includes(tx.transaction_type) ? "text-green-600" : "text-red-600"}`}>
+                      {["deposit", "loan_disbursement", "dividend_payment", "fd_interest", "interest_posting"].includes(tx.transaction_type) ? "+" : "-"}{symbol} {Number(tx.amount).toLocaleString()}
                     </TableCell>
                     <TableCell className="text-right">{symbol} {Number(tx.balance_after).toLocaleString()}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">{tx.reference || "-"}</TableCell>
