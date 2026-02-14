@@ -329,7 +329,7 @@ DEFAULT_SMS_TEMPLATES = [
     {
         "name": "Loan Disbursed",
         "template_type": "loan_disbursed",
-        "message_template": "Dear {{name}}, your loan of {{currency}} {{amount}} (Loan #{{loan_number}}) has been disbursed to your account. Thank you for choosing us."
+        "message_template": "Dear {{name}}, your loan of {{currency}} {{amount}} has been disbursed to your account. Thank you for choosing us."
     },
     {
         "name": "Payment Reminder",
