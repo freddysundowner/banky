@@ -43,7 +43,7 @@ async def get_member_statement(
             LoanApplication.member_id == member_id
         ).all()
         
-        active_loans = [l for l in loans if l.status == "disbursed"]
+        active_loans = [l for l in loans if l.status in ["disbursed", "defaulted", "restructured"]]
         
         fixed_deposits = tenant_session.query(MemberFixedDeposit).filter(
             MemberFixedDeposit.member_id == member_id
@@ -224,14 +224,19 @@ async def get_loan_report(
         loans = query.all()
         
         total_applied = sum(l.amount for l in loans)
-        total_approved = sum(l.amount for l in loans if l.status in ["approved", "disbursed", "paid"])
-        total_disbursed = sum(l.amount_disbursed or Decimal("0") for l in loans if l.status in ["disbursed", "paid"])
-        total_outstanding = sum(l.outstanding_balance or Decimal("0") for l in loans if l.status == "disbursed")
+        ever_approved_statuses = ["approved", "disbursed", "paid", "defaulted", "completed", "restructured", "written_off"]
+        total_approved = sum(l.amount for l in loans if l.status in ever_approved_statuses)
+        ever_disbursed_statuses = ["disbursed", "paid", "defaulted", "completed", "restructured", "written_off"]
+        total_disbursed = sum(l.amount_disbursed or Decimal("0") for l in loans if l.status in ever_disbursed_statuses)
+        active_outstanding_statuses = ["disbursed", "defaulted", "restructured"]
+        total_outstanding = sum(l.outstanding_balance or Decimal("0") for l in loans if l.status in active_outstanding_statuses)
         total_repaid = sum(l.amount_repaid or Decimal("0") for l in loans)
         
         by_status = {}
         for l in loans:
             by_status[l.status] = by_status.get(l.status, 0) + 1
+        
+        approved_count = sum(1 for l in loans if l.status in ever_approved_statuses)
         
         return {
             "period": {
@@ -245,7 +250,7 @@ async def get_loan_report(
                 "total_disbursed_amount": float(total_disbursed),
                 "total_outstanding": float(total_outstanding),
                 "total_repaid": float(total_repaid),
-                "approval_rate": (sum(1 for l in loans if l.status in ["approved", "disbursed", "paid"]) / len(loans) * 100) if loans else 0
+                "approval_rate": (approved_count / len(loans) * 100) if loans else 0
             },
             "by_status": by_status,
             "loans": [
@@ -297,7 +302,8 @@ async def get_financial_summary(
             loan_query = loan_query.join(Member).filter(Member.branch_id == branch_id)
         loans = loan_query.all()
         
-        total_loan_portfolio = sum(l.outstanding_balance or Decimal("0") for l in loans if l.status == "disbursed")
+        active_loan_statuses = ["disbursed", "defaulted", "restructured"]
+        total_loan_portfolio = sum(l.outstanding_balance or Decimal("0") for l in loans if l.status in active_loan_statuses)
         
         txn_query = tenant_session.query(Transaction).filter(
             func.date(Transaction.created_at) >= start_date,
@@ -323,7 +329,7 @@ async def get_financial_summary(
         disbursements = tenant_session.query(LoanApplication).filter(
             func.date(LoanApplication.disbursed_at) >= start_date,
             func.date(LoanApplication.disbursed_at) <= end_date,
-            LoanApplication.status.in_(["disbursed", "paid"])
+            LoanApplication.disbursed_at.isnot(None)
         ).all()
         
         total_disbursements = sum(l.amount_disbursed or Decimal("0") for l in disbursements)
@@ -341,7 +347,7 @@ async def get_financial_summary(
             },
             "loan_portfolio": {
                 "total_outstanding": float(total_loan_portfolio),
-                "active_loans": sum(1 for l in loans if l.status == "disbursed")
+                "active_loans": sum(1 for l in loans if l.status in active_loan_statuses)
             },
             "period_activity": {
                 "deposits_received": float(total_deposits_period),
@@ -385,7 +391,8 @@ async def get_profit_loss_report(
         
         disbursements = tenant_session.query(LoanApplication).filter(
             func.date(LoanApplication.disbursed_at) >= start_date,
-            func.date(LoanApplication.disbursed_at) <= end_date
+            func.date(LoanApplication.disbursed_at) <= end_date,
+            LoanApplication.disbursed_at.isnot(None)
         ).all()
         
         upfront_interest = sum(
@@ -454,7 +461,7 @@ async def get_aging_report(org_id: str, user=Depends(get_current_user), db: Sess
         today = date.today()
         
         loans = tenant_session.query(LoanApplication).filter(
-            LoanApplication.status == "disbursed",
+            LoanApplication.status.in_(["disbursed", "defaulted", "restructured"]),
             LoanApplication.outstanding_balance > 0
         ).all()
         

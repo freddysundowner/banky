@@ -303,6 +303,9 @@ export default function Reports({ organizationId }: ReportsProps) {
       pending: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
       approved: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
       disbursed: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
+      defaulted: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
+      restructured: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
+      completed: "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-300",
       rejected: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
       paid: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300",
     };
@@ -578,6 +581,9 @@ export default function Reports({ organizationId }: ReportsProps) {
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="approved">Approved</SelectItem>
                   <SelectItem value="disbursed">Disbursed</SelectItem>
+                  <SelectItem value="defaulted">Defaulted</SelectItem>
+                  <SelectItem value="restructured">Restructured</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
                   <SelectItem value="rejected">Rejected</SelectItem>
                   <SelectItem value="paid">Paid</SelectItem>
                 </SelectContent>
