@@ -89,7 +89,7 @@ def process_auto_deductions(org_id, org_name, connection_string, force=False):
         due_instalments = session.query(LoanInstalment).join(
             LoanApplication, LoanInstalment.loan_id == LoanApplication.id
         ).filter(
-            LoanApplication.status == "disbursed",
+            LoanApplication.status.in_(["disbursed", "defaulted"]),
             LoanInstalment.status.in_(["pending", "partial", "overdue"]),
             LoanInstalment.due_date <= local_today
         ).order_by(
@@ -108,7 +108,7 @@ def process_auto_deductions(org_id, org_name, connection_string, force=False):
                 loan = session.query(LoanApplication).filter(
                     LoanApplication.id == instalment.loan_id
                 ).first()
-                if not loan or loan.status != "disbursed":
+                if not loan or loan.status not in ("disbursed", "defaulted"):
                     continue
 
                 member = session.query(Member).filter(
