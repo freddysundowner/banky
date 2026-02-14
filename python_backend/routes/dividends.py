@@ -396,10 +396,10 @@ async def distribute_dividend(org_id: str, dividend_id: str, user=Depends(get_cu
                         credited_to = "savings account" if md.credited_to == "savings" else "share capital"
                         currency = get_org_currency(tenant_session)
                         message = f"Dear {member.first_name}, your dividend of {currency} {float(md.dividend_amount):,.2f} for FY{declaration.fiscal_year} has been credited to your {credited_to}. Thank you for being a valued member."
-                        send_sms(member.phone_number, message, tenant_session)
+                        send_sms(member.phone, message, tenant_session)
                         sms_sent += 1
                     except Exception as e:
-                        print(f"[SMS] Failed to send dividend SMS to {member.phone_number}: {e}")
+                        print(f"[SMS] Failed to send dividend SMS to {member.phone}: {e}")
         
         return {
             "message": f"Dividend distributed to {credited_count} members. {sms_sent} SMS notifications sent.",
