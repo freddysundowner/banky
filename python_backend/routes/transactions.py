@@ -565,30 +565,6 @@ def generate_statement_pdf(member, transactions, symbol, org_name, account_type=
     elements.append(info_table)
     elements.append(Spacer(1, 4*mm))
 
-    savings = float(member.savings_balance or 0)
-    shares = float(member.shares_balance or 0)
-    deposits = float(member.deposits_balance or 0)
-    bal_data = [
-        [Paragraph("<b>Savings</b>", ParagraphStyle('bc', parent=normal_style, alignment=TA_CENTER)),
-         Paragraph("<b>Shares</b>", ParagraphStyle('bc', parent=normal_style, alignment=TA_CENTER)),
-         Paragraph("<b>Deposits</b>", ParagraphStyle('bc', parent=normal_style, alignment=TA_CENTER))],
-        [Paragraph(f"<b>{symbol} {savings:,.2f}</b>", ParagraphStyle('bv', parent=normal_style, alignment=TA_CENTER, fontSize=11)),
-         Paragraph(f"<b>{symbol} {shares:,.2f}</b>", ParagraphStyle('bv', parent=normal_style, alignment=TA_CENTER, fontSize=11)),
-         Paragraph(f"<b>{symbol} {deposits:,.2f}</b>", ParagraphStyle('bv', parent=normal_style, alignment=TA_CENTER, fontSize=11))],
-    ]
-    bal_table = Table(bal_data, colWidths=[doc.width/3]*3)
-    bal_table.setStyle(TableStyle([
-        ('BOX', (0,0), (0,-1), 0.5, colors.lightgrey),
-        ('BOX', (1,0), (1,-1), 0.5, colors.lightgrey),
-        ('BOX', (2,0), (2,-1), 0.5, colors.lightgrey),
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f0f4f8')),
-        ('TOPPADDING', (0,0), (-1,-1), 4),
-        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
-        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-    ]))
-    elements.append(bal_table)
-    elements.append(Spacer(1, 6*mm))
-
     elements.append(Paragraph("Transaction History", heading_style))
     elements.append(Spacer(1, 2*mm))
 
