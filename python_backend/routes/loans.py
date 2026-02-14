@@ -385,6 +385,11 @@ async def export_loans(org_id: str, export_type: str = "all", status: str = None
                 LoanApplication.status.in_(active_statuses)
             )
             title = f"Loans Due This Week - {today.strftime('%d %b %Y')} to {week_end.strftime('%d %b %Y')}"
+        elif export_type == "filtered":
+            query = tenant_session.query(LoanApplication)
+            if status:
+                query = query.filter(LoanApplication.status == status)
+            title = f"Filtered Loans Export - {today.strftime('%d %b %Y')}"
         else:
             query = tenant_session.query(LoanApplication)
             if status:

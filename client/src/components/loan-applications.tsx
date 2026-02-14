@@ -2267,6 +2267,10 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
             </PopoverTrigger>
             <PopoverContent className="w-56 p-1" align="end">
               <div className="space-y-0.5">
+                <Button variant="ghost" size="sm" className="w-full justify-start text-sm font-normal" onClick={() => handleExport("filtered")} data-testid="button-export-filtered">
+                  <SlidersHorizontal className="h-4 w-4 mr-2 text-primary" /> Download Current View
+                </Button>
+                <div className="border-t my-1" />
                 <Button variant="ghost" size="sm" className="w-full justify-start text-sm font-normal" onClick={() => handleExport("due_today")} data-testid="button-export-due-today">
                   <Clock className="h-4 w-4 mr-2 text-yellow-500" /> Due Today
                 </Button>
