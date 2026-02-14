@@ -93,13 +93,14 @@ export default function MemberStatementPage({ organizationId, memberId, onBack }
   const { data: transactions, isLoading: txLoading } = useQuery<Transaction[]>({
     queryKey: ["/api/organizations", organizationId, "transactions", "member", memberId, accountFilter],
     queryFn: async () => {
-      let url = `/api/organizations/${organizationId}/transactions?member_id=${memberId}`;
+      let url = `/api/organizations/${organizationId}/transactions?member_id=${memberId}&page_size=100`;
       if (accountFilter !== "all") {
         url += `&account_type=${accountFilter}`;
       }
       const res = await fetch(url, { credentials: "include" });
       if (!res.ok) return [];
-      return res.json();
+      const data = await res.json();
+      return Array.isArray(data) ? data : (data.items || []);
     },
   });
 
