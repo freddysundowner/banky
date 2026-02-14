@@ -47,7 +47,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { getErrorMessage } from "@/lib/error-utils";
-import { FileText, Plus, Check, X, Banknote, Eye, ArrowLeft, Pencil, Download, ChevronLeft, ChevronRight, ChevronsUpDown, AlertTriangle, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { FileText, Plus, Check, X, Banknote, Eye, ArrowLeft, Pencil, Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronsUpDown, AlertTriangle, Clock, CheckCircle2, AlertCircle, Search } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
@@ -599,6 +599,11 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
   const [disburseConfirmed, setDisburseConfirmed] = useState(false);
   const [rejectConfirmed, setRejectConfirmed] = useState(false);
   const [branchFilter, setBranchFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
   const { canWrite, hasPermission } = useResourcePermissions(organizationId, RESOURCES.LOANS);
   const canApprove = hasPermission("loans:approve");
   const canReject = hasPermission("loans:reject");
@@ -637,19 +642,42 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
     }
   }, [branches]);
 
-  const { data: applications, isLoading } = useQuery<LoanApplication[]>({
-    queryKey: ["/api/organizations", organizationId, "loan-applications", branchFilter],
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch, statusFilter, branchFilter]);
+
+  const { data: paginatedLoans, isLoading } = useQuery<{
+    data: LoanApplication[];
+    pagination: { page: number; page_size: number; total: number; total_pages: number };
+  }>({
+    queryKey: ["/api/organizations", organizationId, "loan-applications", branchFilter, statusFilter, debouncedSearch, currentPage, pageSize],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (branchFilter && branchFilter !== "all") {
         params.append("branch_id", branchFilter);
       }
-      const url = `/api/organizations/${organizationId}/loan-applications${params.toString() ? `?${params.toString()}` : ''}`;
+      if (statusFilter && statusFilter !== "all") {
+        params.append("status", statusFilter);
+      }
+      if (debouncedSearch) {
+        params.append("search", debouncedSearch);
+      }
+      params.append("page", String(currentPage));
+      params.append("page_size", String(pageSize));
+      const url = `/api/organizations/${organizationId}/loan-applications?${params.toString()}`;
       const res = await fetch(url, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch loan applications");
       return res.json();
     },
   });
+
+  const applications = paginatedLoans?.data;
+  const pagination = paginatedLoans?.pagination;
 
   const { data: products } = useQuery<LoanProduct[]>({
     queryKey: ["/api/organizations", organizationId, "loan-products", "active"],
@@ -2176,11 +2204,35 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
         </div>
       </div>
 
-      {canSeeAllBranches && branches && branches.length > 1 && (
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Filter by Branch:</span>
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by member name or application number..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+            data-testid="input-search-loans"
+          />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[160px]" data-testid="select-status-filter">
+            <SelectValue placeholder="All Statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="under_review">Under Review</SelectItem>
+            <SelectItem value="approved">Approved</SelectItem>
+            <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value="disbursed">Disbursed</SelectItem>
+            <SelectItem value="closed">Closed</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
+        {canSeeAllBranches && branches && branches.length > 1 && (
           <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="All Branches" />
             </SelectTrigger>
             <SelectContent>
@@ -2192,8 +2244,8 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
               ))}
             </SelectContent>
           </Select>
-        </div>
-      )}
+        )}
+      </div>
 
       <Card>
         <CardContent className="pt-6">
@@ -2263,9 +2315,9 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <FileText className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="font-medium">No loan applications yet</h3>
-              <p className="text-sm text-muted-foreground mb-4">Submit your first loan application</p>
-              {canWrite && (
+              <h3 className="font-medium">{debouncedSearch || statusFilter !== "all" ? "No matching loan applications" : "No loan applications yet"}</h3>
+              <p className="text-sm text-muted-foreground mb-4">{debouncedSearch || statusFilter !== "all" ? "Try adjusting your search or filters" : "Submit your first loan application"}</p>
+              {canWrite && !debouncedSearch && statusFilter === "all" && (
                 <Button onClick={() => setViewMode("new")} data-testid="button-first-application">
                   <Plus className="mr-2 h-4 w-4" />
                   New Application
@@ -2275,6 +2327,55 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
           )}
         </CardContent>
       </Card>
+
+      {pagination && pagination.total_pages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Showing {((pagination.page - 1) * pagination.page_size) + 1}-{Math.min(pagination.page * pagination.page_size, pagination.total)} of {pagination.total} applications
+          </p>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentPage(1)}
+              disabled={currentPage <= 1}
+              data-testid="button-first-page"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              data-testid="button-prev-page"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="px-3 text-sm">
+              Page {pagination.page} of {pagination.total_pages}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentPage((p) => Math.min(pagination.total_pages, p + 1))}
+              disabled={currentPage >= pagination.total_pages}
+              data-testid="button-next-page"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setCurrentPage(pagination.total_pages)}
+              disabled={currentPage >= pagination.total_pages}
+              data-testid="button-last-page"
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Approve Dialog */}
       <Dialog open={!!showApproveDialog} onOpenChange={(open) => { if (!open) { setShowApproveDialog(null); setApproveComments(""); setApproveConditions(""); } }}>

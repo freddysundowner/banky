@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from typing import List, Optional
 from decimal import Decimal
 from datetime import datetime, timedelta
@@ -80,7 +80,7 @@ def generate_code(db: Session, prefix: str):
     return f"{prefix}{count + 1:04d}"
 
 @router.get("/{org_id}/loans")
-async def list_loans(org_id: str, status: str = None, member_id: str = None, branch_id: str = None, user=Depends(get_current_user), db: Session = Depends(get_db)):
+async def list_loans(org_id: str, status: str = None, member_id: str = None, branch_id: str = None, page: int = 1, page_size: int = 20, search: str = None, user=Depends(get_current_user), db: Session = Depends(get_db)):
     from routes.common import get_branch_filter
     
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
@@ -89,10 +89,8 @@ async def list_loans(org_id: str, status: str = None, member_id: str = None, bra
     try:
         query = tenant_session.query(LoanApplication)
         
-        # Get branch filter based on user role
         staff_branch_id = get_branch_filter(user)
         
-        # If staff has branch restriction, filter by member's branch
         if staff_branch_id:
             branch_member_ids = [m.id for m in tenant_session.query(Member).filter(Member.branch_id == staff_branch_id).all()]
             query = query.filter(LoanApplication.member_id.in_(branch_member_ids))
@@ -104,7 +102,33 @@ async def list_loans(org_id: str, status: str = None, member_id: str = None, bra
             query = query.filter(LoanApplication.status == status)
         if member_id:
             query = query.filter(LoanApplication.member_id == member_id)
-        loans = query.order_by(LoanApplication.created_at.desc()).all()
+        
+        if search:
+            search_term = f"%{search.strip()}%"
+            matching_member_ids = [m.id for m in tenant_session.query(Member).filter(
+                or_(
+                    Member.first_name.ilike(search_term),
+                    Member.last_name.ilike(search_term),
+                    Member.member_number.ilike(search_term),
+                )
+            ).all()]
+            query = query.filter(
+                or_(
+                    LoanApplication.application_number.ilike(search_term),
+                    LoanApplication.member_id.in_(matching_member_ids) if matching_member_ids else False,
+                )
+            )
+        
+        total = query.count()
+        
+        if page < 1:
+            page = 1
+        if page_size < 1:
+            page_size = 20
+        if page_size > 100:
+            page_size = 100
+        
+        loans = query.order_by(LoanApplication.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
         
         result = []
         for loan in loans:
@@ -121,7 +145,18 @@ async def list_loans(org_id: str, status: str = None, member_id: str = None, bra
             loan_dict["created_by_name"] = f"{created_by.first_name} {created_by.last_name}" if created_by else None
             loan_dict["reviewed_by_name"] = f"{reviewed_by.first_name} {reviewed_by.last_name}" if reviewed_by else None
             result.append(loan_dict)
-        return result
+        
+        total_pages = (total + page_size - 1) // page_size
+        
+        return {
+            "data": result,
+            "pagination": {
+                "page": page,
+                "page_size": page_size,
+                "total": total,
+                "total_pages": total_pages,
+            }
+        }
     finally:
         tenant_session.close()
         tenant_ctx.close()
@@ -831,8 +866,8 @@ async def cancel_loan(org_id: str, loan_id: str, user=Depends(get_current_user),
 
 # Alias routes for frontend compatibility - loan-applications maps to loans
 @router.get("/{org_id}/loan-applications")
-async def list_loan_applications(org_id: str, status: str = None, member_id: str = None, branch_id: str = None, user=Depends(get_current_user), db: Session = Depends(get_db)):
-    return await list_loans(org_id, status, member_id, branch_id, user, db)
+async def list_loan_applications(org_id: str, status: str = None, member_id: str = None, branch_id: str = None, page: int = 1, page_size: int = 20, search: str = None, user=Depends(get_current_user), db: Session = Depends(get_db)):
+    return await list_loans(org_id, status, member_id, branch_id, page, page_size, search, user, db)
 
 @router.post("/{org_id}/loan-applications")
 async def create_loan_application(org_id: str, data: LoanApplicationCreate, user=Depends(get_current_user), db: Session = Depends(get_db)):

@@ -275,9 +275,10 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
   const { data: loans } = useQuery<LoanApplication[]>({
     queryKey: ["/api/organizations", organizationId, "loans", "active"],
     queryFn: async () => {
-      const res = await fetch(`/api/organizations/${organizationId}/loans?status=disbursed`, { credentials: "include" });
+      const res = await fetch(`/api/organizations/${organizationId}/loans?status=disbursed&page_size=100`, { credentials: "include" });
       if (!res.ok) return [];
-      return res.json();
+      const json = await res.json();
+      return json.data || json;
     },
   });
 

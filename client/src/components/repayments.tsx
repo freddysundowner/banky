@@ -154,9 +154,10 @@ export default function Repayments({ organizationId }: RepaymentsProps) {
   const { data: loans } = useQuery<LoanApplication[]>({
     queryKey: ["/api/organizations", organizationId, "loan-applications", "active"],
     queryFn: async () => {
-      const res = await fetch(`/api/organizations/${organizationId}/loan-applications?status=disbursed`, { credentials: "include" });
+      const res = await fetch(`/api/organizations/${organizationId}/loan-applications?status=disbursed&page_size=100`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch loans");
-      return res.json();
+      const json = await res.json();
+      return json.data || json;
     },
   });
 
