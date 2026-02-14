@@ -175,7 +175,6 @@ def regenerate_instalments_after_restructure(tenant_session, loan: LoanApplicati
             interest_portion = round(balance * periodic_rate, 2)
             if i == remaining_term - 1:
                 principal_portion = balance
-                interest_portion = max(total_payment - balance, Decimal("0"))
             else:
                 principal_portion = total_payment - interest_portion
                 if principal_portion > balance:

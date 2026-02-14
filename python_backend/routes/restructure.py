@@ -6,7 +6,7 @@ from decimal import Decimal
 from datetime import datetime, timedelta, date
 import math
 from models.database import get_db
-from models.tenant import LoanApplication, LoanRestructure, LoanProduct, Member
+from models.tenant import LoanApplication, LoanRestructure, LoanProduct, LoanInstalment, Member
 from schemas.tenant import LoanRestructureCreate, LoanRestructureResponse
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission
@@ -108,6 +108,11 @@ async def restructure_loan(org_id: str, loan_id: str, data: LoanRestructureCreat
         remaining_principal, preserved_interest = get_remaining_principal_and_paid_interest(tenant_session, loan)
         amount_already_paid = Decimal(str(loan.amount_repaid or 0))
 
+        completed_count = tenant_session.query(LoanInstalment).filter(
+            LoanInstalment.loan_id == str(loan.id),
+            LoanInstalment.status.in_(["paid", "partial"])
+        ).count()
+
         valid_types = ["extend_term", "reduce_installment", "adjust_interest", "waive_penalty", "grace_period"]
         if data.restructure_type not in valid_types:
             raise HTTPException(status_code=400, detail=f"Invalid restructure type")
@@ -125,7 +130,8 @@ async def restructure_loan(org_id: str, loan_id: str, data: LoanRestructureCreat
             if data.new_term_months <= loan.term_months:
                 raise HTTPException(status_code=400, detail="New term must be greater than current term")
             
-            recalc = recalculate_loan(remaining_principal, product, loan, new_term=data.new_term_months)
+            remaining_periods = data.new_term_months - completed_count
+            recalc = recalculate_loan(remaining_principal, product, loan, new_term=remaining_periods)
             restructure.new_term_months = data.new_term_months
             restructure.new_monthly_repayment = recalc["monthly_repayment"]
             
@@ -161,16 +167,18 @@ async def restructure_loan(org_id: str, loan_id: str, data: LoanRestructureCreat
 
             recalc = recalculate_loan(remaining_principal, product, loan, new_term=new_term)
             
+            total_term = new_term + completed_count
             restructure.new_monthly_repayment = new_payment
-            restructure.new_term_months = new_term
+            restructure.new_term_months = total_term
             loan.monthly_repayment = new_payment
-            loan.term_months = new_term
+            loan.term_months = total_term
             loan.total_interest = preserved_interest + recalc["total_interest"]
             loan.total_repayment = amount_already_paid + recalc["total_repayment"]
             loan.outstanding_balance = recalc["total_repayment"]
         
         elif data.restructure_type == "adjust_interest" and data.new_interest_rate is not None:
-            recalc = recalculate_loan(remaining_principal, product, loan, new_rate=data.new_interest_rate)
+            remaining_periods = int(loan.term_months) - completed_count
+            recalc = recalculate_loan(remaining_principal, product, loan, new_term=remaining_periods, new_rate=data.new_interest_rate)
             restructure.new_interest_rate = data.new_interest_rate
             restructure.new_monthly_repayment = recalc["monthly_repayment"]
             
