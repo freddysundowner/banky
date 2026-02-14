@@ -116,6 +116,14 @@ A Flutter-based mobile application for members located in `/mobile-app/`:
 - **Build Instructions**: See `mobile-app/README.md` for setup and build instructions
 - **Note**: Flutter SDK not available in Replit - download the folder and build locally
 
+## Testing
+- **Framework**: pytest with FastAPI TestClient
+- **Location**: `python_backend/tests/`
+- **Run**: `python -m pytest python_backend/tests/ -v`
+- **Coverage**: 64 tests across 15 test files covering auth (10), branches (5), members (6), loan products (4), loans (4), transactions (5), feature flags (9), accounting (5), expenses (3), HR (3), roles (2), audit (2), SMS (2), reports (2), fixed deposits (2)
+- **Architecture**: SQLite in-memory databases for both master and tenant, mocked tenant context to avoid Neon API calls, session-scoped fixtures for performance
+- **Key Patterns**: `auth_client` fixture provides authenticated TestClient, `tenant_db`/`master_db` fixtures for direct database access
+
 ## External Dependencies
 - **Neon**: For PostgreSQL database provisioning and management for each tenant.
 - **M-Pesa**: Integrated for loan disbursements and potentially other financial transactions.
