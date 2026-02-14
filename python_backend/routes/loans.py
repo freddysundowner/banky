@@ -130,13 +130,34 @@ async def list_loans(org_id: str, status: str = None, member_id: str = None, bra
         
         loans = query.order_by(LoanApplication.created_at.desc()).offset((page - 1) * page_size).limit(page_size).all()
         
+        member_ids = list(set(l.member_id for l in loans if l.member_id))
+        product_ids = list(set(l.loan_product_id for l in loans if l.loan_product_id))
+        staff_ids = list(set(
+            sid for l in loans for sid in [l.created_by_id, l.reviewed_by_id] if sid
+        ))
+        
+        members_map = {}
+        if member_ids:
+            for m in tenant_session.query(Member).filter(Member.id.in_(member_ids)).all():
+                members_map[m.id] = m
+        
+        products_map = {}
+        if product_ids:
+            for p in tenant_session.query(LoanProduct).filter(LoanProduct.id.in_(product_ids)).all():
+                products_map[p.id] = p
+        
+        staff_map = {}
+        if staff_ids:
+            for s in tenant_session.query(Staff).filter(Staff.id.in_(staff_ids)).all():
+                staff_map[s.id] = s
+        
         result = []
         for loan in loans:
             loan_dict = LoanApplicationResponse.model_validate(loan).model_dump()
-            member = tenant_session.query(Member).filter(Member.id == loan.member_id).first()
-            product = tenant_session.query(LoanProduct).filter(LoanProduct.id == loan.loan_product_id).first()
-            created_by = tenant_session.query(Staff).filter(Staff.id == loan.created_by_id).first() if loan.created_by_id else None
-            reviewed_by = tenant_session.query(Staff).filter(Staff.id == loan.reviewed_by_id).first() if loan.reviewed_by_id else None
+            member = members_map.get(loan.member_id)
+            product = products_map.get(loan.loan_product_id)
+            created_by = staff_map.get(loan.created_by_id) if loan.created_by_id else None
+            reviewed_by = staff_map.get(loan.reviewed_by_id) if loan.reviewed_by_id else None
             
             loan_dict["member_name"] = f"{member.first_name} {member.last_name}" if member else ""
             loan_dict["member_first_name"] = member.first_name if member else ""
