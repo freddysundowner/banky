@@ -5,7 +5,8 @@ from typing import List
 from decimal import Decimal
 from datetime import datetime, timedelta, date
 from models.database import get_db
-from models.tenant import LoanApplication, LoanDefault, Member, LoanRepayment, AuditLog, LoanInstalment
+from models.tenant import LoanApplication, LoanDefault, Member, LoanRepayment, AuditLog, LoanInstalment, Transaction
+from services.code_generator import generate_txn_code
 from schemas.tenant import LoanDefaultResponse, LoanDefaultUpdate, LoanDefaultLoanInfo, LoanDefaultMemberInfo
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission
@@ -168,6 +169,17 @@ def check_and_create_defaults(tenant_session):
                     }
                 )
                 tenant_session.add(audit_log)
+
+                penalty_txn = Transaction(
+                    transaction_number=generate_txn_code(),
+                    member_id=str(member.id) if member else None,
+                    transaction_type="penalty_charge",
+                    account_type="loan",
+                    amount=new_penalty,
+                    reference=f"PENALTY-{today.strftime('%Y%m%d')}-{loan.application_number}",
+                    description=f"Late payment penalty ({penalty_rate}%) on overdue amount {amount_overdue} for loan {loan.application_number}"
+                )
+                tenant_session.add(penalty_txn)
 
                 try:
                     from accounting.service import AccountingService
