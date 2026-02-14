@@ -40,7 +40,7 @@ export default function Settings() {
   const [formData, setFormData] = useState<Record<string, string>>({})
   const [hasChanges, setHasChanges] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>('general')
-  const [paymentSubTab, setPaymentSubTab] = useState<'gateways' | 'mpesa' | 'stripe' | 'paystack'>('gateways')
+  const [paymentSubTab, setPaymentSubTab] = useState<'mpesa' | 'stripe' | 'paystack'>('mpesa')
 
   const mutation = useMutation({
     mutationFn: updateSettings,
@@ -237,7 +237,6 @@ export default function Settings() {
                 <div className="border-b border-gray-200">
                   <nav className="flex gap-1" aria-label="Payment tabs">
                     {[
-                      { id: 'gateways' as const, label: 'Gateways', color: 'text-primary-600' },
                       { id: 'mpesa' as const, label: 'M-Pesa', color: 'text-green-600' },
                       { id: 'stripe' as const, label: 'Stripe', color: 'text-blue-600' },
                       { id: 'paystack' as const, label: 'Paystack', color: 'text-teal-600' },
@@ -257,57 +256,24 @@ export default function Settings() {
                   </nav>
                 </div>
 
-                {paymentSubTab === 'gateways' && (
+                {paymentSubTab === 'mpesa' && (() => {
+                  const mpesaEnabled = getValue('gateway_mpesa_enabled') === 'true' || getValue('gateway_mpesa_enabled') === '';
+                  return (
                   <div className="space-y-6">
-                    <div>
-                      <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                        Payment Gateway Toggles
-                      </h2>
-                      <p className="text-sm text-gray-500 mt-1">Enable or disable payment gateways shown to organizations on the upgrade page</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {[
-                        { key: 'gateway_mpesa_enabled', label: 'M-Pesa', currency: 'KES', activeClass: 'border-green-300 bg-green-50' },
-                        { key: 'gateway_stripe_enabled', label: 'Stripe', currency: 'USD', activeClass: 'border-blue-300 bg-blue-50' },
-                        { key: 'gateway_paystack_enabled', label: 'Paystack', currency: 'NGN', activeClass: 'border-teal-300 bg-teal-50' },
-                      ].map((gw) => {
-                        const isEnabled = getValue(gw.key) === 'true' || getValue(gw.key) === '';
-                        return (
-                          <div key={gw.key} className={`rounded-lg border-2 p-4 transition-all ${isEnabled ? gw.activeClass : 'border-gray-200 bg-gray-50 opacity-60'}`}>
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <h4 className="font-medium text-gray-900">{gw.label}</h4>
-                                <p className="text-xs text-gray-500">{gw.currency}</p>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => handleChange(gw.key, isEnabled ? 'false' : 'true')}
-                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isEnabled ? 'bg-green-500' : 'bg-gray-300'}`}
-                              >
-                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {paymentSubTab === 'mpesa' && (
-                  <div className="space-y-6">
-                    <div>
-                      <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        M-Pesa Subscription Payments
-                      </h2>
-                      <p className="text-sm text-gray-500 mt-1">Configure M-Pesa payments for organization subscriptions via SunPay</p>
+                    <div className={`rounded-lg border-2 p-4 transition-all ${mpesaEnabled ? 'border-green-300 bg-green-50' : 'border-gray-200 bg-gray-50'}`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium text-gray-900">Enable M-Pesa Gateway</h3>
+                          <p className="text-xs text-gray-500">KES - Show M-Pesa as a payment option on the upgrade page</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleChange('gateway_mpesa_enabled', mpesaEnabled ? 'false' : 'true')}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${mpesaEnabled ? 'bg-green-500' : 'bg-gray-300'}`}
+                        >
+                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${mpesaEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="bg-green-50 rounded-lg p-5 border border-green-100">
@@ -330,9 +296,7 @@ export default function Settings() {
 
                     <div className="grid gap-6">
                       <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          SunPay API Key
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">SunPay API Key</label>
                         <input
                           type="password"
                           value={getValue('subscription_sunpay_api_key')}
@@ -344,9 +308,7 @@ export default function Settings() {
                       </div>
 
                       <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          M-Pesa Paybill / Till Number
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">M-Pesa Paybill / Till Number</label>
                         <input
                           type="text"
                           value={getValue('subscription_mpesa_paybill')}
@@ -369,34 +331,52 @@ export default function Settings() {
                       </ol>
                     </div>
                   </div>
-                )}
+                  );
+                })()}
 
-                {paymentSubTab === 'stripe' && (
+                {paymentSubTab === 'stripe' && (() => {
+                  const stripeEnabled = getValue('gateway_stripe_enabled') === 'true' || getValue('gateway_stripe_enabled') === '';
+                  return (
                   <div className="space-y-6">
-                    <div>
-                      <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                        </svg>
-                        Stripe (Card Payments - USD)
-                      </h2>
-                      <p className="text-sm text-gray-500 mt-1">Accept credit and debit card payments in USD</p>
+                    <div className={`rounded-lg border-2 p-4 transition-all ${stripeEnabled ? 'border-blue-300 bg-blue-50' : 'border-gray-200 bg-gray-50'}`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium text-gray-900">Enable Stripe Gateway</h3>
+                          <p className="text-xs text-gray-500">USD - Show Stripe card payments on the upgrade page</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleChange('gateway_stripe_enabled', stripeEnabled ? 'false' : 'true')}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${stripeEnabled ? 'bg-green-500' : 'bg-gray-300'}`}
+                        >
+                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${stripeEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                      </div>
                     </div>
 
-                    <div className="bg-blue-50 rounded-lg p-5 border border-blue-100">
-                      <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="text-sm font-medium text-blue-900">Automatic Configuration</h4>
-                          <p className="text-sm text-blue-700 mt-1">
-                            Stripe is managed via the Replit integration. API keys are automatically configured.
-                            Organizations can pay for subscriptions using credit/debit cards in USD.
-                          </p>
-                        </div>
+                    <div className="grid gap-6">
+                      <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Stripe Secret Key</label>
+                        <input
+                          type="password"
+                          value={getValue('stripe_secret_key')}
+                          onChange={(e) => handleChange('stripe_secret_key', e.target.value)}
+                          placeholder="sk_live_..."
+                          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-mono text-sm"
+                        />
+                        <p className="text-sm text-gray-500 mt-2">Get your API keys from <a href="https://dashboard.stripe.com/apikeys" target="_blank" rel="noopener noreferrer" className="underline font-medium text-blue-600">Stripe Dashboard</a></p>
+                      </div>
+
+                      <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Stripe Publishable Key</label>
+                        <input
+                          type="text"
+                          value={getValue('stripe_publishable_key')}
+                          onChange={(e) => handleChange('stripe_publishable_key', e.target.value)}
+                          placeholder="pk_live_..."
+                          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-mono text-sm"
+                        />
+                        <p className="text-sm text-gray-500 mt-2">Used on the frontend for Stripe checkout (optional)</p>
                       </div>
                     </div>
 
@@ -410,25 +390,32 @@ export default function Settings() {
                       </ol>
                     </div>
                   </div>
-                )}
+                  );
+                })()}
 
-                {paymentSubTab === 'paystack' && (
+                {paymentSubTab === 'paystack' && (() => {
+                  const paystackEnabled = getValue('gateway_paystack_enabled') === 'true' || getValue('gateway_paystack_enabled') === '';
+                  return (
                   <div className="space-y-6">
-                    <div>
-                      <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                        <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        Paystack (NGN Payments)
-                      </h2>
-                      <p className="text-sm text-gray-500 mt-1">Configure Paystack for Nigerian Naira subscription payments</p>
+                    <div className={`rounded-lg border-2 p-4 transition-all ${paystackEnabled ? 'border-teal-300 bg-teal-50' : 'border-gray-200 bg-gray-50'}`}>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium text-gray-900">Enable Paystack Gateway</h3>
+                          <p className="text-xs text-gray-500">NGN - Show Paystack as a payment option on the upgrade page</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleChange('gateway_paystack_enabled', paystackEnabled ? 'false' : 'true')}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${paystackEnabled ? 'bg-green-500' : 'bg-gray-300'}`}
+                        >
+                          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${paystackEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="grid gap-6">
                       <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Paystack Secret Key
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Paystack Secret Key</label>
                         <input
                           type="password"
                           value={getValue('paystack_secret_key')}
@@ -440,9 +427,7 @@ export default function Settings() {
                       </div>
 
                       <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Paystack Public Key
-                        </label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Paystack Public Key</label>
                         <input
                           type="text"
                           value={getValue('paystack_public_key')}
@@ -464,7 +449,8 @@ export default function Settings() {
                       </ol>
                     </div>
                   </div>
-                )}
+                  );
+                })()}
               </div>
             )}
 
