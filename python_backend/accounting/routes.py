@@ -405,7 +405,8 @@ async def preview_opening_balances(
         svc.seed_default_accounts()
         
         existing = tenant_session.query(JournalEntry).filter(
-            JournalEntry.source_type == "opening_balance"
+            JournalEntry.source_type == "opening_balance",
+            JournalEntry.is_reversed == False
         ).first()
         
         result = _calculate_opening_balance_gaps(tenant_session, svc)
@@ -434,7 +435,8 @@ async def post_opening_balances(
     
     try:
         existing = tenant_session.query(JournalEntry).filter(
-            JournalEntry.source_type == "opening_balance"
+            JournalEntry.source_type == "opening_balance",
+            JournalEntry.is_reversed == False
         ).first()
         if existing:
             raise HTTPException(
