@@ -98,15 +98,16 @@ def process_auto_deductions(org_id, org_name, connection_string, force=False):
 
         print(f"  Found {len(due_instalments)} due instalments")
 
-        processed_loans = set()
+        loan_instalments_map = {}
+        for inst in due_instalments:
+            loan_instalments_map.setdefault(inst.loan_id, []).append(inst)
 
-        for instalment in due_instalments:
-            if instalment.loan_id in processed_loans:
-                continue
+        from services.instalment_service import allocate_payment_to_instalments
 
+        for loan_id, instalments in loan_instalments_map.items():
             try:
                 loan = session.query(LoanApplication).filter(
-                    LoanApplication.id == instalment.loan_id
+                    LoanApplication.id == loan_id
                 ).first()
                 if not loan or loan.status not in ("disbursed", "defaulted"):
                     continue
@@ -121,51 +122,83 @@ def process_auto_deductions(org_id, org_name, connection_string, force=False):
                 if savings <= 0:
                     print(f"  Skipping loan {loan.application_number} for {member.first_name} {member.last_name}: insufficient savings (KES {savings})")
                     skipped_count += 1
-                    processed_loans.add(instalment.loan_id)
                     continue
 
-                total_due = (
-                    (instalment.expected_principal or Decimal("0")) - (instalment.paid_principal or Decimal("0")) +
-                    (instalment.expected_interest or Decimal("0")) - (instalment.paid_interest or Decimal("0")) +
-                    (instalment.expected_penalty or Decimal("0")) - (instalment.paid_penalty or Decimal("0"))
-                )
+                total_due_for_loan = Decimal("0")
+                for inst in instalments:
+                    inst_remaining = (
+                        (inst.expected_principal or Decimal("0")) - (inst.paid_principal or Decimal("0")) +
+                        (inst.expected_interest or Decimal("0")) - (inst.paid_interest or Decimal("0")) +
+                        (inst.expected_penalty or Decimal("0")) - (inst.paid_penalty or Decimal("0"))
+                    )
+                    if inst_remaining > 0:
+                        total_due_for_loan += inst_remaining
 
-                if total_due <= 0:
+                if total_due_for_loan <= 0:
                     continue
 
-                deduction_amount = min(savings, total_due)
+                deduction_amount = min(savings, total_due_for_loan)
 
-                from services.instalment_service import allocate_payment_to_instalments
+                savings_before = member.savings_balance or Decimal("0")
+
                 principal_amount, interest_amount, penalty_amount, insurance_amount, overpayment = allocate_payment_to_instalments(
                     session, loan, deduction_amount
                 )
 
-                actual_loan_payment = principal_amount + interest_amount + penalty_amount + insurance_amount
-                if actual_loan_payment <= 0:
+                actual_payment = principal_amount + interest_amount + penalty_amount + insurance_amount
+                if actual_payment <= 0:
                     continue
 
-                balance_before = member.savings_balance or Decimal("0")
-                member.savings_balance = balance_before - actual_loan_payment
+                member.savings_balance = savings_before - actual_payment
 
                 code = generate_repayment_code()
                 auto_ref = f"AUTO-{local_today.strftime('%Y%m%d')}-{loan.application_number}"
 
+                instalments_covered = len([i for i in instalments if i.status == "paid"])
+
                 repayment = LoanRepayment(
                     repayment_number=code,
                     loan_id=str(loan.id),
-                    amount=actual_loan_payment,
+                    amount=actual_payment,
                     principal_amount=principal_amount,
                     interest_amount=interest_amount,
                     penalty_amount=penalty_amount,
                     payment_method="auto_deduction",
                     reference=auto_ref,
-                    notes=f"Auto-deducted from savings on {local_today}",
+                    notes=f"Auto-deducted from savings on {local_today} covering {instalments_covered} instalment(s)",
                     payment_date=datetime.utcnow()
                 )
 
-                loan.amount_repaid = (loan.amount_repaid or Decimal("0")) + actual_loan_payment
-                loan.outstanding_balance = (loan.outstanding_balance or Decimal("0")) - actual_loan_payment
+                loan.amount_repaid = (loan.amount_repaid or Decimal("0")) + actual_payment
+                loan.outstanding_balance = (loan.outstanding_balance or Decimal("0")) - actual_payment
                 loan.last_payment_date = local_today
+
+                withdrawal_txn = Transaction(
+                    transaction_number=generate_txn_code(),
+                    member_id=str(member.id),
+                    transaction_type="withdrawal",
+                    account_type="savings",
+                    amount=actual_payment,
+                    balance_before=savings_before,
+                    balance_after=member.savings_balance,
+                    payment_method="auto_deduction",
+                    reference=auto_ref,
+                    description=f"Auto loan deduction for {loan.application_number} ({instalments_covered} instalment(s))"
+                )
+
+                repayment_txn = Transaction(
+                    transaction_number=generate_txn_code(),
+                    member_id=str(member.id),
+                    transaction_type="loan_repayment",
+                    account_type="loan",
+                    amount=actual_payment,
+                    reference=auto_ref,
+                    description=f"Auto loan repayment for {loan.application_number} ({instalments_covered} instalment(s))"
+                )
+
+                session.add(repayment)
+                session.add(withdrawal_txn)
+                session.add(repayment_txn)
 
                 next_inst = session.query(LoanInstalment).filter(
                     LoanInstalment.loan_id == str(loan.id),
@@ -174,7 +207,7 @@ def process_auto_deductions(org_id, org_name, connection_string, force=False):
                 if next_inst:
                     loan.next_payment_date = next_inst.due_date
 
-                if loan.outstanding_balance <= 0:
+                if loan.outstanding_balance is not None and loan.outstanding_balance <= 0:
                     loan.status = "paid"
                     loan.closed_at = datetime.utcnow()
                     loan.outstanding_balance = Decimal("0")
@@ -183,44 +216,17 @@ def process_auto_deductions(org_id, org_name, connection_string, force=False):
                         LoanDefault.status.in_(["overdue", "in_collection"])
                     ).update({"status": "resolved", "resolved_at": datetime.utcnow()}, synchronize_session="fetch")
 
-                withdrawal_txn = Transaction(
-                    transaction_number=generate_txn_code(),
-                    member_id=str(member.id),
-                    transaction_type="withdrawal",
-                    account_type="savings",
-                    amount=actual_loan_payment,
-                    balance_before=balance_before,
-                    balance_after=member.savings_balance,
-                    payment_method="auto_deduction",
-                    reference=auto_ref,
-                    description=f"Auto loan deduction for {loan.application_number}"
-                )
-
-                repayment_txn = Transaction(
-                    transaction_number=generate_txn_code(),
-                    member_id=str(member.id),
-                    transaction_type="loan_repayment",
-                    account_type="loan",
-                    amount=actual_loan_payment,
-                    reference=auto_ref,
-                    description=f"Auto loan repayment for {loan.application_number}"
-                )
-
-                session.add(repayment)
-                session.add(withdrawal_txn)
-                session.add(repayment_txn)
-
                 audit_log = AuditLog(
                     staff_id=None,
                     action="auto_loan_deduction",
                     entity_type="loan_repayment",
                     entity_id=str(loan.id),
-                    old_values={"savings_balance": str(balance_before)},
+                    old_values={"savings_balance": str(savings_before)},
                     new_values={
-                        "deducted_amount": str(actual_loan_payment),
+                        "deducted_amount": str(actual_payment),
+                        "instalments_covered": instalments_covered,
                         "savings_balance_after": str(member.savings_balance),
                         "loan_outstanding": str(loan.outstanding_balance),
-                        "repayment_number": code,
                     }
                 )
                 session.add(audit_log)
@@ -231,14 +237,14 @@ def process_auto_deductions(org_id, org_name, connection_string, force=False):
                     from routes.repayments import post_repayment_to_gl
                     post_repayment_to_gl(session, repayment, loan, member)
                 except Exception as gl_err:
-                    print(f"  [GL] Warning: Failed to post GL entry: {gl_err}")
+                    print(f"  [GL] Warning: Failed to post GL entry for {repayment.repayment_number}: {gl_err}")
 
                 try:
                     from routes.repayments import try_send_sms
                     if member.phone:
                         sms_vars = {
                             "name": member.first_name,
-                            "amount": str(actual_loan_payment),
+                            "amount": str(actual_payment),
                             "balance": str(loan.outstanding_balance or 0)
                         }
                         try_send_sms(
@@ -253,17 +259,15 @@ def process_auto_deductions(org_id, org_name, connection_string, force=False):
                 except Exception as sms_err:
                     print(f"  [SMS] Warning: Failed to send SMS: {sms_err}")
 
-                print(f"  Deducted KES {actual_loan_payment} from {member.first_name} {member.last_name} savings for loan {loan.application_number}")
+                print(f"  Deducted KES {total_deducted_for_loan} from {member.first_name} {member.last_name} savings for {instalments_paid} instalment(s) on loan {loan.application_number}")
                 deducted_count += 1
-                processed_loans.add(instalment.loan_id)
 
             except Exception as e:
                 session.rollback()
-                print(f"  Error processing instalment {instalment.id}: {e}")
+                print(f"  Error processing loan {loan_id}: {e}")
                 import traceback
                 traceback.print_exc()
                 error_count += 1
-                processed_loans.add(instalment.loan_id)
 
         last_run_setting = session.query(OrganizationSettings).filter(
             OrganizationSettings.setting_key == "auto_loan_deduction_last_run"
