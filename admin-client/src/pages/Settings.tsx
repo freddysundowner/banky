@@ -40,6 +40,7 @@ export default function Settings() {
   const [formData, setFormData] = useState<Record<string, string>>({})
   const [hasChanges, setHasChanges] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>('general')
+  const [paymentSubTab, setPaymentSubTab] = useState<'gateways' | 'mpesa' | 'stripe' | 'paystack'>('gateways')
 
   const mutation = useMutation({
     mutationFn: updateSettings,
@@ -232,167 +233,238 @@ export default function Settings() {
             )}
 
             {activeTab === 'payments' && (
-              <div className="space-y-8">
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                    Payment Gateway Toggles
-                  </h2>
-                  <p className="text-sm text-gray-500 mt-1">Enable or disable payment gateways shown to organizations on the upgrade page</p>
+              <div className="space-y-6">
+                <div className="border-b border-gray-200">
+                  <nav className="flex gap-1" aria-label="Payment tabs">
+                    {[
+                      { id: 'gateways' as const, label: 'Gateways', color: 'text-primary-600' },
+                      { id: 'mpesa' as const, label: 'M-Pesa', color: 'text-green-600' },
+                      { id: 'stripe' as const, label: 'Stripe', color: 'text-blue-600' },
+                      { id: 'paystack' as const, label: 'Paystack', color: 'text-teal-600' },
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setPaymentSubTab(tab.id)}
+                        className={`px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors ${
+                          paymentSubTab === tab.id
+                            ? `${tab.color} border-b-2 border-current bg-white`
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </nav>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {[
-                    { key: 'gateway_mpesa_enabled', label: 'M-Pesa', currency: 'KES', activeClass: 'border-green-300 bg-green-50' },
-                    { key: 'gateway_stripe_enabled', label: 'Stripe', currency: 'USD', activeClass: 'border-blue-300 bg-blue-50' },
-                    { key: 'gateway_paystack_enabled', label: 'Paystack', currency: 'NGN', activeClass: 'border-teal-300 bg-teal-50' },
-                  ].map((gw) => {
-                    const isEnabled = getValue(gw.key) === 'true' || getValue(gw.key) === '';
-                    return (
-                      <div key={gw.key} className={`rounded-lg border-2 p-4 transition-all ${isEnabled ? gw.activeClass : 'border-gray-200 bg-gray-50 opacity-60'}`}>
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="font-medium text-gray-900">{gw.label}</h4>
-                            <p className="text-xs text-gray-500">{gw.currency}</p>
+                {paymentSubTab === 'gateways' && (
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        Payment Gateway Toggles
+                      </h2>
+                      <p className="text-sm text-gray-500 mt-1">Enable or disable payment gateways shown to organizations on the upgrade page</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {[
+                        { key: 'gateway_mpesa_enabled', label: 'M-Pesa', currency: 'KES', activeClass: 'border-green-300 bg-green-50' },
+                        { key: 'gateway_stripe_enabled', label: 'Stripe', currency: 'USD', activeClass: 'border-blue-300 bg-blue-50' },
+                        { key: 'gateway_paystack_enabled', label: 'Paystack', currency: 'NGN', activeClass: 'border-teal-300 bg-teal-50' },
+                      ].map((gw) => {
+                        const isEnabled = getValue(gw.key) === 'true' || getValue(gw.key) === '';
+                        return (
+                          <div key={gw.key} className={`rounded-lg border-2 p-4 transition-all ${isEnabled ? gw.activeClass : 'border-gray-200 bg-gray-50 opacity-60'}`}>
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h4 className="font-medium text-gray-900">{gw.label}</h4>
+                                <p className="text-xs text-gray-500">{gw.currency}</p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleChange(gw.key, isEnabled ? 'false' : 'true')}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isEnabled ? 'bg-green-500' : 'bg-gray-300'}`}
+                              >
+                                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                              </button>
+                            </div>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => handleChange(gw.key, isEnabled ? 'false' : 'true')}
-                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${isEnabled ? 'bg-green-500' : 'bg-gray-300'}`}
-                          >
-                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
-                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {paymentSubTab === 'mpesa' && (
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        M-Pesa Subscription Payments
+                      </h2>
+                      <p className="text-sm text-gray-500 mt-1">Configure M-Pesa payments for organization subscriptions via SunPay</p>
+                    </div>
+
+                    <div className="bg-green-50 rounded-lg p-5 border border-green-100">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                          <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-medium text-green-900">About SunPay</h4>
+                          <p className="text-sm text-green-700 mt-1">
+                            SunPay provides a simplified M-Pesa integration for processing subscription payments. 
+                            This is a <strong>platform-level</strong> API key, separate from individual organization M-Pesa settings.
+                            Get your API key at <a href="https://sunpay.co.ke" target="_blank" rel="noopener noreferrer" className="underline font-medium">sunpay.co.ke</a>
+                          </p>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-
-                <div className="border-t border-gray-200 pt-8">
-                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    M-Pesa Subscription Payments
-                  </h2>
-                  <p className="text-sm text-gray-500 mt-1">Configure M-Pesa payments for organization subscriptions via SunPay</p>
-                </div>
-
-                <div className="bg-green-50 rounded-lg p-5 border border-green-100">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                      <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-sm font-medium text-green-900">About SunPay</h4>
-                      <p className="text-sm text-green-700 mt-1">
-                        SunPay provides a simplified M-Pesa integration for processing subscription payments. 
-                        This is a <strong>platform-level</strong> API key, separate from individual organization M-Pesa settings.
-                        Get your API key at <a href="https://sunpay.co.ke" target="_blank" rel="noopener noreferrer" className="underline font-medium">sunpay.co.ke</a>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid gap-6">
-                  <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      SunPay API Key
-                    </label>
-                    <input
-                      type="password"
-                      value={getValue('subscription_sunpay_api_key')}
-                      onChange={(e) => handleChange('subscription_sunpay_api_key', e.target.value)}
-                      placeholder="Enter your SunPay API key..."
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-mono text-sm"
-                    />
-                    <p className="text-sm text-gray-500 mt-2">Used to process M-Pesa STK Push payments when organizations subscribe or upgrade their plans</p>
-                  </div>
-
-                  <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      M-Pesa Paybill / Till Number
-                    </label>
-                    <input
-                      type="text"
-                      value={getValue('subscription_mpesa_paybill')}
-                      onChange={(e) => handleChange('subscription_mpesa_paybill', e.target.value)}
-                      placeholder="e.g. 174379"
-                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
-                    />
-                    <p className="text-sm text-gray-500 mt-2">Displayed to customers on payment receipts (optional)</p>
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-200 pt-8">
-                  <h3 className="text-md font-semibold text-gray-900 mb-3">How M-Pesa Works</h3>
-                  <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600">
-                    <li>An organization owner goes to <strong>Subscription Plans</strong> and selects a plan</li>
-                    <li>They choose <strong>M-Pesa</strong> as payment method and enter their phone number</li>
-                    <li>An STK Push prompt is sent to their phone via SunPay</li>
-                    <li>After entering their M-Pesa PIN, a webhook confirms the payment</li>
-                    <li>The subscription is automatically activated for the plan's billing period</li>
-                  </ol>
-                </div>
-
-                <div className="border-t border-gray-200 pt-8">
-                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
-                    <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                    </svg>
-                    Stripe (Card Payments - USD)
-                  </h2>
-                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-100 mb-4">
-                    <p className="text-sm text-blue-700">
-                      Stripe is managed via the Replit integration. API keys are automatically configured.
-                      Organizations can pay for subscriptions using credit/debit cards in USD.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="border-t border-gray-200 pt-8">
-                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
-                    <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
-                    Paystack (NGN Payments)
-                  </h2>
-                  <p className="text-sm text-gray-500 mb-4">Configure Paystack for Nigerian Naira subscription payments</p>
-
-                  <div className="grid gap-6">
-                    <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Paystack Secret Key
-                      </label>
-                      <input
-                        type="password"
-                        value={getValue('paystack_secret_key')}
-                        onChange={(e) => handleChange('paystack_secret_key', e.target.value)}
-                        placeholder="sk_live_..."
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-mono text-sm"
-                      />
-                      <p className="text-sm text-gray-500 mt-2">Get your API keys from <a href="https://dashboard.paystack.com/#/settings/developer" target="_blank" rel="noopener noreferrer" className="underline font-medium text-teal-600">Paystack Dashboard</a></p>
                     </div>
 
-                    <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Paystack Public Key
-                      </label>
-                      <input
-                        type="text"
-                        value={getValue('paystack_public_key')}
-                        onChange={(e) => handleChange('paystack_public_key', e.target.value)}
-                        placeholder="pk_live_..."
-                        className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-mono text-sm"
-                      />
-                      <p className="text-sm text-gray-500 mt-2">Used on the frontend for Paystack inline checkout (optional)</p>
+                    <div className="grid gap-6">
+                      <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          SunPay API Key
+                        </label>
+                        <input
+                          type="password"
+                          value={getValue('subscription_sunpay_api_key')}
+                          onChange={(e) => handleChange('subscription_sunpay_api_key', e.target.value)}
+                          placeholder="Enter your SunPay API key..."
+                          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-mono text-sm"
+                        />
+                        <p className="text-sm text-gray-500 mt-2">Used to process M-Pesa STK Push payments when organizations subscribe or upgrade their plans</p>
+                      </div>
+
+                      <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          M-Pesa Paybill / Till Number
+                        </label>
+                        <input
+                          type="text"
+                          value={getValue('subscription_mpesa_paybill')}
+                          onChange={(e) => handleChange('subscription_mpesa_paybill', e.target.value)}
+                          placeholder="e.g. 174379"
+                          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                        />
+                        <p className="text-sm text-gray-500 mt-2">Displayed to customers on payment receipts (optional)</p>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-gray-200 pt-6">
+                      <h3 className="text-md font-semibold text-gray-900 mb-3">How M-Pesa Works</h3>
+                      <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600">
+                        <li>An organization owner goes to <strong>Subscription Plans</strong> and selects a plan</li>
+                        <li>They choose <strong>M-Pesa</strong> as payment method and enter their phone number</li>
+                        <li>An STK Push prompt is sent to their phone via SunPay</li>
+                        <li>After entering their M-Pesa PIN, a webhook confirms the payment</li>
+                        <li>The subscription is automatically activated for the plan's billing period</li>
+                      </ol>
                     </div>
                   </div>
-                </div>
+                )}
+
+                {paymentSubTab === 'stripe' && (
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        Stripe (Card Payments - USD)
+                      </h2>
+                      <p className="text-sm text-gray-500 mt-1">Accept credit and debit card payments in USD</p>
+                    </div>
+
+                    <div className="bg-blue-50 rounded-lg p-5 border border-blue-100">
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-medium text-blue-900">Automatic Configuration</h4>
+                          <p className="text-sm text-blue-700 mt-1">
+                            Stripe is managed via the Replit integration. API keys are automatically configured.
+                            Organizations can pay for subscriptions using credit/debit cards in USD.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-gray-200 pt-6">
+                      <h3 className="text-md font-semibold text-gray-900 mb-3">How Stripe Works</h3>
+                      <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600">
+                        <li>An organization owner selects a plan and chooses <strong>Card Payment</strong></li>
+                        <li>They are redirected to Stripe's secure checkout page</li>
+                        <li>After entering card details and completing payment, a webhook confirms it</li>
+                        <li>The subscription is automatically activated for the plan's billing period</li>
+                      </ol>
+                    </div>
+                  </div>
+                )}
+
+                {paymentSubTab === 'paystack' && (
+                  <div className="space-y-6">
+                    <div>
+                      <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                        <svg className="w-5 h-5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Paystack (NGN Payments)
+                      </h2>
+                      <p className="text-sm text-gray-500 mt-1">Configure Paystack for Nigerian Naira subscription payments</p>
+                    </div>
+
+                    <div className="grid gap-6">
+                      <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Paystack Secret Key
+                        </label>
+                        <input
+                          type="password"
+                          value={getValue('paystack_secret_key')}
+                          onChange={(e) => handleChange('paystack_secret_key', e.target.value)}
+                          placeholder="sk_live_..."
+                          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-mono text-sm"
+                        />
+                        <p className="text-sm text-gray-500 mt-2">Get your API keys from <a href="https://dashboard.paystack.com/#/settings/developer" target="_blank" rel="noopener noreferrer" className="underline font-medium text-teal-600">Paystack Dashboard</a></p>
+                      </div>
+
+                      <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Paystack Public Key
+                        </label>
+                        <input
+                          type="text"
+                          value={getValue('paystack_public_key')}
+                          onChange={(e) => handleChange('paystack_public_key', e.target.value)}
+                          placeholder="pk_live_..."
+                          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-mono text-sm"
+                        />
+                        <p className="text-sm text-gray-500 mt-2">Used on the frontend for Paystack inline checkout (optional)</p>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-gray-200 pt-6">
+                      <h3 className="text-md font-semibold text-gray-900 mb-3">How Paystack Works</h3>
+                      <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600">
+                        <li>An organization owner selects a plan and chooses <strong>Paystack</strong></li>
+                        <li>They are redirected to Paystack's secure payment page</li>
+                        <li>After completing payment (card, bank transfer, or USSD), a webhook confirms it</li>
+                        <li>The subscription is automatically activated for the plan's billing period</li>
+                      </ol>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
