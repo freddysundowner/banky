@@ -350,24 +350,27 @@ async def export_loans(org_id: str, export_type: str = "all", status: str = None
     try:
         today = date.today()
         
+        active_statuses = ["disbursed", "defaulted", "restructured"]
+        unpaid_instalment_statuses = ["pending", "partial", "overdue"]
+        
         if export_type == "due_today":
             due_loan_ids = [i.loan_id for i in tenant_session.query(LoanInstalment).filter(
                 LoanInstalment.due_date == today,
-                LoanInstalment.status.in_(["pending", "partial"])
+                LoanInstalment.status.in_(unpaid_instalment_statuses)
             ).all()]
             query = tenant_session.query(LoanApplication).filter(
                 LoanApplication.id.in_(due_loan_ids),
-                LoanApplication.status == "disbursed"
+                LoanApplication.status.in_(active_statuses)
             )
             title = f"Loans Due Today - {today.strftime('%d %b %Y')}"
         elif export_type == "overdue":
             overdue_loan_ids = [i.loan_id for i in tenant_session.query(LoanInstalment).filter(
                 LoanInstalment.due_date < today,
-                LoanInstalment.status.in_(["pending", "partial"])
+                LoanInstalment.status.in_(unpaid_instalment_statuses)
             ).all()]
             query = tenant_session.query(LoanApplication).filter(
                 LoanApplication.id.in_(overdue_loan_ids),
-                LoanApplication.status == "disbursed"
+                LoanApplication.status.in_(active_statuses)
             )
             title = f"Overdue Loans - {today.strftime('%d %b %Y')}"
         elif export_type == "due_this_week":
@@ -375,11 +378,11 @@ async def export_loans(org_id: str, export_type: str = "all", status: str = None
             due_loan_ids = [i.loan_id for i in tenant_session.query(LoanInstalment).filter(
                 LoanInstalment.due_date >= today,
                 LoanInstalment.due_date <= week_end,
-                LoanInstalment.status.in_(["pending", "partial"])
+                LoanInstalment.status.in_(unpaid_instalment_statuses)
             ).all()]
             query = tenant_session.query(LoanApplication).filter(
                 LoanApplication.id.in_(due_loan_ids),
-                LoanApplication.status == "disbursed"
+                LoanApplication.status.in_(active_statuses)
             )
             title = f"Loans Due This Week - {today.strftime('%d %b %Y')} to {week_end.strftime('%d %b %Y')}"
         else:
@@ -387,7 +390,7 @@ async def export_loans(org_id: str, export_type: str = "all", status: str = None
             if status:
                 query = query.filter(LoanApplication.status == status)
             else:
-                query = query.filter(LoanApplication.status == "disbursed")
+                query = query.filter(LoanApplication.status.in_(active_statuses))
             title = f"Loan Applications Export - {today.strftime('%d %b %Y')}"
         
         staff_branch_id = get_branch_filter(user)
