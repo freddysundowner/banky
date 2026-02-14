@@ -5,7 +5,7 @@ from typing import List, Optional
 from decimal import Decimal
 from datetime import datetime, timedelta
 from models.database import get_db
-from models.tenant import LoanApplication, LoanProduct, Member, LoanGuarantor, LoanExtraCharge, Transaction, Staff
+from models.tenant import LoanApplication, LoanProduct, Member, LoanGuarantor, LoanExtraCharge, Transaction, Staff, LoanInstalment
 from schemas.tenant import LoanApplicationCreate, LoanApplicationUpdate, LoanApplicationResponse, LoanApplicationAction, LoanDisbursement, LoanGuarantorCreate
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission, require_any_permission, require_role
@@ -313,6 +313,223 @@ async def create_loan(org_id: str, data: LoanApplicationCreate, user=Depends(get
         if eligibility_warning:
             response["eligibility_warning"] = eligibility_warning
         return response
+    finally:
+        tenant_session.close()
+        tenant_ctx.close()
+
+@router.get("/{org_id}/loans/export")
+async def export_loans(org_id: str, export_type: str = "all", status: str = None, product_id: str = None, branch_id: str = None, date_from: str = None, date_to: str = None, search: str = None, user=Depends(get_current_user), db: Session = Depends(get_db)):
+    from fastapi.responses import StreamingResponse
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from io import BytesIO
+    from datetime import date
+    from routes.common import get_branch_filter
+    
+    tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
+    require_permission(membership, "loans:read", db)
+    tenant_session = tenant_ctx.create_session()
+    try:
+        today = date.today()
+        
+        if export_type == "due_today":
+            due_loan_ids = [i.loan_id for i in tenant_session.query(LoanInstalment).filter(
+                LoanInstalment.due_date == today,
+                LoanInstalment.status.in_(["pending", "partial"])
+            ).all()]
+            query = tenant_session.query(LoanApplication).filter(
+                LoanApplication.id.in_(due_loan_ids),
+                LoanApplication.status == "disbursed"
+            )
+            title = f"Loans Due Today - {today.strftime('%d %b %Y')}"
+        elif export_type == "overdue":
+            overdue_loan_ids = [i.loan_id for i in tenant_session.query(LoanInstalment).filter(
+                LoanInstalment.due_date < today,
+                LoanInstalment.status.in_(["pending", "partial"])
+            ).all()]
+            query = tenant_session.query(LoanApplication).filter(
+                LoanApplication.id.in_(overdue_loan_ids),
+                LoanApplication.status == "disbursed"
+            )
+            title = f"Overdue Loans - {today.strftime('%d %b %Y')}"
+        elif export_type == "due_this_week":
+            week_end = today + timedelta(days=(6 - today.weekday()))
+            due_loan_ids = [i.loan_id for i in tenant_session.query(LoanInstalment).filter(
+                LoanInstalment.due_date >= today,
+                LoanInstalment.due_date <= week_end,
+                LoanInstalment.status.in_(["pending", "partial"])
+            ).all()]
+            query = tenant_session.query(LoanApplication).filter(
+                LoanApplication.id.in_(due_loan_ids),
+                LoanApplication.status == "disbursed"
+            )
+            title = f"Loans Due This Week - {today.strftime('%d %b %Y')} to {week_end.strftime('%d %b %Y')}"
+        else:
+            query = tenant_session.query(LoanApplication)
+            if status:
+                query = query.filter(LoanApplication.status == status)
+            else:
+                query = query.filter(LoanApplication.status == "disbursed")
+            title = f"Loan Applications Export - {today.strftime('%d %b %Y')}"
+        
+        staff_branch_id = get_branch_filter(user)
+        if staff_branch_id:
+            branch_member_ids = [m.id for m in tenant_session.query(Member).filter(Member.branch_id == staff_branch_id).all()]
+            query = query.filter(LoanApplication.member_id.in_(branch_member_ids))
+        elif branch_id:
+            branch_member_ids = [m.id for m in tenant_session.query(Member).filter(Member.branch_id == branch_id).all()]
+            query = query.filter(LoanApplication.member_id.in_(branch_member_ids))
+        
+        if product_id:
+            query = query.filter(LoanApplication.loan_product_id == product_id)
+        if date_from:
+            try:
+                query = query.filter(LoanApplication.created_at >= datetime.strptime(date_from, "%Y-%m-%d"))
+            except ValueError:
+                pass
+        if date_to:
+            try:
+                query = query.filter(LoanApplication.created_at < datetime.strptime(date_to, "%Y-%m-%d") + timedelta(days=1))
+            except ValueError:
+                pass
+        if search:
+            search_term = f"%{search.strip()}%"
+            matching_ids = [m.id for m in tenant_session.query(Member).filter(
+                or_(Member.first_name.ilike(search_term), Member.last_name.ilike(search_term), Member.member_number.ilike(search_term))
+            ).all()]
+            query = query.filter(
+                or_(
+                    LoanApplication.application_number.ilike(search_term),
+                    LoanApplication.member_id.in_(matching_ids) if matching_ids else False,
+                )
+            )
+        
+        loans = query.order_by(LoanApplication.created_at.desc()).all()
+        
+        member_ids = list(set(l.member_id for l in loans if l.member_id))
+        product_ids_list = list(set(l.loan_product_id for l in loans if l.loan_product_id))
+        members_map = {m.id: m for m in tenant_session.query(Member).filter(Member.id.in_(member_ids)).all()} if member_ids else {}
+        products_map = {p.id: p for p in tenant_session.query(LoanProduct).filter(LoanProduct.id.in_(product_ids_list)).all()} if product_ids_list else {}
+        
+        loan_ids = [l.id for l in loans]
+        instalments = tenant_session.query(LoanInstalment).filter(
+            LoanInstalment.loan_id.in_(loan_ids)
+        ).all() if loan_ids else []
+        
+        instalment_map = {}
+        for inst in instalments:
+            if inst.loan_id not in instalment_map:
+                instalment_map[inst.loan_id] = []
+            instalment_map[inst.loan_id].append(inst)
+        
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Loans"
+        
+        header_font = Font(bold=True, color="FFFFFF", size=11)
+        header_fill = PatternFill(start_color="1E3A5F", end_color="1E3A5F", fill_type="solid")
+        header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        thin_border = Border(
+            left=Side(style="thin"), right=Side(style="thin"),
+            top=Side(style="thin"), bottom=Side(style="thin")
+        )
+        
+        ws.merge_cells("A1:N1")
+        title_cell = ws["A1"]
+        title_cell.value = title
+        title_cell.font = Font(bold=True, size=14, color="1E3A5F")
+        title_cell.alignment = Alignment(horizontal="center")
+        ws.row_dimensions[1].height = 30
+        
+        ws.merge_cells("A2:N2")
+        ws["A2"].value = f"Generated: {datetime.now().strftime('%d %b %Y %H:%M')} | Total Records: {len(loans)}"
+        ws["A2"].font = Font(italic=True, color="666666", size=10)
+        ws["A2"].alignment = Alignment(horizontal="center")
+        
+        headers = [
+            "Loan #", "Member Name", "Member Number", "Phone", "Alt. Phone", "Email",
+            "Product", "Amount Disbursed", "Outstanding Balance", "Amount Repaid",
+            "Next Due Date", "Overdue Amount", "Days Overdue", "Status"
+        ]
+        
+        for col_idx, header in enumerate(headers, 1):
+            cell = ws.cell(row=4, column=col_idx, value=header)
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+            cell.border = thin_border
+        
+        overdue_fill = PatternFill(start_color="FFF0F0", end_color="FFF0F0", fill_type="solid")
+        due_today_fill = PatternFill(start_color="FFFFF0", end_color="FFFFF0", fill_type="solid")
+        
+        for row_idx, loan in enumerate(loans, 5):
+            member = members_map.get(loan.member_id)
+            product = products_map.get(loan.loan_product_id)
+            loan_instalments = instalment_map.get(loan.id, [])
+            
+            overdue_instalments = [i for i in loan_instalments if i.due_date < today and i.status in ("pending", "partial")]
+            overdue_amount = sum(
+                float(i.expected_principal or 0) + float(i.expected_interest or 0) - float(i.paid_principal or 0) - float(i.paid_interest or 0)
+                for i in overdue_instalments
+            )
+            days_overdue = 0
+            if overdue_instalments:
+                earliest_overdue = min(i.due_date for i in overdue_instalments)
+                days_overdue = (today - earliest_overdue).days
+            
+            next_due = None
+            pending_instalments = sorted(
+                [i for i in loan_instalments if i.status in ("pending", "partial")],
+                key=lambda i: i.due_date
+            )
+            if pending_instalments:
+                next_due = pending_instalments[0].due_date
+            
+            row_data = [
+                loan.application_number,
+                f"{member.first_name} {member.last_name}" if member else "",
+                member.member_number if member else "",
+                member.phone or "" if member else "",
+                member.phone_secondary or "" if member else "",
+                member.email or "" if member else "",
+                product.name if product else "",
+                float(loan.amount_disbursed or loan.amount or 0),
+                float(loan.outstanding_balance or 0),
+                float(loan.amount_repaid or 0),
+                next_due.strftime("%d %b %Y") if next_due else "",
+                round(overdue_amount, 2) if overdue_amount > 0 else "",
+                days_overdue if days_overdue > 0 else "",
+                loan.status.replace("_", " ").title(),
+            ]
+            
+            is_overdue = days_overdue > 0
+            is_due_today = next_due == today if next_due else False
+            
+            for col_idx, value in enumerate(row_data, 1):
+                cell = ws.cell(row=row_idx, column=col_idx, value=value)
+                cell.border = thin_border
+                if is_overdue:
+                    cell.fill = overdue_fill
+                elif is_due_today:
+                    cell.fill = due_today_fill
+        
+        col_widths = [14, 22, 14, 16, 16, 24, 18, 16, 16, 14, 14, 14, 12, 12]
+        for idx, width in enumerate(col_widths, 1):
+            col_letter = ws.cell(row=4, column=idx).column_letter
+            ws.column_dimensions[col_letter].width = width
+        
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        
+        safe_title = export_type.replace(" ", "_")
+        filename = f"loans_{safe_title}_{today.strftime('%Y%m%d')}.xlsx"
+        
+        return StreamingResponse(
+            output,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={"Content-Disposition": f"attachment; filename={filename}"}
+        )
     finally:
         tenant_session.close()
         tenant_ctx.close()

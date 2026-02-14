@@ -620,11 +620,49 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
   const [memberSearchOpen, setMemberSearchOpen] = useState(false);
   const [guarantorSearchOpen, setGuarantorSearchOpen] = useState(false);
   const [extraCharges, setExtraCharges] = useState<{ charge_name: string; amount: string }[]>([]);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const { user } = useAuth();
 
   const userBranchId = (user as any)?.branchId;
   const userRole = (user as any)?.role;
   const canSeeAllBranches = !userBranchId || userRole === 'admin' || userRole === 'owner';
+
+  const handleExport = async (exportType: string) => {
+    setIsExporting(true);
+    setExportOpen(false);
+    try {
+      const params = new URLSearchParams({ export_type: exportType });
+      if (statusFilter && statusFilter !== "all") params.append("status", statusFilter);
+      if (productFilter && productFilter !== "all") params.append("product_id", productFilter);
+      if (branchFilter && branchFilter !== "all") params.append("branch_id", branchFilter);
+      if (dateFrom) params.append("date_from", dateFrom);
+      if (dateTo) params.append("date_to", dateTo);
+      if (debouncedSearch) params.append("search", debouncedSearch);
+      
+      const res = await fetch(`/api/organizations/${organizationId}/loans/export?${params}`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Export failed");
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const disposition = res.headers.get("content-disposition");
+      const filename = disposition?.match(/filename=(.+)/)?.[1] || `loans_export.xlsx`;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast({ title: "Export Complete", description: "Loan data has been downloaded" });
+    } catch (err) {
+      toast({ title: "Export Failed", description: getErrorMessage(err), variant: "destructive" });
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const isMemberInactive = (member: Member | undefined): boolean => {
     if (!member) return false;
@@ -2220,6 +2258,31 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
         </div>
         <div className="flex items-center gap-2">
           <RefreshButton organizationId={organizationId} />
+          <Popover open={exportOpen} onOpenChange={setExportOpen}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" disabled={isExporting} data-testid="button-export-loans" className="gap-1.5 h-10">
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">{isExporting ? "Exporting..." : "Export"}</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-56 p-1" align="end">
+              <div className="space-y-0.5">
+                <Button variant="ghost" size="sm" className="w-full justify-start text-sm font-normal" onClick={() => handleExport("due_today")} data-testid="button-export-due-today">
+                  <Clock className="h-4 w-4 mr-2 text-yellow-500" /> Due Today
+                </Button>
+                <Button variant="ghost" size="sm" className="w-full justify-start text-sm font-normal" onClick={() => handleExport("overdue")} data-testid="button-export-overdue">
+                  <AlertTriangle className="h-4 w-4 mr-2 text-red-500" /> Overdue Loans
+                </Button>
+                <Button variant="ghost" size="sm" className="w-full justify-start text-sm font-normal" onClick={() => handleExport("due_this_week")} data-testid="button-export-due-week">
+                  <CalendarDays className="h-4 w-4 mr-2 text-blue-500" /> Due This Week
+                </Button>
+                <div className="border-t my-1" />
+                <Button variant="ghost" size="sm" className="w-full justify-start text-sm font-normal" onClick={() => handleExport("all")} data-testid="button-export-all">
+                  <FileText className="h-4 w-4 mr-2" /> All Active Loans
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
           {canWrite && (
             <Button onClick={() => { form.reset(); setViewMode("new"); }} data-testid="button-new-application" className="shrink-0">
               <Plus className="mr-2 h-4 w-4" />
