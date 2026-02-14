@@ -72,7 +72,15 @@ def calculate_payment_allocation(loan: LoanApplication, amount: Decimal, tenant_
             interest_portion = min(amount, interest_per_period)
         else:
             periodic_rate = loan.interest_rate / Decimal("100")
-            interest_portion = min(amount, (loan.outstanding_balance or Decimal("0")) * periodic_rate)
+            remaining_principal = Decimal(str(loan.amount or 0)) - Decimal(str(loan.amount_repaid or 0))
+            if tenant_session:
+                from models.tenant import LoanInstalment
+                from sqlalchemy import func as sqla_func
+                paid_p = tenant_session.query(
+                    sqla_func.coalesce(sqla_func.sum(LoanInstalment.paid_principal), 0)
+                ).filter(LoanInstalment.loan_id == str(loan.id)).scalar()
+                remaining_principal = Decimal(str(loan.amount or 0)) - Decimal(str(paid_p or 0))
+            interest_portion = min(amount, remaining_principal * periodic_rate)
         principal_portion = amount - interest_portion
         penalty_portion = Decimal("0")
     return principal_portion, interest_portion, penalty_portion

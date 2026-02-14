@@ -56,7 +56,7 @@ def calculate_loan(amount: Decimal, term: int, interest_rate: Decimal, interest_
     periodic_rate = interest_rate / Decimal("100")
 
     if interest_type == "flat":
-        total_interest = amount * periodic_rate
+        total_interest = amount * periodic_rate * term
         total_repayment = amount + total_interest
         periodic_payment = total_repayment / term if term > 0 else Decimal("0")
     else:
