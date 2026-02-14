@@ -7,6 +7,7 @@ from models.tenant import OrganizationSettings, WorkingHours
 from schemas.tenant import OrganizationSettingCreate, OrganizationSettingResponse, WorkingHoursCreate, WorkingHoursResponse
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_role
+from models.master import Organization
 
 router = APIRouter()
 
@@ -350,3 +351,48 @@ async def get_auto_logout_settings(org_id: str, user=Depends(get_current_user), 
     finally:
         tenant_session.close()
         tenant_ctx.close()
+
+
+@router.post("/{org_id}/trigger-auto-deduction")
+async def trigger_auto_deduction(
+    org_id: str,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
+    require_role(membership, ["owner", "admin"])
+    tenant_session = tenant_ctx.create_session()
+    try:
+        enabled = tenant_session.query(OrganizationSettings).filter(
+            OrganizationSettings.setting_key == "auto_loan_deduction"
+        ).first()
+        if not enabled or enabled.setting_value.lower() != "true":
+            raise HTTPException(status_code=400, detail="Auto loan deduction is not enabled")
+
+        org = db.query(Organization).filter(Organization.id == org_id).first()
+        if not org or not org.connection_string:
+            raise HTTPException(status_code=404, detail="Organization not found")
+
+        tenant_session.close()
+        tenant_ctx.close()
+
+        import importlib
+        cron_mod = importlib.import_module("cron_auto_loan_deduction")
+        result = cron_mod.process_auto_deductions(org_id, org.name, org.connection_string, force=True)
+
+        return {
+            "message": "Auto loan deduction completed",
+            "deducted": result.get("deducted", 0),
+            "skipped": result.get("skipped", 0),
+            "errors": result.get("errors", 0),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to run auto deduction: {str(e)}")
+    finally:
+        try:
+            tenant_session.close()
+            tenant_ctx.close()
+        except Exception:
+            pass

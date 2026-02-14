@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Save, Building2, Smartphone, Users, Clock, Shield, MessageSquare, Mail, Copy, CheckCircle2, Info, Landmark } from "lucide-react";
+import { Loader2, Save, Building2, Smartphone, Users, Clock, Shield, MessageSquare, Mail, Copy, CheckCircle2, Info, Landmark, Play } from "lucide-react";
 import RolesManagement from "@/components/roles-management";
 import { CURRENCIES, getCurrencySymbol } from "@/lib/currency";
 
@@ -24,6 +24,51 @@ interface Setting {
 
 interface SettingsPageProps {
   organizationId: string;
+}
+
+function RunDeductionButton({ organizationId }: { organizationId: string }) {
+  const { toast } = useToast();
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", `/api/organizations/${organizationId}/trigger-auto-deduction`);
+      return res.json();
+    },
+    onSuccess: (data: { message: string; deducted: number; skipped: number; errors: number }) => {
+      toast({
+        title: "Auto Deduction Complete",
+        description: `${data.deducted} loan(s) deducted, ${data.skipped} skipped (insufficient savings), ${data.errors} error(s)`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed",
+        description: error.message || "Could not run auto deduction",
+        variant: "destructive",
+      });
+    },
+  });
+
+  return (
+    <div className="pt-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => mutation.mutate()}
+        disabled={mutation.isPending}
+        data-testid="button-run-auto-deduction"
+      >
+        {mutation.isPending ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <Play className="mr-2 h-4 w-4" />
+        )}
+        Run Now
+      </Button>
+      <p className="text-xs text-muted-foreground mt-1">
+        Manually trigger auto loan deductions right now
+      </p>
+    </div>
+  );
 }
 
 interface RoleCardProps {
@@ -393,6 +438,7 @@ export default function SettingsPage({ organizationId }: SettingsPageProps) {
                     <p className="text-sm text-muted-foreground">
                       What time of day to run auto-deductions (based on your organization timezone)
                     </p>
+                    <RunDeductionButton organizationId={organizationId} />
                   </div>
                 )}
               </CardContent>

@@ -34,8 +34,8 @@ def get_setting(session, key, default=None):
     return default
 
 
-def process_auto_deductions(org_id, org_name, connection_string):
-    """Process auto loan deductions for a single organization"""
+def process_auto_deductions(org_id, org_name, connection_string, force=False):
+    """Process auto loan deductions for a single organization. If force=True, skip time and already-ran checks."""
     print(f"\n--- Processing organization: {org_name} ({org_id}) ---")
 
     try:
@@ -76,13 +76,13 @@ def process_auto_deductions(org_id, org_name, connection_string):
         current_total = current_hour * 60 + current_minute
         scheduled_total = run_hour * 60 + run_minute
 
-        if current_total < scheduled_total:
+        if not force and current_total < scheduled_total:
             print(f"  Not yet time to run (scheduled at {run_time}, current local time {local_now.strftime('%H:%M')})")
             return {"deducted": 0, "skipped": 0, "errors": 0}
 
         last_run = get_setting(session, "auto_loan_deduction_last_run", "")
         today_str = str(local_today)
-        if last_run == today_str:
+        if not force and last_run == today_str:
             print(f"  Already ran today ({today_str})")
             return {"deducted": 0, "skipped": 0, "errors": 0}
 
