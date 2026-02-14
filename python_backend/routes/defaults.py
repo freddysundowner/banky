@@ -5,7 +5,7 @@ from typing import List
 from decimal import Decimal
 from datetime import datetime, timedelta, date
 from models.database import get_db
-from models.tenant import LoanApplication, LoanDefault, Member, LoanRepayment
+from models.tenant import LoanApplication, LoanDefault, Member, LoanRepayment, AuditLog, LoanInstalment
 from schemas.tenant import LoanDefaultResponse, LoanDefaultUpdate, LoanDefaultLoanInfo, LoanDefaultMemberInfo
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission
@@ -138,8 +138,54 @@ def check_and_create_defaults(tenant_session):
             new_penalty = penalty_amount - existing_penalty_on_insts
             if new_penalty > Decimal("0.01"):
                 last_overdue = loan_insts[-1]
-                last_overdue.expected_penalty = (last_overdue.expected_penalty or Decimal("0")) + new_penalty
-                loan.outstanding_balance = (loan.outstanding_balance or Decimal("0")) + new_penalty
+                old_penalty = last_overdue.expected_penalty or Decimal("0")
+                last_overdue.expected_penalty = old_penalty + new_penalty
+                old_outstanding = loan.outstanding_balance or Decimal("0")
+                loan.outstanding_balance = old_outstanding + new_penalty
+
+                member = tenant_session.query(Member).filter(Member.id == loan.member_id).first()
+                member_name = f"{member.first_name} {member.last_name}" if member else "Unknown"
+
+                audit_log = AuditLog(
+                    staff_id=None,
+                    action="late_penalty_charged",
+                    entity_type="loan",
+                    entity_id=str(loan.id),
+                    old_values={
+                        "outstanding_balance": str(old_outstanding),
+                        "instalment_penalty": str(old_penalty),
+                        "instalment_number": last_overdue.instalment_number,
+                    },
+                    new_values={
+                        "penalty_charged": str(new_penalty),
+                        "penalty_rate": str(penalty_rate),
+                        "amount_overdue": str(amount_overdue),
+                        "outstanding_balance": str(loan.outstanding_balance),
+                        "instalment_penalty": str(last_overdue.expected_penalty),
+                        "loan_number": loan.application_number,
+                        "member": member_name,
+                        "reason": f"Late payment penalty ({penalty_rate}% on overdue amount {amount_overdue})",
+                    }
+                )
+                tenant_session.add(audit_log)
+
+                try:
+                    from accounting.service import AccountingService
+                    svc = AccountingService(tenant_session)
+                    svc.seed_default_accounts()
+                    lines = [
+                        {"account_code": "1100", "debit": new_penalty, "credit": Decimal("0"), "loan_id": str(loan.id), "memo": f"Late penalty on {loan.application_number}"},
+                        {"account_code": "4020", "debit": Decimal("0"), "credit": new_penalty, "loan_id": str(loan.id), "memo": f"Penalty income - {loan.application_number}"},
+                    ]
+                    svc.create_journal_entry(
+                        entry_date=today,
+                        description=f"Late payment penalty - {loan.application_number} - {member_name} - {penalty_rate}% on overdue {amount_overdue}",
+                        lines=lines,
+                        entry_type="auto",
+                        source="penalty_charge"
+                    )
+                except Exception as gl_err:
+                    print(f"  [GL] Warning: Failed to post penalty GL entry for {loan.application_number}: {gl_err}")
 
         if not existing_default:
             default_record = LoanDefault(
