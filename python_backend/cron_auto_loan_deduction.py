@@ -216,6 +216,7 @@ def process_auto_deductions(org_id, org_name, connection_string, force=False):
                         LoanDefault.status.in_(["overdue", "in_collection"])
                     ).update({"status": "resolved", "resolved_at": datetime.utcnow()}, synchronize_session="fetch")
                 else:
+                    session.flush()
                     overdue_remaining = session.query(LoanInstalment).filter(
                         LoanInstalment.loan_id == str(loan.id),
                         LoanInstalment.status.in_(["overdue", "partial"]),
@@ -273,7 +274,7 @@ def process_auto_deductions(org_id, org_name, connection_string, force=False):
                 except Exception as sms_err:
                     print(f"  [SMS] Warning: Failed to send SMS: {sms_err}")
 
-                print(f"  Deducted KES {actual_payment} from {member.first_name} {member.last_name} savings for {instalments_paid} instalment(s) on loan {loan.application_number}")
+                print(f"  Deducted KES {actual_payment} from {member.first_name} {member.last_name} savings for {instalments_covered} instalment(s) on loan {loan.application_number}")
                 deducted_count += 1
 
             except Exception as e:
