@@ -269,15 +269,15 @@ class MemberResponse(BaseModel):
     share_capital: Optional[Decimal] = None
     
     # Account Balances
-    savings_balance: Decimal = Decimal("0")
-    shares_balance: Decimal = Decimal("0")
-    deposits_balance: Decimal = Decimal("0")
+    savings_balance: Optional[Decimal] = Decimal("0")
+    shares_balance: Optional[Decimal] = Decimal("0")
+    deposits_balance: Optional[Decimal] = Decimal("0")
     
     # Status and Dates
     status: str = "active"
     is_active: bool
     joined_at: Optional[datetime] = None
-    created_at: datetime
+    created_at: Optional[datetime] = None
     created_by_id: Optional[str] = None
     
     # Documents
