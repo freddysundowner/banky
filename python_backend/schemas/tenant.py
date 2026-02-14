@@ -384,22 +384,22 @@ class LoanProductResponse(BaseModel):
     max_amount: Decimal
     min_term_months: int
     max_term_months: int
-    processing_fee: Decimal = Decimal("0")
-    insurance_fee: Decimal = Decimal("0")
-    appraisal_fee: Decimal = Decimal("0")
-    excise_duty_rate: Decimal = Decimal("20")
-    credit_life_insurance_rate: Decimal = Decimal("0")
-    credit_life_insurance_freq: str = "annual"
-    late_payment_penalty: Decimal = Decimal("0")
-    grace_period_days: int = 0
-    requires_guarantor: bool = False
-    min_guarantors: int = 0
-    max_guarantors: int = 3
-    shares_multiplier: Decimal = Decimal("0")
-    min_shares_required: Decimal = Decimal("0")
-    deduct_interest_upfront: bool = False
+    processing_fee: Optional[Decimal] = Decimal("0")
+    insurance_fee: Optional[Decimal] = Decimal("0")
+    appraisal_fee: Optional[Decimal] = Decimal("0")
+    excise_duty_rate: Optional[Decimal] = Decimal("20")
+    credit_life_insurance_rate: Optional[Decimal] = Decimal("0")
+    credit_life_insurance_freq: Optional[str] = "annual"
+    late_payment_penalty: Optional[Decimal] = Decimal("0")
+    grace_period_days: Optional[int] = 0
+    requires_guarantor: Optional[bool] = False
+    min_guarantors: Optional[int] = 0
+    max_guarantors: Optional[int] = 3
+    shares_multiplier: Optional[Decimal] = Decimal("0")
+    min_shares_required: Optional[Decimal] = Decimal("0")
+    deduct_interest_upfront: Optional[bool] = False
     is_active: bool
-    created_at: datetime
+    created_at: Optional[datetime] = None
     
     class Config:
         from_attributes = True
