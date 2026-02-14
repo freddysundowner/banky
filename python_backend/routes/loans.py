@@ -793,6 +793,20 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
         
         tenant_session.add(transaction)
         
+        if data.disbursement_method == "savings" and member:
+            member.savings_balance = (member.savings_balance or Decimal("0")) + net_amount
+            savings_txn = Transaction(
+                transaction_number=generate_txn_code(),
+                member_id=loan.member_id,
+                transaction_type="deposit",
+                account_type="savings",
+                amount=net_amount,
+                balance_after=member.savings_balance,
+                description=f"Loan disbursement to savings - {loan.application_number}",
+                processed_by_id=current_staff.id if current_staff else None
+            )
+            tenant_session.add(savings_txn)
+        
         from services.instalment_service import generate_instalment_schedule
         generate_instalment_schedule(tenant_session, loan, product)
         

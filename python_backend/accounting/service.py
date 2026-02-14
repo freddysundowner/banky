@@ -653,6 +653,8 @@ def post_loan_disbursement(
     
     if disbursement_method == "cash":
         lines.append({"account_code": "1000", "debit": Decimal("0"), "credit": net_disbursed, "member_id": member_id, "loan_id": loan_id, "memo": "Cash disbursed"})
+    elif disbursement_method == "savings":
+        lines.append({"account_code": "2000", "debit": Decimal("0"), "credit": net_disbursed, "member_id": member_id, "loan_id": loan_id, "memo": "Disbursed to member savings"})
     else:
         lines.append({"account_code": "1010", "debit": Decimal("0"), "credit": net_disbursed, "member_id": member_id, "loan_id": loan_id, "memo": "Bank/Mpesa disbursed"})
     
