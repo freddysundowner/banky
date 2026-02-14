@@ -105,6 +105,7 @@ import FixedDeposits from "@/components/fixed-deposits";
 import ChartOfAccounts from "@/components/chart-of-accounts";
 import JournalEntries from "@/components/journal-entries";
 import { Dividends } from "@/components/dividends";
+import OpeningBalances from "@/components/opening-balances";
 import { TrialBanner } from "@/components/trial-banner";
 import SettingsPage from "@/pages/settings";
 import UpgradePage from "@/pages/upgrade";
@@ -149,7 +150,7 @@ const updateOrgSchema = z.object({
 type CreateOrgFormData = z.infer<typeof createOrgSchema>;
 type UpdateOrgFormData = z.infer<typeof updateOrgSchema>;
 
-type NavSection = "dashboard" | "teller" | "teller-services" | "float-management" | "ticketing-kiosk" | "queue-display" | "branches" | "staff" | "members" | "loan-products" | "loans" | "transactions" | "repayments" | "fixed-deposits" | "chart-of-accounts" | "journal-entries" | "dividends" | "reports" | "analytics" | "sms" | "defaults" | "hr" | "leaves" | "expenses" | "audit" | "settings" | "my-account" | "upgrade";
+type NavSection = "dashboard" | "teller" | "teller-services" | "float-management" | "ticketing-kiosk" | "queue-display" | "branches" | "staff" | "members" | "loan-products" | "loans" | "transactions" | "repayments" | "fixed-deposits" | "chart-of-accounts" | "journal-entries" | "opening-balances" | "dividends" | "reports" | "analytics" | "sms" | "defaults" | "hr" | "leaves" | "expenses" | "audit" | "settings" | "my-account" | "upgrade";
 
 const weekDays = [
   { value: "monday", label: "Monday" },
@@ -179,6 +180,7 @@ const navItems = [
   { title: "Dividends", value: "dividends" as NavSection, icon: Wallet, permissions: ["dividends:read"], feature: "dividends" },
   { title: "Chart of Accounts", value: "chart-of-accounts" as NavSection, icon: FileText, permissions: ["chart_of_accounts:read"], feature: "accounting" },
   { title: "Journal Entries", value: "journal-entries" as NavSection, icon: ScrollText, permissions: ["journal_entries:read"], feature: "accounting" },
+  { title: "Opening Balances", value: "opening-balances" as NavSection, icon: ScrollText, permissions: ["settings:write"], feature: "accounting" },
   { title: "Reports", value: "reports" as NavSection, icon: BarChart3, permissions: ["reports:read"], feature: "analytics" },
   { title: "Analytics", value: "analytics" as NavSection, icon: BarChart3, permissions: ["analytics:read"], feature: "analytics" },
   { title: "SMS Notifications", value: "sms" as NavSection, icon: MessageSquare, permissions: ["sms:read"], feature: "sms_notifications" },
@@ -927,6 +929,10 @@ export default function Home() {
 
             {activeSection === "journal-entries" && selectedOrg && (
               <JournalEntries organizationId={selectedOrg.id} />
+            )}
+
+            {activeSection === "opening-balances" && selectedOrg && (
+              <OpeningBalances organizationId={selectedOrg.id} />
             )}
 
             {activeSection === "dividends" && selectedOrg && (
