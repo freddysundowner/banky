@@ -60,8 +60,9 @@ def get_tenant_session(connection_string: str):
             _migrated_tenants.add(connection_string)
         else:
             try:
+                from services.tenant_context import run_tenant_schema_migration as full_migration
                 TenantBase.metadata.create_all(bind=tenant_engine)
-                run_tenant_schema_migration(tenant_engine)
+                full_migration(tenant_engine)
                 _set_db_migration_version(tenant_engine, _migration_version)
                 _migrated_tenants.add(connection_string)
             except Exception as e:

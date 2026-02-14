@@ -4,7 +4,7 @@ from models.master import Organization, OrganizationMember
 from models.tenant import TenantBase
 
 _migrated_tenants = set()
-_migration_version = 12  # Increment to force re-migration
+_migration_version = 14  # Increment to force re-migration
 
 def _get_db_migration_version(engine):
     """Check the migration version stored in the tenant database"""
@@ -53,15 +53,19 @@ def table_exists(conn, table_name):
 def add_column_if_not_exists(conn, table_name, col_name, col_type):
     """Helper to add a column if it doesn't exist"""
     if not table_exists(conn, table_name):
-        return  # Skip if table doesn't exist
+        return
     result = conn.execute(text(f"""
         SELECT column_name FROM information_schema.columns 
         WHERE table_name = '{table_name}' AND column_name = '{col_name}'
     """))
     if not result.fetchone():
         try:
-            conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {col_name} {col_type}"))
+            conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS {col_name} {col_type}"))
         except Exception as e:
+            try:
+                conn.execute(text("ROLLBACK TO SAVEPOINT migration_sp"))
+            except:
+                pass
             print(f"Migration warning: Could not add {table_name}.{col_name}: {e}")
 
 def run_tenant_schema_migration(engine):
