@@ -131,6 +131,16 @@ def check_and_create_defaults(tenant_session):
 
         penalty_amount = amount_overdue * penalty_rate / Decimal("100")
 
+        if penalty_amount > 0 and loan_insts:
+            existing_penalty_on_insts = sum(
+                Decimal(str(i.expected_penalty or 0)) for i in loan_insts
+            )
+            new_penalty = penalty_amount - existing_penalty_on_insts
+            if new_penalty > Decimal("0.01"):
+                last_overdue = loan_insts[-1]
+                last_overdue.expected_penalty = (last_overdue.expected_penalty or Decimal("0")) + new_penalty
+                loan.outstanding_balance = (loan.outstanding_balance or Decimal("0")) + new_penalty
+
         if not existing_default:
             default_record = LoanDefault(
                 loan_id=loan.id,
