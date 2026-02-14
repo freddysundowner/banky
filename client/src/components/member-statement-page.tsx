@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, FileText, Download } from "lucide-react";
+import { ArrowLeft, FileText, Download, Printer } from "lucide-react";
 import { useCurrency } from "@/hooks/use-currency";
 
 interface Member {
@@ -145,6 +145,109 @@ export default function MemberStatementPage({ organizationId, memberId, onBack }
     return true;
   }) || [];
 
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const styles = `
+      <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #1e3a5f; padding-bottom: 10px; }
+        .header h1 { margin: 0; font-size: 24px; color: #1e3a5f; }
+        .header p { margin: 5px 0; color: #666; }
+        .balances { display: flex; gap: 20px; margin-bottom: 20px; }
+        .balance-box { flex: 1; padding: 10px; border: 1px solid #ddd; text-align: center; border-radius: 6px; }
+        .balance-box .label { font-size: 12px; color: #666; }
+        .balance-box .amount { font-size: 18px; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+        th { background-color: #1e3a5f; color: white; font-weight: bold; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .credit { color: green; }
+        .debit { color: #c00; }
+        .footer { margin-top: 20px; text-align: center; font-size: 11px; color: #999; border-top: 1px solid #ddd; padding-top: 10px; }
+        @media print { body { -webkit-print-color-adjust: exact; } }
+      </style>
+    `;
+
+    const creditTypes = ["deposit", "loan_disbursement", "dividend_payment", "fd_interest", "interest_posting"];
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Account Statement - ${member?.first_name} ${member?.last_name}</title>
+          ${styles}
+        </head>
+        <body>
+          <div class="header">
+            <h1>Account Statement</h1>
+            <p><strong>${member?.first_name} ${member?.last_name}</strong></p>
+            <p>Member No: ${member?.member_number}</p>
+            ${member?.branch_name ? `<p>Branch: ${member?.branch_name}</p>` : ''}
+            <p>Generated: ${new Date().toLocaleDateString()}</p>
+            ${accountFilter !== 'all' ? `<p>Account: ${accountFilter.toUpperCase()}</p>` : ''}
+            ${startDate || endDate ? `<p>Period: ${startDate || 'Start'} to ${endDate || 'Present'}</p>` : ''}
+          </div>
+
+          <div class="balances">
+            <div class="balance-box">
+              <div class="label">Savings Balance</div>
+              <div class="amount">${symbol} ${(member?.savings_balance || 0).toLocaleString()}</div>
+            </div>
+            <div class="balance-box">
+              <div class="label">Shares Balance</div>
+              <div class="amount">${symbol} ${(member?.shares_balance || 0).toLocaleString()}</div>
+            </div>
+            <div class="balance-box">
+              <div class="label">Deposits Balance</div>
+              <div class="amount">${symbol} ${(member?.deposits_balance || 0).toLocaleString()}</div>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Tx No.</th>
+                <th>Type</th>
+                <th>Account</th>
+                <th style="text-align:right">Debit</th>
+                <th style="text-align:right">Credit</th>
+                <th style="text-align:right">Balance</th>
+                <th>Reference</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredTransactions.map(tx => {
+                const isCredit = creditTypes.includes(tx.transaction_type);
+                const amt = `${symbol} ${Number(tx.amount).toLocaleString()}`;
+                return `
+                <tr>
+                  <td>${new Date(tx.created_at).toLocaleDateString()}</td>
+                  <td>${tx.transaction_number}</td>
+                  <td>${formatTxType(tx.transaction_type)}</td>
+                  <td>${tx.account_type}</td>
+                  <td style="text-align:right" class="debit">${isCredit ? '' : amt}</td>
+                  <td style="text-align:right" class="credit">${isCredit ? amt : ''}</td>
+                  <td style="text-align:right">${symbol} ${Number(tx.balance_after).toLocaleString()}</td>
+                  <td>${tx.reference || '-'}</td>
+                </tr>`;
+              }).join('')}
+            </tbody>
+          </table>
+
+          <div class="footer">
+            <p>Total Transactions: ${filteredTransactions.length}</p>
+            <p>This is a computer-generated statement and does not require a signature.</p>
+          </div>
+        </body>
+      </html>
+    `);
+
+    printWindow.document.close();
+  };
+
   const [downloading, setDownloading] = useState(false);
 
   const handleDownloadPdf = async () => {
@@ -200,10 +303,16 @@ export default function MemberStatementPage({ organizationId, memberId, onBack }
             </p>
           </div>
         </div>
-        <Button onClick={handleDownloadPdf} disabled={downloading} className="gap-2" data-testid="button-download-statement">
-          <Download className="h-4 w-4" />
-          {downloading ? "Generating..." : "Download PDF"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handlePrint} className="gap-2" data-testid="button-view-statement">
+            <Printer className="h-4 w-4" />
+            View Statement
+          </Button>
+          <Button onClick={handleDownloadPdf} disabled={downloading} className="gap-2" data-testid="button-download-statement">
+            <Download className="h-4 w-4" />
+            {downloading ? "Generating..." : "Download PDF"}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
