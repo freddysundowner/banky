@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { ArrowLeft, Printer, FileText } from "lucide-react";
+import { ArrowLeft, FileText, Download } from "lucide-react";
 import { useCurrency } from "@/hooks/use-currency";
 
 interface Member {
@@ -79,7 +79,7 @@ export default function MemberStatementPage({ organizationId, memberId, onBack }
   const [accountFilter, setAccountFilter] = useState<string>("all");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
-  const printRef = useRef<HTMLDivElement>(null);
+
 
   const { data: member, isLoading: memberLoading } = useQuery<Member>({
     queryKey: ["/api/organizations", organizationId, "members", memberId],
@@ -145,109 +145,35 @@ export default function MemberStatementPage({ organizationId, memberId, onBack }
     return true;
   }) || [];
 
-  const handlePrint = () => {
-    const printContent = printRef.current;
-    if (!printContent) return;
+  const [downloading, setDownloading] = useState(false);
 
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) return;
-
-    const styles = `
-      <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
-        .header h1 { margin: 0; font-size: 24px; }
-        .header p { margin: 5px 0; color: #666; }
-        .balances { display: flex; gap: 20px; margin-bottom: 20px; }
-        .balance-box { flex: 1; padding: 10px; border: 1px solid #ddd; text-align: center; }
-        .balance-box .label { font-size: 12px; color: #666; }
-        .balance-box .amount { font-size: 18px; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
-        th { background-color: #f5f5f5; font-weight: bold; }
-        .deposit { color: green; }
-        .withdrawal, .penalty_charge { color: red; }
-        .loan_repayment { color: #2563eb; }
-        .loan_disbursement { color: #7c3aed; }
-        .transfer { color: #d97706; }
-        .footer { margin-top: 20px; text-align: center; font-size: 11px; color: #999; }
-        @media print { body { -webkit-print-color-adjust: exact; } }
-      </style>
-    `;
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Account Statement - ${member?.first_name} ${member?.last_name}</title>
-          ${styles}
-        </head>
-        <body>
-          <div class="header">
-            <h1>Account Statement</h1>
-            <p><strong>${member?.first_name} ${member?.last_name}</strong></p>
-            <p>Member No: ${member?.member_number}</p>
-            ${member?.branch_name ? `<p>Branch: ${member?.branch_name}</p>` : ''}
-            <p>Generated: ${new Date().toLocaleDateString()}</p>
-            ${accountFilter !== 'all' ? `<p>Account: ${accountFilter.toUpperCase()}</p>` : ''}
-            ${startDate || endDate ? `<p>Period: ${startDate || 'Start'} to ${endDate || 'Present'}</p>` : ''}
-          </div>
-
-          <div class="balances">
-            <div class="balance-box">
-              <div class="label">Savings Balance</div>
-              <div class="amount">${symbol} ${(member?.savings_balance || 0).toLocaleString()}</div>
-            </div>
-            <div class="balance-box">
-              <div class="label">Shares Balance</div>
-              <div class="amount">${symbol} ${(member?.shares_balance || 0).toLocaleString()}</div>
-            </div>
-            <div class="balance-box">
-              <div class="label">Deposits Balance</div>
-              <div class="amount">${symbol} ${(member?.deposits_balance || 0).toLocaleString()}</div>
-            </div>
-          </div>
-
-          <table>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Tx No.</th>
-                <th>Type</th>
-                <th>Account</th>
-                <th>Amount</th>
-                <th>Balance After</th>
-                <th>Reference</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${filteredTransactions.map(tx => `
-                <tr>
-                  <td>${new Date(tx.created_at).toLocaleDateString()}</td>
-                  <td>${tx.transaction_number}</td>
-                  <td class="${tx.transaction_type}">${formatTxType(tx.transaction_type)}</td>
-                  <td>${tx.account_type}</td>
-                  <td class="${tx.transaction_type}">${symbol} ${Number(tx.amount).toLocaleString()}</td>
-                  <td>${symbol} ${Number(tx.balance_after).toLocaleString()}</td>
-                  <td>${tx.reference || '-'}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-
-          <div class="footer">
-            <p>Total Transactions: ${filteredTransactions.length}</p>
-            <p>This is a computer-generated statement.</p>
-          </div>
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-    }, 250);
+  const handleDownloadPdf = async () => {
+    setDownloading(true);
+    try {
+      const params = new URLSearchParams();
+      if (accountFilter && accountFilter !== "all") params.set("account_type", accountFilter);
+      if (startDate) params.set("start_date", startDate);
+      if (endDate) params.set("end_date", endDate);
+      const qs = params.toString() ? `?${params.toString()}` : "";
+      const res = await fetch(
+        `/api/organizations/${organizationId}/members/${memberId}/statement/pdf${qs}`,
+        { credentials: "include" }
+      );
+      if (!res.ok) throw new Error("Failed to generate PDF");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `statement_${member?.member_number || "member"}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("PDF download error:", err);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   if (memberLoading) {
@@ -274,9 +200,9 @@ export default function MemberStatementPage({ organizationId, memberId, onBack }
             </p>
           </div>
         </div>
-        <Button onClick={handlePrint} className="gap-2">
-          <Printer className="h-4 w-4" />
-          Print Statement
+        <Button onClick={handleDownloadPdf} disabled={downloading} className="gap-2" data-testid="button-download-statement">
+          <Download className="h-4 w-4" />
+          {downloading ? "Generating..." : "Download PDF"}
         </Button>
       </div>
 
@@ -341,7 +267,7 @@ export default function MemberStatementPage({ organizationId, memberId, onBack }
             </div>
           </div>
         </CardHeader>
-        <CardContent ref={printRef}>
+        <CardContent>
           {txLoading ? (
             <div className="space-y-2">
               {[...Array(5)].map((_, i) => (

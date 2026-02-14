@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
-from typing import List
+from typing import List, Optional
 from decimal import Decimal
-from datetime import date
+from datetime import date, datetime
 from models.database import get_db
 from models.tenant import Member, Transaction, OrganizationSettings, Staff, AuditLog, TellerFloat, FloatTransaction
 from schemas.tenant import TransactionCreate, TransactionResponse
@@ -11,6 +12,7 @@ from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission
 from services.code_generator import generate_txn_code
 import logging
+import io
 
 gl_logger = logging.getLogger("accounting.gl")
 
@@ -462,3 +464,230 @@ async def get_member_statement(org_id: str, member_id: str, user=Depends(get_cur
     finally:
         tenant_session.close()
         tenant_ctx.close()
+
+
+@router.get("/{org_id}/members/{member_id}/statement/pdf")
+async def get_member_statement_pdf(
+    org_id: str,
+    member_id: str,
+    account_type: Optional[str] = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
+    require_permission(membership, "transactions:read", db)
+    tenant_session = tenant_ctx.create_session()
+    try:
+        member = tenant_session.query(Member).filter(Member.id == member_id).first()
+        if not member:
+            raise HTTPException(status_code=404, detail="Member not found")
+
+        query = tenant_session.query(Transaction).filter(Transaction.member_id == member_id)
+        if account_type and account_type != "all":
+            query = query.filter(Transaction.account_type == account_type)
+        if start_date:
+            query = query.filter(Transaction.created_at >= datetime.strptime(start_date, "%Y-%m-%d"))
+        if end_date:
+            query = query.filter(Transaction.created_at <= datetime.strptime(end_date + " 23:59:59", "%Y-%m-%d %H:%M:%S"))
+
+        transactions = query.order_by(Transaction.created_at.desc()).all()
+
+        currency_setting = tenant_session.query(OrganizationSettings).filter(
+            OrganizationSettings.setting_key == "currency_symbol"
+        ).first()
+        symbol = currency_setting.setting_value if currency_setting else "KES"
+
+        org_name_setting = tenant_session.query(OrganizationSettings).filter(
+            OrganizationSettings.setting_key == "organization_name"
+        ).first()
+        org_name = org_name_setting.setting_value if org_name_setting else "BANKY"
+
+        pdf_buffer = generate_statement_pdf(member, transactions, symbol, org_name, account_type, start_date, end_date)
+
+        filename = f"statement_{member.member_number}_{datetime.now().strftime('%Y%m%d')}.pdf"
+        return StreamingResponse(
+            pdf_buffer,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        )
+    finally:
+        tenant_session.close()
+        tenant_ctx.close()
+
+
+def generate_statement_pdf(member, transactions, symbol, org_name, account_type=None, start_date=None, end_date=None):
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import mm
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=15*mm, bottomMargin=15*mm, leftMargin=15*mm, rightMargin=15*mm)
+    styles = getSampleStyleSheet()
+    elements = []
+
+    title_style = ParagraphStyle('Title', parent=styles['Title'], fontSize=18, spaceAfter=2, textColor=colors.HexColor('#1e3a5f'))
+    subtitle_style = ParagraphStyle('Subtitle', parent=styles['Normal'], fontSize=10, alignment=TA_CENTER, textColor=colors.grey)
+    heading_style = ParagraphStyle('Heading', parent=styles['Heading2'], fontSize=12, spaceAfter=6, textColor=colors.HexColor('#1e3a5f'))
+    normal_style = ParagraphStyle('NormalCustom', parent=styles['Normal'], fontSize=9)
+    small_style = ParagraphStyle('Small', parent=styles['Normal'], fontSize=8, textColor=colors.grey)
+    right_style = ParagraphStyle('Right', parent=styles['Normal'], fontSize=9, alignment=TA_RIGHT)
+
+    elements.append(Paragraph(org_name.upper(), title_style))
+    elements.append(Paragraph("Account Statement", subtitle_style))
+    elements.append(Spacer(1, 4*mm))
+    elements.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor('#1e3a5f')))
+    elements.append(Spacer(1, 4*mm))
+
+    member_name = f"{member.first_name} {member.last_name}"
+    info_data = [
+        [Paragraph(f"<b>Member:</b> {member_name}", normal_style),
+         Paragraph(f"<b>Member No:</b> {member.member_number}", normal_style)],
+        [Paragraph(f"<b>Phone:</b> {member.phone or 'N/A'}", normal_style),
+         Paragraph(f"<b>Generated:</b> {datetime.now().strftime('%d/%m/%Y %H:%M')}", normal_style)],
+    ]
+    if account_type and account_type != "all":
+        info_data.append([Paragraph(f"<b>Account:</b> {account_type.capitalize()}", normal_style), Paragraph("", normal_style)])
+    if start_date or end_date:
+        period = f"{start_date or 'Start'} to {end_date or 'Present'}"
+        info_data.append([Paragraph(f"<b>Period:</b> {period}", normal_style), Paragraph("", normal_style)])
+
+    info_table = Table(info_data, colWidths=[doc.width/2]*2)
+    info_table.setStyle(TableStyle([
+        ('VALIGN', (0,0), (-1,-1), 'TOP'),
+        ('TOPPADDING', (0,0), (-1,-1), 2),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 2),
+    ]))
+    elements.append(info_table)
+    elements.append(Spacer(1, 4*mm))
+
+    savings = float(member.savings_balance or 0)
+    shares = float(member.shares_balance or 0)
+    deposits = float(member.deposits_balance or 0)
+    bal_data = [
+        [Paragraph("<b>Savings</b>", ParagraphStyle('bc', parent=normal_style, alignment=TA_CENTER)),
+         Paragraph("<b>Shares</b>", ParagraphStyle('bc', parent=normal_style, alignment=TA_CENTER)),
+         Paragraph("<b>Deposits</b>", ParagraphStyle('bc', parent=normal_style, alignment=TA_CENTER))],
+        [Paragraph(f"<b>{symbol} {savings:,.2f}</b>", ParagraphStyle('bv', parent=normal_style, alignment=TA_CENTER, fontSize=11)),
+         Paragraph(f"<b>{symbol} {shares:,.2f}</b>", ParagraphStyle('bv', parent=normal_style, alignment=TA_CENTER, fontSize=11)),
+         Paragraph(f"<b>{symbol} {deposits:,.2f}</b>", ParagraphStyle('bv', parent=normal_style, alignment=TA_CENTER, fontSize=11))],
+    ]
+    bal_table = Table(bal_data, colWidths=[doc.width/3]*3)
+    bal_table.setStyle(TableStyle([
+        ('BOX', (0,0), (0,-1), 0.5, colors.lightgrey),
+        ('BOX', (1,0), (1,-1), 0.5, colors.lightgrey),
+        ('BOX', (2,0), (2,-1), 0.5, colors.lightgrey),
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#f0f4f8')),
+        ('TOPPADDING', (0,0), (-1,-1), 4),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 4),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+    ]))
+    elements.append(bal_table)
+    elements.append(Spacer(1, 6*mm))
+
+    elements.append(Paragraph("Transaction History", heading_style))
+    elements.append(Spacer(1, 2*mm))
+
+    tx_type_labels = {
+        "deposit": "Deposit", "withdrawal": "Withdrawal", "transfer": "Transfer",
+        "loan_disbursement": "Loan Disbursement", "loan_repayment": "Loan Repayment",
+        "penalty_charge": "Late Penalty", "auto_deduction": "Auto Deduction",
+        "interest_posting": "Interest", "dividend_payment": "Dividend",
+        "share_purchase": "Share Purchase", "share_sale": "Share Sale",
+        "fixed_deposit": "Fixed Deposit", "fd_withdrawal": "FD Withdrawal",
+        "fd_interest": "FD Interest",
+    }
+
+    credit_types = {"deposit", "loan_disbursement", "dividend_payment", "fd_interest", "interest_posting"}
+
+    header = [
+        Paragraph("<b>Date</b>", small_style),
+        Paragraph("<b>Tx No.</b>", small_style),
+        Paragraph("<b>Type</b>", small_style),
+        Paragraph("<b>Account</b>", small_style),
+        Paragraph("<b>Debit</b>", ParagraphStyle('rh', parent=small_style, alignment=TA_RIGHT)),
+        Paragraph("<b>Credit</b>", ParagraphStyle('rh', parent=small_style, alignment=TA_RIGHT)),
+        Paragraph("<b>Balance</b>", ParagraphStyle('rh', parent=small_style, alignment=TA_RIGHT)),
+        Paragraph("<b>Reference</b>", small_style),
+    ]
+    tx_data = [header]
+
+    total_debit = 0
+    total_credit = 0
+
+    for tx in transactions:
+        amt = float(tx.amount or 0)
+        tx_type = tx.transaction_type or ""
+        label = tx_type_labels.get(tx_type, tx_type.replace("_", " ").title())
+        is_credit = tx_type in credit_types
+
+        if is_credit:
+            debit_str = ""
+            credit_str = f"{symbol} {amt:,.2f}"
+            total_credit += amt
+        else:
+            debit_str = f"{symbol} {amt:,.2f}"
+            credit_str = ""
+            total_debit += amt
+
+        balance_after = float(tx.balance_after or 0)
+        tx_date = tx.created_at.strftime("%d/%m/%Y") if tx.created_at else ""
+
+        row = [
+            Paragraph(tx_date, small_style),
+            Paragraph(str(tx.transaction_number or ""), small_style),
+            Paragraph(label, small_style),
+            Paragraph((tx.account_type or "").capitalize(), small_style),
+            Paragraph(debit_str, ParagraphStyle('rd', parent=small_style, alignment=TA_RIGHT)),
+            Paragraph(credit_str, ParagraphStyle('rc', parent=small_style, alignment=TA_RIGHT)),
+            Paragraph(f"{symbol} {balance_after:,.2f}", ParagraphStyle('rb', parent=small_style, alignment=TA_RIGHT)),
+            Paragraph(str(tx.reference or ""), small_style),
+        ]
+        tx_data.append(row)
+
+    totals_row = [
+        Paragraph("", small_style),
+        Paragraph("", small_style),
+        Paragraph("", small_style),
+        Paragraph("<b>Totals</b>", ParagraphStyle('tb', parent=small_style, alignment=TA_RIGHT)),
+        Paragraph(f"<b>{symbol} {total_debit:,.2f}</b>", ParagraphStyle('td', parent=small_style, alignment=TA_RIGHT)),
+        Paragraph(f"<b>{symbol} {total_credit:,.2f}</b>", ParagraphStyle('tc', parent=small_style, alignment=TA_RIGHT)),
+        Paragraph("", small_style),
+        Paragraph("", small_style),
+    ]
+    tx_data.append(totals_row)
+
+    col_widths = [55, 70, 65, 45, 60, 60, 60, 55]
+    total_w = sum(col_widths)
+    scale = doc.width / total_w
+    col_widths = [w * scale for w in col_widths]
+
+    tx_table = Table(tx_data, colWidths=col_widths, repeatRows=1)
+    tx_table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#1e3a5f')),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('FONTSIZE', (0,0), (-1,-1), 7),
+        ('TOPPADDING', (0,0), (-1,-1), 3),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 3),
+        ('GRID', (0,0), (-1,-2), 0.25, colors.lightgrey),
+        ('LINEABOVE', (0,-1), (-1,-1), 1, colors.HexColor('#1e3a5f')),
+        ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#f0f4f8')),
+        ('ROWBACKGROUNDS', (0,1), (-1,-2), [colors.white, colors.HexColor('#fafafa')]),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+    ]))
+    elements.append(tx_table)
+
+    elements.append(Spacer(1, 8*mm))
+    elements.append(HRFlowable(width="100%", thickness=0.5, color=colors.lightgrey))
+    elements.append(Spacer(1, 2*mm))
+    footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=8, textColor=colors.grey, alignment=TA_CENTER)
+    elements.append(Paragraph(f"Total Transactions: {len(transactions)}", footer_style))
+    elements.append(Paragraph("This is a computer-generated statement and does not require a signature.", footer_style))
+
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer
