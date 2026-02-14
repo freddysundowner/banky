@@ -1961,7 +1961,10 @@ async def request_salary_advance(org_id: str, data: SalaryAdvanceCreate, user=De
     require_permission(membership, "hr:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
-        staff = tenant_session.query(Staff).filter(Staff.email == user.email).first()
+        if data.staff_id:
+            staff = tenant_session.query(Staff).filter(Staff.id == data.staff_id).first()
+        else:
+            staff = tenant_session.query(Staff).filter(Staff.email == user.email).first()
         if not staff:
             raise HTTPException(status_code=404, detail="Staff record not found")
         

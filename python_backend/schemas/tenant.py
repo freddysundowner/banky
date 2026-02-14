@@ -1308,7 +1308,7 @@ class DisciplinaryRecordResponse(BaseModel):
     action_taken: Optional[str] = None
     suspension_start_date: Optional[date] = None
     suspension_end_date: Optional[date] = None
-    issued_by_id: str
+    issued_by_id: Optional[str] = None
     witness_id: Optional[str] = None
     staff_response: Optional[str] = None
     follow_up_date: Optional[date] = None
@@ -1428,6 +1428,7 @@ class PayrollRunResponse(BaseModel):
 
 # Salary Advance schemas
 class SalaryAdvanceCreate(BaseModel):
+    staff_id: Optional[str] = None
     amount: Decimal
     reason: Optional[str] = None
     recovery_months: int = 1
