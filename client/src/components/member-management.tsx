@@ -85,6 +85,7 @@ import {
 import type { Member, Branch } from "@shared/tenant-types";
 import { useResourcePermissions, RESOURCES } from "@/hooks/use-resource-permissions";
 import { useCurrency } from "@/hooks/use-currency";
+import MemberStatementPage from "./member-statement-page";
 
 interface MemberManagementProps {
   organizationId: string;
@@ -149,7 +150,7 @@ const memberSchema = z.object({
 
 type MemberFormData = z.infer<typeof memberSchema>;
 
-type ViewMode = "list" | "new" | "edit" | "view";
+type ViewMode = "list" | "new" | "edit" | "view" | "statement";
 
 const kenyanCounties = [
   "Baringo", "Bomet", "Bungoma", "Busia", "Elgeyo-Marakwet", "Embu", "Garissa",
@@ -1604,6 +1605,16 @@ export default function MemberManagement({ organizationId }: MemberManagementPro
     );
   }
 
+  if (viewMode === "statement" && selectedMember) {
+    return (
+      <MemberStatementPage
+        organizationId={organizationId}
+        memberId={selectedMember.id}
+        onBack={() => setViewMode("view")}
+      />
+    );
+  }
+
   // View Mode
   if (viewMode === "view" && selectedMember) {
     const member = selectedMember;
@@ -1663,11 +1674,36 @@ export default function MemberManagement({ organizationId }: MemberManagementPro
             )}
             <Button 
               variant="outline" 
-              onClick={() => downloadAccountStatement(member)}
-              data-testid="button-download-statement"
+              onClick={() => setViewMode("statement")}
+              data-testid="button-view-statement"
+            >
+              <Eye className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">View Statement</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={async () => {
+                try {
+                  const res = await fetch(`/api/organizations/${organizationId}/members/${member.id}/statement/pdf`, {
+                    credentials: "include",
+                  });
+                  if (!res.ok) throw new Error("Failed to download PDF");
+                  const blob = await res.blob();
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `statement-${member.member_number || "member"}.pdf`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                  toast({ title: "Downloaded", description: "PDF statement downloaded successfully" });
+                } catch (error) {
+                  toast({ title: "Error", description: "Failed to download PDF statement", variant: "destructive" });
+                }
+              }}
+              data-testid="button-download-pdf-statement"
             >
               <Download className="h-4 w-4 mr-1" />
-              <span className="hidden sm:inline">Statement</span>
+              <span className="hidden sm:inline">PDF</span>
             </Button>
             {canWrite && (
               <Button variant="outline" onClick={() => handleEditMember(member)} data-testid="button-edit-view">
