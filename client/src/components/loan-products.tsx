@@ -57,6 +57,7 @@ const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
   description: z.string().optional(),
   interest_rate: z.string().min(1, "Interest rate is required"),
+  interest_rate_period: z.enum(["monthly", "annual", "weekly"]).default("monthly"),
   interest_type: z.enum(["flat", "reducing_balance"]).default("reducing_balance"),
   repayment_frequency: z.enum(["daily", "weekly", "bi_weekly", "monthly"]).default("monthly"),
   min_amount: z.string().min(1, "Minimum amount is required"),
@@ -120,6 +121,7 @@ export default function LoanProducts({ organizationId }: LoanProductsProps) {
       name: "",
       description: "",
       interest_rate: "",
+      interest_rate_period: "monthly",
       interest_type: "reducing_balance",
       repayment_frequency: "monthly",
       min_amount: "",
@@ -221,6 +223,7 @@ export default function LoanProducts({ organizationId }: LoanProductsProps) {
       name: product.name,
       description: product.description || "",
       interest_rate: String(parseFloat(product.interest_rate) || 0),
+      interest_rate_period: ((product as any).interest_rate_period || "monthly") as any,
       interest_type: product.interest_type as any,
       repayment_frequency: (product as any).repayment_frequency || "monthly",
       min_amount: product.min_amount,
@@ -320,11 +323,27 @@ export default function LoanProducts({ organizationId }: LoanProductsProps) {
                 <CardTitle>Interest & Repayment</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-4 sm:grid-cols-3">
                   <FormField control={form.control} name="interest_rate" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Interest Rate (% per annum)</FormLabel>
+                      <FormLabel>Interest Rate (%)</FormLabel>
                       <FormControl><Input {...field} type="number" step="0.01" placeholder="12.5" data-testid="input-product-interest" /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="interest_rate_period" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Rate Period</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-product-rate-period"><SelectValue /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="monthly">Per Month</SelectItem>
+                          <SelectItem value="annual">Per Year</SelectItem>
+                          <SelectItem value="weekly">Per Week</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -629,7 +648,7 @@ export default function LoanProducts({ organizationId }: LoanProductsProps) {
                       <TableCell className="hidden sm:table-cell">{product.code || "-"}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          {formatPercent(product.interest_rate)} ({product.interest_type?.replace("_", " ")})
+                          {formatPercent(product.interest_rate)} {(product as any).interest_rate_period === "annual" ? "p.a." : (product as any).interest_rate_period === "weekly" ? "p.w." : "p.m."} ({product.interest_type?.replace("_", " ")})
                         </div>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">

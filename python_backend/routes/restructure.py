@@ -73,7 +73,7 @@ def recalculate_loan(remaining_principal: Decimal, product: LoanProduct, loan: L
 
     interest_type = getattr(product, 'interest_type', 'reducing_balance') if product else 'reducing_balance'
     freq = getattr(product, 'repayment_frequency', 'monthly') if product else 'monthly'
-    return calculate_loan(remaining_principal, term, rate, interest_type, freq)
+    return calculate_loan(remaining_principal, term, rate, interest_type, freq, freq)
 
 @router.get("/{org_id}/loans/{loan_id}/restructures")
 async def list_loan_restructures(org_id: str, loan_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):

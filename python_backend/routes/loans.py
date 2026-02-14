@@ -54,8 +54,23 @@ def post_disbursement_to_gl(tenant_session, loan, member, disbursement_method: s
 
 router = APIRouter()
 
-def calculate_loan(amount: Decimal, term: int, interest_rate: Decimal, interest_type: str = "reducing_balance", repayment_frequency: str = "monthly"):
-    periodic_rate = interest_rate / Decimal("100")
+def get_periodic_rate(interest_rate: Decimal, interest_rate_period: str, repayment_frequency: str) -> Decimal:
+    periods_per_year = {"daily": 365, "weekly": 52, "bi_weekly": 26, "monthly": 12}
+    rate_as_decimal = interest_rate / Decimal("100")
+    
+    freq_periods = periods_per_year.get(repayment_frequency, 12)
+    rate_periods = periods_per_year.get(interest_rate_period, 12)
+    
+    if interest_rate_period == "annual":
+        return rate_as_decimal / Decimal(str(freq_periods))
+    elif rate_periods == freq_periods:
+        return rate_as_decimal
+    else:
+        annual_rate = rate_as_decimal * Decimal(str(rate_periods))
+        return annual_rate / Decimal(str(freq_periods))
+
+def calculate_loan(amount: Decimal, term: int, interest_rate: Decimal, interest_type: str = "reducing_balance", repayment_frequency: str = "monthly", interest_rate_period: str = "monthly"):
+    periodic_rate = get_periodic_rate(interest_rate, interest_rate_period, repayment_frequency)
 
     if interest_type == "flat":
         total_interest = amount * periodic_rate * term
@@ -237,7 +252,8 @@ async def create_loan(org_id: str, data: LoanApplicationCreate, user=Depends(get
         if data.term_months < product.min_term_months or data.term_months > product.max_term_months:
             raise HTTPException(status_code=400, detail=f"Term must be between {product.min_term_months} and {product.max_term_months} {period_label}")
         
-        calc = calculate_loan(data.amount, data.term_months, product.interest_rate, product.interest_type, getattr(product, 'repayment_frequency', 'monthly'))
+        rate_period = getattr(product, 'interest_rate_period', None) or 'monthly'
+        calc = calculate_loan(data.amount, data.term_months, product.interest_rate, product.interest_type, getattr(product, 'repayment_frequency', 'monthly'), rate_period)
         
         processing_fee = data.amount * (product.processing_fee or Decimal("0")) / Decimal("100")
         insurance_fee = data.amount * (product.insurance_fee or Decimal("0")) / Decimal("100")
@@ -251,6 +267,8 @@ async def create_loan(org_id: str, data: LoanApplicationCreate, user=Depends(get
         cli_rate = getattr(product, 'credit_life_insurance_rate', None) or Decimal("0")
         cli_freq = getattr(product, 'credit_life_insurance_freq', None) or "annual"
         
+        effective_rate = get_periodic_rate(product.interest_rate, rate_period, getattr(product, 'repayment_frequency', 'monthly')) * Decimal("100")
+        
         code = generate_code(tenant_session, "LN")
         
         current_staff = tenant_session.query(Staff).filter(Staff.email == user.email).first()
@@ -261,7 +279,7 @@ async def create_loan(org_id: str, data: LoanApplicationCreate, user=Depends(get
             loan_product_id=data.loan_product_id,
             amount=data.amount,
             term_months=data.term_months,
-            interest_rate=product.interest_rate,
+            interest_rate=round(effective_rate, 4),
             total_interest=calc["total_interest"],
             total_repayment=calc["total_repayment"],
             monthly_repayment=calc["monthly_repayment"],
@@ -1037,7 +1055,9 @@ async def update_loan(org_id: str, loan_id: str, data: LoanApplicationUpdate, us
             if not product:
                 raise HTTPException(status_code=404, detail="Loan product not found")
             loan.loan_product_id = data.loan_product_id
-            loan.interest_rate = product.interest_rate
+            edit_rate_period = getattr(product, 'interest_rate_period', None) or 'monthly'
+            edit_effective_rate = get_periodic_rate(product.interest_rate, edit_rate_period, getattr(product, 'repayment_frequency', 'monthly')) * Decimal("100")
+            loan.interest_rate = round(edit_effective_rate, 4)
         else:
             product = tenant_session.query(LoanProduct).filter(LoanProduct.id == loan.loan_product_id).first()
         
@@ -1063,7 +1083,8 @@ async def update_loan(org_id: str, loan_id: str, data: LoanApplicationUpdate, us
         if data.disbursement_phone is not None:
             loan.disbursement_phone = data.disbursement_phone
         
-        calc = calculate_loan(loan.amount, loan.term_months, product.interest_rate, product.interest_type, getattr(product, 'repayment_frequency', 'monthly'))
+        edit_rp = getattr(product, 'interest_rate_period', None) or 'monthly'
+        calc = calculate_loan(loan.amount, loan.term_months, product.interest_rate, product.interest_type, getattr(product, 'repayment_frequency', 'monthly'), edit_rp)
         loan.total_interest = calc["total_interest"]
         loan.total_repayment = calc["total_repayment"]
         loan.monthly_repayment = calc["monthly_repayment"]

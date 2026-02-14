@@ -207,6 +207,7 @@ class LoanProduct(TenantBase):
     code = Column(String(50), unique=True, nullable=False)
     description = Column(Text)
     interest_rate = Column(Numeric(10, 4), nullable=False)
+    interest_rate_period = Column(String(20), default="monthly")
     interest_type = Column(String(50), default="reducing_balance")
     repayment_frequency = Column(String(50), default="monthly")
     min_amount = Column(Numeric(15, 2), nullable=False)

@@ -193,6 +193,7 @@ def run_tenant_schema_migration(engine):
             ("max_guarantors", "INTEGER DEFAULT 3"),
             ("shares_multiplier", "NUMERIC(5,2) DEFAULT 3"),
             ("min_shares_required", "NUMERIC(15,2) DEFAULT 0"),
+            ("interest_rate_period", "VARCHAR(20) DEFAULT 'monthly'"),
             ("deduct_interest_upfront", "BOOLEAN DEFAULT FALSE"),
             ("appraisal_fee", "NUMERIC(10,4) DEFAULT 0"),
             ("excise_duty_rate", "NUMERIC(10,4) DEFAULT 20"),

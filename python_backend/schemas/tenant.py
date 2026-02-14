@@ -322,6 +322,7 @@ class LoanProductCreate(BaseModel):
     name: str
     description: Optional[str] = None
     interest_rate: Decimal
+    interest_rate_period: Optional[str] = "monthly"
     interest_type: Optional[str] = "reducing_balance"
     repayment_frequency: Optional[str] = "monthly"
     min_amount: Decimal
@@ -347,6 +348,7 @@ class LoanProductUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     interest_rate: Optional[Decimal] = None
+    interest_rate_period: Optional[str] = None
     interest_type: Optional[str] = None
     repayment_frequency: Optional[str] = None
     min_amount: Optional[Decimal] = None
@@ -375,6 +377,7 @@ class LoanProductResponse(BaseModel):
     code: str
     description: Optional[str] = None
     interest_rate: Decimal
+    interest_rate_period: str = "monthly"
     interest_type: str
     repayment_frequency: str = "monthly"
     min_amount: Decimal
