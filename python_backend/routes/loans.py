@@ -80,7 +80,7 @@ def generate_code(db: Session, prefix: str):
     return f"{prefix}{count + 1:04d}"
 
 @router.get("/{org_id}/loans")
-async def list_loans(org_id: str, status: str = None, member_id: str = None, branch_id: str = None, page: int = 1, page_size: int = 20, search: str = None, user=Depends(get_current_user), db: Session = Depends(get_db)):
+async def list_loans(org_id: str, status: str = None, member_id: str = None, branch_id: str = None, page: int = 1, page_size: int = 20, search: str = None, product_id: str = None, date_from: str = None, date_to: str = None, user=Depends(get_current_user), db: Session = Depends(get_db)):
     from routes.common import get_branch_filter
     
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
@@ -102,6 +102,20 @@ async def list_loans(org_id: str, status: str = None, member_id: str = None, bra
             query = query.filter(LoanApplication.status == status)
         if member_id:
             query = query.filter(LoanApplication.member_id == member_id)
+        if product_id:
+            query = query.filter(LoanApplication.loan_product_id == product_id)
+        if date_from:
+            try:
+                from_date = datetime.strptime(date_from, "%Y-%m-%d")
+                query = query.filter(LoanApplication.created_at >= from_date)
+            except ValueError:
+                pass
+        if date_to:
+            try:
+                to_date = datetime.strptime(date_to, "%Y-%m-%d") + timedelta(days=1)
+                query = query.filter(LoanApplication.created_at < to_date)
+            except ValueError:
+                pass
         
         if search:
             search_term = f"%{search.strip()}%"
@@ -887,8 +901,8 @@ async def cancel_loan(org_id: str, loan_id: str, user=Depends(get_current_user),
 
 # Alias routes for frontend compatibility - loan-applications maps to loans
 @router.get("/{org_id}/loan-applications")
-async def list_loan_applications(org_id: str, status: str = None, member_id: str = None, branch_id: str = None, page: int = 1, page_size: int = 20, search: str = None, user=Depends(get_current_user), db: Session = Depends(get_db)):
-    return await list_loans(org_id, status, member_id, branch_id, page, page_size, search, user, db)
+async def list_loan_applications(org_id: str, status: str = None, member_id: str = None, branch_id: str = None, page: int = 1, page_size: int = 20, search: str = None, product_id: str = None, date_from: str = None, date_to: str = None, user=Depends(get_current_user), db: Session = Depends(get_db)):
+    return await list_loans(org_id, status, member_id, branch_id, page, page_size, search, product_id, date_from, date_to, user, db)
 
 @router.post("/{org_id}/loan-applications")
 async def create_loan_application(org_id: str, data: LoanApplicationCreate, user=Depends(get_current_user), db: Session = Depends(get_db)):

@@ -47,7 +47,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { getErrorMessage } from "@/lib/error-utils";
-import { FileText, Plus, Check, X, Banknote, Eye, ArrowLeft, Pencil, Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronsUpDown, AlertTriangle, Clock, CheckCircle2, AlertCircle, Search } from "lucide-react";
+import { FileText, Plus, Check, X, Banknote, Eye, ArrowLeft, Pencil, Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronsUpDown, AlertTriangle, Clock, CheckCircle2, AlertCircle, Search, SlidersHorizontal, CalendarDays, RotateCcw } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
@@ -600,9 +600,13 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
   const [rejectConfirmed, setRejectConfirmed] = useState(false);
   const [branchFilter, setBranchFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [productFilter, setProductFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
   const pageSize = 20;
   const { canWrite, hasPermission } = useResourcePermissions(organizationId, RESOURCES.LOANS);
   const canApprove = hasPermission("loans:approve");
@@ -636,6 +640,15 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
     },
   });
 
+  const { data: allProducts } = useQuery<LoanProduct[]>({
+    queryKey: ["/api/organizations", organizationId, "loan-products"],
+    queryFn: async () => {
+      const res = await fetch(`/api/organizations/${organizationId}/loan-products`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch loan products");
+      return res.json();
+    },
+  });
+
   useEffect(() => {
     if (branches && branches.length === 1) {
       setBranchFilter(branches[0].id);
@@ -649,13 +662,13 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [debouncedSearch, statusFilter, branchFilter]);
+  }, [debouncedSearch, statusFilter, branchFilter, productFilter, dateFrom, dateTo]);
 
   const { data: paginatedLoans, isLoading } = useQuery<{
     data: LoanApplication[];
     pagination: { page: number; page_size: number; total: number; total_pages: number };
   }>({
-    queryKey: ["/api/organizations", organizationId, "loan-applications", branchFilter, statusFilter, debouncedSearch, currentPage, pageSize],
+    queryKey: ["/api/organizations", organizationId, "loan-applications", branchFilter, statusFilter, productFilter, dateFrom, dateTo, debouncedSearch, currentPage, pageSize],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (branchFilter && branchFilter !== "all") {
@@ -663,6 +676,15 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
       }
       if (statusFilter && statusFilter !== "all") {
         params.append("status", statusFilter);
+      }
+      if (productFilter && productFilter !== "all") {
+        params.append("product_id", productFilter);
+      }
+      if (dateFrom) {
+        params.append("date_from", dateFrom);
+      }
+      if (dateTo) {
+        params.append("date_to", dateTo);
       }
       if (debouncedSearch) {
         params.append("search", debouncedSearch);
@@ -2208,46 +2230,118 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by member name or application number..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-            data-testid="input-search-loans"
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[160px]" data-testid="select-status-filter">
-            <SelectValue placeholder="All Statuses" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="under_review">Under Review</SelectItem>
-            <SelectItem value="approved">Approved</SelectItem>
-            <SelectItem value="rejected">Rejected</SelectItem>
-            <SelectItem value="disbursed">Disbursed</SelectItem>
-            <SelectItem value="closed">Closed</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
-        {canSeeAllBranches && branches && branches.length > 1 && (
-          <Select value={branchFilter} onValueChange={setBranchFilter}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="All Branches" />
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by member name or application number..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+              data-testid="input-search-loans"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[160px]" data-testid="select-status-filter">
+              <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Branches</SelectItem>
-              {branches.map((branch) => (
-                <SelectItem key={branch.id} value={branch.id}>
-                  {branch.name}
-                </SelectItem>
-              ))}
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+              <SelectItem value="under_review">Under Review</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="disbursed">Disbursed</SelectItem>
+              <SelectItem value="closed">Closed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
             </SelectContent>
           </Select>
+          <Button
+            variant={showMoreFilters ? "secondary" : "outline"}
+            size="sm"
+            onClick={() => setShowMoreFilters(!showMoreFilters)}
+            className="gap-1.5 h-10"
+            data-testid="button-more-filters"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            <span className="hidden sm:inline">More Filters</span>
+            {(productFilter !== "all" || dateFrom || dateTo || (branchFilter !== "all" && canSeeAllBranches)) && (
+              <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs rounded-full">
+                {[productFilter !== "all", dateFrom || dateTo, branchFilter !== "all" && canSeeAllBranches].filter(Boolean).length}
+              </Badge>
+            )}
+          </Button>
+        </div>
+
+        {showMoreFilters && (
+          <div className="flex flex-col sm:flex-row gap-3 p-3 bg-muted/50 rounded-lg border">
+            <Select value={productFilter} onValueChange={setProductFilter}>
+              <SelectTrigger className="w-full sm:w-[200px]" data-testid="select-product-filter">
+                <SelectValue placeholder="All Products" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Products</SelectItem>
+                {allProducts?.map((product) => (
+                  <SelectItem key={product.id} value={product.id}>
+                    {product.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {canSeeAllBranches && branches && branches.length > 1 && (
+              <Select value={branchFilter} onValueChange={setBranchFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="All Branches" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Branches</SelectItem>
+                  {branches.map((branch) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
+              <Input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="w-full sm:w-[150px]"
+                placeholder="From"
+                data-testid="input-date-from"
+              />
+              <span className="text-muted-foreground text-sm">to</span>
+              <Input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="w-full sm:w-[150px]"
+                placeholder="To"
+                data-testid="input-date-to"
+              />
+            </div>
+            {(productFilter !== "all" || dateFrom || dateTo || branchFilter !== "all") && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setProductFilter("all");
+                  setBranchFilter("all");
+                  setDateFrom("");
+                  setDateTo("");
+                }}
+                className="gap-1.5 h-10 text-muted-foreground"
+                data-testid="button-clear-filters"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                Clear
+              </Button>
+            )}
+          </div>
         )}
       </div>
 
