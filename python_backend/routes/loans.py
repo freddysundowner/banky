@@ -488,7 +488,7 @@ async def export_loans(org_id: str, export_type: str = "all", status: str = None
             product = products_map.get(loan.loan_product_id)
             loan_instalments = instalment_map.get(loan.id, [])
             
-            overdue_instalments = [i for i in loan_instalments if i.due_date < today and i.status in ("pending", "partial")]
+            overdue_instalments = [i for i in loan_instalments if i.due_date < today and i.status in ("pending", "partial", "overdue")]
             overdue_amount = sum(
                 float(i.expected_principal or 0) + float(i.expected_interest or 0) - float(i.paid_principal or 0) - float(i.paid_interest or 0)
                 for i in overdue_instalments
@@ -499,12 +499,12 @@ async def export_loans(org_id: str, export_type: str = "all", status: str = None
                 days_overdue = (today - earliest_overdue).days
             
             next_due = None
-            pending_instalments = sorted(
-                [i for i in loan_instalments if i.status in ("pending", "partial")],
+            unpaid_instalments = sorted(
+                [i for i in loan_instalments if i.status in ("pending", "partial", "overdue")],
                 key=lambda i: i.due_date
             )
-            if pending_instalments:
-                next_due = pending_instalments[0].due_date
+            if unpaid_instalments:
+                next_due = unpaid_instalments[0].due_date
             
             row_data = [
                 loan.application_number,
