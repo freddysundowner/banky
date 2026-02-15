@@ -236,99 +236,153 @@ export default function Transactions({ organizationId }: TransactionsProps) {
     queryKey: ["/api/organizations", organizationId, "settings"],
     enabled: !!organizationId,
   });
-  const orgName = settingsData?.find(s => s.setting_key === "organization_name")?.setting_value || "Organization";
+  const getSetting = (key: string) => settingsData?.find(s => s.setting_key === key)?.setting_value || "";
+  const orgName = getSetting("organization_name") || "Organization";
+  const orgPhone = getSetting("organization_phone");
+  const orgEmail = getSetting("email_from_address") || getSetting("organization_email");
+  const orgAddress = getSetting("organization_address");
+  const orgPostal = getSetting("organization_postal");
+  const orgWebsite = getSetting("organization_website");
+  const orgRegNo = getSetting("organization_registration_no");
 
   const handlePrintReceipt = (txn: Transaction) => {
     const member = members?.find(m => m.id === txn.member_id);
     const memberName = member ? `${member.first_name} ${member.last_name}` : "Unknown";
     const memberNumber = member?.member_number || "";
+    const memberPhone = member?.phone || "";
     const date = new Date(txn.created_at);
+    const fmtAmt = (v: number) => `${symbol} ${Number(v ?? 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+    const typeLabel = txn.transaction_type.charAt(0).toUpperCase() + txn.transaction_type.slice(1);
 
-    const printWindow = window.open("", "_blank", "width=400,height=600");
+    const contactLines = [
+      orgAddress,
+      orgPostal ? `P.O. Box ${orgPostal}` : "",
+      orgPhone ? `Tel: ${orgPhone}` : "",
+      orgEmail ? `Email: ${orgEmail}` : "",
+      orgWebsite || "",
+      orgRegNo ? `Reg No: ${orgRegNo}` : "",
+    ].filter(Boolean);
+
+    const printWindow = window.open("", "_blank", "width=460,height=700");
     if (!printWindow) return;
 
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Receipt - ${txn.transaction_number}</title>
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { font-family: 'Courier New', monospace; padding: 20px; max-width: 350px; margin: 0 auto; color: #000; }
-          .header { text-align: center; border-bottom: 2px dashed #333; padding-bottom: 12px; margin-bottom: 12px; }
-          .header h1 { font-size: 18px; font-weight: bold; margin-bottom: 4px; }
-          .header p { font-size: 11px; color: #555; }
-          .receipt-title { text-align: center; font-size: 14px; font-weight: bold; margin: 12px 0; text-transform: uppercase; letter-spacing: 1px; }
-          .divider { border-top: 1px dashed #999; margin: 10px 0; }
-          .row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; }
-          .row .label { color: #555; }
-          .row .value { font-weight: bold; text-align: right; max-width: 55%; }
-          .amount-row { font-size: 16px; padding: 8px 0; }
-          .amount-row .value { font-size: 16px; }
-          .footer { text-align: center; margin-top: 16px; border-top: 2px dashed #333; padding-top: 12px; font-size: 10px; color: #777; }
-          .footer p { margin-bottom: 4px; }
-          @media print {
-            body { padding: 10px; }
-            .no-print { display: none; }
-          }
-          .print-btn { display: block; width: 100%; padding: 10px; margin-top: 16px; background: #2563eb; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
-          .print-btn:hover { background: #1d4ed8; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>${orgName}</h1>
-          <p>Transaction Receipt</p>
+    printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <title>Receipt - ${txn.transaction_number}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; padding: 0; color: #1a1a1a; background: #fff; }
+    .receipt { max-width: 380px; margin: 20px auto; padding: 0 16px; }
+    .org-header { text-align: center; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 2px solid #1a1a1a; }
+    .org-header h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 6px; text-transform: uppercase; }
+    .org-contact { font-size: 10px; color: #555; line-height: 1.6; }
+    .txn-badge { text-align: center; margin: 14px 0; }
+    .txn-badge span {
+      display: inline-block; padding: 5px 20px; font-size: 12px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 1.5px; border: 2px solid #1a1a1a; border-radius: 4px;
+    }
+    .section { margin: 14px 0; }
+    .section-title { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: #888; margin-bottom: 8px; }
+    .divider { border: none; border-top: 1px solid #ddd; margin: 14px 0; }
+    .divider-bold { border: none; border-top: 2px solid #1a1a1a; margin: 14px 0; }
+    .row { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; font-size: 12px; }
+    .row .label { color: #666; flex-shrink: 0; }
+    .row .value { font-weight: 500; text-align: right; word-break: break-all; }
+    .amount-box {
+      background: #f5f5f5; border-radius: 6px; padding: 12px 14px; margin: 10px 0;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .amount-box .label { font-size: 13px; font-weight: 500; color: #333; }
+    .amount-box .value { font-size: 20px; font-weight: 700; color: #1a1a1a; }
+    .balance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0; }
+    .balance-item { background: #fafafa; border-radius: 4px; padding: 8px 10px; text-align: center; }
+    .balance-item .bal-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 4px; }
+    .balance-item .bal-value { font-size: 13px; font-weight: 600; }
+    .footer { text-align: center; margin-top: 20px; padding-top: 16px; border-top: 2px solid #1a1a1a; }
+    .footer .thanks { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+    .footer .org-foot { font-size: 10px; color: #888; margin-bottom: 2px; }
+    .stamp { font-size: 9px; color: #aaa; margin-top: 12px; }
+    @media print {
+      body { padding: 0; }
+      .receipt { margin: 0 auto; }
+      .no-print { display: none !important; }
+    }
+    .btn-row { display: flex; gap: 8px; margin-top: 16px; }
+    .print-btn {
+      flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 13px;
+      font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif;
+    }
+    .print-btn.primary { background: #1a1a1a; color: #fff; }
+    .print-btn.primary:hover { background: #333; }
+    .print-btn.secondary { background: #f0f0f0; color: #333; }
+    .print-btn.secondary:hover { background: #e0e0e0; }
+  </style>
+</head>
+<body>
+  <div class="receipt">
+    <div class="org-header">
+      <h1>${orgName}</h1>
+      ${contactLines.length > 0 ? `<div class="org-contact">${contactLines.join(" &bull; ")}</div>` : ""}
+    </div>
+
+    <div class="txn-badge"><span>${typeLabel} Receipt</span></div>
+
+    <div class="section">
+      <div class="section-title">Transaction Details</div>
+      <div class="row"><span class="label">Receipt No</span><span class="value">${txn.transaction_number}</span></div>
+      <div class="row"><span class="label">Date</span><span class="value">${date.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} ${date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span></div>
+      <div class="row"><span class="label">Payment Method</span><span class="value" style="text-transform:capitalize">${txn.payment_method || "Cash"}</span></div>
+      ${txn.reference ? `<div class="row"><span class="label">Reference</span><span class="value" style="font-family:monospace;font-size:11px">${txn.reference}</span></div>` : ""}
+    </div>
+
+    <hr class="divider" />
+
+    <div class="section">
+      <div class="section-title">Member Information</div>
+      <div class="row"><span class="label">Name</span><span class="value">${memberName}</span></div>
+      ${memberNumber ? `<div class="row"><span class="label">Member No</span><span class="value">${memberNumber}</span></div>` : ""}
+      ${memberPhone ? `<div class="row"><span class="label">Phone</span><span class="value">${memberPhone}</span></div>` : ""}
+      <div class="row"><span class="label">Account</span><span class="value" style="text-transform:capitalize">${txn.account_type}</span></div>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="section">
+      <div class="section-title">Amount</div>
+      <div class="amount-box">
+        <span class="label">${typeLabel}</span>
+        <span class="value">${fmtAmt(txn.amount)}</span>
+      </div>
+      <div class="balance-grid">
+        <div class="balance-item">
+          <div class="bal-label">Before</div>
+          <div class="bal-value">${fmtAmt(txn.balance_before)}</div>
         </div>
-        <div class="receipt-title">${txn.transaction_type} Receipt</div>
-        <div class="divider"></div>
-        <div class="row">
-          <span class="label">Receipt No:</span>
-          <span class="value">${txn.transaction_number}</span>
+        <div class="balance-item">
+          <div class="bal-label">After</div>
+          <div class="bal-value">${fmtAmt(txn.balance_after)}</div>
         </div>
-        <div class="row">
-          <span class="label">Date:</span>
-          <span class="value">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</span>
-        </div>
-        <div class="divider"></div>
-        <div class="row">
-          <span class="label">Member:</span>
-          <span class="value">${memberName}</span>
-        </div>
-        ${memberNumber ? `<div class="row"><span class="label">Member No:</span><span class="value">${memberNumber}</span></div>` : ""}
-        <div class="row">
-          <span class="label">Account:</span>
-          <span class="value" style="text-transform: capitalize;">${txn.account_type}</span>
-        </div>
-        <div class="divider"></div>
-        <div class="row amount-row">
-          <span class="label">Amount:</span>
-          <span class="value">${symbol} ${Number(txn.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-        </div>
-        <div class="row">
-          <span class="label">Balance Before:</span>
-          <span class="value">${symbol} ${Number(txn.balance_before ?? 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-        </div>
-        <div class="row">
-          <span class="label">Balance After:</span>
-          <span class="value">${symbol} ${Number(txn.balance_after ?? 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
-        </div>
-        <div class="divider"></div>
-        <div class="row">
-          <span class="label">Payment Method:</span>
-          <span class="value" style="text-transform: capitalize;">${txn.payment_method || "Cash"}</span>
-        </div>
-        ${txn.reference ? `<div class="row"><span class="label">Reference:</span><span class="value">${txn.reference}</span></div>` : ""}
-        ${txn.description ? `<div class="row"><span class="label">Description:</span><span class="value">${txn.description}</span></div>` : ""}
-        <div class="footer">
-          <p>Thank you for banking with us</p>
-          <p>${orgName}</p>
-          <p>Printed: ${new Date().toLocaleString()}</p>
-        </div>
-        <button class="print-btn no-print" onclick="window.print()">Print Receipt</button>
-      </body>
-      </html>
-    `);
+      </div>
+    </div>
+
+    ${txn.description ? `<hr class="divider" /><div class="section"><div class="section-title">Description</div><div style="font-size:12px;color:#444">${txn.description}</div></div>` : ""}
+
+    <div class="footer">
+      <div class="thanks">Thank you for banking with us</div>
+      <div class="org-foot">${orgName}</div>
+      ${orgPhone ? `<div class="org-foot">${orgPhone}</div>` : ""}
+      <div class="stamp">Printed: ${new Date().toLocaleString()}</div>
+    </div>
+
+    <div class="btn-row no-print">
+      <button class="print-btn primary" onclick="window.print()">Print Receipt</button>
+      <button class="print-btn secondary" onclick="window.close()">Close</button>
+    </div>
+  </div>
+</body>
+</html>`);
     printWindow.document.close();
   };
 
