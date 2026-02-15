@@ -246,6 +246,87 @@ export default function SettingsPage({ organizationId }: SettingsPageProps) {
           <TabsContent value="general" className="space-y-4">
             <Card>
               <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Building2 className="h-5 w-5" /> Organization Details</CardTitle>
+                <CardDescription>Your organization's information displayed on receipts and documents</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="organization_name">Organization Name</Label>
+                    <Input
+                      id="organization_name"
+                      value={getValue("organization_name")}
+                      onChange={(e) => updateSetting("organization_name", e.target.value)}
+                      placeholder="e.g. Sunrise SACCO Ltd"
+                      data-testid="input-organization-name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="organization_phone">Phone Number</Label>
+                    <Input
+                      id="organization_phone"
+                      value={getValue("organization_phone")}
+                      onChange={(e) => updateSetting("organization_phone", e.target.value)}
+                      placeholder="e.g. +254 700 123 456"
+                      data-testid="input-organization-phone"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="organization_email">Email Address</Label>
+                    <Input
+                      id="organization_email"
+                      value={getValue("organization_email")}
+                      onChange={(e) => updateSetting("organization_email", e.target.value)}
+                      placeholder="e.g. info@yoursacco.co.ke"
+                      data-testid="input-organization-email"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="organization_website">Website</Label>
+                    <Input
+                      id="organization_website"
+                      value={getValue("organization_website")}
+                      onChange={(e) => updateSetting("organization_website", e.target.value)}
+                      placeholder="e.g. www.yoursacco.co.ke"
+                      data-testid="input-organization-website"
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="organization_address">Physical Address</Label>
+                    <Input
+                      id="organization_address"
+                      value={getValue("organization_address")}
+                      onChange={(e) => updateSetting("organization_address", e.target.value)}
+                      placeholder="e.g. Kenyatta Avenue, Nairobi"
+                      data-testid="input-organization-address"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="organization_postal">P.O. Box</Label>
+                    <Input
+                      id="organization_postal"
+                      value={getValue("organization_postal")}
+                      onChange={(e) => updateSetting("organization_postal", e.target.value)}
+                      placeholder="e.g. 12345-00100 Nairobi"
+                      data-testid="input-organization-postal"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="organization_registration_no">Registration Number</Label>
+                    <Input
+                      id="organization_registration_no"
+                      value={getValue("organization_registration_no")}
+                      onChange={(e) => updateSetting("organization_registration_no", e.target.value)}
+                      placeholder="e.g. CS/12345"
+                      data-testid="input-organization-registration-no"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
                 <CardTitle>General Settings</CardTitle>
                 <CardDescription>Basic organization configuration</CardDescription>
               </CardHeader>

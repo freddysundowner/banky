@@ -239,7 +239,7 @@ export default function Transactions({ organizationId }: TransactionsProps) {
   const getSetting = (key: string) => settingsData?.find(s => s.setting_key === key)?.setting_value || "";
   const orgName = getSetting("organization_name") || "Organization";
   const orgPhone = getSetting("organization_phone");
-  const orgEmail = getSetting("email_from_address") || getSetting("organization_email");
+  const orgEmail = getSetting("organization_email") || getSetting("email_from_address");
   const orgAddress = getSetting("organization_address");
   const orgPostal = getSetting("organization_postal");
   const orgWebsite = getSetting("organization_website");
