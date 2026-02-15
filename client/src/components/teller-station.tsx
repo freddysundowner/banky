@@ -62,7 +62,9 @@ import {
   PhoneCall,
   UserCheck,
   PiggyBank,
-  RefreshCw
+  Plus,
+  RefreshCw,
+  X
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -598,9 +600,8 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
   
   const [showShortageApproval, setShowShortageApproval] = useState(false);
   const [pendingShortageId, setPendingShortageId] = useState<string | null>(null);
-  const [approverStaffNumber, setApproverStaffNumber] = useState(""); // kept for backward compat
   const [approverPin, setApproverPin] = useState("");
-  const [shortageAction, setShortageAction] = useState<"deduct" | "hold" | "expense">("deduct");
+  const [shortageDists, setShortageDists] = useState<Array<{action: "deduct" | "hold" | "expense"; amount: string}>>([{action: "deduct", amount: ""}]);
   const [approvalNotes, setApprovalNotes] = useState("");
 
   const [showHandoverDialog, setShowHandoverDialog] = useState(false);
@@ -681,9 +682,14 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
   const approveShortagueMutation = useMutation({
     mutationFn: async () => {
       if (!pendingShortageId) throw new Error("No shortage to approve");
+      const shortageTotal = myShortages?.shortages?.find(s => s.id === pendingShortageId)?.shortage_amount || 0;
+      const distributions = shortageDists.map(d => ({
+        action: d.action,
+        amount: parseFloat(d.amount) || (shortageDists.length === 1 ? shortageTotal : 0),
+      }));
       const res = await apiRequest("POST", `/api/organizations/${organizationId}/shortages/${pendingShortageId}/approve`, {
         pin: approverPin,
-        action: shortageAction,
+        distributions,
         notes: approvalNotes,
       });
       return await res.json();
@@ -693,8 +699,8 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
       refetchShortages();
       setShowShortageApproval(false);
       setPendingShortageId(null);
-      setApproverStaffNumber("");
       setApproverPin("");
+      setShortageDists([{action: "deduct", amount: ""}]);
       setApprovalNotes("");
       setPhysicalCount("");
       setReconcileNotes("");
@@ -2086,107 +2092,169 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
 
       {/* Manager Approval Dialog */}
       <Dialog open={showShortageApproval} onOpenChange={setShowShortageApproval}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ShieldAlert className="h-5 w-5 text-orange-600" />
               Manager Shortage Approval
             </DialogTitle>
             <DialogDescription>
-              A manager must enter their staff number and approval PIN to authorize this shortage resolution.
+              Enter your approval PIN and decide how to handle the shortage.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
-            {myShortages?.shortages?.find(s => s.id === pendingShortageId) && (
-              <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-                <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                  Shortage Amount: {symbol} {myShortages.shortages.find(s => s.id === pendingShortageId)?.shortage_amount.toLocaleString()}
-                </p>
-                <p className="text-xs text-red-600 dark:text-red-300 mt-1">
-                  Date: {myShortages.shortages.find(s => s.id === pendingShortageId)?.date}
-                </p>
+          {(() => {
+            const shortageRecord = myShortages?.shortages?.find(s => s.id === pendingShortageId);
+            const shortageTotal = shortageRecord?.shortage_amount || 0;
+            const distTotal = shortageDists.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
+            const remaining = shortageTotal - distTotal;
+
+            return (
+              <div className="space-y-4 py-4">
+                {shortageRecord && (
+                  <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                    <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                      Total Shortage: {symbol} {shortageTotal.toLocaleString()}
+                    </p>
+                    <p className="text-xs text-red-600 dark:text-red-300 mt-1">
+                      Date: {shortageRecord.date}
+                    </p>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="approver-pin">Manager Approval PIN</Label>
+                  <Input
+                    id="approver-pin"
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={6}
+                    placeholder="Enter 4-6 digit PIN"
+                    value={approverPin}
+                    onChange={(e) => setApproverPin(e.target.value)}
+                    autoFocus
+                    data-testid="input-approver-pin"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Distribution</Label>
+                    {shortageDists.length < 3 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={() => {
+                          const usedActions = shortageDists.map(d => d.action);
+                          const nextAction = (["deduct", "hold", "expense"] as const).find(a => !usedActions.includes(a)) || "hold";
+                          const currentTotal = shortageDists.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0);
+                          const remainingAmt = Math.max(0, shortageTotal - currentTotal);
+                          setShortageDists([...shortageDists, {action: nextAction, amount: remainingAmt > 0 ? remainingAmt.toString() : ""}]);
+                        }}
+                        data-testid="button-split-shortage"
+                      >
+                        <Plus className="h-3 w-3 mr-1" /> Split
+                      </Button>
+                    )}
+                  </div>
+
+                  {shortageDists.map((dist, idx) => (
+                    <div key={idx} className="flex items-center gap-2">
+                      <Select
+                        value={dist.action}
+                        onValueChange={(value: "deduct" | "hold" | "expense") => {
+                          const updated = [...shortageDists];
+                          updated[idx] = {...updated[idx], action: value};
+                          setShortageDists(updated);
+                        }}
+                      >
+                        <SelectTrigger className="w-[160px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="deduct">Salary Deduction</SelectItem>
+                          <SelectItem value="hold">Hold</SelectItem>
+                          <SelectItem value="expense">Write Off</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <div className="relative flex-1">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{symbol}</span>
+                        <Input
+                          type="number"
+                          inputMode="decimal"
+                          className="pl-10"
+                          placeholder={shortageDists.length === 1 ? shortageTotal.toLocaleString() : "0"}
+                          value={dist.amount}
+                          onChange={(e) => {
+                            const updated = [...shortageDists];
+                            updated[idx] = {...updated[idx], amount: e.target.value};
+                            if (shortageDists.length === 1) {
+                              updated[0].amount = e.target.value || shortageTotal.toString();
+                            }
+                            setShortageDists(updated);
+                          }}
+                          data-testid={`input-dist-amount-${idx}`}
+                        />
+                      </div>
+                      {shortageDists.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          onClick={() => setShortageDists(shortageDists.filter((_, i) => i !== idx))}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  
+                  {shortageDists.length > 1 && (
+                    <div className={`text-xs ${Math.abs(remaining) < 0.01 ? "text-green-600" : "text-red-600"} font-medium`}>
+                      {Math.abs(remaining) < 0.01 
+                        ? "Amounts match the shortage total" 
+                        : remaining > 0 
+                          ? `${symbol} ${remaining.toLocaleString()} remaining to allocate`
+                          : `${symbol} ${Math.abs(remaining).toLocaleString()} over-allocated`}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="approval-notes">Notes (Optional)</Label>
+                  <Input
+                    id="approval-notes"
+                    placeholder="Add any notes..."
+                    value={approvalNotes}
+                    onChange={(e) => setApprovalNotes(e.target.value)}
+                  />
+                </div>
               </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="approver-pin">Manager Approval PIN</Label>
-              <Input
-                id="approver-pin"
-                type="password"
-                inputMode="numeric"
-                maxLength={6}
-                placeholder="Enter 4-6 digit PIN"
-                value={approverPin}
-                onChange={(e) => setApproverPin(e.target.value)}
-                autoFocus
-                data-testid="input-approver-pin"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Action</Label>
-              <Select
-                value={shortageAction}
-                onValueChange={(value: "deduct" | "hold" | "expense") => setShortageAction(value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select action" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="deduct">
-                    <span className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4" />
-                      Deduct from Teller Salary
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="hold">
-                    <span className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      Hold (Keep as Warning)
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="expense">
-                    <span className="flex items-center gap-2">
-                      <Receipt className="h-4 w-4" />
-                      Write Off as Expense
-                    </span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                {shortageAction === "deduct" 
-                  ? "The shortage will be recorded as a salary deduction for the teller."
-                  : shortageAction === "hold"
-                  ? "The shortage will remain visible as a warning until resolved."
-                  : "The shortage will be written off as an organizational expense."}
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="approval-notes">Notes (Optional)</Label>
-              <Input
-                id="approval-notes"
-                placeholder="Add any notes..."
-                value={approvalNotes}
-                onChange={(e) => setApprovalNotes(e.target.value)}
-              />
-            </div>
-          </div>
+            );
+          })()}
 
           <div className="flex flex-col gap-3 pt-4 border-t">
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => {
                 setShowShortageApproval(false);
-                setApproverStaffNumber("");
                 setApproverPin("");
+                setShortageDists([{action: "deduct", amount: ""}]);
                 setApprovalNotes("");
               }}>
                 Cancel
               </Button>
               <Button
                 onClick={() => approveShortagueMutation.mutate()}
-                disabled={!approverPin || approveShortagueMutation.isPending}
+                disabled={!approverPin || approveShortagueMutation.isPending || (() => {
+                  if (shortageDists.length <= 1) return false;
+                  const total = myShortages?.shortages?.find(s => s.id === pendingShortageId)?.shortage_amount || 0;
+                  const distSum = shortageDists.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0);
+                  return Math.abs(distSum - total) > 0.01;
+                })()}
+                data-testid="button-approve-shortage"
               >
                 {approveShortagueMutation.isPending ? "Approving..." : "Approve & Close Day"}
               </Button>

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import and_, func
 from datetime import datetime, date
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel
 
 from models.tenant import TellerFloat, FloatTransaction, Staff, Branch, ShortageRecord, SalaryDeduction, BranchVault, VaultTransaction, PendingVaultReturn, ShiftHandover
@@ -85,10 +85,15 @@ class ReconcileFloatRequest(BaseModel):
     notes: Optional[str] = None
     return_to_vault: bool = False  # If true, balance is returned to vault and next day starts at 0
 
+class ShortageDistribution(BaseModel):
+    action: str  # "deduct", "hold", or "expense"
+    amount: float
+
 class ShortageApprovalRequest(BaseModel):
     staff_number: Optional[str] = None
     pin: str
-    action: str  # "deduct", "hold", or "expense"
+    action: Optional[str] = None  # single action (backward compat)
+    distributions: Optional[List[ShortageDistribution]] = None  # split across multiple actions
     notes: Optional[str] = None
 
 class ReplenishmentRequestCreate(BaseModel):
@@ -1165,44 +1170,95 @@ async def approve_shortage(
         if shortage.status not in ["pending", "held"]:
             raise HTTPException(status_code=400, detail="Shortage already resolved")
         
-        if request.action == "deduct":
-            shortage.status = "deducted"
-            shortage.resolution = "deduct_salary"
-            shortage.approved_by_id = approver_staff.id
-            shortage.approved_at = datetime.utcnow()
-            shortage.notes = request.notes
-            
-            salary_deduction = SalaryDeduction(
-                staff_id=shortage.staff_id,
-                shortage_record_id=shortage.id,
-                amount=shortage.shortage_amount,
-                reason=f"Cash shortage on {shortage.date.isoformat()}",
-                deduction_date=date.today(),
-                pay_period=date.today().strftime("%Y-%m"),
-                status="pending",
-                approved_by_id=approver_staff.id,
-                notes=request.notes
-            )
-            session.add(salary_deduction)
-            
-        elif request.action == "hold":
-            shortage.status = "held"
-            shortage.resolution = "hold"
-            shortage.approved_by_id = approver_staff.id
-            shortage.approved_at = datetime.utcnow()
-            shortage.notes = request.notes
-            
-        elif request.action == "expense":
-            shortage.status = "expensed"
-            shortage.resolution = "expense"
-            shortage.approved_by_id = approver_staff.id
-            shortage.approved_at = datetime.utcnow()
-            shortage.notes = request.notes or "Written off as organizational expense"
-        else:
-            raise HTTPException(status_code=400, detail="Invalid action. Must be 'deduct', 'hold', or 'expense'")
+        import json as json_module
+        total_amount = float(shortage.shortage_amount)
         
+        dists = request.distributions
+        if not dists:
+            if not request.action:
+                raise HTTPException(status_code=400, detail="Either action or distributions is required")
+            dists = [ShortageDistribution(action=request.action, amount=total_amount)]
+        
+        for d in dists:
+            if d.action not in ("deduct", "hold", "expense"):
+                raise HTTPException(status_code=400, detail=f"Invalid action '{d.action}'. Must be 'deduct', 'hold', or 'expense'")
+            if d.amount <= 0:
+                raise HTTPException(status_code=400, detail="Distribution amounts must be positive")
+        
+        dist_total = round(sum(d.amount for d in dists), 2)
+        if abs(dist_total - total_amount) > 0.01:
+            raise HTTPException(status_code=400, detail=f"Distribution amounts ({dist_total}) must equal the shortage ({total_amount})")
+        
+        is_split = len(dists) > 1
+        
+        if is_split:
+            shortage.status = "resolved"
+            shortage.resolution = "split"
+            shortage.approved_by_id = approver_staff.id
+            shortage.approved_at = datetime.utcnow()
+            shortage.notes = request.notes
+            shortage.distributions = json_module.dumps([{"action": d.action, "amount": d.amount} for d in dists])
+        
+        action_parts = []
+        for d in dists:
+            if is_split:
+                child = ShortageRecord(
+                    teller_float_id=shortage.teller_float_id,
+                    staff_id=shortage.staff_id,
+                    date=shortage.date,
+                    shortage_amount=d.amount,
+                    approved_by_id=approver_staff.id,
+                    approved_at=datetime.utcnow(),
+                    notes=request.notes,
+                    parent_shortage_id=shortage.id,
+                )
+                target = child
+                session.add(child)
+            else:
+                target = shortage
+            
+            if d.action == "deduct":
+                target.status = "deducted"
+                target.resolution = "deduct_salary"
+                target.approved_by_id = approver_staff.id
+                target.approved_at = datetime.utcnow()
+                target.notes = request.notes
+                salary_deduction = SalaryDeduction(
+                    staff_id=shortage.staff_id,
+                    shortage_record_id=target.id if not is_split else None,
+                    amount=d.amount,
+                    reason=f"Cash shortage on {shortage.date.isoformat()}",
+                    deduction_date=date.today(),
+                    pay_period=date.today().strftime("%Y-%m"),
+                    status="pending",
+                    approved_by_id=approver_staff.id,
+                    notes=request.notes
+                )
+                session.add(salary_deduction)
+                action_parts.append(f"{d.amount:,.0f} deducted from salary")
+            elif d.action == "hold":
+                target.status = "held"
+                target.resolution = "hold"
+                target.approved_by_id = approver_staff.id
+                target.approved_at = datetime.utcnow()
+                target.notes = request.notes
+                action_parts.append(f"{d.amount:,.0f} put on hold")
+            elif d.action == "expense":
+                target.status = "expensed"
+                target.resolution = "expense"
+                target.approved_by_id = approver_staff.id
+                target.approved_at = datetime.utcnow()
+                target.notes = request.notes or "Written off as organizational expense"
+                action_parts.append(f"{d.amount:,.0f} written off as expense")
+            
+            if is_split:
+                session.flush()
+                if d.action == "deduct":
+                    salary_deduction.shortage_record_id = target.id
+        
+        has_hold_only = all(d.action == "hold" for d in dists)
         teller_float = session.query(TellerFloat).filter(TellerFloat.id == shortage.teller_float_id).first()
-        if teller_float and request.action in ["deduct", "expense"]:
+        if teller_float and not has_hold_only:
             teller_float.current_balance = teller_float.physical_count or teller_float.current_balance
             teller_float.closing_balance = teller_float.physical_count or teller_float.closing_balance
             teller_float.status = "reconciled"
@@ -1219,23 +1275,17 @@ async def approve_shortage(
             if float_txn:
                 float_txn.status = "completed"
                 float_txn.approved_by_id = approver_staff.id
-        elif teller_float and request.action == "hold":
-            pass
         
         session.commit()
         
         teller = session.query(Staff).filter(Staff.id == shortage.staff_id).first()
         
-        action_messages = {
-            "deduct": "deducted from salary",
-            "hold": "put on hold",
-            "expense": "written off as expense"
-        }
+        message = "; ".join(action_parts) if action_parts else "Shortage processed"
         return {
-            "message": f"Shortage {action_messages.get(request.action, 'processed')} successfully",
+            "message": message,
             "shortage_id": shortage.id,
-            "amount": float(shortage.shortage_amount),
-            "action": request.action,
+            "amount": total_amount,
+            "distributions": [{"action": d.action, "amount": d.amount} for d in dists],
             "teller_name": f"{teller.first_name} {teller.last_name}" if teller else None,
             "approved_by": f"{approver_staff.first_name} {approver_staff.last_name}"
         }

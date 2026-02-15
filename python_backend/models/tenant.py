@@ -617,14 +617,16 @@ class ShortageRecord(TenantBase):
     staff_id = Column(String, ForeignKey("staff.id"), nullable=False)
     date = Column(Date, nullable=False)
     shortage_amount = Column(Numeric(15, 2), nullable=False)
-    status = Column(String(50), default="pending")  # pending, deducted, held
-    resolution = Column(String(50))  # deduct_salary, hold
+    status = Column(String(50), default="pending")  # pending, deducted, held, expensed, resolved
+    resolution = Column(String(50))  # deduct_salary, hold, expense, split
     approved_by_id = Column(String, ForeignKey("staff.id"))
     approved_at = Column(DateTime)
     notes = Column(Text)
+    parent_shortage_id = Column(String, ForeignKey("shortage_records.id"), nullable=True)
+    distributions = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
-    teller_float = relationship("TellerFloat")
+    teller_float = relationship("TellerFloat", foreign_keys=[teller_float_id])
     staff = relationship("Staff", foreign_keys=[staff_id])
     approved_by = relationship("Staff", foreign_keys=[approved_by_id])
 

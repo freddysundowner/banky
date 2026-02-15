@@ -560,6 +560,10 @@ def run_tenant_schema_migration(engine):
         for col_name, col_type in pending_return_columns:
             add_column_if_not_exists(conn, "pending_vault_returns", col_name, col_type)
         
+        # Shortage record split distribution columns
+        add_column_if_not_exists(conn, "shortage_records", "parent_shortage_id", "VARCHAR(255)")
+        add_column_if_not_exists(conn, "shortage_records", "distributions", "TEXT")
+        
         # Salary deduction columns
         add_column_if_not_exists(conn, "salary_deductions", "pay_period", "VARCHAR(20)")
         
