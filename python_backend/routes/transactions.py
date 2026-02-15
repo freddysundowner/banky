@@ -261,7 +261,12 @@ async def create_transaction(org_id: str, data: TransactionCreate, request: Requ
             gateway = get_org_setting(tenant_session, "mpesa_gateway", "daraja")
             account_ref = member.member_number or f"DEP-{member.id[:8]}"
             description = f"Deposit to {data.account_type} for {member.first_name} {member.last_name}"
-            request_base = str(request.base_url).rstrip("/")
+            import os
+            public_domain = os.environ.get("REPLIT_DEV_DOMAIN", "") or os.environ.get("REPLIT_DOMAINS", "")
+            if public_domain:
+                request_base = f"https://{public_domain}"
+            else:
+                request_base = str(request.base_url).rstrip("/")
             
             try:
                 if gateway == "sunpay":

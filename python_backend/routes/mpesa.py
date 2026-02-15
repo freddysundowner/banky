@@ -555,8 +555,13 @@ def initiate_stk_push(tenant_session, phone: str, amount: Decimal, account_refer
     passkey = get_org_setting(tenant_session, "mpesa_passkey", "")
     callback_url = get_org_setting(tenant_session, "mpesa_stk_callback_url", "")
     
-    if not callback_url and org_id and base_url_override:
-        callback_url = f"{base_url_override.rstrip('/')}/api/mpesa/stk-callback/{org_id}"
+    if not callback_url and org_id:
+        import os
+        public_domain = os.environ.get("REPLIT_DEV_DOMAIN", "") or os.environ.get("REPLIT_DOMAINS", "")
+        if public_domain:
+            callback_url = f"https://{public_domain}/api/mpesa/stk-callback/{org_id}"
+        elif base_url_override:
+            callback_url = f"{base_url_override.rstrip('/')}/api/mpesa/stk-callback/{org_id}"
         print(f"[STK Push] Using auto-generated callback URL: {callback_url}")
     
     if not shortcode or not passkey:
