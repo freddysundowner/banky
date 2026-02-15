@@ -251,11 +251,8 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
               onSuccess: () => {
                 paystackPopupActive.current = false;
                 payInProgress.current = false;
-                setPaymentStatus("success");
+                setPaymentStatus("waiting");
                 setShowPaymentDialog(true);
-                queryClient.invalidateQueries({ queryKey: ["plans", organizationId] });
-                queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "features"] });
-                toast({ title: "Payment Successful!", description: "Your subscription has been activated." });
               },
               onCancel: () => {
                 paystackPopupActive.current = false;
@@ -474,7 +471,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                 <h3 className="text-lg font-semibold">Payment Successful!</h3>
                 <p className="text-sm text-muted-foreground mt-1">Your {selectedPlan?.name} subscription is now active.</p>
               </div>
-              <Button onClick={() => setShowPaymentDialog(false)} className="mt-2">Done</Button>
+              <Button onClick={() => { setShowPaymentDialog(false); setPaymentStatus("idle"); setCurrentPaymentId(null); queryClient.invalidateQueries({ queryKey: ["plans", organizationId] }); queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "features"] }); queryClient.invalidateQueries({ queryKey: ["/api/auth/session", organizationId] }); }} className="mt-2">Done</Button>
             </div>
           ) : (
             <div className="space-y-5">
@@ -613,10 +610,10 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                   <Loader2 className="h-5 w-5 animate-spin text-yellow-600 flex-shrink-0" />
                   <div>
                     <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                      {gateway === "mpesa" ? "Waiting for M-Pesa confirmation..." : "Waiting for payment confirmation..."}
+                      {gateway === "mpesa" ? "Waiting for M-Pesa confirmation..." : "Confirming your payment..."}
                     </p>
                     <p className="text-xs text-yellow-600 dark:text-yellow-400">
-                      {gateway === "mpesa" ? "Check your phone and enter your M-Pesa PIN" : "Complete the payment in the opened tab"}
+                      {gateway === "mpesa" ? "Check your phone and enter your M-Pesa PIN" : "Please wait while we verify your payment"}
                     </p>
                   </div>
                 </div>
