@@ -383,85 +383,77 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
               })()}
             </TableBody>
           </Table>
-        </CardContent>
-      </Card>
 
-      {!alreadyPosted && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Post Opening Balances</CardTitle>
-            <CardDescription>
-              Review the totals below. Debits must equal credits before you can post.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-6 p-4 rounded-lg bg-muted/50">
-              <div className="text-center">
-                <div className="text-xs text-muted-foreground uppercase tracking-wide">Total Debits</div>
-                <div className="text-lg font-mono font-semibold">{formatCurrency(totals.debit)}</div>
+          {!alreadyPosted && (
+            <div className="mt-6 space-y-4 border-t pt-6">
+              <div className="flex flex-wrap items-center gap-4 p-4 rounded-lg bg-muted/50">
+                <div className="text-center">
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide">Total Debits</div>
+                  <div className="text-lg font-mono font-semibold">{formatCurrency(totals.debit)}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide">Total Credits</div>
+                  <div className="text-lg font-mono font-semibold">{formatCurrency(totals.credit)}</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xs text-muted-foreground uppercase tracking-wide">Difference</div>
+                  <div className={`text-lg font-mono font-semibold ${totals.balanced ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                    {formatCurrency(Math.abs(totals.debit - totals.credit))}
+                  </div>
+                </div>
+                <Badge variant={totals.balanced ? "default" : "destructive"} className="ml-auto" data-testid="balance-status">
+                  {totals.balanced ? "Balanced" : "Out of Balance"}
+                </Badge>
               </div>
-              <div className="text-center">
-                <div className="text-xs text-muted-foreground uppercase tracking-wide">Total Credits</div>
-                <div className="text-lg font-mono font-semibold">{formatCurrency(totals.credit)}</div>
-              </div>
-              <div className="text-center">
-                <div className="text-xs text-muted-foreground uppercase tracking-wide">Difference</div>
-                <div className={`text-lg font-mono font-semibold ${totals.balanced ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-                  {formatCurrency(Math.abs(totals.debit - totals.credit))}
+
+              {hasAnyEntries && !totals.balanced && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Entry Not Balanced</AlertTitle>
+                  <AlertDescription>
+                    Total debits ({formatCurrency(totals.debit)}) do not equal total credits ({formatCurrency(totals.credit)}).
+                    Adjust amounts so debits and credits are equal.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="effective-date">Effective Date</Label>
+                  <Input
+                    id="effective-date"
+                    type="date"
+                    value={effectiveDate}
+                    onChange={(e) => setEffectiveDate(e.target.value)}
+                    data-testid="input-effective-date"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notes (optional)</Label>
+                  <Input
+                    id="notes"
+                    placeholder="e.g. Migration from legacy system"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    data-testid="input-notes"
+                  />
                 </div>
               </div>
-              <Badge variant={totals.balanced ? "default" : "destructive"} className="ml-auto" data-testid="balance-status">
-                {totals.balanced ? "Balanced" : "Out of Balance"}
-              </Badge>
-            </div>
-
-            {!totals.balanced && (
-              <Alert variant="destructive">
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Entry Not Balanced</AlertTitle>
-                <AlertDescription>
-                  Total debits ({formatCurrency(totals.debit)}) do not equal total credits ({formatCurrency(totals.credit)}).
-                  Adjust your amounts so that debits and credits are equal. You may need to add a Cash at Bank or
-                  Cash on Hand amount to balance the entry.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="effective-date">Effective Date</Label>
-                <Input
-                  id="effective-date"
-                  type="date"
-                  value={effectiveDate}
-                  onChange={(e) => setEffectiveDate(e.target.value)}
-                  data-testid="input-effective-date"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notes (optional)</Label>
-                <Input
-                  id="notes"
-                  placeholder="e.g. Migration from legacy system"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  data-testid="input-notes"
-                />
+              <div className="flex justify-end">
+                <Button
+                  size="lg"
+                  onClick={() => setShowConfirm(true)}
+                  disabled={!totals.balanced || !hasAnyEntries}
+                  data-testid="button-post-opening-balances"
+                >
+                  <ArrowRightLeft className="h-4 w-4 mr-2" />
+                  Post Opening Balances
+                </Button>
               </div>
             </div>
-            <div className="flex justify-end">
-              <Button
-                onClick={() => setShowConfirm(true)}
-                disabled={!totals.balanced || !hasAnyEntries}
-                data-testid="button-post-opening-balances"
-              >
-                <ArrowRightLeft className="h-4 w-4 mr-2" />
-                Post Opening Balances
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </CardContent>
+      </Card>
 
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
         <DialogContent>
