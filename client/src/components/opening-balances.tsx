@@ -390,12 +390,13 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
                               )}
                               {hasEntry && (
                                 <Button
-                                  variant="ghost"
+                                  variant="destructive"
                                   size="sm"
                                   onClick={() => clearEntry(acct.account_code)}
                                   data-testid={`button-clear-${acct.account_code}`}
                                 >
-                                  <RotateCcw className="h-3.5 w-3.5" />
+                                  <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                                  Reset
                                 </Button>
                               )}
                             </div>
