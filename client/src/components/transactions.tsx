@@ -422,6 +422,7 @@ export default function Transactions({ organizationId }: TransactionsProps) {
                   <TableHead className="hidden md:table-cell">Account</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                   <TableHead className="text-right hidden lg:table-cell">Balance After</TableHead>
+                  <TableHead className="hidden xl:table-cell">Reference</TableHead>
                   <TableHead className="hidden sm:table-cell">Date</TableHead>
                 </TableRow>
               </TableHeader>
@@ -447,6 +448,9 @@ export default function Transactions({ organizationId }: TransactionsProps) {
                     </TableCell>
                     <TableCell className="text-right hidden lg:table-cell">
                       {formatCurrency(txn.balance_after)}
+                    </TableCell>
+                    <TableCell className="hidden xl:table-cell font-mono text-xs">
+                      {txn.reference || "-"}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">{new Date(txn.created_at).toLocaleDateString()}</TableCell>
                   </TableRow>
