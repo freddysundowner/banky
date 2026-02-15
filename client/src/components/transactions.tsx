@@ -376,8 +376,6 @@ export default function Transactions({ organizationId }: TransactionsProps) {
       </div>
     </div>
 
-    ${txn.description ? `<hr class="divider" /><div class="section"><div class="section-title">Description</div><div style="font-size:12px;color:#444">${txn.description}</div></div>` : ""}
-
     <div class="footer">
       <div class="thanks">Thank you for banking with us</div>
       <div class="org-foot">${orgName}</div>
