@@ -534,10 +534,30 @@ async def reopen_float(
         if not teller_float:
             raise HTTPException(status_code=404, detail="Float not found")
         
-        if teller_float.status not in ["reconciled", "closed", "pending_vault_return"]:
+        if teller_float.status not in ["reconciled", "closed", "pending_vault_return", "pending_approval"]:
             raise HTTPException(status_code=400, detail="Float is not closed - cannot reopen")
         
         reopener = session.query(Staff).filter(Staff.email == user.email).first()
+        
+        # Cancel any pending shortage records when reverting from pending_approval
+        if teller_float.status == "pending_approval":
+            pending_shortages = session.query(ShortageRecord).filter(
+                ShortageRecord.teller_float_id == float_id,
+                ShortageRecord.status == "pending"
+            ).all()
+            for s in pending_shortages:
+                s.status = "cancelled"
+                s.notes = (s.notes or "") + " | Cancelled - reconciliation reverted"
+            
+            pending_txns = session.query(FloatTransaction).filter(
+                and_(
+                    FloatTransaction.teller_float_id == float_id,
+                    FloatTransaction.transaction_type == "reconciliation",
+                    FloatTransaction.status == "pending"
+                )
+            ).all()
+            for txn in pending_txns:
+                txn.status = "cancelled"
         
         # Cancel any pending vault return
         pending_return = session.query(PendingVaultReturn).filter(

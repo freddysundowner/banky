@@ -61,7 +61,8 @@ import {
   Ticket,
   PhoneCall,
   UserCheck,
-  PiggyBank
+  PiggyBank,
+  RefreshCw
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
@@ -692,6 +693,29 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
     },
   });
 
+  const revertReconciliationMutation = useMutation({
+    mutationFn: async () => {
+      if (!myFloat) throw new Error("No float to revert");
+      const res = await apiRequest("POST", `/api/organizations/${organizationId}/floats/${myFloat.id}/reopen`);
+      return await res.json();
+    },
+    onSuccess: () => {
+      refetchFloat();
+      refetchShortages();
+      setShowShortageApproval(false);
+      setPendingShortageId(null);
+      setApproverStaffNumber("");
+      setApproverPin("");
+      setApprovalNotes("");
+      setPhysicalCount("");
+      setReconcileNotes("");
+      toast({ title: "Reconciliation Reverted", description: "You can now redo the end-of-day reconciliation." });
+    },
+    onError: (error: any) => {
+      toast({ title: "Revert Failed", description: error?.message || "Failed to revert reconciliation", variant: "destructive" });
+    },
+  });
+
   const requestReplenishMutation = useMutation({
     mutationFn: async () => {
       return apiRequest("POST", `/api/organizations/${organizationId}/floats/my/request-replenishment`, {
@@ -1144,20 +1168,31 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
             <AlertTitle>Manager Approval Required</AlertTitle>
             <AlertDescription>
               Your end-of-day reconciliation shows a shortage that requires manager approval before closing.
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="mt-2 ml-2"
-                onClick={() => {
-                  const pendingShortage = myShortages?.shortages?.find(s => s.status === "pending");
-                  if (pendingShortage) {
-                    setPendingShortageId(pendingShortage.id);
-                    setShowShortageApproval(true);
-                  }
-                }}
-              >
-                Request Manager Approval
-              </Button>
+              <div className="flex gap-2 mt-2">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => {
+                    const pendingShortage = myShortages?.shortages?.find((s: any) => s.status === "pending");
+                    if (pendingShortage) {
+                      setPendingShortageId(pendingShortage.id);
+                      setShowShortageApproval(true);
+                    }
+                  }}
+                >
+                  Request Manager Approval
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="secondary"
+                  onClick={() => revertReconciliationMutation.mutate()}
+                  disabled={revertReconciliationMutation.isPending}
+                  data-testid="button-redo-reconciliation"
+                >
+                  <RefreshCw className="h-4 w-4 mr-1" />
+                  {revertReconciliationMutation.isPending ? "Reverting..." : "Redo Reconciliation"}
+                </Button>
+              </div>
             </AlertDescription>
           </Alert>
         )}
@@ -2133,7 +2168,17 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
             </div>
           </div>
 
-          <DialogFooter className="gap-2">
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button 
+              variant="destructive" 
+              onClick={() => revertReconciliationMutation.mutate()}
+              disabled={revertReconciliationMutation.isPending}
+              className="sm:mr-auto"
+              data-testid="button-reject-redo-count"
+            >
+              <RefreshCw className="h-4 w-4 mr-1" />
+              {revertReconciliationMutation.isPending ? "Reverting..." : "Reject & Redo Count"}
+            </Button>
             <Button variant="outline" onClick={() => {
               setShowShortageApproval(false);
               setApproverStaffNumber("");
