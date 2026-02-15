@@ -3,31 +3,33 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 
 const ALL_FEATURES = [
-  { id: 'core_banking', name: 'Core Banking' },
-  { id: 'members', name: 'Members Management' },
-  { id: 'savings', name: 'Savings Accounts' },
-  { id: 'shares', name: 'Share Accounts' },
-  { id: 'loans', name: 'Loans' },
-  { id: 'teller_station', name: 'Teller Station' },
-  { id: 'float_management', name: 'Float Management' },
-  { id: 'fixed_deposits', name: 'Fixed Deposits' },
-  { id: 'dividends', name: 'Dividends' },
-  { id: 'analytics', name: 'Analytics' },
-  { id: 'analytics_export', name: 'Analytics Export' },
-  { id: 'sms_notifications', name: 'SMS Notifications' },
-  { id: 'bulk_sms', name: 'Bulk SMS' },
-  { id: 'expenses', name: 'Expenses Management' },
-  { id: 'leave_management', name: 'Leave Management' },
-  { id: 'payroll', name: 'Payroll' },
-  { id: 'accounting', name: 'Accounting' },
-  { id: 'audit_logs', name: 'Audit Logs' },
-  { id: 'multiple_branches', name: 'Multiple Branches' },
-  { id: 'api_access', name: 'API Access' },
-  { id: 'white_label', name: 'White Label' },
-  { id: 'custom_reports', name: 'Custom Reports' },
-  { id: 'mpesa_integration', name: 'M-Pesa Integration' },
-  { id: 'bank_integration', name: 'Bank Integration' },
+  { id: 'core_banking', name: 'Core Banking', group: 'Core' },
+  { id: 'members', name: 'Members Management', group: 'Core' },
+  { id: 'savings', name: 'Savings Accounts', group: 'Core' },
+  { id: 'shares', name: 'Share Accounts', group: 'Core' },
+  { id: 'loans', name: 'Loans', group: 'Core' },
+  { id: 'teller_station', name: 'Teller Station', group: 'Operations', requires: ['float_management'], requiredBy: ['float_management'] },
+  { id: 'float_management', name: 'Float Management', group: 'Operations', requires: ['teller_station'], requiredBy: ['teller_station'] },
+  { id: 'fixed_deposits', name: 'Fixed Deposits', group: 'Products' },
+  { id: 'dividends', name: 'Dividends', group: 'Products' },
+  { id: 'analytics', name: 'Analytics', group: 'Reporting', requiredBy: ['analytics_export'] },
+  { id: 'analytics_export', name: 'Analytics Export', group: 'Reporting', requires: ['analytics'] },
+  { id: 'sms_notifications', name: 'SMS Notifications', group: 'Communication', requiredBy: ['bulk_sms'] },
+  { id: 'bulk_sms', name: 'Bulk SMS', group: 'Communication', requires: ['sms_notifications'] },
+  { id: 'expenses', name: 'Expenses Management', group: 'HR' },
+  { id: 'leave_management', name: 'Leave Management', group: 'HR' },
+  { id: 'payroll', name: 'Payroll', group: 'HR' },
+  { id: 'accounting', name: 'Accounting', group: 'Finance' },
+  { id: 'audit_logs', name: 'Audit Logs', group: 'Security' },
+  { id: 'multiple_branches', name: 'Multiple Branches', group: 'Advanced' },
+  { id: 'api_access', name: 'API Access', group: 'Advanced' },
+  { id: 'white_label', name: 'White Label', group: 'Advanced' },
+  { id: 'custom_reports', name: 'Custom Reports', group: 'Reporting' },
+  { id: 'mpesa_integration', name: 'M-Pesa Integration', group: 'Integrations' },
+  { id: 'bank_integration', name: 'Bank Integration', group: 'Integrations' },
 ]
+
+const FEATURE_GROUPS = ['Core', 'Operations', 'Products', 'Finance', 'Reporting', 'Communication', 'HR', 'Security', 'Advanced', 'Integrations']
 
 type PricingModel = 'saas' | 'enterprise'
 
@@ -178,7 +180,22 @@ export default function Plans() {
   }
 
   const toggleFeature = (featureId: string) => {
-    setSelectedFeatures(prev => prev.includes(featureId) ? prev.filter(f => f !== featureId) : [...prev, featureId])
+    const feature = ALL_FEATURES.find(f => f.id === featureId)
+    setSelectedFeatures(prev => {
+      if (prev.includes(featureId)) {
+        let toRemove = [featureId]
+        if (feature?.requiredBy) {
+          toRemove = [...toRemove, ...feature.requiredBy.filter(dep => prev.includes(dep))]
+        }
+        return prev.filter(f => !toRemove.includes(f))
+      } else {
+        let toAdd = [featureId]
+        if (feature?.requires) {
+          toAdd = [...toAdd, ...feature.requires.filter(dep => !prev.includes(dep))]
+        }
+        return [...prev, ...toAdd]
+      }
+    })
   }
 
   if (isLoading) {
@@ -405,14 +422,33 @@ export default function Plans() {
               <p className="text-sm text-gray-500">Select which features are included in this plan</p>
             </div>
             <div className="p-6 overflow-y-auto max-h-[50vh]">
-              <div className="grid grid-cols-2 gap-3">
-                {ALL_FEATURES.map(feature => (
-                  <label key={feature.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                    <input type="checkbox" checked={selectedFeatures.includes(feature.id)} onChange={() => toggleFeature(feature.id)} className="w-4 h-4 text-primary-600 rounded" />
-                    <span className="text-sm">{feature.name}</span>
-                  </label>
-                ))}
-              </div>
+              {FEATURE_GROUPS.map(group => {
+                const groupFeatures = ALL_FEATURES.filter(f => f.group === group)
+                if (groupFeatures.length === 0) return null
+                return (
+                  <div key={group} className="mb-4">
+                    <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{group}</h3>
+                    <div className="grid grid-cols-2 gap-1">
+                      {groupFeatures.map(feature => {
+                        const isChecked = selectedFeatures.includes(feature.id)
+                        const deps = (feature as any).requires as string[] | undefined
+                        const depNames = deps?.map(d => ALL_FEATURES.find(f => f.id === d)?.name).filter(Boolean)
+                        return (
+                          <label key={feature.id} className="flex items-start gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                            <input type="checkbox" checked={isChecked} onChange={() => toggleFeature(feature.id)} className="w-4 h-4 text-primary-600 rounded mt-0.5" />
+                            <div>
+                              <span className="text-sm">{feature.name}</span>
+                              {depNames && depNames.length > 0 && (
+                                <span className="block text-xs text-amber-600">Requires: {depNames.join(', ')}</span>
+                              )}
+                            </div>
+                          </label>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
             <div className="p-6 border-t flex gap-3 justify-end">
               <button onClick={() => { setEditingFeatures(null); setSelectedFeatures([]) }} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancel</button>
