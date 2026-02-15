@@ -1158,10 +1158,11 @@ async def approve_shortage(
                 from routes.common import check_permission
                 if not check_permission(approver_membership, "shortage_approval:write", db):
                     raise HTTPException(status_code=403, detail="You do not have permission to approve shortages")
-            else:
-                raise HTTPException(status_code=403, detail="You are not authorized for this organization")
-        else:
-            raise HTTPException(status_code=403, detail="Staff account not found in system")
+        
+        if not approver_user:
+            allowed_roles = ("manager", "admin", "supervisor", "branch_manager", "chief_teller")
+            if not approver_staff.role or approver_staff.role.lower() not in allowed_roles:
+                raise HTTPException(status_code=403, detail="You do not have permission to approve shortages")
         
         shortage = session.query(ShortageRecord).filter(ShortageRecord.id == shortage_id).first()
         if not shortage:
