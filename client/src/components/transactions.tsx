@@ -364,16 +364,6 @@ export default function Transactions({ organizationId }: TransactionsProps) {
         <span class="label">${typeLabel}</span>
         <span class="value">${fmtAmt(txn.amount)}</span>
       </div>
-      <div class="balance-grid">
-        <div class="balance-item">
-          <div class="bal-label">Before</div>
-          <div class="bal-value">${fmtAmt(txn.balance_before)}</div>
-        </div>
-        <div class="balance-item">
-          <div class="bal-label">After</div>
-          <div class="bal-value">${fmtAmt(txn.balance_after)}</div>
-        </div>
-      </div>
     </div>
 
     <div class="footer">
