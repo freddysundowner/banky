@@ -388,14 +388,17 @@ async def initiate_paystack_payment(organization_id: str, data: dict, auth=Depen
     email = data.get("email", "")
     billing_period = data.get("billing_period", "monthly")
     channels = data.get("channels")
+    currency_override = data.get("currency")
 
-    paystack_currency_setting = db.query(PlatformSettings).filter(
-        PlatformSettings.setting_key == "paystack_currency"
-    ).first()
-    currency = (paystack_currency_setting.setting_value if paystack_currency_setting else "NGN").upper()
-
-    if currency not in ("NGN", "KES", "GHS", "ZAR", "USD"):
-        currency = "NGN"
+    if currency_override and currency_override.upper() in ("NGN", "KES", "GHS", "ZAR", "USD"):
+        currency = currency_override.upper()
+    else:
+        paystack_currency_setting = db.query(PlatformSettings).filter(
+            PlatformSettings.setting_key == "paystack_currency"
+        ).first()
+        currency = (paystack_currency_setting.setting_value if paystack_currency_setting else "NGN").upper()
+        if currency not in ("NGN", "KES", "GHS", "ZAR", "USD"):
+            currency = "NGN"
 
     if not plan_id or not email:
         raise HTTPException(status_code=400, detail="plan_id and email are required")

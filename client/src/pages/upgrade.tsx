@@ -67,20 +67,21 @@ function convertPrice(amountUsd: number, currency: string, rates: Record<string,
   return Math.round(amountUsd * rate);
 }
 
-function getGatewayCurrency(gateway: Gateway, paystackCurrency: string): string {
+function getGatewayCurrency(gateway: Gateway, paystackCurrency: string, paystackChannel?: PaystackChannel): string {
   if (gateway === "stripe") return "USD";
   if (gateway === "mpesa") return "KES";
+  if (paystackChannel === "card") return "USD";
   return paystackCurrency || "NGN";
 }
 
-function getPlanPrice(plan: Plan, gateway: Gateway, period: "monthly" | "annual", rates: Record<string, number>, paystackCurrency: string): number {
+function getPlanPrice(plan: Plan, gateway: Gateway, period: "monthly" | "annual", rates: Record<string, number>, paystackCurrency: string, paystackChannel?: PaystackChannel): number {
   const amountUsd = period === "annual" && plan.annual_price > 0 ? plan.annual_price : plan.monthly_price;
-  const currency = getGatewayCurrency(gateway, paystackCurrency);
+  const currency = getGatewayCurrency(gateway, paystackCurrency, paystackChannel);
   return convertPrice(amountUsd, currency, rates);
 }
 
-function formatPrice(amount: number, gateway: Gateway, paystackCurrency: string): string {
-  const currency = getGatewayCurrency(gateway, paystackCurrency);
+function formatPrice(amount: number, gateway: Gateway, paystackCurrency: string, paystackChannel?: PaystackChannel): string {
+  const currency = getGatewayCurrency(gateway, paystackCurrency, paystackChannel);
   const sym = CURRENCY_SYMBOLS[currency] || currency + " ";
   return `${sym}${amount.toLocaleString()}`;
 }
@@ -212,7 +213,8 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
             plan_id: selectedPlan.id,
             email,
             billing_period: billingPeriod,
-            channels: [paystackChannel]
+            channels: [paystackChannel],
+            currency: paystackChannel === "card" ? "USD" : undefined
           })
         });
       }
@@ -290,7 +292,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
   }
 
   const saasPlans = plans?.filter(p => p.pricing_model === "saas") || plans || [];
-  const paymentAmount = selectedPlan ? getPlanPrice(selectedPlan, gateway, billingPeriod, rates, paystackCurrency) : 0;
+  const paymentAmount = selectedPlan ? getPlanPrice(selectedPlan, gateway, billingPeriod, rates, paystackCurrency, paystackChannel) : 0;
   const showAnnual = selectedPlan ? hasAnnual(selectedPlan) : false;
 
   const allGateways: { id: Gateway; label: string; sub: string; icon: typeof Smartphone; color: string }[] = [
@@ -493,7 +495,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                     <Badge variant="outline" className="capitalize">{billingPeriod}</Badge>
                   </div>
                   <div className="text-2xl font-bold mt-1">
-                    {formatPrice(paymentAmount, gateway, paystackCurrency)}
+                    {formatPrice(paymentAmount, gateway, paystackCurrency, paystackChannel)}
                     <span className="text-sm font-normal text-muted-foreground">
                       /{billingPeriod === "annual" ? "year" : "month"}
                     </span>
@@ -516,10 +518,10 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="monthly">
-                        Monthly ({formatPrice(selectedPlan ? getPlanPrice(selectedPlan, gateway, "monthly", rates, paystackCurrency) : 0, gateway, paystackCurrency)}/mo)
+                        Monthly ({formatPrice(selectedPlan ? getPlanPrice(selectedPlan, gateway, "monthly", rates, paystackCurrency, paystackChannel) : 0, gateway, paystackCurrency, paystackChannel)}/mo)
                       </SelectItem>
                       <SelectItem value="annual">
-                        Annual ({formatPrice(selectedPlan ? getPlanPrice(selectedPlan, gateway, "annual", rates, paystackCurrency) : 0, gateway, paystackCurrency)}/yr)
+                        Annual ({formatPrice(selectedPlan ? getPlanPrice(selectedPlan, gateway, "annual", rates, paystackCurrency, paystackChannel) : 0, gateway, paystackCurrency, paystackChannel)}/yr)
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -601,7 +603,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                     {gateway === "mpesa" && <Smartphone className="h-4 w-4 mr-2" />}
                     {gateway === "stripe" && <CreditCard className="h-4 w-4 mr-2" />}
                     {gateway === "paystack" && <Globe className="h-4 w-4 mr-2" />}
-                    Pay {formatPrice(paymentAmount, gateway, paystackCurrency)}
+                    Pay {formatPrice(paymentAmount, gateway, paystackCurrency, paystackChannel)}
                     {gateway === "stripe" && " with Card"}
                   </>
                 )}
