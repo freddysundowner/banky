@@ -181,6 +181,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
   }, [paymentStatus, currentPaymentId, organizationId]);
 
   const payInProgress = useRef(false);
+  const paystackPopupActive = useRef(false);
 
   const handlePay = async () => {
     if (!selectedPlan || payInProgress.current) return;
@@ -240,25 +241,30 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
       } else if (gateway === "stripe" && data.checkout_url) {
         window.location.href = data.checkout_url;
       } else if (gateway === "paystack" && data.access_code) {
+        paystackPopupActive.current = true;
         setShowPaymentDialog(false);
-        setPaymentStatus("idle");
         try {
           const PaystackPop = (window as any).PaystackPop;
           if (PaystackPop) {
             const popup = new PaystackPop();
             popup.resumeTransaction(data.access_code, {
               onSuccess: () => {
+                paystackPopupActive.current = false;
                 payInProgress.current = false;
                 setPaymentStatus("success");
                 setShowPaymentDialog(true);
                 queryClient.invalidateQueries({ queryKey: ["plans", organizationId] });
+                queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "features"] });
+                toast({ title: "Payment Successful!", description: "Your subscription has been activated." });
               },
               onCancel: () => {
+                paystackPopupActive.current = false;
                 payInProgress.current = false;
                 setPaymentStatus("idle");
                 setShowPaymentDialog(true);
               },
               onError: () => {
+                paystackPopupActive.current = false;
                 payInProgress.current = false;
                 setPaymentStatus("failed");
                 setShowPaymentDialog(true);
@@ -451,8 +457,9 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
       {/* Payment Dialog */}
       <Dialog open={showPaymentDialog} onOpenChange={(open) => {
         if (!open && paymentStatus === "waiting") return;
+        if (!open && paystackPopupActive.current) return;
         setShowPaymentDialog(open);
-        if (!open) { setPaymentStatus("idle"); setCurrentPaymentId(null); }
+        if (!open) { setPaymentStatus("idle"); setCurrentPaymentId(null); payInProgress.current = false; }
       }}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
