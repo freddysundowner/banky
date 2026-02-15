@@ -401,7 +401,7 @@ export default function Settings() {
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="font-medium text-gray-900">Enable Paystack Gateway</h3>
-                          <p className="text-xs text-gray-500">NGN - Show Paystack as a payment option on the upgrade page</p>
+                          <p className="text-xs text-gray-500">Show Paystack as a payment option on the upgrade page</p>
                         </div>
                         <button
                           type="button"
@@ -414,6 +414,22 @@ export default function Settings() {
                     </div>
 
                     <div className="grid gap-6">
+                      <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Paystack Currency</label>
+                        <select
+                          value={getValue('paystack_currency') || 'NGN'}
+                          onChange={(e) => handleChange('paystack_currency', e.target.value)}
+                          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                        >
+                          <option value="NGN">NGN - Nigerian Naira</option>
+                          <option value="KES">KES - Kenyan Shilling</option>
+                          <option value="GHS">GHS - Ghanaian Cedi</option>
+                          <option value="ZAR">ZAR - South African Rand</option>
+                          <option value="USD">USD - US Dollar</option>
+                        </select>
+                        <p className="text-sm text-gray-500 mt-2">Currency used for all Paystack transactions. Prices are auto-converted from USD at current exchange rates.</p>
+                      </div>
+
                       <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Paystack Secret Key</label>
                         <input
