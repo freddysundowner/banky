@@ -1145,24 +1145,9 @@ async def approve_shortage(
             if not approver_staff:
                 raise HTTPException(status_code=401, detail="Invalid PIN")
         
-        from models.master import OrganizationMember, User
-        approver_user = db.query(User).filter(User.email == approver_staff.email).first()
-        if approver_user:
-            approver_membership = db.query(OrganizationMember).filter(
-                and_(
-                    OrganizationMember.organization_id == org_id,
-                    OrganizationMember.user_id == approver_user.id
-                )
-            ).first()
-            if approver_membership:
-                from routes.common import check_permission
-                if not check_permission(approver_membership, "shortage_approval:write", db):
-                    raise HTTPException(status_code=403, detail="You do not have permission to approve shortages")
-        
-        if not approver_user:
-            allowed_roles = ("manager", "admin", "supervisor", "branch_manager", "chief_teller")
-            if not approver_staff.role or approver_staff.role.lower() not in allowed_roles:
-                raise HTTPException(status_code=403, detail="You do not have permission to approve shortages")
+        allowed_roles = ("manager", "admin", "supervisor", "branch_manager", "chief_teller")
+        if not approver_staff.role or approver_staff.role.lower() not in allowed_roles:
+            raise HTTPException(status_code=403, detail="You do not have permission to approve shortages")
         
         shortage = session.query(ShortageRecord).filter(ShortageRecord.id == shortage_id).first()
         if not shortage:
