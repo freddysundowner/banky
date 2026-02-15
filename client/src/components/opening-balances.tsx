@@ -95,9 +95,8 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
 
   const clearEntry = (code: string) => {
     setEntries(prev => {
-      const next = { ...prev };
-      delete next[code];
-      return next;
+      const { [code]: _, ...rest } = prev;
+      return rest;
     });
   };
 
