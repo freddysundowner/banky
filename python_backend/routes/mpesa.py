@@ -672,3 +672,120 @@ async def trigger_stk_push(org_id: str, request: Request, user=Depends(get_curre
     finally:
         tenant_session.close()
         tenant_ctx.close()
+
+
+@router.post("/mpesa/stk-callback/{org_id}")
+async def mpesa_stk_callback(org_id: str, request: Request, db: Session = Depends(get_db)):
+    """
+    M-Pesa STK Push Callback URL
+    Called by Safaricom after STK Push payment is completed or cancelled
+    """
+    try:
+        data = await request.json()
+        print(f"[STK Callback] Received for org {org_id}: {json.dumps(data, default=str)}")
+
+        body = data.get("Body", {}).get("stkCallback", {})
+        result_code = body.get("ResultCode")
+        result_desc = body.get("ResultDesc", "")
+        checkout_request_id = body.get("CheckoutRequestID", "")
+        merchant_request_id = body.get("MerchantRequestID", "")
+
+        if result_code != 0:
+            print(f"[STK Callback] Payment failed/cancelled: {result_desc}")
+            return {"ResultCode": 0, "ResultDesc": "Accepted"}
+
+        metadata = body.get("CallbackMetadata", {}).get("Item", [])
+        amount = None
+        mpesa_receipt = None
+        phone = None
+        for item in metadata:
+            name = item.get("Name", "")
+            value = item.get("Value")
+            if name == "Amount":
+                amount = Decimal(str(value))
+            elif name == "MpesaReceiptNumber":
+                mpesa_receipt = str(value)
+            elif name == "PhoneNumber":
+                phone = str(value)
+
+        if not amount or not mpesa_receipt:
+            print(f"[STK Callback] Missing amount or receipt in metadata")
+            return {"ResultCode": 0, "ResultDesc": "Accepted"}
+
+        org = db.query(Organization).filter(Organization.id == org_id).first()
+        if not org or not org.connection_string:
+            print(f"[STK Callback] Organization not found: {org_id}")
+            return {"ResultCode": 0, "ResultDesc": "Accepted"}
+
+        tenant_ctx = TenantContext(org.connection_string, org_id)
+        tenant_session = tenant_ctx.create_session()
+
+        try:
+            existing = tenant_session.query(MpesaPayment).filter(
+                MpesaPayment.trans_id == mpesa_receipt
+            ).first()
+            if existing:
+                print(f"[STK Callback] Duplicate receipt: {mpesa_receipt}")
+                return {"ResultCode": 0, "ResultDesc": "Accepted"}
+
+            member = None
+            if phone:
+                phone_search = phone[-9:] if len(phone) > 9 else phone
+                member = tenant_session.query(Member).filter(
+                    Member.phone_number.like(f"%{phone_search}")
+                ).first()
+
+            mpesa_payment = MpesaPayment(
+                trans_id=mpesa_receipt,
+                trans_time=datetime.utcnow().strftime("%Y%m%d%H%M%S"),
+                amount=amount,
+                phone_number=phone or "",
+                bill_ref_number=checkout_request_id,
+                first_name="STK Push",
+                transaction_type="STK",
+                member_id=member.id if member else None,
+                status="credited" if member else "unmatched",
+                raw_payload=data
+            )
+            tenant_session.add(mpesa_payment)
+
+            if member:
+                current_balance = member.savings_balance or Decimal("0")
+                new_balance = current_balance + amount
+                code = generate_txn_code()
+
+                transaction = Transaction(
+                    transaction_number=code,
+                    member_id=member.id,
+                    transaction_type="deposit",
+                    account_type="savings",
+                    amount=amount,
+                    balance_before=current_balance,
+                    balance_after=new_balance,
+                    payment_method="mpesa",
+                    reference=mpesa_receipt,
+                    description=f"M-Pesa STK Push deposit from {phone}"
+                )
+                member.savings_balance = new_balance
+                tenant_session.add(transaction)
+                tenant_session.flush()
+
+                mpesa_payment.transaction_id = transaction.id
+                mpesa_payment.credited_at = datetime.utcnow()
+
+                post_mpesa_deposit_to_gl(tenant_session, member, amount, mpesa_receipt)
+
+                print(f"[STK Callback] Credited {amount} to member {member.member_number}")
+            else:
+                mpesa_payment.notes = f"STK Push payment - no member matched for phone {phone}"
+                print(f"[STK Callback] Unmatched payment from {phone}")
+
+            tenant_session.commit()
+            return {"ResultCode": 0, "ResultDesc": "Accepted"}
+        finally:
+            tenant_session.close()
+            tenant_ctx.close()
+
+    except Exception as e:
+        print(f"[STK Callback] Error: {e}")
+        return {"ResultCode": 0, "ResultDesc": "Accepted"}
