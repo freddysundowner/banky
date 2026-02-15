@@ -798,14 +798,14 @@ def _get_permissions_for_user(auth, org_id: str, organization, db: Session) -> d
 
 
 def _get_features_for_org(org_id: str, db: Session) -> dict:
-    from services.feature_flags import get_deployment_mode, get_license_key, get_feature_access_for_saas, get_feature_access_for_enterprise
+    from services.feature_flags import get_deployment_mode, get_license_key, get_feature_access_for_enterprise, get_org_features, PLAN_LIMITS
     from routes.features import get_subscription_status_info, OrganizationSubscription
 
     mode = get_deployment_mode()
 
     if mode == "enterprise":
         license_key = get_license_key()
-        access = get_feature_access_for_enterprise(license_key)
+        access = get_feature_access_for_enterprise(license_key, db)
         return {
             "mode": access.mode,
             "plan_or_edition": access.plan_or_edition,
@@ -830,8 +830,6 @@ def _get_features_for_org(org_id: str, db: Session) -> dict:
         }
 
     plan_type = "starter"
-    plan_features = None
-    from services.feature_flags import PLAN_LIMITS
     limits = PLAN_LIMITS.get("starter", {})
 
     if subscription and subscription.plan:
@@ -842,14 +840,8 @@ def _get_features_for_org(org_id: str, db: Session) -> dict:
             "max_branches": subscription.plan.max_branches,
             "sms_monthly": subscription.plan.sms_credits_monthly
         }
-        if subscription.plan.features and subscription.plan.features.get("enabled"):
-            plan_features = subscription.plan.features.get("enabled")
 
-    if plan_features:
-        features = plan_features
-    else:
-        access = get_feature_access_for_saas(plan_type)
-        features = list(access.enabled_features)
+    features = list(get_org_features(org_id, db))
 
     return {
         "mode": "saas",

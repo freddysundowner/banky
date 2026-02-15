@@ -7,7 +7,7 @@ from models.database import get_db
 from models.master import Organization, OrganizationSubscription, SubscriptionPlan, OrganizationMember
 from services.feature_flags import (
     get_deployment_mode, get_license_key, get_feature_access_for_enterprise,
-    get_feature_access_for_saas, Feature, PLAN_FEATURES, PLAN_LIMITS, CORE_FEATURES
+    get_feature_access_for_saas, Feature, PLAN_LIMITS, BASELINE_FEATURES
 )
 from routes.auth import get_current_user
 
@@ -88,7 +88,7 @@ def get_organization_features(organization_id: str, db: Session = Depends(get_db
     
     if mode == "enterprise":
         license_key = get_license_key()
-        access = get_feature_access_for_enterprise(license_key)
+        access = get_feature_access_for_enterprise(license_key, db)
         return {
             "mode": access.mode,
             "plan_or_edition": access.plan_or_edition,
@@ -118,7 +118,6 @@ def get_organization_features(organization_id: str, db: Session = Depends(get_db
         }
     
     plan_type = "starter"
-    plan_features = None
     limits = PLAN_LIMITS.get("starter", {})
     
     if subscription and subscription.plan:
@@ -129,14 +128,9 @@ def get_organization_features(organization_id: str, db: Session = Depends(get_db
             "max_branches": subscription.plan.max_branches,
             "sms_monthly": subscription.plan.sms_credits_monthly
         }
-        if subscription.plan.features and subscription.plan.features.get("enabled"):
-            plan_features = subscription.plan.features.get("enabled")
     
-    if plan_features:
-        features = list(set(plan_features) | CORE_FEATURES)
-    else:
-        access = get_feature_access_for_saas(plan_type)
-        features = list(access.enabled_features | CORE_FEATURES)
+    from services.feature_flags import get_org_features
+    features = list(get_org_features(organization_id, db))
     
     return {
         "mode": "saas",
@@ -152,36 +146,38 @@ def check_feature(organization_id: str, feature_name: str, db: Session = Depends
     
     if mode == "enterprise":
         license_key = get_license_key()
-        access = get_feature_access_for_enterprise(license_key)
-        is_expired = False
-    else:
-        subscription = db.query(OrganizationSubscription).filter(
-            OrganizationSubscription.organization_id == organization_id
-        ).first()
-        
-        status_info = get_subscription_status_info(subscription)
-        is_expired = status_info["is_expired"]
-        
-        if is_expired:
-            return {
-                "feature": feature_name,
-                "enabled": False,
-                "plan": "expired",
-                "reason": "Subscription expired"
-            }
-        
-        plan_type = "starter"
-        if subscription and subscription.plan:
-            plan_type = subscription.plan.plan_type
-        
-        access = get_feature_access_for_saas(plan_type)
+        access = get_feature_access_for_enterprise(license_key, db)
+        is_enabled = feature_name in access.enabled_features
+        return {
+            "feature": feature_name,
+            "enabled": is_enabled,
+            "plan": access.plan_or_edition
+        }
     
-    is_enabled = feature_name in access.enabled_features
+    subscription = db.query(OrganizationSubscription).filter(
+        OrganizationSubscription.organization_id == organization_id
+    ).first()
+    
+    status_info = get_subscription_status_info(subscription)
+    
+    if status_info["is_expired"]:
+        return {
+            "feature": feature_name,
+            "enabled": False,
+            "plan": "expired",
+            "reason": "Subscription expired"
+        }
+    
+    from services.feature_flags import get_org_features
+    features = get_org_features(organization_id, db)
+    plan_type = "starter"
+    if subscription and subscription.plan:
+        plan_type = subscription.plan.plan_type
     
     return {
         "feature": feature_name,
-        "enabled": is_enabled,
-        "plan": access.plan_or_edition
+        "enabled": feature_name in features,
+        "plan": plan_type
     }
 
 @router.get("/{organization_id}/plans")

@@ -13,8 +13,10 @@ from models.master import (
     SubscriptionPlan, OrganizationSubscription, LicenseKey, PlatformSettings
 )
 from services.feature_flags import (
-    get_all_features, PLAN_FEATURES, PLAN_LIMITS, EDITION_FEATURES, 
-    EDITION_LIMITS, generate_license_key
+    get_all_features, PLAN_LIMITS, 
+    EDITION_LIMITS, generate_license_key,
+    get_all_plan_features_from_db, get_all_edition_features_from_db,
+    _get_edition_features_from_db
 )
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -567,7 +569,7 @@ def create_license(data: dict, admin: AdminUser = Depends(require_admin), db: Se
         max_members = data.get("max_members") or limits.get("max_members")
         max_staff = data.get("max_staff") or limits.get("max_staff")
         max_branches = data.get("max_branches") or limits.get("max_branches")
-        features = list(EDITION_FEATURES.get(edition, EDITION_FEATURES["basic"]))
+        features = list(_get_edition_features_from_db(edition, db))
         support_years = 1
     
     license_key = generate_license_key(edition, org_name)
@@ -614,11 +616,11 @@ def update_license(license_id: str, data: dict, admin: AdminUser = Depends(requi
     return {"message": "License updated"}
 
 @router.get("/features")
-def list_features(admin: AdminUser = Depends(require_admin)):
+def list_features(admin: AdminUser = Depends(require_admin), db: Session = Depends(get_db)):
     return {
         "features": get_all_features(),
-        "plan_features": {k: list(v) for k, v in PLAN_FEATURES.items()},
-        "edition_features": {k: list(v) for k, v in EDITION_FEATURES.items()},
+        "plan_features": get_all_plan_features_from_db(db),
+        "edition_features": get_all_edition_features_from_db(db),
         "plan_limits": PLAN_LIMITS,
         "edition_limits": EDITION_LIMITS
     }

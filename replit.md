@@ -88,9 +88,11 @@ BANKY operates as a hybrid SaaS + Enterprise License product:
 - **Enterprise Edition** ($50,000+): All features + custom development
 
 ### Feature Flag System
-Features are controlled via:
-- **SaaS**: Subscription plan in admin panel (stored in master database)
-- **Enterprise**: License key + DEPLOYMENT_MODE=enterprise environment variable
+Features are **database-driven** with one source of truth:
+- **SaaS**: Features stored in `subscription_plans.features.enabled` JSON column in master database. Admin panel is the single place to edit features per plan.
+- **Enterprise**: License key + DEPLOYMENT_MODE=enterprise environment variable. Edition features also read from database plans.
+- **Safety Net**: If a plan has no features configured in the database, a baseline set (core_banking, members, savings, shares, loans) is returned to prevent zero-feature scenarios.
+- **No Hardcoded Fallbacks**: The old hardcoded `PLAN_FEATURES`/`EDITION_FEATURES` dictionaries have been removed. All feature resolution goes through the database via `_get_plan_features_from_db()` and `_get_edition_features_from_db()` in `python_backend/services/feature_flags.py`.
 
 ### Trial Subscription System
 New organizations start with a configurable trial period (default 14 days on starter plan):

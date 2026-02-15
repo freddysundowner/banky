@@ -31,58 +31,54 @@ class Feature(str, Enum):
     MPESA_INTEGRATION = "mpesa_integration"
     BANK_INTEGRATION = "bank_integration"
 
-PLAN_FEATURES: Dict[str, Set[str]] = {
-    "starter": {
-        Feature.CORE_BANKING, Feature.MEMBERS, Feature.SAVINGS, Feature.SHARES,
-        Feature.LOANS, Feature.AUDIT_LOGS, Feature.MPESA_INTEGRATION
-    },
-    "growth": {
-        Feature.CORE_BANKING, Feature.MEMBERS, Feature.SAVINGS, Feature.SHARES,
-        Feature.LOANS, Feature.TELLER_STATION, Feature.FLOAT_MANAGEMENT,
-        Feature.ANALYTICS, Feature.SMS_NOTIFICATIONS, Feature.EXPENSES,
-        Feature.LEAVE_MANAGEMENT, Feature.MULTIPLE_BRANCHES, Feature.AUDIT_LOGS,
-        Feature.ACCOUNTING, Feature.MPESA_INTEGRATION
-    },
-    "professional": {
-        Feature.CORE_BANKING, Feature.MEMBERS, Feature.SAVINGS, Feature.SHARES,
-        Feature.LOANS, Feature.TELLER_STATION, Feature.FLOAT_MANAGEMENT,
-        Feature.FIXED_DEPOSITS, Feature.DIVIDENDS, Feature.ANALYTICS,
-        Feature.ANALYTICS_EXPORT, Feature.SMS_NOTIFICATIONS, Feature.BULK_SMS,
-        Feature.EXPENSES, Feature.LEAVE_MANAGEMENT, Feature.PAYROLL,
-        Feature.ACCOUNTING, Feature.MULTIPLE_BRANCHES, Feature.API_ACCESS,
-        Feature.WHITE_LABEL, Feature.CUSTOM_REPORTS, Feature.MPESA_INTEGRATION,
-        Feature.AUDIT_LOGS
-    },
-    "enterprise": {
-        f for f in Feature
-    }
+BASELINE_FEATURES: Set[str] = {
+    Feature.CORE_BANKING, Feature.MEMBERS, Feature.SAVINGS, Feature.SHARES, Feature.LOANS
 }
 
-EDITION_FEATURES: Dict[str, Set[str]] = {
-    "basic": {
-        Feature.CORE_BANKING, Feature.MEMBERS, Feature.SAVINGS, Feature.SHARES,
-        Feature.LOANS, Feature.AUDIT_LOGS, Feature.MPESA_INTEGRATION
-    },
-    "standard": {
-        Feature.CORE_BANKING, Feature.MEMBERS, Feature.SAVINGS, Feature.SHARES,
-        Feature.LOANS, Feature.TELLER_STATION, Feature.FLOAT_MANAGEMENT,
-        Feature.ANALYTICS, Feature.SMS_NOTIFICATIONS, Feature.EXPENSES,
-        Feature.LEAVE_MANAGEMENT, Feature.ACCOUNTING, Feature.MULTIPLE_BRANCHES,
-        Feature.AUDIT_LOGS, Feature.MPESA_INTEGRATION
-    },
-    "premium": {
-        Feature.CORE_BANKING, Feature.MEMBERS, Feature.SAVINGS, Feature.SHARES,
-        Feature.LOANS, Feature.TELLER_STATION, Feature.FLOAT_MANAGEMENT,
-        Feature.FIXED_DEPOSITS, Feature.DIVIDENDS, Feature.ANALYTICS,
-        Feature.ANALYTICS_EXPORT, Feature.SMS_NOTIFICATIONS, Feature.BULK_SMS,
-        Feature.EXPENSES, Feature.LEAVE_MANAGEMENT, Feature.PAYROLL,
-        Feature.ACCOUNTING, Feature.MULTIPLE_BRANCHES, Feature.MPESA_INTEGRATION,
-        Feature.BANK_INTEGRATION, Feature.AUDIT_LOGS
-    },
-    "enterprise": {
-        f for f in Feature
-    }
-}
+def _get_plan_features_from_db(plan_type: str, db=None) -> Set[str]:
+    if db is None:
+        return BASELINE_FEATURES
+    from models.master import SubscriptionPlan
+    plan = db.query(SubscriptionPlan).filter(
+        SubscriptionPlan.plan_type == plan_type
+    ).first()
+    if plan and plan.features and plan.features.get("enabled"):
+        return set(plan.features["enabled"])
+    return BASELINE_FEATURES
+
+def _get_edition_features_from_db(edition: str, db=None) -> Set[str]:
+    if db is None:
+        return BASELINE_FEATURES
+    from models.master import SubscriptionPlan
+    plan = db.query(SubscriptionPlan).filter(
+        SubscriptionPlan.plan_type == edition,
+        SubscriptionPlan.pricing_model == "enterprise"
+    ).first()
+    if plan and plan.features and plan.features.get("enabled"):
+        return set(plan.features["enabled"])
+    return BASELINE_FEATURES
+
+def get_all_plan_features_from_db(db) -> Dict[str, list]:
+    from models.master import SubscriptionPlan
+    plans = db.query(SubscriptionPlan).filter(
+        SubscriptionPlan.pricing_model == "saas"
+    ).all()
+    result = {}
+    for plan in plans:
+        features = plan.features.get("enabled", []) if plan.features else []
+        result[plan.plan_type] = features
+    return result
+
+def get_all_edition_features_from_db(db) -> Dict[str, list]:
+    from models.master import SubscriptionPlan
+    plans = db.query(SubscriptionPlan).filter(
+        SubscriptionPlan.pricing_model == "enterprise"
+    ).all()
+    result = {}
+    for plan in plans:
+        features = plan.features.get("enabled", []) if plan.features else []
+        result[plan.plan_type] = features
+    return result
 
 PLAN_LIMITS: Dict[str, Dict] = {
     "starter": {"max_members": 500, "max_staff": 3, "max_branches": 1, "sms_monthly": 0},
@@ -111,7 +107,7 @@ def get_deployment_mode() -> str:
 def get_license_key() -> Optional[str]:
     return os.environ.get("LICENSE_KEY")
 
-def validate_license_key(license_key: str) -> Optional[Dict]:
+def validate_license_key(license_key: str, db=None) -> Optional[Dict]:
     if not license_key or not license_key.startswith("BANKY-"):
         return None
     
@@ -126,25 +122,25 @@ def validate_license_key(license_key: str) -> Optional[Dict]:
     return {
         "edition": edition,
         "valid": True,
-        "features": EDITION_FEATURES.get(edition, EDITION_FEATURES["basic"]),
+        "features": _get_edition_features_from_db(edition, db),
         "limits": EDITION_LIMITS.get(edition, EDITION_LIMITS["basic"])
     }
 
-def get_feature_access_for_saas(plan_type: str = "starter") -> FeatureAccess:
+def get_feature_access_for_saas(plan_type: str = "starter", db=None) -> FeatureAccess:
     plan = plan_type.lower()
-    if plan not in PLAN_FEATURES:
-        plan = "starter"
+    limits = PLAN_LIMITS.get(plan, PLAN_LIMITS["starter"])
+    features = _get_plan_features_from_db(plan, db)
     
     return FeatureAccess(
-        enabled_features=PLAN_FEATURES[plan],
-        limits=PLAN_LIMITS[plan],
+        enabled_features=features,
+        limits=limits,
         mode="saas",
         plan_or_edition=plan
     )
 
-def get_feature_access_for_enterprise(license_key: Optional[str] = None) -> FeatureAccess:
+def get_feature_access_for_enterprise(license_key: Optional[str] = None, db=None) -> FeatureAccess:
     if license_key:
-        license_info = validate_license_key(license_key)
+        license_info = validate_license_key(license_key, db)
         if license_info:
             return FeatureAccess(
                 enabled_features=license_info["features"],
@@ -155,23 +151,23 @@ def get_feature_access_for_enterprise(license_key: Optional[str] = None) -> Feat
     
     edition = os.environ.get("LICENSE_EDITION", "basic").lower()
     return FeatureAccess(
-        enabled_features=EDITION_FEATURES.get(edition, EDITION_FEATURES["basic"]),
+        enabled_features=_get_edition_features_from_db(edition, db),
         limits=EDITION_LIMITS.get(edition, EDITION_LIMITS["basic"]),
         mode="enterprise",
         plan_or_edition=edition
     )
 
-def get_feature_access(organization_subscription: Optional[Dict] = None) -> FeatureAccess:
+def get_feature_access(organization_subscription: Optional[Dict] = None, db=None) -> FeatureAccess:
     mode = get_deployment_mode()
     
     if mode == "enterprise":
         license_key = get_license_key()
-        return get_feature_access_for_enterprise(license_key)
+        return get_feature_access_for_enterprise(license_key, db)
     else:
         plan_type = "starter"
         if organization_subscription and organization_subscription.get("plan"):
             plan_type = organization_subscription["plan"].get("plan_type", "starter")
-        return get_feature_access_for_saas(plan_type)
+        return get_feature_access_for_saas(plan_type, db)
 
 def is_feature_enabled(feature: str, feature_access: FeatureAccess) -> bool:
     return feature in feature_access.enabled_features
@@ -221,8 +217,6 @@ def generate_license_key(edition: str, org_name: str) -> str:
     return f"BANKY-{edition_code}-{year}-{unique}"
 
 
-CORE_FEATURES: Set[str] = set()
-
 def get_org_features(organization_id: str, db) -> Set[str]:
     from models.master import OrganizationSubscription
     
@@ -230,21 +224,19 @@ def get_org_features(organization_id: str, db) -> Set[str]:
     
     if mode == "enterprise":
         license_key = get_license_key()
-        access = get_feature_access_for_enterprise(license_key)
-        return access.enabled_features | CORE_FEATURES
+        access = get_feature_access_for_enterprise(license_key, db)
+        return access.enabled_features
     
     subscription = db.query(OrganizationSubscription).filter(
         OrganizationSubscription.organization_id == organization_id
     ).first()
     
-    plan_type = "starter"
     if subscription and subscription.plan:
-        plan_type = subscription.plan.plan_type
         if subscription.plan.features and subscription.plan.features.get("enabled"):
-            return set(subscription.plan.features.get("enabled")) | CORE_FEATURES
+            return set(subscription.plan.features.get("enabled"))
+        return _get_plan_features_from_db(subscription.plan.plan_type, db)
     
-    access = get_feature_access_for_saas(plan_type)
-    return access.enabled_features | CORE_FEATURES
+    return BASELINE_FEATURES
 
 
 def check_org_feature(organization_id: str, feature: str, db) -> bool:
