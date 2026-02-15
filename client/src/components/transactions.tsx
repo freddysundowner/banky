@@ -43,7 +43,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { ArrowDownLeft, ArrowUpRight, Plus, Wallet, AlertCircle, ChevronsUpDown, Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Plus, Wallet, AlertCircle, ChevronsUpDown, Check, ChevronLeft, ChevronRight, Loader2, Printer, Eye } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
@@ -121,6 +121,7 @@ export default function Transactions({ organizationId }: TransactionsProps) {
   } | null>(null);
   const [stkPollCount, setStkPollCount] = useState(0);
   const maxPollAttempts = 24;
+  const [receiptTxn, setReceiptTxn] = useState<Transaction | null>(null);
 
   useEffect(() => {
     if (!stkPolling) return;
@@ -230,6 +231,106 @@ export default function Transactions({ organizationId }: TransactionsProps) {
       return res.json();
     },
   });
+
+  const { data: settingsData } = useQuery<{setting_key: string; setting_value: string}[]>({
+    queryKey: ["/api/organizations", organizationId, "settings"],
+    enabled: !!organizationId,
+  });
+  const orgName = settingsData?.find(s => s.setting_key === "organization_name")?.setting_value || "Organization";
+
+  const handlePrintReceipt = (txn: Transaction) => {
+    const member = members?.find(m => m.id === txn.member_id);
+    const memberName = member ? `${member.first_name} ${member.last_name}` : "Unknown";
+    const memberNumber = member?.member_number || "";
+    const date = new Date(txn.created_at);
+
+    const printWindow = window.open("", "_blank", "width=400,height=600");
+    if (!printWindow) return;
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Receipt - ${txn.transaction_number}</title>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Courier New', monospace; padding: 20px; max-width: 350px; margin: 0 auto; color: #000; }
+          .header { text-align: center; border-bottom: 2px dashed #333; padding-bottom: 12px; margin-bottom: 12px; }
+          .header h1 { font-size: 18px; font-weight: bold; margin-bottom: 4px; }
+          .header p { font-size: 11px; color: #555; }
+          .receipt-title { text-align: center; font-size: 14px; font-weight: bold; margin: 12px 0; text-transform: uppercase; letter-spacing: 1px; }
+          .divider { border-top: 1px dashed #999; margin: 10px 0; }
+          .row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; }
+          .row .label { color: #555; }
+          .row .value { font-weight: bold; text-align: right; max-width: 55%; }
+          .amount-row { font-size: 16px; padding: 8px 0; }
+          .amount-row .value { font-size: 16px; }
+          .footer { text-align: center; margin-top: 16px; border-top: 2px dashed #333; padding-top: 12px; font-size: 10px; color: #777; }
+          .footer p { margin-bottom: 4px; }
+          @media print {
+            body { padding: 10px; }
+            .no-print { display: none; }
+          }
+          .print-btn { display: block; width: 100%; padding: 10px; margin-top: 16px; background: #2563eb; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
+          .print-btn:hover { background: #1d4ed8; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>${orgName}</h1>
+          <p>Transaction Receipt</p>
+        </div>
+        <div class="receipt-title">${txn.transaction_type} Receipt</div>
+        <div class="divider"></div>
+        <div class="row">
+          <span class="label">Receipt No:</span>
+          <span class="value">${txn.transaction_number}</span>
+        </div>
+        <div class="row">
+          <span class="label">Date:</span>
+          <span class="value">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</span>
+        </div>
+        <div class="divider"></div>
+        <div class="row">
+          <span class="label">Member:</span>
+          <span class="value">${memberName}</span>
+        </div>
+        ${memberNumber ? `<div class="row"><span class="label">Member No:</span><span class="value">${memberNumber}</span></div>` : ""}
+        <div class="row">
+          <span class="label">Account:</span>
+          <span class="value" style="text-transform: capitalize;">${txn.account_type}</span>
+        </div>
+        <div class="divider"></div>
+        <div class="row amount-row">
+          <span class="label">Amount:</span>
+          <span class="value">${symbol} ${Number(txn.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+        </div>
+        <div class="row">
+          <span class="label">Balance Before:</span>
+          <span class="value">${symbol} ${Number(txn.balance_before ?? 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+        </div>
+        <div class="row">
+          <span class="label">Balance After:</span>
+          <span class="value">${symbol} ${Number(txn.balance_after ?? 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+        </div>
+        <div class="divider"></div>
+        <div class="row">
+          <span class="label">Payment Method:</span>
+          <span class="value" style="text-transform: capitalize;">${txn.payment_method || "Cash"}</span>
+        </div>
+        ${txn.reference ? `<div class="row"><span class="label">Reference:</span><span class="value">${txn.reference}</span></div>` : ""}
+        ${txn.description ? `<div class="row"><span class="label">Description:</span><span class="value">${txn.description}</span></div>` : ""}
+        <div class="footer">
+          <p>Thank you for banking with us</p>
+          <p>${orgName}</p>
+          <p>Printed: ${new Date().toLocaleString()}</p>
+        </div>
+        <button class="print-btn no-print" onclick="window.print()">Print Receipt</button>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
 
   const form = useForm<TransactionFormData>({
     resolver: zodResolver(transactionSchema),
@@ -424,6 +525,7 @@ export default function Transactions({ organizationId }: TransactionsProps) {
                   <TableHead className="text-right hidden lg:table-cell">Balance After</TableHead>
                   <TableHead className="hidden xl:table-cell">Reference</TableHead>
                   <TableHead className="hidden sm:table-cell">Date</TableHead>
+                  <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -453,6 +555,16 @@ export default function Transactions({ organizationId }: TransactionsProps) {
                       {txn.reference || "-"}
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">{new Date(txn.created_at).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        data-testid={`button-print-receipt-${txn.id}`}
+                        onClick={() => handlePrintReceipt(txn)}
+                      >
+                        <Printer className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
