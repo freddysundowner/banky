@@ -61,11 +61,6 @@ interface PostResult {
   } | null;
 }
 
-interface AccountEntry {
-  amount: string;
-  source: "none" | "suggested" | "manual";
-}
-
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 2,
@@ -80,30 +75,30 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
     new Date().toISOString().split("T")[0]
   );
   const [notes, setNotes] = useState("");
-  const [entries, setEntries] = useState<Record<string, AccountEntry>>({});
+  const [amounts, setAmounts] = useState<Record<string, string>>({});
+  const [autoApplied, setAutoApplied] = useState<Record<string, boolean>>({});
 
   const { data: preview, isLoading, isError, error, refetch } = useQuery<PreviewData>({
     queryKey: [`/api/organizations/${organizationId}/accounting/opening-balances/preview`],
   });
 
-  const updateEntry = (code: string, amount: string, source: "suggested" | "manual") => {
-    setEntries(prev => ({
-      ...prev,
-      [code]: { amount, source },
-    }));
+  const setAmount = (code: string, value: string) => {
+    setAmounts(prev => ({ ...prev, [code]: value }));
+    setAutoApplied(prev => ({ ...prev, [code]: false }));
   };
 
-  const clearEntry = (code: string) => {
-    setEntries(prev => {
-      const { [code]: _, ...rest } = prev;
-      return rest;
-    });
+  const applyAuto = (code: string, gap: number) => {
+    setAmounts(prev => ({ ...prev, [code]: String(gap) }));
+    setAutoApplied(prev => ({ ...prev, [code]: true }));
+  };
+
+  const clearAmount = (code: string) => {
+    setAmounts(prev => ({ ...prev, [code]: "" }));
+    setAutoApplied(prev => ({ ...prev, [code]: false }));
   };
 
   const getEntryAmount = (code: string): number => {
-    const entry = entries[code];
-    if (!entry || entry.source === "none") return 0;
-    return parseFloat(entry.amount) || 0;
+    return parseFloat(amounts[code] || "") || 0;
   };
 
   const totals = useMemo(() => {
@@ -122,22 +117,22 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
       }
     }
     return { debit, credit, balanced: Math.abs(debit - credit) < 0.01 };
-  }, [entries, preview?.accounts]);
+  }, [amounts, preview?.accounts]);
 
-  const hasAnyEntries = Object.values(entries).some(e => e.source !== "none" && parseFloat(e.amount) !== 0);
+  const hasAnyEntries = Object.values(amounts).some(v => parseFloat(v) !== 0 && v !== "");
 
   const postMutation = useMutation<PostResult, Error>({
     mutationFn: async () => {
       const lines = (preview?.accounts || [])
         .filter(acct => {
-          const entry = entries[acct.account_code];
-          return entry && entry.source !== "none" && parseFloat(entry.amount) !== 0;
+          const val = parseFloat(amounts[acct.account_code] || "");
+          return !isNaN(val) && val !== 0;
         })
         .map(acct => ({
           account_code: acct.account_code,
-          amount: parseFloat(entries[acct.account_code].amount),
-          memo: entries[acct.account_code].source === "suggested"
-            ? `Opening balance (system suggested) - ${acct.account_name}`
+          amount: parseFloat(amounts[acct.account_code]),
+          memo: autoApplied[acct.account_code]
+            ? `Opening balance (auto-calculated) - ${acct.account_name}`
             : `Opening balance (manually entered) - ${acct.account_name}`,
         }));
 
@@ -158,7 +153,8 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
         description: data.message,
       });
       setShowConfirm(false);
-      setEntries({});
+      setAmounts({});
+      setAutoApplied({});
       refetch();
       queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/accounting`] });
     },
@@ -284,12 +280,11 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
                     </TableRow>
                   );
                   group.accounts.forEach((acct) => {
-                    const entry = entries[acct.account_code];
-                    const hasEntry = entry && entry.source !== "none";
                     const hasSuggestion = acct.suggested_balance !== null;
                     const gapExists = acct.gap !== null && Math.abs(acct.gap) > 0.01;
-                    const isAuto = hasEntry && entry.source === "suggested";
-                    const isManual = hasEntry && entry.source === "manual";
+                    const currentVal = amounts[acct.account_code] || "";
+                    const isAutoFilled = autoApplied[acct.account_code] === true;
+                    const hasValue = currentVal !== "" && parseFloat(currentVal) !== 0;
                     rows.push(
                       <TableRow key={acct.account_code} data-testid={`account-row-${acct.account_code}`}>
                         <TableCell>
@@ -313,7 +308,7 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
                               {formatCurrency(acct.gap!)}
                             </span>
                           ) : hasSuggestion ? (
-                            <Badge variant="outline" className="text-xs">None</Badge>
+                            <Badge variant="outline" className="text-xs">Matched</Badge>
                           ) : (
                             <span className="text-xs text-muted-foreground italic">-</span>
                           )}
@@ -321,61 +316,46 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
                         <TableCell className="text-right">
                           {alreadyPosted ? (
                             <span className="text-muted-foreground">-</span>
-                          ) : isAuto ? (
-                            <div className="flex items-center justify-end gap-2">
-                              <span className="font-mono font-medium text-green-700 dark:text-green-400">
-                                {formatCurrency(parseFloat(entry.amount) || 0)}
-                              </span>
-                              <Badge variant="secondary" className="text-xs">Auto</Badge>
-                            </div>
-                          ) : isManual ? (
-                            <Input
-                              type="number"
-                              step="0.01"
-                              className="w-36 text-right font-mono ml-auto"
-                              value={entry.amount}
-                              onChange={(e) => updateEntry(acct.account_code, e.target.value, "manual")}
-                              autoFocus
-                              data-testid={`input-amount-${acct.account_code}`}
-                            />
                           ) : (
-                            <span className="text-muted-foreground text-sm">-</span>
+                            <div className="flex items-center justify-end gap-2">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                placeholder="0.00"
+                                className={`w-36 text-right font-mono ${isAutoFilled ? "border-green-500 bg-green-50 dark:bg-green-950" : ""}`}
+                                value={currentVal}
+                                onChange={(e) => setAmount(acct.account_code, e.target.value)}
+                                data-testid={`input-amount-${acct.account_code}`}
+                              />
+                              {isAutoFilled && (
+                                <Badge variant="secondary" className="text-xs">Auto</Badge>
+                              )}
+                            </div>
                           )}
                         </TableCell>
                         <TableCell className="text-center">
                           {!alreadyPosted && (
                             <div className="flex items-center justify-center gap-1">
-                              {hasSuggestion && gapExists && !isAuto && (
+                              {hasSuggestion && gapExists && (
                                 <Button
                                   variant="default"
                                   size="sm"
-                                  onClick={() => updateEntry(acct.account_code, String(acct.gap!), "suggested")}
+                                  onClick={() => applyAuto(acct.account_code, acct.gap!)}
                                   data-testid={`button-auto-${acct.account_code}`}
                                 >
                                   <Wand2 className="h-3.5 w-3.5 mr-1" />
                                   Auto
                                 </Button>
                               )}
-                              {!isManual && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => updateEntry(acct.account_code, "", "manual")}
-                                  data-testid={`button-manual-${acct.account_code}`}
-                                >
-                                  <Pencil className="h-3.5 w-3.5 mr-1" />
-                                  Manual
-                                </Button>
-                              )}
-                              {hasEntry && (
+                              {hasValue && (
                                 <Button
                                   variant="destructive"
                                   size="sm"
-                                  onClick={() => clearEntry(acct.account_code)}
+                                  onClick={() => clearAmount(acct.account_code)}
                                   data-testid={`button-clear-${acct.account_code}`}
                                 >
                                   <RotateCcw className="h-3.5 w-3.5 mr-1" />
-                                  Reset
+                                  Clear
                                 </Button>
                               )}
                             </div>
@@ -483,16 +463,16 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
             <div className="text-sm text-muted-foreground">Accounts included:</div>
             {preview?.accounts
               .filter(a => {
-                const e = entries[a.account_code];
-                return e && e.source !== "none" && parseFloat(e.amount) !== 0;
+                const val = parseFloat(amounts[a.account_code] || "");
+                return !isNaN(val) && val !== 0;
               })
               .map(a => (
                 <div key={a.account_code} className="flex justify-between text-sm px-2">
                   <span>{a.account_code} - {a.account_name}</span>
                   <span className="font-mono">
-                    {formatCurrency(parseFloat(entries[a.account_code].amount))}
+                    {formatCurrency(parseFloat(amounts[a.account_code]))}
                     <Badge variant="outline" className="ml-2 text-xs">
-                      {entries[a.account_code].source === "suggested" ? "Auto" : "Manual"}
+                      {autoApplied[a.account_code] ? "Auto" : "Manual"}
                     </Badge>
                   </span>
                 </div>
