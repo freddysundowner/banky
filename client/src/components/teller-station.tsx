@@ -598,7 +598,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
   
   const [showShortageApproval, setShowShortageApproval] = useState(false);
   const [pendingShortageId, setPendingShortageId] = useState<string | null>(null);
-  const [approverStaffNumber, setApproverStaffNumber] = useState("");
+  const [approverStaffNumber, setApproverStaffNumber] = useState(""); // kept for backward compat
   const [approverPin, setApproverPin] = useState("");
   const [shortageAction, setShortageAction] = useState<"deduct" | "hold" | "expense">("deduct");
   const [approvalNotes, setApprovalNotes] = useState("");
@@ -682,7 +682,6 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
     mutationFn: async () => {
       if (!pendingShortageId) throw new Error("No shortage to approve");
       const res = await apiRequest("POST", `/api/organizations/${organizationId}/shortages/${pendingShortageId}/approve`, {
-        staff_number: approverStaffNumber,
         pin: approverPin,
         action: shortageAction,
         notes: approvalNotes,
@@ -2111,19 +2110,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="approver-staff-number">Manager Staff Number</Label>
-              <Input
-                id="approver-staff-number"
-                type="text"
-                placeholder="e.g. STF001"
-                value={approverStaffNumber}
-                onChange={(e) => setApproverStaffNumber(e.target.value)}
-                data-testid="input-approver-staff-number"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="approver-pin">Approval PIN</Label>
+              <Label htmlFor="approver-pin">Manager Approval PIN</Label>
               <Input
                 id="approver-pin"
                 type="password"
@@ -2132,6 +2119,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
                 placeholder="Enter 4-6 digit PIN"
                 value={approverPin}
                 onChange={(e) => setApproverPin(e.target.value)}
+                autoFocus
                 data-testid="input-approver-pin"
               />
             </div>
@@ -2198,7 +2186,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
               </Button>
               <Button
                 onClick={() => approveShortagueMutation.mutate()}
-                disabled={!approverStaffNumber || !approverPin || approveShortagueMutation.isPending}
+                disabled={!approverPin || approveShortagueMutation.isPending}
               >
                 {approveShortagueMutation.isPending ? "Approving..." : "Approve & Close Day"}
               </Button>

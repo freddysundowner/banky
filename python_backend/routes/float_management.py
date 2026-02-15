@@ -86,7 +86,7 @@ class ReconcileFloatRequest(BaseModel):
     return_to_vault: bool = False  # If true, balance is returned to vault and next day starts at 0
 
 class ShortageApprovalRequest(BaseModel):
-    staff_number: str
+    staff_number: Optional[str] = None
     pin: str
     action: str  # "deduct", "hold", or "expense"
     notes: Optional[str] = None
@@ -1122,15 +1122,23 @@ async def approve_shortage(
     session = tenant_ctx.create_session()
     
     try:
-        approver_staff = session.query(Staff).filter(Staff.staff_number == request.staff_number).first()
-        if not approver_staff:
-            raise HTTPException(status_code=401, detail="Invalid staff number or PIN")
-        
-        if not approver_staff.approval_pin:
-            raise HTTPException(status_code=400, detail="This staff member has not set an approval PIN. Please set one in Settings first.")
-        
-        if not bcrypt.checkpw(request.pin.encode('utf-8'), approver_staff.approval_pin.encode('utf-8')):
-            raise HTTPException(status_code=401, detail="Invalid staff number or PIN")
+        approver_staff = None
+        if request.staff_number:
+            approver_staff = session.query(Staff).filter(Staff.staff_number == request.staff_number).first()
+            if not approver_staff:
+                raise HTTPException(status_code=401, detail="Invalid PIN")
+            if not approver_staff.approval_pin:
+                raise HTTPException(status_code=400, detail="This staff member has not set an approval PIN.")
+            if not bcrypt.checkpw(request.pin.encode('utf-8'), approver_staff.approval_pin.encode('utf-8')):
+                raise HTTPException(status_code=401, detail="Invalid PIN")
+        else:
+            candidates = session.query(Staff).filter(Staff.approval_pin.isnot(None)).all()
+            for candidate in candidates:
+                if bcrypt.checkpw(request.pin.encode('utf-8'), candidate.approval_pin.encode('utf-8')):
+                    approver_staff = candidate
+                    break
+            if not approver_staff:
+                raise HTTPException(status_code=401, detail="Invalid PIN")
         
         from models.master import OrganizationMember, User
         approver_user = db.query(User).filter(User.email == approver_staff.email).first()
