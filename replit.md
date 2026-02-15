@@ -57,11 +57,18 @@ The frontend is built with React 18 and TypeScript, utilizing Shadcn UI componen
 - **Multi-Gateway Subscription Payments**: Three payment gateways for subscription billing:
     - **M-Pesa (KES)**: STK Push via SunPay, webhook at `/api/webhooks/subscription-payment`
     - **Stripe (USD)**: Checkout Session via Replit connection API, webhook at `/api/webhooks/stripe-subscription`, service: `python_backend/services/stripe_service.py`
-    - **Paystack (NGN)**: Transaction initialization, webhook at `/api/webhooks/paystack-subscription`, service: `python_backend/services/paystack_service.py`
-    - Multi-currency pricing: Each plan has KES (monthly_price/annual_price), USD (usd_monthly_price/usd_annual_price), NGN (ngn_monthly_price/ngn_annual_price)
+    - **Paystack (configurable currency)**: Transaction initialization, webhook at `/api/webhooks/paystack-subscription`, service: `python_backend/services/paystack_service.py`
+    - **USD-Only Pricing**: All plan prices are stored in USD (`monthly_price`/`annual_price`). Auto-conversion to local currencies (KES, NGN, GHS, ZAR) via exchange rate service (`python_backend/services/exchange_rate.py`). Rates are fetched from exchangerate-api.com and cached for 6 hours with fallback rates.
+    - Upgrade page shows converted prices dynamically per gateway: KES for M-Pesa, USD for Stripe, configurable for Paystack (card=USD, mobile_money=local currency)
+    - Exchange rates API endpoint: `/api/exchange-rates`
     - SubscriptionPayment model tracks gateway, currency, stripe_session_id, paystack_reference
     - Check-payment endpoint polls all 3 gateways as fallback when webhooks don't arrive
-    - Admin panel: Paystack API key in Settings, multi-currency fields in Plans management
+    - Admin panel: Paystack API key and currency in Settings, USD-only price fields in Plans management
+- **M-Pesa Deposits via STK Push**: When M-Pesa is selected as payment method for deposits in Transactions page:
+    - Triggers STK Push to member's phone (auto-routes to Daraja or SunPay based on `mpesa_gateway` setting)
+    - Callback auto-credits member's account when payment confirmed
+    - Deposit is NOT recorded until M-Pesa confirms payment (prevents fake deposits)
+    - Requires: `mpesa_integration` feature flag, M-Pesa enabled in settings, member has phone number
 - **Operations**: SMS notifications with templates, analytics dashboards for performance insights, HR management (staff lock/unlock, performance reviews), audit logs for complete traceability, and configurable organization settings.
 - **Automation**: Includes a cron-based script for processing matured fixed deposits with options for regular maturity or auto-rollover.
 - **Auto Loan Deduction**: Cron job (`python_backend/cron_auto_loan_deduction.py`) auto-deducts loan repayments from member savings on instalment due dates. Enabled per-org via `auto_loan_deduction` setting in Settings > Loans tab.
