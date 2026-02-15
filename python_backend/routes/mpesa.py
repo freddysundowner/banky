@@ -547,20 +547,17 @@ def initiate_b2c_disbursement(tenant_session, phone: str, amount: Decimal, remar
         return {"success": False, **result}
 
 
-def initiate_stk_push(tenant_session, phone: str, amount: Decimal, account_reference: str, description: str, org_id: str = "") -> dict:
+def initiate_stk_push(tenant_session, phone: str, amount: Decimal, account_reference: str, description: str, org_id: str = "", base_url_override: str = "") -> dict:
     """Initiate M-Pesa STK Push"""
-    import os
     access_token = get_mpesa_access_token(tenant_session)
     
     shortcode = get_org_setting(tenant_session, "mpesa_paybill", "") or get_org_setting(tenant_session, "mpesa_shortcode", "")
     passkey = get_org_setting(tenant_session, "mpesa_passkey", "")
     callback_url = get_org_setting(tenant_session, "mpesa_stk_callback_url", "")
     
-    if not callback_url and org_id:
-        replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
-        if replit_domain:
-            callback_url = f"https://{replit_domain}/api/mpesa/stk-callback/{org_id}"
-            print(f"[STK Push] Using auto-generated callback URL: {callback_url}")
+    if not callback_url and org_id and base_url_override:
+        callback_url = f"{base_url_override.rstrip('/')}/api/mpesa/stk-callback/{org_id}"
+        print(f"[STK Push] Using auto-generated callback URL: {callback_url}")
     
     if not shortcode or not passkey:
         raise HTTPException(status_code=400, detail="M-Pesa STK Push not configured")
@@ -657,7 +654,8 @@ async def trigger_stk_push(org_id: str, request: Request, user=Depends(get_curre
                 **(result if isinstance(result, dict) else {})
             }
         
-        result = initiate_stk_push(tenant_session, phone, amount, account_reference, description, org_id=org_id)
+        request_base = str(request.base_url).rstrip("/")
+        result = initiate_stk_push(tenant_session, phone, amount, account_reference, description, org_id=org_id, base_url_override=request_base)
         
         if result.get("ResponseCode") == "0":
             return {
