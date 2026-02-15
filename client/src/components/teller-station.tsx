@@ -1170,35 +1170,13 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
           </div>
         )}
 
-        {/* Shortage Warning Banner */}
-        {myShortages && myShortages.total_outstanding > 0 && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Outstanding Cash Shortages</AlertTitle>
-            <AlertDescription>
-              You have outstanding shortages totaling <strong>{symbol} {myShortages.total_outstanding.toLocaleString()}</strong>.
-              {myShortages.total_pending > 0 && (
-                <span className="block mt-1">
-                  Pending approval: {symbol} {myShortages.total_pending.toLocaleString()}
-                </span>
-              )}
-              {myShortages.total_held > 0 && (
-                <span className="block mt-1">
-                  Held (awaiting resolution): {symbol} {myShortages.total_held.toLocaleString()}
-                </span>
-              )}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Pending Approval Status */}
-        {myFloat?.status === "pending_approval" && (
+        {/* Shortage / Pending Approval Banner */}
+        {myFloat?.status === "pending_approval" ? (
           <Alert variant="destructive" className="mb-4">
             <ShieldAlert className="h-4 w-4" />
-            <AlertTitle>Manager Approval Required</AlertTitle>
+            <AlertTitle>Shortage {symbol} {myShortages?.total_pending?.toLocaleString() || "0"} — Manager Approval Required</AlertTitle>
             <AlertDescription>
-              Your end-of-day reconciliation shows a shortage that requires manager approval before closing.
-              <div className="flex gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-1">
                 <Button 
                   size="sm" 
                   variant="outline" 
@@ -1214,18 +1192,28 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
                 </Button>
                 <Button 
                   size="sm" 
-                  variant="secondary"
+                  variant="ghost"
                   onClick={() => revertReconciliationMutation.mutate()}
                   disabled={revertReconciliationMutation.isPending}
                   data-testid="button-redo-reconciliation"
                 >
-                  <RefreshCw className="h-4 w-4 mr-1" />
-                  {revertReconciliationMutation.isPending ? "Reverting..." : "Redo Reconciliation"}
+                  <RefreshCw className="h-3 w-3 mr-1" />
+                  {revertReconciliationMutation.isPending ? "Reverting..." : "Redo Count"}
                 </Button>
               </div>
             </AlertDescription>
           </Alert>
-        )}
+        ) : myShortages && myShortages.total_outstanding > 0 ? (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Outstanding Shortages: {symbol} {myShortages.total_outstanding.toLocaleString()}</AlertTitle>
+            <AlertDescription>
+              {myShortages.total_held > 0 && (
+                <span>Held (awaiting resolution): {symbol} {myShortages.total_held.toLocaleString()}</span>
+              )}
+            </AlertDescription>
+          </Alert>
+        ) : null}
 
         {/* Pending Incoming Handovers */}
         {myPendingHandovers.length > 0 && (
