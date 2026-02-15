@@ -791,6 +791,10 @@ DEFAULT_PLATFORM_SETTINGS = [
     {"key": "gateway_stripe_enabled", "value": "true", "type": "boolean", "description": "Enable Stripe (USD) as a subscription payment gateway"},
     {"key": "gateway_paystack_enabled", "value": "true", "type": "boolean", "description": "Enable Paystack as a subscription payment gateway"},
     {"key": "paystack_currency", "value": "NGN", "type": "string", "description": "Currency for Paystack payments (NGN, KES, GHS, ZAR, USD) - must match your Paystack account currency"},
+    {"key": "stripe_secret_key", "value": "", "type": "string", "description": "Stripe secret API key for processing card payments"},
+    {"key": "stripe_publishable_key", "value": "", "type": "string", "description": "Stripe publishable key for frontend checkout"},
+    {"key": "paystack_secret_key", "value": "", "type": "string", "description": "Paystack secret key for processing payments"},
+    {"key": "paystack_public_key", "value": "", "type": "string", "description": "Paystack public key for frontend integration"},
 ]
 
 def initialize_platform_settings(db: Session):
@@ -839,6 +843,14 @@ def update_platform_settings(updates: dict, admin: AdminUser = Depends(require_a
         if setting:
             setting.setting_value = str(value) if value is not None else ""
             setting.updated_at = datetime.utcnow()
+        else:
+            new_setting = PlatformSettings(
+                setting_key=key,
+                setting_value=str(value) if value is not None else "",
+                setting_type="string",
+                description=""
+            )
+            db.add(new_setting)
     
     db.commit()
     return {"message": "Settings updated"}
