@@ -577,8 +577,8 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
   
   const [showShortageApproval, setShowShortageApproval] = useState(false);
   const [pendingShortageId, setPendingShortageId] = useState<string | null>(null);
-  const [approverEmail, setApproverEmail] = useState("");
-  const [approverPassword, setApproverPassword] = useState("");
+  const [approverStaffNumber, setApproverStaffNumber] = useState("");
+  const [approverPin, setApproverPin] = useState("");
   const [shortageAction, setShortageAction] = useState<"deduct" | "hold" | "expense">("deduct");
   const [approvalNotes, setApprovalNotes] = useState("");
 
@@ -656,8 +656,8 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
     mutationFn: async () => {
       if (!pendingShortageId) throw new Error("No shortage to approve");
       return apiRequest("POST", `/api/organizations/${organizationId}/shortages/${pendingShortageId}/approve`, {
-        email: approverEmail,
-        password: approverPassword,
+        staff_number: approverStaffNumber,
+        pin: approverPin,
         action: shortageAction,
         notes: approvalNotes,
       });
@@ -667,8 +667,8 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
       refetchShortages();
       setShowShortageApproval(false);
       setPendingShortageId(null);
-      setApproverEmail("");
-      setApproverPassword("");
+      setApproverStaffNumber("");
+      setApproverPin("");
       setApprovalNotes("");
       setPhysicalCount("");
       setReconcileNotes("");
@@ -2035,7 +2035,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
               Manager Shortage Approval
             </DialogTitle>
             <DialogDescription>
-              A manager with shortage approval permission must authenticate to approve this shortage.
+              A manager must enter their staff number and approval PIN to authorize this shortage resolution.
             </DialogDescription>
           </DialogHeader>
           
@@ -2052,24 +2052,28 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="approver-email">Manager Email</Label>
+              <Label htmlFor="approver-staff-number">Manager Staff Number</Label>
               <Input
-                id="approver-email"
-                type="email"
-                placeholder="manager@example.com"
-                value={approverEmail}
-                onChange={(e) => setApproverEmail(e.target.value)}
+                id="approver-staff-number"
+                type="text"
+                placeholder="e.g. STF001"
+                value={approverStaffNumber}
+                onChange={(e) => setApproverStaffNumber(e.target.value)}
+                data-testid="input-approver-staff-number"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="approver-password">Password</Label>
+              <Label htmlFor="approver-pin">Approval PIN</Label>
               <Input
-                id="approver-password"
+                id="approver-pin"
                 type="password"
-                placeholder="Enter password"
-                value={approverPassword}
-                onChange={(e) => setApproverPassword(e.target.value)}
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="Enter 4-6 digit PIN"
+                value={approverPin}
+                onChange={(e) => setApproverPin(e.target.value)}
+                data-testid="input-approver-pin"
               />
             </div>
 
@@ -2126,15 +2130,15 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => {
               setShowShortageApproval(false);
-              setApproverEmail("");
-              setApproverPassword("");
+              setApproverStaffNumber("");
+              setApproverPin("");
               setApprovalNotes("");
             }}>
               Cancel
             </Button>
             <Button
               onClick={() => approveShortagueMutation.mutate()}
-              disabled={!approverEmail || !approverPassword || approveShortagueMutation.isPending}
+              disabled={!approverStaffNumber || !approverPin || approveShortagueMutation.isPending}
             >
               {approveShortagueMutation.isPending ? "Approving..." : "Approve & Close Day"}
             </Button>

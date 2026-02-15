@@ -4,7 +4,7 @@ from models.master import Organization, OrganizationMember
 from models.tenant import TenantBase
 
 _migrated_tenants = set()
-_migration_version = 14  # Increment to force re-migration
+_migration_version = 16  # Increment to force re-migration
 
 def _get_db_migration_version(engine):
     """Check the migration version stored in the tenant database"""
@@ -98,6 +98,7 @@ def run_tenant_schema_migration(engine):
             ("password_hash", "VARCHAR(255)"),
             ("is_active", "BOOLEAN DEFAULT TRUE"),
             ("is_locked", "BOOLEAN DEFAULT FALSE"),
+            ("approval_pin", "VARCHAR(255)"),
             ("last_login", "TIMESTAMP"),
             ("created_at", "TIMESTAMP DEFAULT NOW()"),
         ]
@@ -540,6 +541,23 @@ def run_tenant_schema_migration(engine):
         ]
         for col_name, col_type in pending_return_columns:
             add_column_if_not_exists(conn, "pending_vault_returns", col_name, col_type)
+        
+        # Salary deduction columns
+        add_column_if_not_exists(conn, "salary_deductions", "pay_period", "VARCHAR(20)")
+        
+        # Add unique constraint on teller_floats (staff_id, date) for existing databases
+        try:
+            conn.execute(text("""
+                DO $$ BEGIN
+                    IF NOT EXISTS (
+                        SELECT 1 FROM pg_constraint WHERE conname = 'uq_teller_float_staff_date'
+                    ) THEN
+                        ALTER TABLE teller_floats ADD CONSTRAINT uq_teller_float_staff_date UNIQUE (staff_id, date);
+                    END IF;
+                END $$;
+            """))
+        except Exception:
+            pass
         
         # Shift handover columns
         handover_columns = [

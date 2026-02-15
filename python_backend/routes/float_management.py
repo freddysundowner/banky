@@ -23,12 +23,14 @@ def get_org_currency(session):
         return "KES"
 
 def post_float_allocation_to_gl(tenant_session, staff_name: str, amount: Decimal, txn_type: str, branch_name: str = ""):
-    """Post float allocation/return to General Ledger"""
+    """Post float allocation/return to General Ledger. Returns error message if failed, None if successful."""
     try:
         from accounting.service import AccountingService
         
         svc = AccountingService(tenant_session)
         svc.seed_default_accounts()
+        
+        timestamp = datetime.utcnow().strftime("%H%M%S")
         
         if txn_type == "allocation":
             lines = [
@@ -49,18 +51,21 @@ def post_float_allocation_to_gl(tenant_session, staff_name: str, amount: Decimal
             ]
             description = f"Vault deposit - {branch_name}"
         else:
-            return
+            return None
         
         svc.create_journal_entry(
             entry_date=date.today(),
             description=description,
             source_type=f"float_{txn_type}",
-            source_id=f"{staff_name}_{date.today()}",
+            source_id=f"{staff_name}_{date.today()}_{timestamp}",
             lines=lines
         )
         print(f"[GL] Posted float {txn_type} to GL: {staff_name}")
+        return None
     except Exception as e:
-        print(f"[GL] Failed to post float {txn_type} to GL: {e}")
+        error_msg = f"GL posting failed for float {txn_type}: {str(e)}"
+        print(f"[GL] {error_msg}")
+        return error_msg
 
 class AllocateFloatRequest(BaseModel):
     staff_id: str
@@ -81,8 +86,8 @@ class ReconcileFloatRequest(BaseModel):
     return_to_vault: bool = False  # If true, balance is returned to vault and next day starts at 0
 
 class ShortageApprovalRequest(BaseModel):
-    email: str
-    password: str
+    staff_number: str
+    pin: str
     action: str  # "deduct", "hold", or "expense"
     notes: Optional[str] = None
 
@@ -150,9 +155,18 @@ def get_or_create_today_float(session: Session, staff_id: str, branch_id: str) -
             current_balance=opening,
             status="open"
         )
-        session.add(teller_float)
-        session.commit()
-        session.refresh(teller_float)
+        try:
+            session.add(teller_float)
+            session.commit()
+            session.refresh(teller_float)
+        except Exception:
+            session.rollback()
+            teller_float = session.query(TellerFloat).filter(
+                and_(
+                    TellerFloat.staff_id == staff_id,
+                    TellerFloat.date == today
+                )
+            ).first()
     
     return teller_float
 
@@ -414,6 +428,17 @@ async def allocate_float(
             teller_float.closing_balance = None  # Clear closing balance since we're reopening
         
         amount = Decimal(str(request.amount))
+        
+        vault = session.query(BranchVault).filter(
+            BranchVault.branch_id == staff.branch_id
+        ).with_for_update().first()
+        if vault:
+            vault_balance = vault.current_balance or Decimal("0")
+            if amount > vault_balance:
+                raise HTTPException(status_code=400, detail=f"Insufficient vault balance. Available: {float(vault_balance):,.2f}")
+            vault.current_balance = vault_balance - amount
+            vault.last_updated = datetime.utcnow()
+        
         new_balance = Decimal(str(teller_float.current_balance or 0)) + amount
         
         teller_float.current_balance = new_balance
@@ -432,11 +457,13 @@ async def allocate_float(
         session.add(float_txn)
         session.commit()
         
-        # Post to General Ledger
         branch = session.query(Branch).filter(Branch.id == staff.branch_id).first()
-        post_float_allocation_to_gl(session, f"{staff.first_name} {staff.last_name}", amount, "allocation", branch.name if branch else "")
+        gl_error = post_float_allocation_to_gl(session, f"{staff.first_name} {staff.last_name}", amount, "allocation", branch.name if branch else "")
         
-        return {"message": "Float allocated successfully", "new_balance": float(new_balance)}
+        result = {"message": "Float allocated successfully", "new_balance": float(new_balance)}
+        if gl_error:
+            result["gl_warning"] = gl_error
+        return result
     finally:
         session.close()
         tenant_ctx.close()
@@ -454,7 +481,7 @@ async def replenish_float(
     session = tenant_ctx.create_session()
     
     try:
-        teller_float = session.query(TellerFloat).filter(TellerFloat.id == float_id).first()
+        teller_float = session.query(TellerFloat).filter(TellerFloat.id == float_id).with_for_update().first()
         if not teller_float:
             raise HTTPException(status_code=404, detail="Float not found")
         
@@ -561,7 +588,7 @@ async def return_to_vault(
     session = tenant_ctx.create_session()
     
     try:
-        teller_float = session.query(TellerFloat).filter(TellerFloat.id == float_id).first()
+        teller_float = session.query(TellerFloat).filter(TellerFloat.id == float_id).with_for_update().first()
         if not teller_float:
             raise HTTPException(status_code=404, detail="Float not found")
         
@@ -1057,35 +1084,40 @@ async def approve_shortage(
     user = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Manager approves a shortage by entering their email/password"""
-    from services.auth import verify_password
-    from models.master import User
+    """Manager approves a shortage by entering their staff number and PIN at the teller station"""
+    import bcrypt
     
     tenant_ctx, _ = get_tenant_session_context(org_id, user, db)
     session = tenant_ctx.create_session()
     
     try:
-        approver_user = db.query(User).filter(User.email == request.email).first()
-        if not approver_user:
-            raise HTTPException(status_code=401, detail="Invalid credentials")
+        approver_staff = session.query(Staff).filter(Staff.staff_number == request.staff_number).first()
+        if not approver_staff:
+            raise HTTPException(status_code=401, detail="Invalid staff number or PIN")
         
-        if not verify_password(request.password, approver_user.password):
-            raise HTTPException(status_code=401, detail="Invalid credentials")
+        if not approver_staff.approval_pin:
+            raise HTTPException(status_code=400, detail="This staff member has not set an approval PIN. Please set one in Settings first.")
         
-        from models.master import OrganizationMember
-        approver_membership = db.query(OrganizationMember).filter(
-            and_(
-                OrganizationMember.organization_id == org_id,
-                OrganizationMember.user_id == approver_user.id
-            )
-        ).first()
+        if not bcrypt.checkpw(request.pin.encode('utf-8'), approver_staff.approval_pin.encode('utf-8')):
+            raise HTTPException(status_code=401, detail="Invalid staff number or PIN")
         
-        if not approver_membership:
-            raise HTTPException(status_code=403, detail="You are not a member of this organization")
-        
-        from routes.common import check_permission
-        if not check_permission(approver_membership, "shortage_approval:write", db):
-            raise HTTPException(status_code=403, detail="You do not have permission to approve shortages")
+        from models.master import OrganizationMember, User
+        approver_user = db.query(User).filter(User.email == approver_staff.email).first()
+        if approver_user:
+            approver_membership = db.query(OrganizationMember).filter(
+                and_(
+                    OrganizationMember.organization_id == org_id,
+                    OrganizationMember.user_id == approver_user.id
+                )
+            ).first()
+            if approver_membership:
+                from routes.common import check_permission
+                if not check_permission(approver_membership, "shortage_approval:write", db):
+                    raise HTTPException(status_code=403, detail="You do not have permission to approve shortages")
+            else:
+                raise HTTPException(status_code=403, detail="You are not authorized for this organization")
+        else:
+            raise HTTPException(status_code=403, detail="Staff account not found in system")
         
         shortage = session.query(ShortageRecord).filter(ShortageRecord.id == shortage_id).first()
         if not shortage:
@@ -1094,12 +1126,10 @@ async def approve_shortage(
         if shortage.status not in ["pending", "held"]:
             raise HTTPException(status_code=400, detail="Shortage already resolved")
         
-        approver_staff = session.query(Staff).filter(Staff.email == request.email).first()
-        
         if request.action == "deduct":
             shortage.status = "deducted"
             shortage.resolution = "deduct_salary"
-            shortage.approved_by_id = approver_staff.id if approver_staff else None
+            shortage.approved_by_id = approver_staff.id
             shortage.approved_at = datetime.utcnow()
             shortage.notes = request.notes
             
@@ -1109,8 +1139,9 @@ async def approve_shortage(
                 amount=shortage.shortage_amount,
                 reason=f"Cash shortage on {shortage.date.isoformat()}",
                 deduction_date=date.today(),
+                pay_period=date.today().strftime("%Y-%m"),
                 status="pending",
-                approved_by_id=approver_staff.id if approver_staff else None,
+                approved_by_id=approver_staff.id,
                 notes=request.notes
             )
             session.add(salary_deduction)
@@ -1118,27 +1149,24 @@ async def approve_shortage(
         elif request.action == "hold":
             shortage.status = "held"
             shortage.resolution = "hold"
-            shortage.approved_by_id = approver_staff.id if approver_staff else None
+            shortage.approved_by_id = approver_staff.id
             shortage.approved_at = datetime.utcnow()
             shortage.notes = request.notes
             
         elif request.action == "expense":
             shortage.status = "expensed"
             shortage.resolution = "expense"
-            shortage.approved_by_id = approver_staff.id if approver_staff else None
+            shortage.approved_by_id = approver_staff.id
             shortage.approved_at = datetime.utcnow()
             shortage.notes = request.notes or "Written off as organizational expense"
         else:
             raise HTTPException(status_code=400, detail="Invalid action. Must be 'deduct', 'hold', or 'expense'")
         
-        # Only close the float if action is "deduct" or "expense" (not "hold")
-        # "hold" keeps the float open with the shortage as a warning
         teller_float = session.query(TellerFloat).filter(TellerFloat.id == shortage.teller_float_id).first()
         if teller_float and request.action in ["deduct", "expense"]:
-            # Close the float regardless of current status
             teller_float.status = "reconciled"
             teller_float.reconciled_at = datetime.utcnow()
-            teller_float.reconciled_by_id = approver_staff.id if approver_staff else None
+            teller_float.reconciled_by_id = approver_staff.id
             
             float_txn = session.query(FloatTransaction).filter(
                 and_(
@@ -1149,7 +1177,7 @@ async def approve_shortage(
             ).first()
             if float_txn:
                 float_txn.status = "completed"
-                float_txn.approved_by_id = approver_staff.id if approver_staff else None
+                float_txn.approved_by_id = approver_staff.id
         
         session.commit()
         
@@ -1166,8 +1194,73 @@ async def approve_shortage(
             "amount": float(shortage.shortage_amount),
             "action": request.action,
             "teller_name": f"{teller.first_name} {teller.last_name}" if teller else None,
-            "approved_by": f"{approver_staff.first_name} {approver_staff.last_name}" if approver_staff else request.email
+            "approved_by": f"{approver_staff.first_name} {approver_staff.last_name}"
         }
+    finally:
+        session.close()
+        tenant_ctx.close()
+
+@router.post("/organizations/{org_id}/staff/set-approval-pin")
+async def set_approval_pin(
+    org_id: str,
+    user = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    pin: str = None
+):
+    """Set or update the current user's approval PIN"""
+    import bcrypt
+    
+    if not pin or len(pin) < 4 or len(pin) > 6 or not pin.isdigit():
+        raise HTTPException(status_code=400, detail="PIN must be 4-6 digits")
+    
+    tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
+    session = tenant_ctx.create_session()
+    
+    try:
+        staff = session.query(Staff).filter(Staff.email == user.email).first()
+        if not staff:
+            raise HTTPException(status_code=404, detail="Staff not found")
+        
+        hashed = bcrypt.hashpw(pin.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        staff.approval_pin = hashed
+        session.commit()
+        
+        return {"message": "Approval PIN set successfully"}
+    finally:
+        session.close()
+        tenant_ctx.close()
+
+class SetApprovalPinRequest(BaseModel):
+    pin: str
+
+@router.post("/organizations/{org_id}/staff/{staff_id}/set-approval-pin")
+async def set_staff_approval_pin(
+    org_id: str,
+    staff_id: str,
+    request: SetApprovalPinRequest,
+    user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Admin sets a staff member's approval PIN"""
+    import bcrypt
+    
+    if not request.pin or len(request.pin) < 4 or len(request.pin) > 6 or not request.pin.isdigit():
+        raise HTTPException(status_code=400, detail="PIN must be 4-6 digits")
+    
+    tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
+    require_permission(membership, "staff:write", db)
+    session = tenant_ctx.create_session()
+    
+    try:
+        staff = session.query(Staff).filter(Staff.id == staff_id).first()
+        if not staff:
+            raise HTTPException(status_code=404, detail="Staff not found")
+        
+        hashed = bcrypt.hashpw(request.pin.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        staff.approval_pin = hashed
+        session.commit()
+        
+        return {"message": f"Approval PIN set for {staff.first_name} {staff.last_name}"}
     finally:
         session.close()
         tenant_ctx.close()
@@ -1245,6 +1338,8 @@ async def process_salary_deduction(
         processor = session.query(Staff).filter(Staff.email == user.email).first()
         
         deduction.status = "processed"
+        if not deduction.pay_period:
+            deduction.pay_period = date.today().strftime("%Y-%m")
         deduction.processed_by_id = processor.id if processor else None
         deduction.processed_at = datetime.utcnow()
         
@@ -1348,6 +1443,7 @@ async def deposit_to_vault(
     
     try:
         vault = get_or_create_branch_vault(session, request.branch_id)
+        vault = session.query(BranchVault).filter(BranchVault.id == vault.id).with_for_update().first()
         staff = session.query(Staff).filter(Staff.email == user.email).first()
         
         amount = Decimal(str(request.amount))
@@ -1376,13 +1472,16 @@ async def deposit_to_vault(
         branch = session.query(Branch).filter(Branch.id == request.branch_id).first()
         
         # Post to General Ledger
-        post_float_allocation_to_gl(session, staff.first_name if staff else "Unknown", amount, "vault_deposit", branch.name if branch else "")
+        gl_error = post_float_allocation_to_gl(session, staff.first_name if staff else "Unknown", amount, "vault_deposit", branch.name if branch else "")
         
-        return {
+        result = {
             "message": f"Successfully deposited {get_org_currency(session)} {float(amount):,.2f} to {branch.name if branch else 'vault'}",
             "new_balance": float(new_balance),
             "transaction_id": txn.id
         }
+        if gl_error:
+            result["gl_warning"] = gl_error
+        return result
     finally:
         session.close()
         tenant_ctx.close()
@@ -1631,7 +1730,19 @@ async def create_shift_handover(
         if amount > (from_float.current_balance or Decimal("0")):
             raise HTTPException(status_code=400, detail="Insufficient balance for handover")
         
-        # Create handover record
+        from_float.current_balance = (from_float.current_balance or Decimal("0")) - amount
+        
+        reserve_txn = FloatTransaction(
+            teller_float_id=from_float.id,
+            transaction_type="handover_reserved",
+            amount=amount,
+            balance_after=from_float.current_balance,
+            description=f"Funds reserved for shift handover to {to_staff.first_name} {to_staff.last_name}",
+            performed_by_id=from_staff.id,
+            status="pending"
+        )
+        session.add(reserve_txn)
+        
         handover = ShiftHandover(
             from_staff_id=from_staff.id,
             to_staff_id=to_staff.id,
@@ -1678,6 +1789,22 @@ async def cancel_shift_handover(
             raise HTTPException(status_code=400, detail="This handover has already been processed")
         
         handover.status = "cancelled"
+        
+        from_float = session.query(TellerFloat).filter(TellerFloat.id == handover.from_float_id).with_for_update().first()
+        if from_float:
+            from_float.current_balance = (from_float.current_balance or Decimal("0")) + Decimal(str(handover.amount))
+            
+            return_txn = FloatTransaction(
+                teller_float_id=from_float.id,
+                transaction_type="handover_returned",
+                amount=Decimal(str(handover.amount)),
+                balance_after=from_float.current_balance,
+                description="Funds returned - handover cancelled",
+                performed_by_id=current_staff.id,
+                status="completed"
+            )
+            session.add(return_txn)
+        
         session.commit()
         
         return {"message": "Handover cancelled successfully"}
@@ -1711,17 +1838,14 @@ async def acknowledge_shift_handover(
             raise HTTPException(status_code=400, detail="This handover has already been processed")
         
         if request.action == "accept":
-            from_float = session.query(TellerFloat).filter(TellerFloat.id == handover.from_float_id).first()
+            from_float = session.query(TellerFloat).filter(TellerFloat.id == handover.from_float_id).with_for_update().first()
             if not from_float:
                 raise HTTPException(status_code=400, detail="Source float not found")
             
-            # Get or create receiver's float
             to_float = get_or_create_today_float(session, handover.to_staff_id, handover.branch_id)
             
             amount = Decimal(str(handover.amount))
             
-            # Deduct from sender
-            from_float.current_balance = (from_float.current_balance or Decimal("0")) - amount
             from_txn = FloatTransaction(
                 teller_float_id=from_float.id,
                 transaction_type="handover_out",
@@ -1762,6 +1886,21 @@ async def acknowledge_shift_handover(
             handover.status = "rejected"
             handover.notes = (handover.notes or "") + f" | Rejected: {request.notes or 'No reason'}"
             handover.to_acknowledged_at = datetime.utcnow()
+            
+            from_float = session.query(TellerFloat).filter(TellerFloat.id == handover.from_float_id).with_for_update().first()
+            if from_float:
+                from_float.current_balance = (from_float.current_balance or Decimal("0")) + Decimal(str(handover.amount))
+                
+                return_txn = FloatTransaction(
+                    teller_float_id=from_float.id,
+                    transaction_type="handover_returned",
+                    amount=Decimal(str(handover.amount)),
+                    balance_after=from_float.current_balance,
+                    description=f"Funds returned - handover rejected by {current_staff.first_name} {current_staff.last_name}",
+                    performed_by_id=current_staff.id,
+                    status="completed"
+                )
+                session.add(return_txn)
             
             session.commit()
             

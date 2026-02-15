@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, date
-from sqlalchemy import Column, String, Boolean, DateTime, Numeric, Text, Integer, ForeignKey, Date, Time, JSON
+from sqlalchemy import Column, String, Boolean, DateTime, Numeric, Text, Integer, ForeignKey, Date, Time, JSON, UniqueConstraint
 from sqlalchemy.orm import relationship, declarative_base
 
 TenantBase = declarative_base()
@@ -38,6 +38,7 @@ class Staff(TenantBase):
     password_hash = Column(String(255))
     is_active = Column(Boolean, default=True)
     is_locked = Column(Boolean, default=False)
+    approval_pin = Column(String(255))  # Hashed PIN for shortage approvals
     last_login = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow)
     
@@ -580,6 +581,10 @@ class TellerFloat(TenantBase):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    __table_args__ = (
+        UniqueConstraint('staff_id', 'date', name='uq_teller_float_staff_date'),
+    )
+    
     staff = relationship("Staff", foreign_keys=[staff_id])
     branch = relationship("Branch")
     reconciled_by = relationship("Staff", foreign_keys=[reconciled_by_id])
@@ -632,6 +637,7 @@ class SalaryDeduction(TenantBase):
     amount = Column(Numeric(15, 2), nullable=False)
     reason = Column(String(255), nullable=False)
     deduction_date = Column(Date, nullable=False)
+    pay_period = Column(String(20))  # e.g., "2026-02" - auto-set from deduction_date
     status = Column(String(50), default="pending")  # pending, processed, cancelled
     approved_by_id = Column(String, ForeignKey("staff.id"))
     processed_by_id = Column(String, ForeignKey("staff.id"))
