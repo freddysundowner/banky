@@ -526,7 +526,6 @@ async def reopen_float(
 ):
     """Reopen a closed/reconciled teller float to allow further transactions"""
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_permission(membership, "float_management:write", db)
     session = tenant_ctx.create_session()
     
     try:
@@ -538,6 +537,12 @@ async def reopen_float(
             raise HTTPException(status_code=400, detail="Float is not closed - cannot reopen")
         
         reopener = session.query(Staff).filter(Staff.email == user.email).first()
+        is_own_float = reopener and teller_float.staff_id == reopener.id
+        
+        if is_own_float and teller_float.status == "pending_approval":
+            pass
+        else:
+            require_permission(membership, "float_management:write", db)
         
         # Cancel any pending shortage records when reverting from pending_approval
         if teller_float.status == "pending_approval":
