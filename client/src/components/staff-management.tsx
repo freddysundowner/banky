@@ -45,7 +45,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { getErrorMessage } from "@/lib/error-utils";
-import { Users, Plus, Pencil, Trash2, Mail, Phone, Lock, Unlock, KeyRound, UserX, UserCheck, MoreHorizontal, ArrowLeft, Building2, User, IdCard, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, Plus, Pencil, Trash2, Mail, Phone, Lock, Unlock, KeyRound, UserX, UserCheck, MoreHorizontal, ArrowLeft, Building2, User, IdCard, Search, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -96,6 +97,8 @@ interface EditStaffPageProps {
 function EditStaffPage({ organizationId, staffData, onBack }: EditStaffPageProps) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const [approvalPin, setApprovalPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
 
   const userBranchId = (user as any)?.branchId;
   const userRole = (user as any)?.role;
@@ -154,9 +157,38 @@ function EditStaffPage({ organizationId, staffData, onBack }: EditStaffPageProps
     },
   });
 
+  const setPinMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", `/api/organizations/${organizationId}/staff/${staffData.id}/set-approval-pin`, { pin: approvalPin });
+    },
+    onSuccess: () => {
+      setApprovalPin("");
+      setConfirmPin("");
+      toast({ title: "Approval PIN set successfully" });
+    },
+    onError: (error: unknown) => {
+      toast({ title: "Failed to set approval PIN", description: getErrorMessage(error), variant: "destructive" });
+    },
+  });
+
+  const handleSetPin = () => {
+    if (approvalPin.length < 4 || approvalPin.length > 6 || !/^\d+$/.test(approvalPin)) {
+      toast({ title: "PIN must be 4-6 digits", variant: "destructive" });
+      return;
+    }
+    if (approvalPin !== confirmPin) {
+      toast({ title: "PINs do not match", variant: "destructive" });
+      return;
+    }
+    setPinMutation.mutate();
+  };
+
   const handleSubmit = (data: StaffUpdateData) => {
     updateMutation.mutate(data);
   };
+
+  const selectedRole = form.watch("role");
+  const showPinSection = ["manager", "admin", "supervisor", "owner"].includes(selectedRole || "");
 
   return (
     <div className="space-y-6">
@@ -392,6 +424,61 @@ function EditStaffPage({ organizationId, staffData, onBack }: EditStaffPageProps
           </div>
         </form>
       </Form>
+
+      {showPinSection && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5 text-primary" />
+              <CardTitle>Approval PIN</CardTitle>
+            </div>
+            <CardDescription>
+              Set a 4-6 digit PIN for this staff member to approve float shortages and other sensitive operations at the teller station.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="approval-pin">New PIN</Label>
+                <Input
+                  id="approval-pin"
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="Enter 4-6 digit PIN"
+                  value={approvalPin}
+                  onChange={(e) => setApprovalPin(e.target.value.replace(/\D/g, ""))}
+                  data-testid="input-approval-pin"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-pin">Confirm PIN</Label>
+                <Input
+                  id="confirm-pin"
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="Re-enter PIN"
+                  value={confirmPin}
+                  onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))}
+                  data-testid="input-confirm-approval-pin"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                onClick={handleSetPin}
+                disabled={!approvalPin || !confirmPin || setPinMutation.isPending}
+                data-testid="button-set-approval-pin"
+              >
+                {setPinMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}
+                Set Approval PIN
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

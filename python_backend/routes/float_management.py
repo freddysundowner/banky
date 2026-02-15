@@ -111,6 +111,9 @@ class ShiftHandoverRequest(BaseModel):
     amount: float
     notes: Optional[str] = None
 
+class SetApprovalPinRequest(BaseModel):
+    pin: str
+
 class ShiftHandoverAcknowledgeRequest(BaseModel):
     action: str  # accept, reject
     notes: Optional[str] = None
@@ -1203,12 +1206,13 @@ async def approve_shortage(
 @router.post("/organizations/{org_id}/staff/set-approval-pin")
 async def set_approval_pin(
     org_id: str,
+    request: SetApprovalPinRequest,
     user = Depends(get_current_user),
     db: Session = Depends(get_db),
-    pin: str = None
 ):
     """Set or update the current user's approval PIN"""
     import bcrypt
+    pin = request.pin
     
     if not pin or len(pin) < 4 or len(pin) > 6 or not pin.isdigit():
         raise HTTPException(status_code=400, detail="PIN must be 4-6 digits")
@@ -1229,9 +1233,6 @@ async def set_approval_pin(
     finally:
         session.close()
         tenant_ctx.close()
-
-class SetApprovalPinRequest(BaseModel):
-    pin: str
 
 @router.post("/organizations/{org_id}/staff/{staff_id}/set-approval-pin")
 async def set_staff_approval_pin(

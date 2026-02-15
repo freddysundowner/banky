@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, Save, User, Key } from "lucide-react";
+import { Loader2, Save, User, Key, KeyRound } from "lucide-react";
 import { getErrorMessage } from "@/lib/error-utils";
 
 interface StaffProfile {
@@ -29,6 +29,7 @@ export default function MyAccountPage({ organizationId }: MyAccountPageProps) {
   const { toast } = useToast();
   const [profileData, setProfileData] = useState({ first_name: '', last_name: '', phone: '' });
   const [passwordData, setPasswordData] = useState({ current_password: '', new_password: '', confirm_password: '' });
+  const [pinData, setPinData] = useState({ new_pin: '', confirm_pin: '' });
   const [profileChanged, setProfileChanged] = useState(false);
 
   const { data: myProfile, isLoading } = useQuery<StaffProfile>({
@@ -82,6 +83,19 @@ export default function MyAccountPage({ organizationId }: MyAccountPageProps) {
     updateProfileMutation.mutate(profileData);
   };
 
+  const resetPinMutation = useMutation({
+    mutationFn: async (data: { pin: string }) => {
+      return apiRequest("POST", `/api/organizations/${organizationId}/staff/set-approval-pin`, data);
+    },
+    onSuccess: () => {
+      setPinData({ new_pin: '', confirm_pin: '' });
+      toast({ title: "Approval PIN updated successfully" });
+    },
+    onError: (error: unknown) => {
+      toast({ title: "Failed to update PIN", description: getErrorMessage(error), variant: "destructive" });
+    }
+  });
+
   const handleChangePassword = () => {
     if (passwordData.new_password !== passwordData.confirm_password) {
       toast({ title: "Passwords don't match", variant: "destructive" });
@@ -95,6 +109,18 @@ export default function MyAccountPage({ organizationId }: MyAccountPageProps) {
       current_password: passwordData.current_password,
       new_password: passwordData.new_password
     });
+  };
+
+  const handleResetPin = () => {
+    if (pinData.new_pin.length < 4 || pinData.new_pin.length > 6 || !/^\d+$/.test(pinData.new_pin)) {
+      toast({ title: "PIN must be 4-6 digits", variant: "destructive" });
+      return;
+    }
+    if (pinData.new_pin !== pinData.confirm_pin) {
+      toast({ title: "PINs do not match", variant: "destructive" });
+      return;
+    }
+    resetPinMutation.mutate({ pin: pinData.new_pin });
   };
 
   if (isLoading) {
@@ -229,6 +255,56 @@ export default function MyAccountPage({ organizationId }: MyAccountPageProps) {
           </div>
         </CardContent>
       </Card>
+
+      {["manager", "admin", "supervisor", "owner"].includes(myProfile.role) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <KeyRound className="h-5 w-5" />
+              Approval PIN
+            </CardTitle>
+            <CardDescription>Set or reset your approval PIN used for authorizing float shortages and other sensitive operations</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>New PIN</Label>
+                <Input 
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="Enter 4-6 digit PIN"
+                  value={pinData.new_pin}
+                  onChange={(e) => setPinData(prev => ({ ...prev, new_pin: e.target.value.replace(/\D/g, "") }))}
+                  data-testid="input-my-approval-pin"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Confirm PIN</Label>
+                <Input 
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="Re-enter PIN"
+                  value={pinData.confirm_pin}
+                  onChange={(e) => setPinData(prev => ({ ...prev, confirm_pin: e.target.value.replace(/\D/g, "") }))}
+                  data-testid="input-my-confirm-approval-pin"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button 
+                onClick={handleResetPin} 
+                disabled={!pinData.new_pin || !pinData.confirm_pin || resetPinMutation.isPending}
+                data-testid="button-reset-approval-pin"
+              >
+                {resetPinMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}
+                Set Approval PIN
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
