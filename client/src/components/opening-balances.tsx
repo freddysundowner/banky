@@ -274,7 +274,7 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
                 <TableHead className="text-right">Actual Balance</TableHead>
                 <TableHead className="text-right">Adjustment Needed</TableHead>
                 <TableHead className="text-right">Your Entry</TableHead>
-                <TableHead className="text-center">Action</TableHead>
+                <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -309,6 +309,8 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
                     const hasEntry = entry && entry.source !== "none";
                     const hasSuggestion = acct.suggested_balance !== null;
                     const gapExists = acct.gap !== null && Math.abs(acct.gap) > 0.01;
+                    const isAuto = hasEntry && entry.source === "suggested";
+                    const isManual = hasEntry && entry.source === "manual";
                     rows.push(
                       <TableRow key={acct.account_code} data-testid={`account-row-${acct.account_code}`}>
                         <TableCell>
@@ -334,77 +336,82 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
                           ) : hasSuggestion ? (
                             <Badge variant="outline" className="text-xs">None</Badge>
                           ) : (
-                            <span className="text-xs text-muted-foreground italic">Enter from records</span>
+                            <span className="text-xs text-muted-foreground italic">-</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right min-w-[200px]">
                           {alreadyPosted ? (
                             <span className="text-muted-foreground">-</span>
-                          ) : hasEntry ? (
-                            <div className="flex items-center justify-end gap-2">
-                              {entry.source === "manual" ? (
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  className="w-36 text-right font-mono"
-                                  value={entry.amount}
-                                  onChange={(e) => updateEntry(acct.account_code, e.target.value, "manual")}
-                                  data-testid={`input-amount-${acct.account_code}`}
-                                />
-                              ) : (
-                                <span className="font-mono font-medium">
-                                  {formatCurrency(parseFloat(entry.amount) || 0)}
-                                </span>
-                              )}
-                              <Badge variant={entry.source === "suggested" ? "secondary" : "outline"} className="text-xs whitespace-nowrap">
-                                {entry.source === "suggested" ? "Suggested" : "Manual"}
-                              </Badge>
-                            </div>
                           ) : (
-                            <span className="text-muted-foreground text-sm">Not set</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {!alreadyPosted && (
-                            <div className="flex items-center justify-center gap-1">
-                              {hasSuggestion && gapExists && (!hasEntry || entry.source !== "suggested") && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
+                            <div className="space-y-2">
+                              {hasSuggestion && gapExists && (
+                                <div
+                                  className={`flex items-center justify-between gap-2 p-2 rounded-md border cursor-pointer transition-colors ${
+                                    isAuto
+                                      ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
+                                      : "border-muted hover:border-blue-300"
+                                  }`}
                                   onClick={() => updateEntry(acct.account_code, String(acct.gap!), "suggested")}
-                                  title="Apply the system-calculated adjustment amount"
-                                  data-testid={`button-use-suggested-${acct.account_code}`}
+                                  data-testid={`option-auto-${acct.account_code}`}
                                 >
-                                  <Wand2 className="h-3.5 w-3.5 mr-1" />
-                                  Apply Adjustment
-                                </Button>
+                                  <div className="flex items-center gap-2">
+                                    <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${
+                                      isAuto ? "border-blue-500" : "border-muted-foreground/40"
+                                    }`}>
+                                      {isAuto && <div className="w-2 h-2 rounded-full bg-blue-500" />}
+                                    </div>
+                                    <span className="text-xs font-medium">Auto</span>
+                                  </div>
+                                  <span className="font-mono text-sm font-medium">
+                                    {formatCurrency(acct.gap!)}
+                                  </span>
+                                </div>
                               )}
-                              {(!hasEntry || entry.source !== "manual") && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => updateEntry(acct.account_code, hasEntry ? entry.amount : "", "manual")}
-                                  title="Enter your own amount"
-                                  data-testid={`button-manual-${acct.account_code}`}
-                                >
-                                  <Pencil className="h-3.5 w-3.5 mr-1" />
-                                  Enter Manually
-                                </Button>
-                              )}
+                              <div
+                                className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-colors ${
+                                  isManual
+                                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
+                                    : "border-muted hover:border-blue-300"
+                                }`}
+                                onClick={() => {
+                                  if (!isManual) updateEntry(acct.account_code, "", "manual");
+                                }}
+                                data-testid={`option-manual-${acct.account_code}`}
+                              >
+                                <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                                  isManual ? "border-blue-500" : "border-muted-foreground/40"
+                                }`}>
+                                  {isManual && <div className="w-2 h-2 rounded-full bg-blue-500" />}
+                                </div>
+                                <span className="text-xs font-medium flex-shrink-0">Manual</span>
+                                {isManual ? (
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    className="h-7 w-28 text-right font-mono text-sm ml-auto"
+                                    value={entry.amount}
+                                    onChange={(e) => updateEntry(acct.account_code, e.target.value, "manual")}
+                                    onClick={(e) => e.stopPropagation()}
+                                    autoFocus
+                                    data-testid={`input-amount-${acct.account_code}`}
+                                  />
+                                ) : (
+                                  <span className="text-xs text-muted-foreground ml-auto">Enter amount</span>
+                                )}
+                              </div>
                               {hasEntry && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
+                                <button
+                                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                                   onClick={() => clearEntry(acct.account_code)}
-                                  title="Clear this entry"
                                   data-testid={`button-clear-${acct.account_code}`}
                                 >
-                                  <RotateCcw className="h-3.5 w-3.5" />
-                                </Button>
+                                  Clear
+                                </button>
                               )}
                             </div>
                           )}
                         </TableCell>
+                        <TableCell />
                       </TableRow>
                     );
                   });
