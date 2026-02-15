@@ -1,53 +1,30 @@
 import stripe
 import os
-import httpx
 
 
-async def get_stripe_credentials():
-    hostname = os.environ.get("REPLIT_CONNECTORS_HOSTNAME", "")
-    repl_identity = os.environ.get("REPL_IDENTITY", "")
-    web_renewal = os.environ.get("WEB_REPL_RENEWAL", "")
-    
-    if repl_identity:
-        token = f"repl {repl_identity}"
-    elif web_renewal:
-        token = f"depl {web_renewal}"
-    else:
-        raise Exception("Stripe credentials not available - no Replit token found")
-    
-    is_production = os.environ.get("REPLIT_DEPLOYMENT") == "1"
-    target_env = "production" if is_production else "development"
-    
-    url = f"https://{hostname}/api/v2/connection?include_secrets=true&connector_names=stripe&environment={target_env}"
-    
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        resp = await client.get(url, headers={
-            "Accept": "application/json",
-            "X_REPLIT_TOKEN": token
-        })
-        data = resp.json()
-    
-    items = data.get("items", [])
-    if not items:
-        raise Exception("Stripe connection not found")
-    
-    settings = items[0].get("settings", {})
-    secret_key = settings.get("secret", "")
-    publishable_key = settings.get("publishable", "")
-    
+def get_stripe_credentials_from_db(db):
+    from models.master import PlatformSettings
+    settings = {s.setting_key: s.setting_value for s in db.query(PlatformSettings).filter(
+        PlatformSettings.setting_key.in_(["stripe_secret_key", "stripe_publishable_key"])
+    ).all()}
+
+    secret_key = settings.get("stripe_secret_key", "")
+    publishable_key = settings.get("stripe_publishable_key", "")
+
     if not secret_key:
-        raise Exception("Stripe secret key not found in connection")
-    
+        raise Exception("Stripe secret key not configured. Set it in Admin Panel > Settings > Payments.")
+
     return {"secret_key": secret_key, "publishable_key": publishable_key}
 
 
-async def get_stripe_client():
-    creds = await get_stripe_credentials()
+def get_stripe_client(db):
+    creds = get_stripe_credentials_from_db(db)
     stripe.api_key = creds["secret_key"]
     return stripe
 
 
 async def create_checkout_session(
+    db,
     amount_cents: int,
     currency: str,
     plan_name: str,
@@ -55,8 +32,8 @@ async def create_checkout_session(
     cancel_url: str,
     metadata: dict = None
 ):
-    s = await get_stripe_client()
-    
+    s = get_stripe_client(db)
+
     session = s.checkout.Session.create(
         payment_method_types=["card"],
         line_items=[{
@@ -74,10 +51,10 @@ async def create_checkout_session(
         cancel_url=cancel_url,
         metadata=metadata or {}
     )
-    
+
     return session
 
 
-async def retrieve_session(session_id: str):
-    s = await get_stripe_client()
+async def retrieve_session(db, session_id: str):
+    s = get_stripe_client(db)
     return s.checkout.Session.retrieve(session_id)

@@ -245,7 +245,7 @@ async def check_payment_status_endpoint(organization_id: str, payment_id: str, a
     if payment.status == "awaiting_payment" and payment.stripe_session_id:
         try:
             from services.stripe_service import retrieve_session
-            session = await retrieve_session(payment.stripe_session_id)
+            session = await retrieve_session(db, payment.stripe_session_id)
             if session.payment_status == "paid":
                 receipt = session.payment_intent if hasattr(session, 'payment_intent') else session.id
                 activate_subscription(db, payment, str(receipt))
@@ -336,6 +336,7 @@ async def initiate_stripe_payment(organization_id: str, data: dict, auth=Depends
     try:
         from services.stripe_service import create_checkout_session
         session = await create_checkout_session(
+            db=db,
             amount_cents=amount_cents,
             currency="usd",
             plan_name=plan.name,
@@ -499,10 +500,10 @@ async def initiate_paystack_payment(organization_id: str, data: dict, auth=Depen
 
 
 @router.get("/{organization_id}/subscription/stripe-key")
-async def get_stripe_publishable_key(organization_id: str, auth=Depends(get_current_user)):
+async def get_stripe_publishable_key(organization_id: str, auth=Depends(get_current_user), db: Session = Depends(get_db)):
     try:
-        from services.stripe_service import get_stripe_credentials
-        creds = await get_stripe_credentials()
+        from services.stripe_service import get_stripe_credentials_from_db
+        creds = get_stripe_credentials_from_db(db)
         return {"publishable_key": creds["publishable_key"]}
     except Exception as e:
         print(f"[Stripe] Error fetching publishable key: {e}")
