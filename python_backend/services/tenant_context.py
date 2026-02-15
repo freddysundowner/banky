@@ -4,7 +4,7 @@ from models.master import Organization, OrganizationMember
 from models.tenant import TenantBase
 
 _migrated_tenants = set()
-_migration_version = 16  # Increment to force re-migration
+_migration_version = 17  # Increment to force re-migration
 
 def _get_db_migration_version(engine):
     """Check the migration version stored in the tenant database"""
@@ -60,10 +60,12 @@ def add_column_if_not_exists(conn, table_name, col_name, col_type):
     """))
     if not result.fetchone():
         try:
+            conn.execute(text("SAVEPOINT add_col_sp"))
             conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS {col_name} {col_type}"))
+            conn.execute(text("RELEASE SAVEPOINT add_col_sp"))
         except Exception as e:
             try:
-                conn.execute(text("ROLLBACK TO SAVEPOINT migration_sp"))
+                conn.execute(text("ROLLBACK TO SAVEPOINT add_col_sp"))
             except:
                 pass
             print(f"Migration warning: Could not add {table_name}.{col_name}: {e}")
@@ -76,14 +78,30 @@ def run_tenant_schema_migration(engine):
             WHERE table_name = 'staff' AND column_name = 'employee_number'
         """))
         if result.fetchone():
-            conn.execute(text("ALTER TABLE staff RENAME COLUMN employee_number TO staff_number"))
+            try:
+                conn.execute(text("SAVEPOINT rename_sp1"))
+                conn.execute(text("ALTER TABLE staff RENAME COLUMN employee_number TO staff_number"))
+                conn.execute(text("RELEASE SAVEPOINT rename_sp1"))
+            except Exception:
+                try:
+                    conn.execute(text("ROLLBACK TO SAVEPOINT rename_sp1"))
+                except:
+                    pass
         
         result = conn.execute(text("""
             SELECT column_name FROM information_schema.columns 
             WHERE table_name = 'branches' AND column_name = 'location'
         """))
         if result.fetchone():
-            conn.execute(text("ALTER TABLE branches RENAME COLUMN location TO address"))
+            try:
+                conn.execute(text("SAVEPOINT rename_sp2"))
+                conn.execute(text("ALTER TABLE branches RENAME COLUMN location TO address"))
+                conn.execute(text("RELEASE SAVEPOINT rename_sp2"))
+            except Exception:
+                try:
+                    conn.execute(text("ROLLBACK TO SAVEPOINT rename_sp2"))
+                except:
+                    pass
         
         # Staff table columns
         staff_columns = [
@@ -547,6 +565,7 @@ def run_tenant_schema_migration(engine):
         
         # Add unique constraint on teller_floats (staff_id, date) for existing databases
         try:
+            conn.execute(text("SAVEPOINT uq_constraint_sp"))
             conn.execute(text("""
                 DO $$ BEGIN
                     IF NOT EXISTS (
@@ -556,8 +575,12 @@ def run_tenant_schema_migration(engine):
                     END IF;
                 END $$;
             """))
+            conn.execute(text("RELEASE SAVEPOINT uq_constraint_sp"))
         except Exception:
-            pass
+            try:
+                conn.execute(text("ROLLBACK TO SAVEPOINT uq_constraint_sp"))
+            except:
+                pass
         
         # Shift handover columns
         handover_columns = [
@@ -799,20 +822,19 @@ def run_tenant_schema_migration(engine):
             conn.execute(text("CREATE INDEX idx_jl_entry ON journal_lines(journal_entry_id)"))
         
         # Add emailed_at column to payslips if missing
-        if table_exists(conn, "payslips"):
-            result = conn.execute(text("""
-                SELECT column_name FROM information_schema.columns 
-                WHERE table_name = 'payslips' AND column_name = 'emailed_at'
-            """))
-            if not result.fetchone():
-                conn.execute(text("ALTER TABLE payslips ADD COLUMN emailed_at TIMESTAMP"))
+        add_column_if_not_exists(conn, "payslips", "emailed_at", "TIMESTAMP")
         
         # Make issued_by_id nullable in disciplinary_records (for owners without staff record)
         if table_exists(conn, "disciplinary_records"):
             try:
+                conn.execute(text("SAVEPOINT disc_sp"))
                 conn.execute(text("ALTER TABLE disciplinary_records ALTER COLUMN issued_by_id DROP NOT NULL"))
+                conn.execute(text("RELEASE SAVEPOINT disc_sp"))
             except Exception:
-                pass  # Already nullable or column doesn't exist
+                try:
+                    conn.execute(text("ROLLBACK TO SAVEPOINT disc_sp"))
+                except:
+                    pass
         
         if table_exists(conn, "branches"):
             result = conn.execute(text("SELECT COUNT(*) FROM branches"))
@@ -848,9 +870,14 @@ def run_tenant_schema_migration(engine):
         add_column_if_not_exists(conn, "expenses", "created_by_admin_name", "VARCHAR(200)")
         if table_exists(conn, "expenses"):
             try:
+                conn.execute(text("SAVEPOINT exp_sp"))
                 conn.execute(text("ALTER TABLE expenses ALTER COLUMN created_by_id DROP NOT NULL"))
+                conn.execute(text("RELEASE SAVEPOINT exp_sp"))
             except Exception:
-                pass
+                try:
+                    conn.execute(text("ROLLBACK TO SAVEPOINT exp_sp"))
+                except:
+                    pass
         
         conn.commit()
     
