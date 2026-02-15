@@ -233,11 +233,33 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
       if (gateway === "mpesa") {
         toast({ title: "Check Your Phone", description: data.message || "Enter your M-Pesa PIN to confirm" });
       } else if (gateway === "stripe" && data.checkout_url) {
-        window.open(data.checkout_url, "_blank");
-        toast({ title: "Stripe Checkout Opened", description: "Complete your payment in the new tab." });
-      } else if (gateway === "paystack" && data.authorization_url) {
-        window.open(data.authorization_url, "_blank");
-        toast({ title: "Payment Page Opened", description: "Complete your payment in the new tab." });
+        window.location.href = data.checkout_url;
+      } else if (gateway === "paystack" && data.access_code && data.public_key) {
+        try {
+          const PaystackPop = (window as any).PaystackPop;
+          if (PaystackPop) {
+            const popup = new PaystackPop();
+            popup.resumeTransaction(data.access_code, {
+              onSuccess: () => {
+                setPaymentStatus("success");
+                queryClient.invalidateQueries({ queryKey: ["plans", organizationId] });
+              },
+              onCancel: () => {
+                setPaymentStatus("failed");
+              },
+              onError: () => {
+                setPaymentStatus("failed");
+                toast({ title: "Payment Error", description: "Something went wrong. Please try again.", variant: "destructive" });
+              }
+            });
+          } else {
+            window.location.href = data.authorization_url;
+          }
+        } catch {
+          if (data.authorization_url) {
+            window.location.href = data.authorization_url;
+          }
+        }
       }
     } catch {
       setPaymentStatus("failed");

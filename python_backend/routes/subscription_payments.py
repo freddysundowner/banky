@@ -474,11 +474,19 @@ async def initiate_paystack_payment(organization_id: str, data: dict, auth=Depen
 
         print(f"[Subscription] Paystack transaction initialized for org {org.name}, plan {plan.name}, amount {currency} {amount}")
 
+        from services.paystack_service import get_paystack_public_key
+        public_key = get_paystack_public_key(db)
+
         return {
             "success": True,
             "authorization_url": result["authorization_url"],
+            "access_code": result.get("access_code", ""),
+            "public_key": public_key,
             "payment_id": payment.id,
-            "reference": reference
+            "reference": reference,
+            "email": email,
+            "amount": amount_minor,
+            "currency": currency
         }
 
     except HTTPException:
