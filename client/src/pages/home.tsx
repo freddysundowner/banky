@@ -269,7 +269,13 @@ export default function Home() {
   const { platform_name: platformName } = useBranding();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedOrg, setSelectedOrg] = useState<OrganizationMembership["organization"] | null>(null);
-  const [activeSection, setActiveSection] = useState<NavSection>("dashboard");
+  const [activeSection, setActiveSection] = useState<NavSection>(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("payment") === "success" || params.get("payment") === "cancelled") {
+      return "upgrade";
+    }
+    return "dashboard";
+  });
   const queryClient = useQueryClient();
   const prevSectionRef = useRef(activeSection);
 

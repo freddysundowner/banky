@@ -449,6 +449,57 @@ async def stripe_subscription_webhook(request: Request):
         db.close()
 
 
+@app.get("/api/stripe-return", tags=["Payments"])
+async def stripe_return(request: Request, status: str = "", payment_id: str = ""):
+    from models.database import SessionLocal
+    from models.master import SubscriptionPayment
+    from routes.subscription_payments import activate_subscription
+
+    message = "Payment cancelled."
+    if status == "success" and payment_id:
+        db = SessionLocal()
+        try:
+            payment = db.query(SubscriptionPayment).filter(SubscriptionPayment.id == payment_id).first()
+            if payment and payment.status == "awaiting_payment" and payment.stripe_session_id:
+                try:
+                    from services.stripe_service import retrieve_session
+                    session = await retrieve_session(db, payment.stripe_session_id)
+                    if session.payment_status == "paid":
+                        receipt = session.payment_intent if hasattr(session, 'payment_intent') else session.id
+                        activate_subscription(db, payment, str(receipt))
+                        message = "Payment successful! Your subscription has been activated."
+                        print(f"[Stripe Return] Activated subscription for payment {payment_id}")
+                    else:
+                        message = "Payment is being processed. Your subscription will be activated shortly."
+                except Exception as e:
+                    print(f"[Stripe Return] Error verifying: {e}")
+                    message = "Payment received. Your subscription will be activated shortly."
+            elif payment and payment.status == "completed":
+                message = "Payment successful! Your subscription is already active."
+            else:
+                message = "Payment received. Processing..."
+        finally:
+            db.close()
+
+    from fastapi.responses import HTMLResponse
+    html = f"""<!DOCTYPE html>
+<html><head><title>BANKY - Payment</title>
+<style>body{{font-family:Inter,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f8fafc;}}
+.card{{background:white;border-radius:12px;padding:40px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);max-width:400px;}}
+.icon{{font-size:48px;margin-bottom:16px;}}
+h2{{color:#1e293b;margin:0 0 8px;}}
+p{{color:#64748b;margin:0 0 24px;}}
+a{{display:inline-block;background:#2563eb;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:500;}}
+a:hover{{background:#1d4ed8;}}</style></head>
+<body><div class="card">
+<div class="icon">{"✅" if "successful" in message or "active" in message else "⏳" if "processing" in message.lower() or "shortly" in message.lower() else "❌"}</div>
+<h2>{"Payment Successful" if "successful" in message or "active" in message else "Processing" if "processing" in message.lower() or "shortly" in message.lower() else "Payment Cancelled"}</h2>
+<p>{message}</p>
+<a href="/">Return to BANKY</a>
+</div></body></html>"""
+    return HTMLResponse(content=html)
+
+
 @app.post("/api/webhooks/paystack-subscription", tags=["Webhooks"])
 async def paystack_subscription_webhook(request: Request):
     from models.database import SessionLocal

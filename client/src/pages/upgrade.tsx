@@ -221,7 +221,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ plan_id: selectedPlan.id, billing_period: billingPeriod, origin_url: window.location.origin })
+          body: JSON.stringify({ plan_id: selectedPlan.id, billing_period: billingPeriod })
         });
       } else {
         if (!email) { setPaymentStatus("idle"); payInProgress.current = false; return; }
