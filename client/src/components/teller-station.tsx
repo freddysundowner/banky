@@ -2198,32 +2198,35 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
             </div>
           </div>
 
-          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-col gap-3 pt-4 border-t">
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => {
+                setShowShortageApproval(false);
+                setApproverStaffNumber("");
+                setApproverPin("");
+                setApprovalNotes("");
+              }}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => approveShortagueMutation.mutate()}
+                disabled={!approverStaffNumber || !approverPin || approveShortagueMutation.isPending}
+              >
+                {approveShortagueMutation.isPending ? "Approving..." : "Approve & Close Day"}
+              </Button>
+            </div>
             <Button 
-              variant="destructive" 
+              variant="ghost" 
+              size="sm"
               onClick={() => revertReconciliationMutation.mutate()}
               disabled={revertReconciliationMutation.isPending}
-              className="sm:mr-auto"
+              className="text-destructive hover:text-destructive w-full"
               data-testid="button-reject-redo-count"
             >
-              <RefreshCw className="h-4 w-4 mr-1" />
-              {revertReconciliationMutation.isPending ? "Reverting..." : "Reject & Redo Count"}
+              <RefreshCw className="h-3 w-3 mr-1" />
+              {revertReconciliationMutation.isPending ? "Reverting..." : "Reject & Ask Teller to Recount"}
             </Button>
-            <Button variant="outline" onClick={() => {
-              setShowShortageApproval(false);
-              setApproverStaffNumber("");
-              setApproverPin("");
-              setApprovalNotes("");
-            }}>
-              Cancel
-            </Button>
-            <Button
-              onClick={() => approveShortagueMutation.mutate()}
-              disabled={!approverStaffNumber || !approverPin || approveShortagueMutation.isPending}
-            >
-              {approveShortagueMutation.isPending ? "Approving..." : "Approve & Close Day"}
-            </Button>
-          </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
 
