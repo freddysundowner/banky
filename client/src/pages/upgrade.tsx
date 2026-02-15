@@ -105,6 +105,22 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
   const [contactForm, setContactForm] = useState({ name: "", email: "", organization: "", message: "" });
   const [isSending, setIsSending] = useState(false);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentResult = params.get("payment");
+    const paymentId = params.get("payment_id");
+    if (paymentResult === "success" && paymentId) {
+      setCurrentPaymentId(paymentId);
+      setPaymentStatus("waiting");
+      setShowPaymentDialog(true);
+      setGateway("stripe");
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (paymentResult === "cancelled") {
+      toast({ title: "Payment Cancelled", description: "Your payment was cancelled.", variant: "destructive" });
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
   const { data: plans, isLoading } = useQuery<Plan[]>({
     queryKey: ["plans", organizationId],
     queryFn: async () => {
@@ -205,7 +221,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ plan_id: selectedPlan.id, billing_period: billingPeriod })
+          body: JSON.stringify({ plan_id: selectedPlan.id, billing_period: billingPeriod, origin_url: window.location.origin })
         });
       } else {
         if (!email) { setPaymentStatus("idle"); payInProgress.current = false; return; }

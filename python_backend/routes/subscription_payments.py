@@ -327,11 +327,13 @@ async def initiate_stripe_payment(organization_id: str, data: dict, auth=Depends
     db.commit()
     db.refresh(payment)
 
-    public_domain = os.environ.get("REPLIT_DEV_DOMAIN", "") or os.environ.get("REPL_SLUG", "")
-    if public_domain and not public_domain.startswith("http"):
-        base_url = f"https://{public_domain}"
-    else:
-        base_url = public_domain or "http://localhost:5000"
+    origin = data.get("origin_url", "")
+    if not origin:
+        public_domain = os.environ.get("REPLIT_DEV_DOMAIN", "") or os.environ.get("REPL_SLUG", "")
+        if public_domain and not public_domain.startswith("http"):
+            origin = f"https://{public_domain}"
+        else:
+            origin = public_domain or "http://localhost:5000"
 
     try:
         from services.stripe_service import create_checkout_session
@@ -340,8 +342,8 @@ async def initiate_stripe_payment(organization_id: str, data: dict, auth=Depends
             amount_cents=amount_cents,
             currency="usd",
             plan_name=plan.name,
-            success_url=f"{base_url}/dashboard?payment=success&payment_id={payment.id}",
-            cancel_url=f"{base_url}/upgrade?payment=cancelled",
+            success_url=f"{origin}/upgrade?payment=success&payment_id={payment.id}",
+            cancel_url=f"{origin}/upgrade?payment=cancelled",
             metadata={
                 "payment_id": payment.id,
                 "organization_id": organization_id,
