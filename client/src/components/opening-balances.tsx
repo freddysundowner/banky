@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -85,6 +85,26 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
   const { data: preview, isLoading, isError, error, refetch } = useQuery<PreviewData>({
     queryKey: [`/api/organizations/${organizationId}/accounting/opening-balances/preview`],
   });
+
+  useEffect(() => {
+    if (preview?.accounts && !preview.already_posted) {
+      const autoEntries: Record<string, AccountEntry> = {};
+      for (const acct of preview.accounts) {
+        if (acct.gap !== null && Math.abs(acct.gap) > 0.01) {
+          autoEntries[acct.account_code] = {
+            amount: String(acct.gap),
+            source: "suggested",
+          };
+        }
+      }
+      if (Object.keys(autoEntries).length > 0) {
+        setEntries(prev => {
+          if (Object.keys(prev).length > 0) return prev;
+          return autoEntries;
+        });
+      }
+    }
+  }, [preview]);
 
   const updateEntry = (code: string, amount: string, source: "suggested" | "manual") => {
     setEntries(prev => ({
