@@ -236,8 +236,17 @@ export default function Transactions({ organizationId }: TransactionsProps) {
     queryKey: ["/api/organizations", organizationId, "settings"],
     enabled: !!organizationId,
   });
+  const { data: myOrgs } = useQuery<any[]>({
+    queryKey: ["/api/organizations/my"],
+    queryFn: async () => {
+      const res = await fetch("/api/organizations/my", { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
   const getSetting = (key: string) => settingsData?.find(s => s.setting_key === key)?.setting_value || "";
-  const orgName = getSetting("organization_name") || "Organization";
+  const actualOrgName = myOrgs?.find((m: any) => m.organizationId === organizationId || m.organization?.id === organizationId)?.organization?.name || "";
+  const orgName = getSetting("organization_name") || actualOrgName || "Organization";
   const orgPhone = getSetting("organization_phone");
   const orgEmail = getSetting("organization_email") || getSetting("email_from_address");
   const orgAddress = getSetting("organization_address");
