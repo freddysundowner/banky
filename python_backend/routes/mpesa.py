@@ -496,8 +496,8 @@ def get_mpesa_access_token(tenant_session) -> str:
     
     credentials = base64.b64encode(f"{consumer_key}:{consumer_secret}".encode()).decode()
     
-    sandbox = get_org_setting(tenant_session, "mpesa_sandbox", True)
-    base_url = "https://sandbox.safaricom.co.ke" if sandbox else "https://api.safaricom.co.ke"
+    environment = get_org_setting(tenant_session, "mpesa_environment", "sandbox")
+    base_url = "https://api.safaricom.co.ke" if environment == "production" else "https://sandbox.safaricom.co.ke"
     
     with httpx.Client(timeout=30.0) as client:
         response = client.get(
@@ -512,15 +512,15 @@ def initiate_b2c_disbursement(tenant_session, phone: str, amount: Decimal, remar
     """Initiate M-Pesa B2C payment for loan disbursement via Daraja"""
     access_token = get_mpesa_access_token(tenant_session)
 
-    shortcode = get_org_setting(tenant_session, "mpesa_shortcode", "")
+    shortcode = get_org_setting(tenant_session, "mpesa_paybill", "") or get_org_setting(tenant_session, "mpesa_shortcode", "")
     initiator_name = get_org_setting(tenant_session, "mpesa_initiator_name", "")
     security_credential = get_org_setting(tenant_session, "mpesa_security_credential", "")
 
     if not shortcode:
-        return {"success": False, "error": "M-Pesa shortcode not configured"}
+        return {"success": False, "error": "M-Pesa shortcode/paybill not configured"}
 
-    sandbox = get_org_setting(tenant_session, "mpesa_sandbox", True)
-    base_url = "https://sandbox.safaricom.co.ke" if sandbox else "https://api.safaricom.co.ke"
+    environment = get_org_setting(tenant_session, "mpesa_environment", "sandbox")
+    base_url = "https://api.safaricom.co.ke" if environment == "production" else "https://sandbox.safaricom.co.ke"
 
     payload = {
         "InitiatorName": initiator_name or "testapi",
@@ -551,7 +551,7 @@ def initiate_stk_push(tenant_session, phone: str, amount: Decimal, account_refer
     """Initiate M-Pesa STK Push"""
     access_token = get_mpesa_access_token(tenant_session)
     
-    shortcode = get_org_setting(tenant_session, "mpesa_shortcode", "")
+    shortcode = get_org_setting(tenant_session, "mpesa_paybill", "") or get_org_setting(tenant_session, "mpesa_shortcode", "")
     passkey = get_org_setting(tenant_session, "mpesa_passkey", "")
     callback_url = get_org_setting(tenant_session, "mpesa_stk_callback_url", "")
     
@@ -561,13 +561,12 @@ def initiate_stk_push(tenant_session, phone: str, amount: Decimal, account_refer
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     password = base64.b64encode(f"{shortcode}{passkey}{timestamp}".encode()).decode()
     
-    # Format phone number (remove + and ensure it starts with 254)
     phone = phone.replace("+", "").replace(" ", "")
     if phone.startswith("0"):
         phone = "254" + phone[1:]
     
-    sandbox = get_org_setting(tenant_session, "mpesa_sandbox", True)
-    base_url = "https://sandbox.safaricom.co.ke" if sandbox else "https://api.safaricom.co.ke"
+    environment = get_org_setting(tenant_session, "mpesa_environment", "sandbox")
+    base_url = "https://api.safaricom.co.ke" if environment == "production" else "https://sandbox.safaricom.co.ke"
     
     payload = {
         "BusinessShortCode": shortcode,
