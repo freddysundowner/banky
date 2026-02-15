@@ -716,6 +716,9 @@ async def check_stk_push_status(org_id: str, request: Request, user=Depends(get_
         new_balance = current_balance + amount
         code = generate_txn_code()
         
+        mpesa_receipt = result.get("MpesaReceiptNumber") or result.get("mpesaReceiptNumber") or ""
+        ref = mpesa_receipt if mpesa_receipt else code
+        
         transaction = Transaction(
             transaction_number=code,
             member_id=member.id,
@@ -725,8 +728,8 @@ async def check_stk_push_status(org_id: str, request: Request, user=Depends(get_
             balance_before=current_balance,
             balance_after=new_balance,
             payment_method="mpesa",
-            reference=checkout_request_id,
-            description=f"M-Pesa STK Push deposit (verified via query)"
+            reference=ref,
+            description=f"M-Pesa STK Push deposit"
         )
         
         if account_type == "savings":
@@ -743,7 +746,7 @@ async def check_stk_push_status(org_id: str, request: Request, user=Depends(get_
         pending_record.raw_payload = result
         pending_record.first_name = "STK Push (Query Verified)"
         
-        post_mpesa_deposit_to_gl(tenant_session, member, amount, checkout_request_id)
+        post_mpesa_deposit_to_gl(tenant_session, member, amount, ref)
         
         tenant_session.commit()
         print(f"[STK Query] Credited {amount} to member {member.member_number} ({account_type})")
