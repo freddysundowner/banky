@@ -90,7 +90,7 @@ def seed_default_plans():
                 "max_branches": 1,
                 "sms_credits_monthly": 50,
                 "sort_order": 1,
-                "features": {"enabled": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "audit_logs"]}
+                "features": {"enabled": ["core_banking", "members", "savings", "shares", "loans", "audit_logs", "mpesa_integration"]}
             },
             {
                 "name": "Growth",
@@ -103,7 +103,7 @@ def seed_default_plans():
                 "max_branches": 5,
                 "sms_credits_monthly": 200,
                 "sort_order": 2,
-                "features": {"enabled": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "analytics", "sms_notifications", "expenses", "leave_management", "multiple_branches", "audit_logs", "accounting"]}
+                "features": {"enabled": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "analytics", "sms_notifications", "expenses", "leave_management", "multiple_branches", "audit_logs", "accounting", "mpesa_integration"]}
             },
             {
                 "name": "Professional",
@@ -128,7 +128,7 @@ def seed_default_plans():
                 "max_staff": None,
                 "max_branches": None,
                 "sort_order": 1,
-                "features": {"enabled": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "audit_logs"]}
+                "features": {"enabled": ["core_banking", "members", "savings", "shares", "loans", "audit_logs", "mpesa_integration"]}
             },
             {
                 "name": "Standard",
@@ -140,7 +140,7 @@ def seed_default_plans():
                 "max_staff": None,
                 "max_branches": None,
                 "sort_order": 2,
-                "features": {"enabled": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "analytics", "sms_notifications", "expenses", "leave_management", "multiple_branches", "audit_logs", "accounting"]}
+                "features": {"enabled": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "analytics", "sms_notifications", "expenses", "leave_management", "multiple_branches", "audit_logs", "accounting", "mpesa_integration"]}
             },
             {
                 "name": "Premium",
@@ -152,7 +152,7 @@ def seed_default_plans():
                 "max_staff": None,
                 "max_branches": None,
                 "sort_order": 3,
-                "features": {"enabled": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "fixed_deposits", "dividends", "analytics", "analytics_export", "sms_notifications", "bulk_sms", "expenses", "leave_management", "payroll", "accounting", "multiple_branches", "api_access", "white_label", "custom_reports", "mpesa_integration", "audit_logs"]}
+                "features": {"enabled": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "fixed_deposits", "dividends", "analytics", "analytics_export", "sms_notifications", "bulk_sms", "expenses", "leave_management", "payroll", "accounting", "multiple_branches", "mpesa_integration", "bank_integration", "audit_logs"]}
             },
             {
                 "name": "Enterprise",
@@ -527,7 +527,9 @@ async def get_public_plans():
             "teller_station": "Teller Station",
             "float_management": "Float Management",
             "analytics": "Analytics Dashboard",
+            "analytics_export": "Analytics Export",
             "sms_notifications": "SMS Notifications",
+            "bulk_sms": "Bulk SMS",
             "expenses": "Expense Tracking",
             "leave_management": "Leave Management",
             "multiple_branches": "Multiple Branches",
@@ -540,6 +542,8 @@ async def get_public_plans():
             "api_access": "API Access",
             "custom_reports": "Custom Reports",
             "white_label": "White Label",
+            "mpesa_integration": "M-Pesa Integration",
+            "bank_integration": "Bank Integration",
             "priority_support": "Priority Support"
         }
         
