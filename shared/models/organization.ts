@@ -23,6 +23,7 @@ export const organizations = pgTable("organizations", {
   email: varchar("email", { length: 255 }),
   phone: varchar("phone", { length: 50 }),
   address: text("address"),
+  staffEmailDomain: varchar("staff_email_domain", { length: 255 }),
   
   // Deployment mode
   deploymentMode: varchar("deployment_mode", { length: 20 }).default("saas").notNull(),
