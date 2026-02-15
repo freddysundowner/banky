@@ -558,7 +558,8 @@ def _calculate_opening_balance_gaps(tenant_session, svc: AccountingService):
     }
     
     all_accounts = tenant_session.query(ChartOfAccounts).filter(
-        ChartOfAccounts.is_active == True
+        ChartOfAccounts.is_active == True,
+        ChartOfAccounts.account_type.in_(["asset", "liability", "equity"])
     ).order_by(ChartOfAccounts.code).all()
     
     accounts = []
