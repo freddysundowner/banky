@@ -188,18 +188,34 @@ export default function Transactions({ organizationId }: TransactionsProps) {
 
   const createMutation = useMutation({
     mutationFn: async (data: TransactionFormData) => {
-      return apiRequest("POST", `/api/organizations/${organizationId}/transactions`, {
-        ...data,
-        amount: parseFloat(data.amount),
+      const res = await fetch(`/api/organizations/${organizationId}/transactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ ...data, amount: parseFloat(data.amount) }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: "Failed to record transaction" }));
+        throw new Error(err.detail || "Failed to record transaction");
+      }
+      return res.json();
     },
-    onSuccess: () => {
-      setCurrentPage(1);
-      queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "members"] });
-      setShowDialog(false);
-      form.reset();
-      toast({ title: "Transaction recorded successfully" });
+    onSuccess: (result: any) => {
+      if (result?.stk_push) {
+        setShowDialog(false);
+        form.reset();
+        toast({
+          title: "STK Push Sent",
+          description: result.message || "Please check the member's phone to complete the M-Pesa payment. The deposit will be credited automatically once confirmed.",
+        });
+      } else {
+        setCurrentPage(1);
+        queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "transactions"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "members"] });
+        setShowDialog(false);
+        form.reset();
+        toast({ title: "Transaction recorded successfully" });
+      }
     },
     onError: (error: Error) => {
       toast({ title: error.message || "Failed to record transaction", variant: "destructive" });

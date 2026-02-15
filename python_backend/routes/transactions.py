@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
@@ -229,7 +229,7 @@ async def list_transactions(org_id: str, member_id: str = None, account_type: st
         tenant_ctx.close()
 
 @router.post("/{org_id}/transactions")
-async def create_transaction(org_id: str, data: TransactionCreate, user=Depends(get_current_user), db: Session = Depends(get_db)):
+async def create_transaction(org_id: str, data: TransactionCreate, request: Request, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
     require_permission(membership, "transactions:write", db)
     tenant_session = tenant_ctx.create_session()
@@ -243,6 +243,53 @@ async def create_transaction(org_id: str, data: TransactionCreate, user=Depends(
         
         if data.transaction_type not in ["deposit", "withdrawal", "transfer", "fee", "interest"]:
             raise HTTPException(status_code=400, detail="Invalid transaction type")
+        
+        if data.payment_method == "mpesa" and data.transaction_type == "deposit":
+            from services.feature_flags import check_org_feature
+            has_mpesa = check_org_feature(org_id, "mpesa_integration", db)
+            if not has_mpesa:
+                raise HTTPException(status_code=403, detail="M-Pesa integration is not available in your subscription plan")
+            
+            mpesa_enabled = get_org_setting(tenant_session, "mpesa_enabled", False)
+            if not mpesa_enabled:
+                raise HTTPException(status_code=400, detail="M-Pesa is not enabled. Go to Settings > M-Pesa to enable it.")
+            
+            phone = member.phone
+            if not phone:
+                raise HTTPException(status_code=400, detail="Member does not have a phone number for M-Pesa")
+            
+            gateway = get_org_setting(tenant_session, "mpesa_gateway", "daraja")
+            account_ref = member.member_number or f"DEP-{member.id[:8]}"
+            description = f"Deposit to {data.account_type} for {member.first_name} {member.last_name}"
+            request_base = str(request.base_url).rstrip("/")
+            
+            try:
+                if gateway == "sunpay":
+                    from services.sunpay import stk_push as sunpay_stk_push
+                    callback_url = f"{request_base}/api/webhooks/sunpay/{org_id}"
+                    result = await sunpay_stk_push(tenant_session, phone, data.amount, account_ref, callback_url)
+                    success = isinstance(result, dict) and (result.get("success") or result.get("ResponseCode") == "0")
+                    message = result.get("message", "STK Push sent") if isinstance(result, dict) else "STK Push sent"
+                else:
+                    from routes.mpesa import initiate_stk_push
+                    result = initiate_stk_push(tenant_session, phone, data.amount, account_ref, description, org_id=org_id, base_url_override=request_base)
+                    success = result.get("ResponseCode") == "0"
+                    message = "STK Push sent successfully. Please check member's phone to complete payment."
+                
+                if success:
+                    return {
+                        "stk_push": True,
+                        "success": True,
+                        "message": message,
+                        "checkout_request_id": result.get("CheckoutRequestID", ""),
+                    }
+                else:
+                    error_msg = result.get("ResponseDescription") or result.get("errorMessage") or result.get("message", "STK Push failed")
+                    raise HTTPException(status_code=400, detail=f"M-Pesa STK Push failed: {error_msg}")
+            except HTTPException:
+                raise
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"M-Pesa STK Push error: {str(e)}")
         
         if member.status == "suspended":
             raise HTTPException(status_code=400, detail="Member account is suspended")
