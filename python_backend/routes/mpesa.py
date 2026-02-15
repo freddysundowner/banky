@@ -737,7 +737,7 @@ async def mpesa_stk_callback(org_id: str, request: Request, db: Session = Depend
             if phone:
                 phone_search = phone[-9:] if len(phone) > 9 else phone
                 member = tenant_session.query(Member).filter(
-                    Member.phone_number.like(f"%{phone_search}")
+                    Member.phone.like(f"%{phone_search}")
                 ).first()
 
             mpesa_payment = MpesaPayment(
