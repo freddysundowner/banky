@@ -61,6 +61,7 @@ DEFAULT_ACCOUNTS = [
     
     {"code": "5030", "name": "Bad Debt Write-offs", "type": "expense", "is_system": True},
     {"code": "5040", "name": "Penalty Waiver Expense", "type": "expense", "is_system": True},
+    {"code": "5050", "name": "Cash Shortage Expense", "type": "expense", "is_system": True},
 ]
 
 class AccountingService:

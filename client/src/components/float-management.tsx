@@ -61,7 +61,8 @@ import {
   ArrowRightLeft,
   FileText,
   Download,
-  Vault
+  Vault,
+  Shield
 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCurrency } from "@/hooks/use-currency";
@@ -299,6 +300,58 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
       return res.json();
     },
     enabled: !!selectedStaffForAllocation,
+  });
+
+  const { data: heldShortages, isLoading: heldLoading } = useQuery<{
+    shortages: Array<{
+      id: string;
+      staff_id: string;
+      staff_name: string;
+      branch_name: string;
+      date: string;
+      shortage_amount: number;
+      status: string;
+      notes: string;
+      created_at: string;
+    }>;
+    total_held: number;
+  }>({
+    queryKey: ["/api/organizations", organizationId, "shortages", "held"],
+    queryFn: async () => {
+      const res = await fetch(`/api/organizations/${organizationId}/shortages/held`, { credentials: "include" });
+      if (!res.ok) return { shortages: [], total_held: 0 };
+      return res.json();
+    },
+  });
+
+  const [resolveShortageId, setResolveShortageId] = useState<string | null>(null);
+  const [resolveAction, setResolveAction] = useState<string>("deduct");
+  const [resolvePin, setResolvePin] = useState("");
+  const [resolveStaffNumber, setResolveStaffNumber] = useState("");
+  const [resolveNotes, setResolveNotes] = useState("");
+
+  const resolveHeldMutation = useMutation({
+    mutationFn: async ({ shortageId, action, pin, staffNumber, notes }: { shortageId: string; action: string; pin: string; staffNumber: string; notes: string }) => {
+      return apiRequest("POST", `/api/organizations/${organizationId}/shortages/${shortageId}/approve`, {
+        action,
+        pin,
+        staff_number: staffNumber,
+        notes,
+      });
+    },
+    onSuccess: (_, variables) => {
+      const label = variables.action === "deduct" ? "Salary deduction" : "Expense write-off";
+      toast({ title: `${label} applied successfully` });
+      queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "shortages", "held"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "floats"] });
+      setResolveShortageId(null);
+      setResolvePin("");
+      setResolveStaffNumber("");
+      setResolveNotes("");
+    },
+    onError: (error: any) => {
+      toast({ title: getErrorMessage(error), variant: "destructive" });
+    },
   });
 
   const allocateForm = useForm<AllocateFormData>({
@@ -704,7 +757,7 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="floats" className="flex items-center gap-2">
             <Wallet className="h-4 w-4" />
             Today's Floats
@@ -719,6 +772,15 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
             {(pendingReturnCount + pendingRequestCount) > 0 && (
               <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
                 {pendingReturnCount + pendingRequestCount}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="held" className="flex items-center gap-2 relative" data-testid="tab-held-shortages">
+            <Shield className="h-4 w-4" />
+            Held
+            {(heldShortages?.shortages?.length ?? 0) > 0 && (
+              <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                {heldShortages?.shortages?.length}
               </Badge>
             )}
           </TabsTrigger>
@@ -1135,6 +1197,142 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        <TabsContent value="held" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Held Shortages
+              </CardTitle>
+              <CardDescription>
+                Shortages placed on hold awaiting manager resolution. You can deduct from salary or write off as expense.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {heldLoading ? (
+                <div className="space-y-3">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              ) : heldShortages?.shortages?.length ? (
+                <div className="space-y-4">
+                  {heldShortages.total_held > 0 && (
+                    <Alert>
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Total Held</AlertTitle>
+                      <AlertDescription>
+                        {symbol} {heldShortages.total_held.toLocaleString()} across {heldShortages.shortages.length} shortage(s)
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Teller</TableHead>
+                        <TableHead>Branch</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Notes</TableHead>
+                        <TableHead>Action</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {heldShortages.shortages.map((s) => (
+                        <TableRow key={s.id} data-testid={`row-held-shortage-${s.id}`}>
+                          <TableCell>{new Date(s.date).toLocaleDateString()}</TableCell>
+                          <TableCell className="font-medium">{s.staff_name}</TableCell>
+                          <TableCell>{s.branch_name || "-"}</TableCell>
+                          <TableCell className="font-bold text-destructive">{symbol} {s.shortage_amount.toLocaleString()}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate">{s.notes || "-"}</TableCell>
+                          <TableCell>
+                            <Dialog open={resolveShortageId === s.id} onOpenChange={(open) => { if (!open) setResolveShortageId(null); }}>
+                              <DialogTrigger asChild>
+                                <Button size="sm" onClick={() => { setResolveShortageId(s.id); setResolveAction("deduct"); setResolvePin(""); setResolveStaffNumber(""); setResolveNotes(""); }} data-testid={`button-resolve-${s.id}`}>
+                                  Resolve
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Resolve Held Shortage</DialogTitle>
+                                  <DialogDescription>
+                                    {s.staff_name} - {symbol} {s.shortage_amount.toLocaleString()} on {new Date(s.date).toLocaleDateString()}
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4 pt-2">
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium">Resolution</label>
+                                    <Select value={resolveAction} onValueChange={setResolveAction}>
+                                      <SelectTrigger data-testid="select-resolve-action">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="deduct">Deduct from Salary</SelectItem>
+                                        <SelectItem value="expense">Write Off as Expense</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium">Your Staff Number</label>
+                                    <Input
+                                      value={resolveStaffNumber}
+                                      onChange={(e) => setResolveStaffNumber(e.target.value)}
+                                      placeholder="Enter your staff number"
+                                      data-testid="input-resolve-staff-number"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium">Approval PIN</label>
+                                    <Input
+                                      type="password"
+                                      value={resolvePin}
+                                      onChange={(e) => setResolvePin(e.target.value)}
+                                      placeholder="Enter your PIN"
+                                      data-testid="input-resolve-pin"
+                                    />
+                                  </div>
+                                  <div className="space-y-2">
+                                    <label className="text-sm font-medium">Notes (optional)</label>
+                                    <Textarea
+                                      value={resolveNotes}
+                                      onChange={(e) => setResolveNotes(e.target.value)}
+                                      placeholder="Add notes about the resolution"
+                                      data-testid="input-resolve-notes"
+                                    />
+                                  </div>
+                                  <Button
+                                    className="w-full"
+                                    disabled={!resolvePin || resolveHeldMutation.isPending}
+                                    onClick={() => resolveHeldMutation.mutate({
+                                      shortageId: s.id,
+                                      action: resolveAction,
+                                      pin: resolvePin,
+                                      staffNumber: resolveStaffNumber,
+                                      notes: resolveNotes,
+                                    })}
+                                    data-testid="button-confirm-resolve"
+                                  >
+                                    {resolveHeldMutation.isPending ? "Processing..." : resolveAction === "deduct" ? "Deduct from Salary" : "Write Off as Expense"}
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No held shortages</p>
+                  <p className="text-sm mt-1">All shortages have been resolved</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="handovers" className="space-y-4">

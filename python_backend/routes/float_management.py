@@ -1003,6 +1003,55 @@ async def reject_replenishment_request(
         session.close()
         tenant_ctx.close()
 
+@router.get("/organizations/{org_id}/shortages/held")
+async def get_all_held_shortages(
+    org_id: str,
+    user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get all held shortages across all staff (for managers)"""
+    tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
+    require_permission(membership, "float_management:read", db)
+    session = tenant_ctx.create_session()
+    
+    try:
+        shortages = session.query(ShortageRecord).filter(
+            ShortageRecord.status == "held",
+            ShortageRecord.parent_shortage_id.is_(None)
+        ).order_by(ShortageRecord.date.desc()).all()
+        
+        result = []
+        for s in shortages:
+            staff = session.query(Staff).filter(Staff.id == s.staff_id).first()
+            approved_by = session.query(Staff).filter(Staff.id == s.approved_by_id).first() if s.approved_by_id else None
+            teller_float = session.query(TellerFloat).filter(TellerFloat.id == s.teller_float_id).first()
+            branch = None
+            if teller_float:
+                branch = session.query(Branch).filter(Branch.id == teller_float.branch_id).first()
+            result.append({
+                "id": s.id,
+                "teller_float_id": s.teller_float_id,
+                "staff_id": s.staff_id,
+                "staff_name": f"{staff.first_name} {staff.last_name}" if staff else None,
+                "branch_name": branch.name if branch else None,
+                "date": s.date.isoformat(),
+                "shortage_amount": float(s.shortage_amount),
+                "status": s.status,
+                "resolution": s.resolution,
+                "approved_by": f"{approved_by.first_name} {approved_by.last_name}" if approved_by else None,
+                "approved_at": s.approved_at.isoformat() if s.approved_at else None,
+                "notes": s.notes,
+                "created_at": s.created_at.isoformat()
+            })
+        
+        return {
+            "shortages": result,
+            "total_held": sum(s["shortage_amount"] for s in result)
+        }
+    finally:
+        session.close()
+        tenant_ctx.close()
+
 @router.get("/organizations/{org_id}/shortages/pending/{staff_id}")
 async def get_pending_shortages(
     org_id: str,
@@ -1223,6 +1272,24 @@ async def approve_shortage(
                 target.approved_at = datetime.utcnow()
                 target.notes = request.notes or "Written off as organizational expense"
                 action_parts.append(f"{d.amount:,.0f} written off as expense")
+                try:
+                    from accounting.service import AccountingService
+                    svc = AccountingService(session)
+                    svc.seed_default_accounts()
+                    teller_staff = session.query(Staff).filter(Staff.id == shortage.staff_id).first()
+                    teller_name = f"{teller_staff.first_name} {teller_staff.last_name}" if teller_staff else "Teller"
+                    svc.create_journal_entry(
+                        entry_date=date.today(),
+                        description=f"Cash shortage write-off - {teller_name} ({shortage.date.isoformat()})",
+                        source_type="shortage_expense",
+                        source_id=f"shortage_{target.id}",
+                        lines=[
+                            {"account_code": "5050", "debit": Decimal(str(d.amount)), "credit": Decimal("0"), "memo": f"Cash shortage - {teller_name}"},
+                            {"account_code": "1020", "debit": Decimal("0"), "credit": Decimal(str(d.amount)), "memo": f"Teller cash short - {teller_name}"}
+                        ]
+                    )
+                except Exception as e:
+                    print(f"[GL] Shortage expense posting failed: {e}")
             
             if is_split:
                 session.flush()

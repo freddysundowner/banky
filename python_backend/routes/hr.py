@@ -924,11 +924,14 @@ async def generate_payslips(org_id: str, pay_period: str, pay_date: str, user=De
                 continue
             
             from models.tenant import SalaryDeduction
-            shortage_deductions = tenant_session.query(func.sum(SalaryDeduction.amount)).filter(
+            pending_deductions = tenant_session.query(SalaryDeduction).filter(
                 SalaryDeduction.staff_id == config.staff_id,
-                SalaryDeduction.pay_period == pay_period,
                 SalaryDeduction.status == "pending"
-            ).scalar() or Decimal("0")
+            ).all()
+            shortage_deductions = sum(Decimal(str(d.amount)) for d in pending_deductions) if pending_deductions else Decimal("0")
+            for d in pending_deductions:
+                d.pay_period = pay_period
+                d.status = "processing"
             
             gross = Decimal(config.basic_salary) + Decimal(config.house_allowance) + Decimal(config.transport_allowance) + Decimal(config.other_allowances)
             total_ded = Decimal(config.nhif_deduction) + Decimal(config.nssf_deduction) + Decimal(config.paye_tax) + Decimal(config.other_deductions) + shortage_deductions
@@ -1757,6 +1760,15 @@ async def disburse_payroll(org_id: str, period_id: str, data: DisbursementReques
         
         period.status = "paid"
         period.paid_at = datetime.utcnow()
+        
+        from models.tenant import SalaryDeduction as SD
+        processing_deductions = tenant_session.query(SD).filter(
+            SD.pay_period == pay_period_str,
+            SD.status.in_(["pending", "processing"])
+        ).all()
+        for sd in processing_deductions:
+            sd.status = "processed"
+            sd.processed_at = datetime.utcnow()
         
         acct_service = AccountingService(tenant_session)
         acct_service.seed_default_accounts()
