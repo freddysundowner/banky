@@ -599,6 +599,172 @@ def initiate_stk_push(tenant_session, phone: str, amount: Decimal, account_refer
         )
         return response.json()
 
+
+def query_stk_push_status(tenant_session, checkout_request_id: str) -> dict:
+    """Query M-Pesa STK Push transaction status using Safaricom's Query API"""
+    access_token = get_mpesa_access_token(tenant_session)
+    
+    shortcode = get_org_setting(tenant_session, "mpesa_paybill", "") or get_org_setting(tenant_session, "mpesa_shortcode", "")
+    passkey = get_org_setting(tenant_session, "mpesa_passkey", "")
+    
+    if not shortcode or not passkey:
+        return {"error": "M-Pesa STK Push not configured"}
+    
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    password = base64.b64encode(f"{shortcode}{passkey}{timestamp}".encode()).decode()
+    
+    environment = get_org_setting(tenant_session, "mpesa_environment", "sandbox")
+    base_url = "https://api.safaricom.co.ke" if environment == "production" else "https://sandbox.safaricom.co.ke"
+    
+    payload = {
+        "BusinessShortCode": shortcode,
+        "Password": password,
+        "Timestamp": timestamp,
+        "CheckoutRequestID": checkout_request_id
+    }
+    
+    with httpx.Client(timeout=30.0) as client:
+        response = client.post(
+            f"{base_url}/mpesa/stkpushquery/v1/query",
+            json=payload,
+            headers={"Authorization": f"Bearer {access_token}"}
+        )
+        return response.json()
+
+
+@router.post("/organizations/{org_id}/mpesa/stk-query")
+async def check_stk_push_status(org_id: str, request: Request, user=Depends(get_current_user), db: Session = Depends(get_db)):
+    """Query STK Push status and auto-credit member account if payment succeeded"""
+    tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
+    tenant_session = tenant_ctx.create_session()
+    try:
+        data = await request.json()
+        checkout_request_id = data.get("checkout_request_id", "")
+        
+        if not checkout_request_id:
+            raise HTTPException(status_code=400, detail="Missing checkout_request_id")
+        
+        pending_record = tenant_session.query(MpesaPayment).filter(
+            MpesaPayment.bill_ref_number == checkout_request_id
+        ).first()
+        
+        if not pending_record:
+            raise HTTPException(status_code=404, detail="No STK Push record found for this checkout request")
+        
+        if pending_record.status == "credited":
+            return {"status": "already_credited", "message": "Payment already credited"}
+        
+        if pending_record.status in ("failed", "cancelled"):
+            return {"status": pending_record.status, "message": f"Payment {pending_record.status}"}
+        
+        settings = tenant_session.query(OrganizationSettings).first()
+        gateway = getattr(settings, "mpesa_gateway", "daraja") if settings else "daraja"
+        
+        if gateway == "sunpay":
+            return {"status": "pending", "message": "SunPay payments are confirmed via webhook"}
+        
+        result = query_stk_push_status(tenant_session, checkout_request_id)
+        print(f"[STK Query] Result for {checkout_request_id}: {result}")
+        
+        result_code = result.get("ResultCode")
+        
+        if result_code is None:
+            error = result.get("errorMessage", result.get("errorCode", "Unknown error"))
+            return {"status": "pending", "message": f"Query error: {error}"}
+        
+        result_code = str(result_code)
+        
+        if result_code == "1032":
+            pending_record.status = "cancelled"
+            pending_record.notes = (pending_record.notes or "") + " | Cancelled by user"
+            tenant_session.commit()
+            return {"status": "cancelled", "message": "Payment was cancelled by user"}
+        
+        if result_code == "1037":
+            pending_record.status = "failed"
+            pending_record.notes = (pending_record.notes or "") + " | Timed out"
+            tenant_session.commit()
+            return {"status": "timeout", "message": "Payment request timed out"}
+        
+        if result_code != "0":
+            pending_record.status = "failed"
+            pending_record.notes = (pending_record.notes or "") + f" | {result.get('ResultDesc', 'Failed')}"
+            tenant_session.commit()
+            return {"status": "failed", "message": result.get("ResultDesc", "Payment failed")}
+        
+        amount = pending_record.amount
+        member_id = pending_record.member_id
+        account_type_note = pending_record.notes or ""
+        account_type = "savings"
+        if "account_type:" in account_type_note:
+            account_type = account_type_note.split("account_type:")[1].split("|")[0].strip()
+        
+        if not member_id:
+            return {"status": "completed", "message": "Payment completed but no member linked"}
+        
+        member = tenant_session.query(Member).filter(Member.id == member_id).first()
+        if not member:
+            return {"status": "completed", "message": "Payment completed but member not found"}
+        
+        if account_type == "savings":
+            current_balance = member.savings_balance or Decimal("0")
+        elif account_type == "shares":
+            current_balance = member.shares_balance or Decimal("0")
+        else:
+            current_balance = member.savings_balance or Decimal("0")
+        
+        new_balance = current_balance + amount
+        code = generate_txn_code()
+        
+        transaction = Transaction(
+            transaction_number=code,
+            member_id=member.id,
+            transaction_type="deposit",
+            account_type=account_type,
+            amount=amount,
+            balance_before=current_balance,
+            balance_after=new_balance,
+            payment_method="mpesa",
+            reference=checkout_request_id,
+            description=f"M-Pesa STK Push deposit (verified via query)"
+        )
+        
+        if account_type == "savings":
+            member.savings_balance = new_balance
+        elif account_type == "shares":
+            member.shares_balance = new_balance
+        
+        tenant_session.add(transaction)
+        tenant_session.flush()
+        
+        pending_record.status = "credited"
+        pending_record.transaction_id = transaction.id
+        pending_record.credited_at = datetime.utcnow()
+        pending_record.raw_payload = result
+        pending_record.first_name = "STK Push (Query Verified)"
+        
+        post_mpesa_deposit_to_gl(tenant_session, member, amount, checkout_request_id)
+        
+        tenant_session.commit()
+        print(f"[STK Query] Credited {amount} to member {member.member_number} ({account_type})")
+        
+        return {
+            "status": "credited",
+            "message": f"Payment of {amount} credited to {account_type} account",
+            "transaction_number": code,
+            "new_balance": str(new_balance)
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[STK Query] Error: {e}")
+        tenant_session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        tenant_session.close()
+        tenant_ctx.close()
+
+
 @router.post("/organizations/{org_id}/mpesa/stk-push")
 async def trigger_stk_push(org_id: str, request: Request, user=Depends(get_current_user), db: Session = Depends(get_db)):
     """Trigger M-Pesa STK Push for payment"""
@@ -702,6 +868,23 @@ async def mpesa_stk_callback(org_id: str, request: Request, db: Session = Depend
 
         if result_code != 0:
             print(f"[STK Callback] Payment failed/cancelled: {result_desc}")
+            if checkout_request_id:
+                org = db.query(Organization).filter(Organization.id == org_id).first()
+                if org and org.connection_string:
+                    tc = TenantContext(org.connection_string, org_id)
+                    ts = tc.create_session()
+                    try:
+                        pr = ts.query(MpesaPayment).filter(
+                            MpesaPayment.bill_ref_number == checkout_request_id,
+                            MpesaPayment.status == "pending"
+                        ).first()
+                        if pr:
+                            pr.status = "cancelled" if result_code == 1032 else "failed"
+                            pr.notes = (pr.notes or "") + f" | Callback: {result_desc}"
+                            ts.commit()
+                    finally:
+                        ts.close()
+                        tc.close()
             return {"ResultCode": 0, "ResultDesc": "Accepted"}
 
         metadata = body.get("CallbackMetadata", {}).get("Item", [])
@@ -738,6 +921,14 @@ async def mpesa_stk_callback(org_id: str, request: Request, db: Session = Depend
                 print(f"[STK Callback] Duplicate receipt: {mpesa_receipt}")
                 return {"ResultCode": 0, "ResultDesc": "Accepted"}
 
+            pending_record = tenant_session.query(MpesaPayment).filter(
+                MpesaPayment.bill_ref_number == checkout_request_id,
+                MpesaPayment.status == "credited"
+            ).first()
+            if pending_record:
+                print(f"[STK Callback] Already credited via query for {checkout_request_id}")
+                return {"ResultCode": 0, "ResultDesc": "Accepted"}
+
             member = None
             if phone:
                 phone_search = phone[-9:] if len(phone) > 9 else phone
@@ -745,22 +936,52 @@ async def mpesa_stk_callback(org_id: str, request: Request, db: Session = Depend
                     Member.phone.like(f"%{phone_search}")
                 ).first()
 
-            mpesa_payment = MpesaPayment(
-                trans_id=mpesa_receipt,
-                trans_time=datetime.utcnow().strftime("%Y%m%d%H%M%S"),
-                amount=amount,
-                phone_number=phone or "",
-                bill_ref_number=checkout_request_id,
-                first_name="STK Push",
-                transaction_type="STK",
-                member_id=member.id if member else None,
-                status="credited" if member else "unmatched",
-                raw_payload=data
-            )
-            tenant_session.add(mpesa_payment)
+            pending_stk = tenant_session.query(MpesaPayment).filter(
+                MpesaPayment.bill_ref_number == checkout_request_id,
+                MpesaPayment.status == "pending"
+            ).first()
+
+            if pending_stk:
+                pending_stk.trans_id = mpesa_receipt
+                pending_stk.amount = amount
+                pending_stk.phone_number = phone or ""
+                pending_stk.first_name = "STK Push (Callback)"
+                pending_stk.raw_payload = data
+                mpesa_payment = pending_stk
+                member = tenant_session.query(Member).filter(Member.id == pending_stk.member_id).first() if pending_stk.member_id else None
+                account_type_note = pending_stk.notes or ""
+                account_type = "savings"
+                if "account_type:" in account_type_note:
+                    account_type = account_type_note.split("account_type:")[1].split("|")[0].strip()
+            else:
+                mpesa_payment = MpesaPayment(
+                    trans_id=mpesa_receipt,
+                    trans_time=datetime.utcnow().strftime("%Y%m%d%H%M%S"),
+                    amount=amount,
+                    phone_number=phone or "",
+                    bill_ref_number=checkout_request_id,
+                    first_name="STK Push",
+                    transaction_type="STK",
+                    member_id=member.id if member else None,
+                    status="credited" if member else "unmatched",
+                    raw_payload=data
+                )
+                tenant_session.add(mpesa_payment)
+                account_type = "savings"
+
+            if not member and phone:
+                phone_search = phone[-9:] if len(phone) > 9 else phone
+                member = tenant_session.query(Member).filter(
+                    Member.phone.like(f"%{phone_search}")
+                ).first()
 
             if member:
-                current_balance = member.savings_balance or Decimal("0")
+                if account_type == "savings":
+                    current_balance = member.savings_balance or Decimal("0")
+                elif account_type == "shares":
+                    current_balance = member.shares_balance or Decimal("0")
+                else:
+                    current_balance = member.savings_balance or Decimal("0")
                 new_balance = current_balance + amount
                 code = generate_txn_code()
 
@@ -768,7 +989,7 @@ async def mpesa_stk_callback(org_id: str, request: Request, db: Session = Depend
                     transaction_number=code,
                     member_id=member.id,
                     transaction_type="deposit",
-                    account_type="savings",
+                    account_type=account_type,
                     amount=amount,
                     balance_before=current_balance,
                     balance_after=new_balance,
@@ -776,18 +997,24 @@ async def mpesa_stk_callback(org_id: str, request: Request, db: Session = Depend
                     reference=mpesa_receipt,
                     description=f"M-Pesa STK Push deposit from {phone}"
                 )
-                member.savings_balance = new_balance
+                if account_type == "savings":
+                    member.savings_balance = new_balance
+                elif account_type == "shares":
+                    member.shares_balance = new_balance
                 tenant_session.add(transaction)
                 tenant_session.flush()
 
+                mpesa_payment.status = "credited"
+                mpesa_payment.member_id = member.id
                 mpesa_payment.transaction_id = transaction.id
                 mpesa_payment.credited_at = datetime.utcnow()
 
                 post_mpesa_deposit_to_gl(tenant_session, member, amount, mpesa_receipt)
 
-                print(f"[STK Callback] Credited {amount} to member {member.member_number}")
+                print(f"[STK Callback] Credited {amount} to member {member.member_number} ({account_type})")
             else:
-                mpesa_payment.notes = f"STK Push payment - no member matched for phone {phone}"
+                mpesa_payment.status = "unmatched"
+                mpesa_payment.notes = (mpesa_payment.notes or "") + f" | STK Push payment - no member matched for phone {phone}"
                 print(f"[STK Callback] Unmatched payment from {phone}")
 
             tenant_session.commit()

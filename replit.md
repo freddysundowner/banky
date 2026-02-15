@@ -9,134 +9,37 @@ I want iterative development. Ask before making major changes.
 ## System Architecture
 
 ### UI/UX Decisions
-The frontend is built with React 18 and TypeScript, utilizing Shadcn UI components styled with Tailwind CSS for a professional, responsive, and modern banking theme. Key design elements include a blue primary color, Inter font family, consistent spacing and typography, and full mobile responsiveness achieved through dynamic layouts, responsive padding, and mobile-first breakpoints. Dark mode is supported.
+The frontend uses React 18 and TypeScript with Shadcn UI components and Tailwind CSS for a modern, responsive banking theme. It features a blue primary color, Inter font, consistent spacing, and full mobile responsiveness with dark mode support.
 
 ### Technical Implementations
-- **Frontend**: React 18, TypeScript, TanStack Query, Wouter for routing.
+- **Frontend**: React 18, TypeScript, TanStack Query, Wouter.
 - **Backend**: Python FastAPI with SQLAlchemy ORM.
 - **Database**: PostgreSQL with Neon for database-per-tenant provisioning.
-- **Authentication**: 
-    - **Master Users (Owners/Admins)**: Stored in master database with session tokens using `master:token` cookie format.
-    - **Staff Users**: Fully tenant-isolated authentication. Staff records and sessions (StaffSession table) exist only in tenant databases. Cookie format: `tenant:org_id:token`. No master database involvement for staff authentication.
-    - AuthContext abstraction handles both authentication types uniformly.
-- **Performance Optimization**: 
-    - Database connection pooling with cached engines and session factories (pool_size=10, max_overflow=20).
-    - Session bundle endpoint (`/api/auth/session/{org_id}`) returns user + permissions + features in a single API call, reducing the waterfall of sequential requests.
-    - `useSession` hook pre-populates React Query cache for permissions and features, eliminating redundant API calls on navigation.
-    - Request timing middleware logs API response times for monitoring.
-- **Multi-Tenancy**: Each organization's data is isolated in its own Neon PostgreSQL database, managed through a master database for organization metadata only.
-- **Core Features**: Includes member, staff, and branch management, configurable loan products, and a comprehensive dashboard.
-- **Advanced Loan Features**: Supports loan applications, disbursement (M-Pesa, bank, cash), repayment tracking, restructuring, and a guarantor system.
+- **Authentication**: Supports both master users (stored in master DB) and tenant-isolated staff users (stored in tenant DBs).
+- **Performance Optimization**: Includes database connection pooling, a session bundle API endpoint to reduce requests, and React Query caching for permissions and features.
+- **Multi-Tenancy**: Each organization has its own isolated Neon PostgreSQL database.
+- **Core Features**: Member, staff, and branch management; configurable loan products; comprehensive dashboard.
+- **Advanced Loan Features**: Loan applications, various disbursement methods, repayment tracking, restructuring, and guarantor system.
 - **Financial Management**:
-    - **Quick Transactions**: Simplified transaction recording (deposits/withdrawals) for Starter plan. Uses the existing Transactions component (`client/src/components/transactions.tsx`) without requiring teller floats. The backend (`python_backend/routes/transactions.py`) conditionally skips float checks when org doesn't have `teller_station` feature.
-    - **Teller Station**: Dedicated interface for deposits, withdrawals, and loan repayments, with cash float tracking and end-of-day reconciliation. Available on Growth+ plans.
-    - **Float Management**: Supervisor interface for allocating floats, managing vault cash, approving replenishment requests, and shift handovers.
-    - **Fixed Deposits Module**: Manages fixed deposit products, member deposits, interest calculation, maturity alerts, and early withdrawals. Funds for fixed deposits must originate from savings accounts.
-    - **Dividends Module**: Manages dividend declaration, automatic calculation based on share balance, approval workflow, and distribution options (savings or shares).
-    - **Transactions**: Supports deposits, withdrawals, and transfers across savings, shares, and fixed deposits.
-    - **Defaults & Collections**: Automatic overdue detection, aging analysis, and collection tracking.
-    - **Accounting Module**: A full double-entry bookkeeping system with a default Chart of Accounts, journal entries, General Ledger, and auto-posting for all financial operations. It generates Trial Balance, Income Statement, and Balance Sheet reports.
-    - **Payroll Accounting Integration**: Payroll disbursement auto-posts journal entries: Debit 5100 (Salaries & Wages) for gross salary, Credit 2400 (PAYE Tax Payable), 2410 (NHIF Payable), 2420 (NSSF Payable), 2440 (Salary Advance Recovery), and 1000/1010 (Cash/Bank) for net salary paid. All statutory deductions are tracked as liabilities until remitted.
-- **M-Pesa Payment Gateways**: Dual gateway support:
-    - **Direct Daraja API**: Organizations connect directly to Safaricom's API with their own credentials (Consumer Key, Secret, Passkey)
-    - **SunPay (Managed Gateway)**: Simplified M-Pesa integration via SunPay.co.ke - only requires an API key. Supports STK Push, C2B (Paybill), B2C (disbursements), and transaction reversals. Pricing: 1.5% per transaction.
-    - Gateway selection per org in Settings > M-Pesa tab
-    - Webhook endpoint: `/api/webhooks/sunpay/{org_id}` for automatic payment processing
-    - Service module: `python_backend/services/sunpay.py`, Routes: `python_backend/routes/sunpay.py`
-    - **M-Pesa Loan Repayment**: STK Push with loan_id auto-applies payment to the loan via webhook. Paybill deposits go to savings. Shared loan service: `python_backend/services/mpesa_loan_service.py`
-    - **M-Pesa Loan Disbursement**: When disbursing via M-Pesa, B2C is called (SunPay or Daraja based on gateway setting). The unified STK Push endpoint (`/api/organizations/{org_id}/mpesa/stk-push`) auto-routes to the correct gateway.
-- **Subscription Payments (M-Pesa)**: Organizations pay for subscription plans via M-Pesa STK Push.
-    - Uses platform-level SunPay API key (configured in Admin Panel > Settings as `subscription_sunpay_api_key`)
-    - Flow: Select plan → Enter phone → STK Push → Webhook confirms → Subscription activated
-    - Model: `SubscriptionPayment` in master database tracks all payment attempts
-    - Routes: `python_backend/routes/subscription_payments.py` (initiate payment, check status, history)
-    - Webhook: `/api/webhooks/subscription-payment` processes SunPay callbacks, uses `SUB:{payment_id}` external ref format
-    - Frontend: Upgrade page (`client/src/pages/upgrade.tsx`) with multi-gateway payment selector (M-Pesa/Stripe/Paystack), dynamic currency display, and real-time polling
-    - Sidebar shows subscription status (trial/active/expired) with link to upgrade page
-    - Trial banner has "Upgrade Now" button that navigates to plans page
-- **Multi-Gateway Subscription Payments**: Three payment gateways for subscription billing:
-    - **M-Pesa (KES)**: STK Push via SunPay, webhook at `/api/webhooks/subscription-payment`
-    - **Stripe (USD)**: Checkout Session via Replit connection API, webhook at `/api/webhooks/stripe-subscription`, service: `python_backend/services/stripe_service.py`
-    - **Paystack (configurable currency)**: Transaction initialization, webhook at `/api/webhooks/paystack-subscription`, service: `python_backend/services/paystack_service.py`
-    - **USD-Only Pricing**: All plan prices are stored in USD (`monthly_price`/`annual_price`). Auto-conversion to local currencies (KES, NGN, GHS, ZAR) via exchange rate service (`python_backend/services/exchange_rate.py`). Rates are fetched from exchangerate-api.com and cached for 6 hours with fallback rates.
-    - Upgrade page shows converted prices dynamically per gateway: KES for M-Pesa, USD for Stripe, configurable for Paystack (card=USD, mobile_money=local currency)
-    - Exchange rates API endpoint: `/api/exchange-rates`
-    - SubscriptionPayment model tracks gateway, currency, stripe_session_id, paystack_reference
-    - Check-payment endpoint polls all 3 gateways as fallback when webhooks don't arrive
-    - Admin panel: Paystack API key and currency in Settings, USD-only price fields in Plans management
-- **M-Pesa Deposits via STK Push**: When M-Pesa is selected as payment method for deposits in Transactions page:
-    - Triggers STK Push to member's phone (auto-routes to Daraja or SunPay based on `mpesa_gateway` setting)
-    - Callback auto-credits member's account when payment confirmed
-    - Deposit is NOT recorded until M-Pesa confirms payment (prevents fake deposits)
-    - Requires: `mpesa_integration` feature flag, M-Pesa enabled in settings, member has phone number
-- **Operations**: SMS notifications with templates, analytics dashboards for performance insights, HR management (staff lock/unlock, performance reviews), audit logs for complete traceability, and configurable organization settings.
-- **Automation**: Includes a cron-based script for processing matured fixed deposits with options for regular maturity or auto-rollover.
-- **Auto Loan Deduction**: Cron job (`python_backend/cron_auto_loan_deduction.py`) auto-deducts loan repayments from member savings on instalment due dates. Enabled per-org via `auto_loan_deduction` setting in Settings > Loans tab.
-- **Loan Notifications**: Automated SMS notifications via cron (`python_backend/cron_loan_notifications.py`):
-  - **Due Today Reminder**: SMS sent ~1 hour before instalment is due (run with `due_today` mode)
-  - **Overdue Notice**: SMS sent after instalment becomes overdue/defaulted (run with `overdue` mode)
-  - Duplicate prevention: only one notification per loan per type per day
-  - SMS templates auto-seeded during tenant migration
-
-## Business Model
-
-BANKY operates as a hybrid SaaS + Enterprise License product:
-
-### SaaS Model (Small-Medium Saccos)
-- **Starter Plan** ($50/mo): Up to 500 members, 3 staff, 1 branch - Core banking features with Quick Transactions (no teller station/float management)
-- **Growth Plan** ($150/mo): Up to 2,000 members, 10 staff, 5 branches - Adds teller station, float management, analytics, SMS
-- **Professional Plan** ($400/mo): Up to 10,000 members, 50 staff, 20 branches - All features including dividends, fixed deposits, API access
-- **Enterprise Plan**: Custom pricing for large Saccos
-
-### Enterprise License (Self-Hosted)
-- **Basic Edition** ($10,000): Core banking with Quick Transactions (no teller station), M-Pesa
-- **Standard Edition** ($20,000): + Teller Station, Float Management, Analytics, SMS, Accounting
-- **Premium Edition** ($35,000): + Fixed Deposits, Dividends, Payroll
-- **Enterprise Edition** ($50,000+): All features + custom development
-
-### Feature Flag System
-Features are **database-driven** with one source of truth:
-- **SaaS**: Features stored in `subscription_plans.features.enabled` JSON column in master database. Admin panel is the single place to edit features per plan.
-- **Enterprise**: License key + DEPLOYMENT_MODE=enterprise environment variable. Edition features also read from database plans.
-- **Safety Net**: If a plan has no features configured in the database, a baseline set (core_banking, members, savings, shares, loans) is returned to prevent zero-feature scenarios.
-- **No Hardcoded Fallbacks**: The old hardcoded `PLAN_FEATURES`/`EDITION_FEATURES` dictionaries have been removed. All feature resolution goes through the database via `_get_plan_features_from_db()` and `_get_edition_features_from_db()` in `python_backend/services/feature_flags.py`.
-
-### Trial Subscription System
-New organizations start with a configurable trial period (default 14 days on starter plan):
-- **Trial Banner**: Main app displays warning banner when trial is ending soon (7 days remaining)
-- **Automatic Expiration**: Cron job (`python_backend/cron_check_trials.py`) checks and expires trials daily
-- **Feature Blocking**: When subscription expires, all features are disabled (returns empty feature list)
-- **Admin Controls**: Platform admins can manually change subscription status (trial, active, expired, cancelled)
-- **Platform Settings**: Default trial period and plan configurable via admin panel settings
-
-## Admin Panel
-A separate admin application for platform management running on port 3001:
-- **Location**: `/admin-client/`
-- **Access**: Separate login for platform administrators
-- **Features**: 
-  - Dashboard with platform-wide analytics
-  - Organization management (view all tenants, set subscription plans)
-  - Subscription plan configuration
-  - License key generation and management for enterprise sales
-
-## Mobile App
-A Flutter-based mobile application for members located in `/mobile-app/`:
-- **Technology**: Flutter 3.x with GetX state management
-- **Features (Phase 1)**: Member login, dashboard with balances, transaction history, loan management, profile
-- **Features (Phase 2)**: M-Pesa loan repayment, push notifications (Firebase), statement downloads
-- **Build Instructions**: See `mobile-app/README.md` for setup and build instructions
-- **Note**: Flutter SDK not available in Replit - download the folder and build locally
-
-## Testing
-- **Framework**: pytest with FastAPI TestClient
-- **Location**: `python_backend/tests/`
-- **Run**: `python -m pytest python_backend/tests/ -v`
-- **Coverage**: 64 tests across 15 test files covering auth (10), branches (5), members (6), loan products (4), loans (4), transactions (5), feature flags (9), accounting (5), expenses (3), HR (3), roles (2), audit (2), SMS (2), reports (2), fixed deposits (2)
-- **Architecture**: SQLite in-memory databases for both master and tenant, mocked tenant context to avoid Neon API calls, session-scoped fixtures for performance
-- **Key Patterns**: `auth_client` fixture provides authenticated TestClient, `tenant_db`/`master_db` fixtures for direct database access
+    - **Transaction Handling**: Quick Transactions for basic recording and a dedicated Teller Station for advanced operations with float management and reconciliation.
+    - **Fixed Deposits & Dividends**: Modules for managing fixed deposit products, calculating interest, and handling dividend declarations and distributions.
+    - **Accounting**: Full double-entry bookkeeping system with Chart of Accounts, journal entries, General Ledger, and automated report generation (Trial Balance, Income Statement, Balance Sheet).
+    - **Payroll Integration**: Automatic journal entries for payroll disbursement and statutory deductions.
+- **M-Pesa Payment Gateways**: Supports direct Safaricom Daraja API integration and a simplified SunPay managed gateway for STK Push, C2B, B2C, and reversals. Includes M-Pesa loan repayment and disbursement functionalities.
+- **Subscription Payments**: Multi-gateway support for subscription billing via M-Pesa (SunPay), Stripe, and Paystack, with USD-only pricing and dynamic currency conversion.
+- **M-Pesa Deposits via STK Push**: Secure deposit mechanism requiring dual confirmation (callback or STK Query polling) to prevent fraudulent transactions.
+- **Operations**: SMS notifications, analytics dashboards, HR management, audit logs, and configurable organization settings.
+- **Automation**: Cron-based scripts for processing matured fixed deposits, auto-deducting loan repayments, and sending automated loan notifications (due and overdue).
+- **Business Model**: Hybrid SaaS (Starter, Growth, Professional, Enterprise plans) and Enterprise License (Basic, Standard, Premium, Enterprise editions) with database-driven feature flags.
+- **Trial System**: Configurable trial period for new organizations with automatic expiration and feature blocking.
+- **Admin Panel**: Separate application for platform management, organization oversight, subscription configuration, and license key generation.
+- **Mobile App**: Flutter-based mobile application for members for balances, transaction history, loan management, and profile access.
 
 ## External Dependencies
-- **Neon**: For PostgreSQL database provisioning and management for each tenant.
-- **M-Pesa**: Integrated for loan disbursements and potentially other financial transactions.
-- **SMS Gateway**: Used for sending SMS notifications and reminders.
-- **Firebase**: For mobile app push notifications (FCM).
+- **Neon**: PostgreSQL database provisioning.
+- **M-Pesa**: Payment gateway for transactions and subscriptions.
+- **SMS Gateway**: For notifications.
+- **Firebase**: For mobile app push notifications.
+- **Stripe**: Subscription payment gateway.
+- **Paystack**: Subscription payment gateway.
+- **exchangerate-api.com**: For currency exchange rates.

@@ -288,11 +288,31 @@ async def create_transaction(org_id: str, data: TransactionCreate, request: Requ
                     message = "STK Push sent successfully. Please check member's phone to complete payment."
                 
                 if success:
+                    checkout_id = result.get("CheckoutRequestID", "")
+                    if checkout_id:
+                        from models.tenant import MpesaPayment
+                        pending_payment = MpesaPayment(
+                            trans_id=f"STK_PENDING_{checkout_id}",
+                            trans_time=datetime.utcnow().strftime("%Y%m%d%H%M%S"),
+                            amount=Decimal(str(data.amount)),
+                            phone_number=phone,
+                            bill_ref_number=checkout_id,
+                            first_name="STK Push (Pending)",
+                            transaction_type="STK",
+                            member_id=member.id,
+                            status="pending",
+                            notes=f"account_type:{data.account_type}",
+                            raw_payload=result
+                        )
+                        tenant_session.add(pending_payment)
+                        tenant_session.commit()
+                        print(f"[M-Pesa Deposit] Stored pending STK record: {checkout_id}")
+                    
                     return {
                         "stk_push": True,
                         "success": True,
                         "message": message,
-                        "checkout_request_id": result.get("CheckoutRequestID", ""),
+                        "checkout_request_id": checkout_id,
                     }
                 else:
                     error_msg = result.get("ResponseDescription") or result.get("errorMessage") or result.get("message", "STK Push failed")

@@ -43,7 +43,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { ArrowDownLeft, ArrowUpRight, Plus, Wallet, AlertCircle, ChevronsUpDown, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Plus, Wallet, AlertCircle, ChevronsUpDown, Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
@@ -116,6 +116,64 @@ export default function Transactions({ organizationId }: TransactionsProps) {
   const { hasFeature } = useFeatures(organizationId);
   const hasMpesa = hasFeature("mpesa_integration");
   const hasBankIntegration = hasFeature("bank_integration");
+  const [stkPolling, setStkPolling] = useState<{
+    checkoutRequestId: string;
+  } | null>(null);
+  const [stkPollCount, setStkPollCount] = useState(0);
+  const maxPollAttempts = 12;
+
+  useEffect(() => {
+    if (!stkPolling) return;
+    if (stkPollCount >= maxPollAttempts) {
+      toast({
+        title: "M-Pesa Payment Status Unknown",
+        description: "Could not confirm payment status. If the payment was made, it will be credited shortly.",
+        variant: "destructive",
+      });
+      setStkPolling(null);
+      setStkPollCount(0);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/organizations/${organizationId}/mpesa/stk-query`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            checkout_request_id: stkPolling.checkoutRequestId,
+          }),
+        });
+        const result = await res.json();
+
+        if (result.status === "credited" || result.status === "already_credited") {
+          toast({
+            title: "M-Pesa Payment Confirmed",
+            description: result.message || "Deposit has been credited to the member's account.",
+          });
+          setStkPolling(null);
+          setStkPollCount(0);
+          queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "transactions"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "members"] });
+        } else if (result.status === "cancelled" || result.status === "failed" || result.status === "timeout") {
+          toast({
+            title: "M-Pesa Payment Not Completed",
+            description: result.message || "The payment was not completed.",
+            variant: "destructive",
+          });
+          setStkPolling(null);
+          setStkPollCount(0);
+        } else {
+          setStkPollCount(prev => prev + 1);
+        }
+      } catch {
+        setStkPollCount(prev => prev + 1);
+      }
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, [stkPolling, stkPollCount, organizationId, toast]);
 
   const userBranchId = (user as any)?.branchId;
   const userRole = (user as any)?.role;
@@ -206,8 +264,14 @@ export default function Transactions({ organizationId }: TransactionsProps) {
         form.reset();
         toast({
           title: "STK Push Sent",
-          description: result.message || "Please check the member's phone to complete the M-Pesa payment. The deposit will be credited automatically once confirmed.",
+          description: "Please check the member's phone to approve the payment. Verifying payment status...",
         });
+        if (result.checkout_request_id) {
+          setStkPollCount(0);
+          setStkPolling({
+            checkoutRequestId: result.checkout_request_id,
+          });
+        }
       } else {
         setCurrentPage(1);
         queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "transactions"] });
@@ -256,6 +320,31 @@ export default function Transactions({ organizationId }: TransactionsProps) {
           )}
         </div>
       </div>
+
+      {stkPolling && (
+        <Card className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/30">
+          <CardContent className="flex items-center gap-3 py-3 px-4">
+            <Loader2 className="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400 shrink-0" />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-blue-900 dark:text-blue-100" data-testid="text-stk-polling-status">
+                Verifying M-Pesa payment... ({stkPollCount + 1}/{maxPollAttempts})
+              </p>
+              <p className="text-xs text-blue-700 dark:text-blue-300">
+                Waiting for payment confirmation from Safaricom
+              </p>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => { setStkPolling(null); setStkPollCount(0); }}
+              className="shrink-0 text-blue-600 dark:text-blue-400"
+              data-testid="button-cancel-stk-polling"
+            >
+              Dismiss
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex flex-wrap items-end gap-4">
         {canSeeAllBranches && branches && branches.length > 1 && (
