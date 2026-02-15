@@ -34,7 +34,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useResourcePermissions, RESOURCES } from "@/hooks/use-resource-permissions";
@@ -594,7 +593,6 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
   const [showReplenishRequest, setShowReplenishRequest] = useState(false);
   const [physicalCount, setPhysicalCount] = useState("");
   const [reconcileNotes, setReconcileNotes] = useState("");
-  const [returnToVault, setReturnToVault] = useState(true);
   const [replenishAmount, setReplenishAmount] = useState("");
   const [replenishReason, setReplenishReason] = useState("");
   
@@ -636,7 +634,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
       const res = await apiRequest("POST", `/api/organizations/${organizationId}/floats/${myFloat.id}/reconcile`, {
         physical_count: parseFloat(physicalCount),
         notes: reconcileNotes,
-        return_to_vault: returnToVault,
+        return_to_vault: true,
       });
       return await res.json();
     },
@@ -664,10 +662,9 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
         setShowReconcile(false);
         setPhysicalCount("");
         setReconcileNotes("");
-        setReturnToVault(true);
         const variance = data.variance || 0;
         const status = variance < 0 ? "Shortage" : variance > 0 ? "Overage" : "Balanced";
-        const vaultMessage = data.returned_to_vault ? " - Cash returned to vault" : "";
+        const vaultMessage = " - Cash returned to vault";
         toast({ 
           title: "Float reconciled successfully",
           description: `${status}: ${symbol} ${Math.abs(variance).toLocaleString()}${vaultMessage}`
@@ -1404,21 +1401,15 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
                     />
                   </div>
                   
-                  <div className="p-4 rounded-lg border bg-muted/50">
+                  <div className="p-4 rounded-lg border bg-blue-50 dark:bg-blue-950/30">
                     <div className="flex items-start gap-3">
-                      <Checkbox
-                        id="returnToVault"
-                        checked={returnToVault}
-                        onCheckedChange={(checked) => setReturnToVault(checked === true)}
-                      />
+                      <Lock className="h-5 w-5 text-blue-600 mt-0.5" />
                       <div className="grid gap-1.5 leading-none">
-                        <Label htmlFor="returnToVault" className="font-medium cursor-pointer">
-                          Return cash to vault
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          {returnToVault 
-                            ? `All cash will be returned to the vault. Tomorrow you'll start with ${symbol} 0 until supervisor allocates new float.`
-                            : "Cash will stay with you. Tomorrow you'll start with today's closing balance."}
+                        <span className="font-medium text-blue-900 dark:text-blue-100">
+                          Cash returns to vault automatically
+                        </span>
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          All remaining cash will be returned to the branch vault. Tomorrow starts fresh with {symbol} 0 until a supervisor allocates new float.
                         </p>
                       </div>
                     </div>

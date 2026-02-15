@@ -83,7 +83,7 @@ class ReturnToVaultRequest(BaseModel):
 class ReconcileFloatRequest(BaseModel):
     physical_count: float
     notes: Optional[str] = None
-    return_to_vault: bool = False  # If true, balance is returned to vault and next day starts at 0
+    return_to_vault: bool = True
 
 class ShortageDistribution(BaseModel):
     action: str  # "deduct", "hold", or "expense"
@@ -737,67 +737,54 @@ async def reconcile_float(
             teller_float.reconciled_at = datetime.utcnow()
             teller_float.reconciled_by_id = reconciler.id if reconciler else None
             
-            # Handle return to vault option - create pending return for manager approval
-            if request.return_to_vault:
-                # Create pending vault return for manager to approve
-                pending_return = PendingVaultReturn(
-                    teller_float_id=teller_float.id,
-                    staff_id=teller_float.staff_id,
-                    branch_id=teller_float.branch_id,
-                    amount=physical,
-                    status="pending",
-                    notes=request.notes
-                )
-                session.add(pending_return)
-                
-                # Mark float as pending vault return
-                teller_float.status = "pending_vault_return"
-                teller_float.closing_balance = physical
-                
-                float_txn = FloatTransaction(
-                    teller_float_id=teller_float.id,
-                    transaction_type="reconciliation",
-                    amount=physical,
-                    balance_after=physical,
-                    description=f"End of day reconciliation. Variance: {float(variance)} - Pending vault return approval",
-                    performed_by_id=reconciler.id if reconciler else None,
-                    status="pending"
-                )
-                session.add(float_txn)
-                session.commit()
-                
-                return {
-                    "message": "Reconciliation complete - Awaiting vault return approval from manager",
-                    "expected_balance": float(expected),
-                    "physical_count": float(physical),
-                    "variance": float(variance),
-                    "status": "pending_vault_return",
-                    "requires_approval": False,
-                    "pending_vault_return": True
-                }
-            else:
-                # No vault return - just close the day with the balance
-                float_txn = FloatTransaction(
-                    teller_float_id=teller_float.id,
-                    transaction_type="reconciliation",
-                    amount=physical,
-                    balance_after=physical,
-                    description=f"End of day reconciliation. Variance: {float(variance)}",
-                    performed_by_id=reconciler.id if reconciler else None,
-                    status="completed"
-                )
-                session.add(float_txn)
-                session.commit()
-                
-                return {
-                    "message": "Float reconciled successfully",
-                    "expected_balance": float(expected),
-                    "physical_count": float(physical),
-                    "variance": float(variance),
-                    "status": "overage" if variance > 0 else "balanced",
-                    "requires_approval": False,
-                    "returned_to_vault": False
-                }
+            teller_float.closing_balance = physical
+            
+            vault = get_or_create_branch_vault(session, teller_float.branch_id)
+            vault.current_balance = Decimal(str(vault.current_balance or 0)) + physical
+            vault.last_updated = datetime.utcnow()
+            
+            teller_float.returned_to_vault = True
+            teller_float.returns_to_vault = Decimal(str(teller_float.returns_to_vault or 0)) + physical
+            teller_float.current_balance = Decimal("0")
+            
+            vault_txn = VaultTransaction(
+                branch_id=teller_float.branch_id,
+                transaction_type="vault_deposit",
+                amount=physical,
+                balance_after=vault.current_balance,
+                description=f"End-of-day return from teller",
+                performed_by_id=reconciler.id if reconciler else None,
+                status="completed"
+            )
+            session.add(vault_txn)
+            
+            float_txn = FloatTransaction(
+                teller_float_id=teller_float.id,
+                transaction_type="reconciliation",
+                amount=physical,
+                balance_after=Decimal("0"),
+                description=f"End of day reconciliation. Variance: {float(variance)}. Cash returned to vault.",
+                performed_by_id=reconciler.id if reconciler else None,
+                status="completed"
+            )
+            session.add(float_txn)
+            
+            staff = session.query(Staff).filter(Staff.id == teller_float.staff_id).first()
+            branch = session.query(Branch).filter(Branch.id == teller_float.branch_id).first()
+            if staff and physical > 0:
+                post_float_allocation_to_gl(session, f"{staff.first_name} {staff.last_name}", physical, "return", branch.name if branch else "")
+            
+            session.commit()
+            
+            return {
+                "message": "Float reconciled - cash returned to vault",
+                "expected_balance": float(expected),
+                "physical_count": float(physical),
+                "variance": float(variance),
+                "status": "overage" if variance > 0 else "balanced",
+                "requires_approval": False,
+                "returned_to_vault": True
+            }
     finally:
         session.close()
         tenant_ctx.close()
@@ -1245,11 +1232,39 @@ async def approve_shortage(
         has_hold_only = all(d.action == "hold" for d in dists)
         teller_float = session.query(TellerFloat).filter(TellerFloat.id == shortage.teller_float_id).first()
         if teller_float and not has_hold_only:
-            teller_float.current_balance = teller_float.physical_count or teller_float.current_balance
-            teller_float.closing_balance = teller_float.physical_count or teller_float.closing_balance
+            remaining_cash = Decimal(str(teller_float.physical_count or teller_float.current_balance or 0))
+            teller_float.closing_balance = remaining_cash
             teller_float.status = "reconciled"
             teller_float.reconciled_at = datetime.utcnow()
             teller_float.reconciled_by_id = approver_staff.id
+            
+            if remaining_cash > 0:
+                vault = get_or_create_branch_vault(session, teller_float.branch_id)
+                vault.current_balance = Decimal(str(vault.current_balance or 0)) + remaining_cash
+                vault.last_updated = datetime.utcnow()
+                
+                teller_float.returned_to_vault = True
+                teller_float.returns_to_vault = Decimal(str(teller_float.returns_to_vault or 0)) + remaining_cash
+                teller_float.current_balance = Decimal("0")
+                
+                vault_txn = VaultTransaction(
+                    branch_id=teller_float.branch_id,
+                    transaction_type="vault_deposit",
+                    amount=remaining_cash,
+                    balance_after=vault.current_balance,
+                    description=f"End-of-day return after shortage approval",
+                    performed_by_id=approver_staff.id,
+                    status="completed"
+                )
+                session.add(vault_txn)
+                
+                staff_record = session.query(Staff).filter(Staff.id == teller_float.staff_id).first()
+                branch = session.query(Branch).filter(Branch.id == teller_float.branch_id).first()
+                if staff_record:
+                    post_float_allocation_to_gl(session, f"{staff_record.first_name} {staff_record.last_name}", remaining_cash, "return", branch.name if branch else "")
+            else:
+                teller_float.current_balance = Decimal("0")
+                teller_float.returned_to_vault = True
             
             float_txn = session.query(FloatTransaction).filter(
                 and_(
@@ -1261,6 +1276,8 @@ async def approve_shortage(
             if float_txn:
                 float_txn.status = "completed"
                 float_txn.approved_by_id = approver_staff.id
+                float_txn.balance_after = Decimal("0")
+                float_txn.description = (float_txn.description or "") + " Cash returned to vault."
         
         session.commit()
         
