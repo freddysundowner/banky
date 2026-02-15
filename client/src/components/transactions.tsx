@@ -120,7 +120,7 @@ export default function Transactions({ organizationId }: TransactionsProps) {
     checkoutRequestId: string;
   } | null>(null);
   const [stkPollCount, setStkPollCount] = useState(0);
-  const maxPollAttempts = 12;
+  const maxPollAttempts = 24;
 
   useEffect(() => {
     if (!stkPolling) return;

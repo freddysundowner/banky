@@ -681,10 +681,10 @@ async def check_stk_push_status(org_id: str, request: Request, user=Depends(get_
             return {"status": "cancelled", "message": "Payment was cancelled by user"}
         
         if result_code == "1037":
-            pending_record.status = "failed"
-            pending_record.notes = (pending_record.notes or "") + " | Timed out"
-            tenant_session.commit()
-            return {"status": "timeout", "message": "Payment request timed out"}
+            return {"status": "pending", "message": "Waiting for payment - phone may be unreachable, retrying..."}
+        
+        if result_code == "4999":
+            return {"status": "pending", "message": "Payment is being processed by M-Pesa..."}
         
         if result_code != "0":
             pending_record.status = "failed"
