@@ -793,7 +793,10 @@ def get_platform_settings(admin: AdminUser = Depends(require_admin), db: Session
     initialize_platform_settings(db)
     settings = db.query(PlatformSettings).all()
     
-    plans = db.query(SubscriptionPlan).filter(SubscriptionPlan.is_active == True).order_by(SubscriptionPlan.monthly_price).all()
+    plans = db.query(SubscriptionPlan).filter(
+        SubscriptionPlan.is_active == True,
+        SubscriptionPlan.pricing_model.in_(["saas", None])
+    ).order_by(SubscriptionPlan.monthly_price).all()
     
     return {
         "settings": [{
