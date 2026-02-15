@@ -625,6 +625,21 @@ def list_features(admin: AdminUser = Depends(require_admin), db: Session = Depen
         "edition_limits": EDITION_LIMITS
     }
 
+@router.post("/plans/reset-features")
+def reset_plan_features_to_defaults(admin: AdminUser = Depends(require_admin), db: Session = Depends(get_db)):
+    from main import DEFAULT_PLAN_FEATURES
+    
+    plans = db.query(SubscriptionPlan).all()
+    updated = 0
+    for plan in plans:
+        default_features = DEFAULT_PLAN_FEATURES.get(plan.plan_type)
+        if default_features:
+            plan.features = {"enabled": list(default_features)}
+            updated += 1
+    
+    db.commit()
+    return {"message": f"Reset features to defaults for {updated} plans", "updated": updated}
+
 @router.get("/landing-page")
 def get_landing_page_settings(admin: AdminUser = Depends(require_admin), db: Session = Depends(get_db)):
     """Get landing page settings"""

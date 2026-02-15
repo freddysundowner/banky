@@ -64,6 +64,16 @@ def build_frontend():
     print("Frontend build complete")
     return True
 
+DEFAULT_PLAN_FEATURES = {
+    "starter": ["core_banking", "members", "savings", "shares", "loans", "audit_logs", "mpesa_integration"],
+    "growth": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "analytics", "sms_notifications", "expenses", "leave_management", "multiple_branches", "audit_logs", "accounting", "mpesa_integration"],
+    "professional": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "fixed_deposits", "dividends", "analytics", "analytics_export", "sms_notifications", "bulk_sms", "expenses", "leave_management", "payroll", "accounting", "multiple_branches", "api_access", "white_label", "custom_reports", "mpesa_integration", "audit_logs"],
+    "basic": ["core_banking", "members", "savings", "shares", "loans", "audit_logs", "mpesa_integration"],
+    "standard": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "analytics", "sms_notifications", "expenses", "leave_management", "multiple_branches", "audit_logs", "accounting", "mpesa_integration"],
+    "premium": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "fixed_deposits", "dividends", "analytics", "analytics_export", "sms_notifications", "bulk_sms", "expenses", "leave_management", "payroll", "accounting", "multiple_branches", "mpesa_integration", "bank_integration", "audit_logs"],
+    "enterprise": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "fixed_deposits", "dividends", "analytics", "analytics_export", "sms_notifications", "bulk_sms", "expenses", "leave_management", "payroll", "accounting", "multiple_branches", "api_access", "white_label", "custom_reports", "mpesa_integration", "bank_integration", "audit_logs"],
+}
+
 def seed_default_plans():
     """Seed default subscription plans if none exist"""
     from models.database import SessionLocal
@@ -90,7 +100,7 @@ def seed_default_plans():
                 "max_branches": 1,
                 "sms_credits_monthly": 50,
                 "sort_order": 1,
-                "features": {"enabled": ["core_banking", "members", "savings", "shares", "loans", "audit_logs", "mpesa_integration"]}
+                "features": {"enabled": DEFAULT_PLAN_FEATURES["starter"]}
             },
             {
                 "name": "Growth",
@@ -103,7 +113,7 @@ def seed_default_plans():
                 "max_branches": 5,
                 "sms_credits_monthly": 200,
                 "sort_order": 2,
-                "features": {"enabled": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "analytics", "sms_notifications", "expenses", "leave_management", "multiple_branches", "audit_logs", "accounting", "mpesa_integration"]}
+                "features": {"enabled": DEFAULT_PLAN_FEATURES["growth"]}
             },
             {
                 "name": "Professional",
@@ -116,7 +126,7 @@ def seed_default_plans():
                 "max_branches": 20,
                 "sms_credits_monthly": 1000,
                 "sort_order": 3,
-                "features": {"enabled": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "fixed_deposits", "dividends", "analytics", "analytics_export", "sms_notifications", "bulk_sms", "expenses", "leave_management", "payroll", "accounting", "multiple_branches", "api_access", "white_label", "custom_reports", "mpesa_integration", "audit_logs"]}
+                "features": {"enabled": DEFAULT_PLAN_FEATURES["professional"]}
             },
             {
                 "name": "Basic",
@@ -128,7 +138,7 @@ def seed_default_plans():
                 "max_staff": None,
                 "max_branches": None,
                 "sort_order": 1,
-                "features": {"enabled": ["core_banking", "members", "savings", "shares", "loans", "audit_logs", "mpesa_integration"]}
+                "features": {"enabled": DEFAULT_PLAN_FEATURES["basic"]}
             },
             {
                 "name": "Standard",
@@ -140,7 +150,7 @@ def seed_default_plans():
                 "max_staff": None,
                 "max_branches": None,
                 "sort_order": 2,
-                "features": {"enabled": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "analytics", "sms_notifications", "expenses", "leave_management", "multiple_branches", "audit_logs", "accounting", "mpesa_integration"]}
+                "features": {"enabled": DEFAULT_PLAN_FEATURES["standard"]}
             },
             {
                 "name": "Premium",
@@ -152,7 +162,7 @@ def seed_default_plans():
                 "max_staff": None,
                 "max_branches": None,
                 "sort_order": 3,
-                "features": {"enabled": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "fixed_deposits", "dividends", "analytics", "analytics_export", "sms_notifications", "bulk_sms", "expenses", "leave_management", "payroll", "accounting", "multiple_branches", "mpesa_integration", "bank_integration", "audit_logs"]}
+                "features": {"enabled": DEFAULT_PLAN_FEATURES["premium"]}
             },
             {
                 "name": "Enterprise",
@@ -164,7 +174,7 @@ def seed_default_plans():
                 "max_staff": None,
                 "max_branches": None,
                 "sort_order": 4,
-                "features": {"enabled": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "fixed_deposits", "dividends", "analytics", "analytics_export", "sms_notifications", "bulk_sms", "expenses", "leave_management", "payroll", "accounting", "multiple_branches", "api_access", "white_label", "custom_reports", "mpesa_integration", "bank_integration", "audit_logs"]}
+                "features": {"enabled": DEFAULT_PLAN_FEATURES["enterprise"]}
             }
         ]
         

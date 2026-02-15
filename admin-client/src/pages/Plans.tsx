@@ -64,6 +64,7 @@ export default function Plans() {
   const [editData, setEditData] = useState<Partial<Plan>>({})
   const [editingFeatures, setEditingFeatures] = useState<string | null>(null)
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([])
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [newPlan, setNewPlan] = useState<Partial<Plan>>({
     name: '',
     plan_type: 'custom',
@@ -173,6 +174,24 @@ export default function Plans() {
     }
   })
 
+  const resetFeatures = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/admin/plans/reset-features', {
+        method: 'POST',
+        credentials: 'include'
+      })
+      if (!res.ok) throw new Error('Failed to reset features')
+      return res.json()
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['plans'] })
+      queryClient.invalidateQueries({ queryKey: ['features'] })
+      setShowResetConfirm(false)
+      toast.success(data.message || 'Features reset to defaults')
+    },
+    onError: () => toast.error('Failed to reset features to defaults')
+  })
+
   const startEditingFeatures = (plan: Plan) => {
     setEditingFeatures(plan.id)
     const currentFeatures = plan.features?.enabled || []
@@ -204,20 +223,33 @@ export default function Plans() {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 flex-wrap gap-2">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Subscription Plans</h1>
           <p className="text-sm text-gray-500">Manage pricing plans for SaaS and Enterprise customers</p>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Create Plan
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowResetConfirm(true)}
+            className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+            data-testid="button-reset-features"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Reset Features to Defaults
+          </button>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            data-testid="button-create-plan"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Create Plan
+          </button>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow mb-6">
@@ -453,6 +485,43 @@ export default function Plans() {
             <div className="p-6 border-t flex gap-3 justify-end">
               <button onClick={() => { setEditingFeatures(null); setSelectedFeatures([]) }} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancel</button>
               <button onClick={() => updatePlanFeatures.mutate(editingFeatures)} className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700" disabled={updatePlanFeatures.isPending}>{updatePlanFeatures.isPending ? 'Saving...' : 'Save Features'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showResetConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <h2 className="text-lg font-bold text-gray-800">Reset Features to Defaults</h2>
+              </div>
+              <p className="text-sm text-gray-600 mb-6">
+                This will reset the features for <strong>all plans</strong> (both SaaS and Enterprise) back to the factory defaults. Any custom feature changes you've made will be lost.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowResetConfirm(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                  data-testid="button-cancel-reset"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => resetFeatures.mutate()}
+                  className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700"
+                  disabled={resetFeatures.isPending}
+                  data-testid="button-confirm-reset"
+                >
+                  {resetFeatures.isPending ? 'Resetting...' : 'Reset to Defaults'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
