@@ -24,8 +24,12 @@ def _headers(api_key: str) -> dict:
 async def stk_push(tenant_session, phone: str, amount: Decimal, external_ref: str = None, callback_url: str = "") -> dict:
     api_key = get_sunpay_api_key(tenant_session)
 
+    clean_phone = phone.replace("+", "").strip()
+    if not clean_phone.startswith("254"):
+        clean_phone = "254" + clean_phone.lstrip("0")
+
     payload = {
-        "phoneNumber": phone,
+        "phoneNumber": clean_phone,
         "amount": float(amount),
     }
     if external_ref:
