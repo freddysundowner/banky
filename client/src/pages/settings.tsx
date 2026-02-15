@@ -786,6 +786,46 @@ export default function SettingsPage({ organizationId }: SettingsPageProps) {
                       />
                     </div>
 
+                    <div className="space-y-2">
+                      <Label htmlFor="mpesa_stk_callback_url">STK Push Callback URL</Label>
+                      <Input
+                        id="mpesa_stk_callback_url"
+                        value={getValue("mpesa_stk_callback_url")}
+                        onChange={(e) => updateSetting("mpesa_stk_callback_url", e.target.value)}
+                        placeholder="https://yourdomain.com/api/mpesa/stk-callback/org_id"
+                        data-testid="input-mpesa-stk-callback"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Safaricom will send STK Push results to this URL. Format: https://yourdomain.com/api/mpesa/stk-callback/{organizationId}
+                      </p>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor="mpesa_initiator_name">B2C Initiator Name</Label>
+                        <Input
+                          id="mpesa_initiator_name"
+                          value={getValue("mpesa_initiator_name")}
+                          onChange={(e) => updateSetting("mpesa_initiator_name", e.target.value)}
+                          placeholder="testapi"
+                          data-testid="input-mpesa-initiator"
+                        />
+                        <p className="text-xs text-muted-foreground">Required for B2C disbursements</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="mpesa_security_credential">B2C Security Credential</Label>
+                        <Input
+                          id="mpesa_security_credential"
+                          type="password"
+                          value={getValue("mpesa_security_credential")}
+                          onChange={(e) => updateSetting("mpesa_security_credential", e.target.value)}
+                          placeholder="Encrypted credential"
+                          data-testid="input-mpesa-security-credential"
+                        />
+                        <p className="text-xs text-muted-foreground">Required for B2C disbursements</p>
+                      </div>
+                    </div>
+
                     <div className="rounded-lg bg-muted p-4">
                       <h4 className="font-medium mb-2">Callback URLs</h4>
                       <p className="text-sm text-muted-foreground mb-2">
@@ -794,6 +834,7 @@ export default function SettingsPage({ organizationId }: SettingsPageProps) {
                       <div className="space-y-1 text-sm font-mono bg-background p-2 rounded">
                         <p><span className="text-muted-foreground">Validation:</span> /api/mpesa/c2b/validation/{organizationId}</p>
                         <p><span className="text-muted-foreground">Confirmation:</span> /api/mpesa/c2b/confirmation/{organizationId}</p>
+                        <p><span className="text-muted-foreground">STK Callback:</span> /api/mpesa/stk-callback/{organizationId}</p>
                       </div>
                     </div>
                   </>
