@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -180,8 +180,11 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
     return () => { clearInterval(interval); clearTimeout(timeout); };
   }, [paymentStatus, currentPaymentId, organizationId]);
 
+  const payInProgress = useRef(false);
+
   const handlePay = async () => {
-    if (!selectedPlan) return;
+    if (!selectedPlan || payInProgress.current) return;
+    payInProgress.current = true;
 
     setPaymentStatus("sending");
 
@@ -189,7 +192,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
       let res: Response;
 
       if (gateway === "mpesa") {
-        if (!phone) return setPaymentStatus("idle");
+        if (!phone) { setPaymentStatus("idle"); payInProgress.current = false; return; }
         res = await fetch(`/api/organizations/${organizationId}/subscription/pay-mpesa`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -204,7 +207,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
           body: JSON.stringify({ plan_id: selectedPlan.id, billing_period: billingPeriod })
         });
       } else {
-        if (!email) return setPaymentStatus("idle");
+        if (!email) { setPaymentStatus("idle"); payInProgress.current = false; return; }
         res = await fetch(`/api/organizations/${organizationId}/subscription/pay-paystack`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -223,18 +226,21 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
 
       if (!res.ok) {
         setPaymentStatus("failed");
+        payInProgress.current = false;
         toast({ title: "Payment Failed", description: data.detail || "Failed to initiate payment", variant: "destructive" });
         return;
       }
 
       setCurrentPaymentId(data.payment_id);
-      setPaymentStatus("waiting");
 
       if (gateway === "mpesa") {
+        setPaymentStatus("waiting");
+        payInProgress.current = false;
         toast({ title: "Check Your Phone", description: data.message || "Enter your M-Pesa PIN to confirm" });
       } else if (gateway === "stripe" && data.checkout_url) {
         window.location.href = data.checkout_url;
-      } else if (gateway === "paystack" && data.access_code && data.public_key) {
+      } else if (gateway === "paystack" && data.access_code) {
+        setPaymentStatus("idle");
         try {
           const PaystackPop = (window as any).PaystackPop;
           if (PaystackPop) {
@@ -242,27 +248,35 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
             popup.resumeTransaction(data.access_code, {
               onSuccess: () => {
                 setPaymentStatus("success");
+                payInProgress.current = false;
                 queryClient.invalidateQueries({ queryKey: ["plans", organizationId] });
               },
               onCancel: () => {
-                setPaymentStatus("failed");
+                setPaymentStatus("idle");
+                payInProgress.current = false;
               },
               onError: () => {
                 setPaymentStatus("failed");
+                payInProgress.current = false;
                 toast({ title: "Payment Error", description: "Something went wrong. Please try again.", variant: "destructive" });
               }
             });
           } else {
+            payInProgress.current = false;
             window.location.href = data.authorization_url;
           }
         } catch {
+          payInProgress.current = false;
           if (data.authorization_url) {
             window.location.href = data.authorization_url;
           }
         }
+      } else {
+        payInProgress.current = false;
       }
     } catch {
       setPaymentStatus("failed");
+      payInProgress.current = false;
       toast({ title: "Error", description: "Failed to initiate payment. Please try again.", variant: "destructive" });
     }
   };
