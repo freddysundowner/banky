@@ -689,6 +689,8 @@ async def reconcile_float(
                 status="pending"
             )
             session.add(float_txn)
+            session.flush()
+            shortage_id = shortage_record.id
             session.commit()
             
             return {
@@ -697,7 +699,8 @@ async def reconcile_float(
                 "physical_count": float(physical),
                 "variance": float(variance),
                 "status": "pending_approval",
-                "requires_approval": True
+                "requires_approval": True,
+                "shortage_id": shortage_id
             }
         else:
             teller_float.status = "reconciled"
@@ -1167,6 +1170,8 @@ async def approve_shortage(
         
         teller_float = session.query(TellerFloat).filter(TellerFloat.id == shortage.teller_float_id).first()
         if teller_float and request.action in ["deduct", "expense"]:
+            teller_float.current_balance = teller_float.physical_count or teller_float.current_balance
+            teller_float.closing_balance = teller_float.physical_count or teller_float.closing_balance
             teller_float.status = "reconciled"
             teller_float.reconciled_at = datetime.utcnow()
             teller_float.reconciled_by_id = approver_staff.id
@@ -1181,6 +1186,8 @@ async def approve_shortage(
             if float_txn:
                 float_txn.status = "completed"
                 float_txn.approved_by_id = approver_staff.id
+        elif teller_float and request.action == "hold":
+            pass
         
         session.commit()
         

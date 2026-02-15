@@ -611,11 +611,12 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
   const reconcileMutation = useMutation({
     mutationFn: async () => {
       if (!myFloat) throw new Error("No float to reconcile");
-      return apiRequest("POST", `/api/organizations/${organizationId}/floats/${myFloat.id}/reconcile`, {
+      const res = await apiRequest("POST", `/api/organizations/${organizationId}/floats/${myFloat.id}/reconcile`, {
         physical_count: parseFloat(physicalCount),
         notes: reconcileNotes,
         return_to_vault: returnToVault,
       });
+      return await res.json();
     },
     onSuccess: (data: any) => {
       refetchFloat();
@@ -623,9 +624,13 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
       
       if (data.requires_approval) {
         setShowReconcile(false);
-        const pendingShortage = myShortages?.shortages?.find(s => s.status === "pending");
-        if (pendingShortage) {
-          setPendingShortageId(pendingShortage.id);
+        if (data.shortage_id) {
+          setPendingShortageId(data.shortage_id);
+        } else {
+          const pendingShortage = myShortages?.shortages?.find((s: any) => s.status === "pending");
+          if (pendingShortage) {
+            setPendingShortageId(pendingShortage.id);
+          }
         }
         setShowShortageApproval(true);
         toast({ 
@@ -655,12 +660,13 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
   const approveShortagueMutation = useMutation({
     mutationFn: async () => {
       if (!pendingShortageId) throw new Error("No shortage to approve");
-      return apiRequest("POST", `/api/organizations/${organizationId}/shortages/${pendingShortageId}/approve`, {
+      const res = await apiRequest("POST", `/api/organizations/${organizationId}/shortages/${pendingShortageId}/approve`, {
         staff_number: approverStaffNumber,
         pin: approverPin,
         action: shortageAction,
         notes: approvalNotes,
       });
+      return await res.json();
     },
     onSuccess: (data: any) => {
       refetchFloat();

@@ -875,8 +875,16 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
                     <TableCell className="text-blue-600">+{f.replenishments.toLocaleString()}</TableCell>
                     <TableCell className="font-semibold">{symbol} {f.current_balance.toLocaleString()}</TableCell>
                     <TableCell>
-                      <Badge variant={f.status === "open" ? "default" : "secondary"}>
-                        {f.status === "open" ? "Active" : "Reconciled"}
+                      <Badge variant={
+                        f.status === "open" ? "default" : 
+                        f.status === "pending_approval" ? "destructive" :
+                        f.status === "pending_vault_return" ? "outline" :
+                        "secondary"
+                      }>
+                        {f.status === "open" ? "Active" : 
+                         f.status === "pending_approval" ? "Shortage - Pending Approval" :
+                         f.status === "pending_vault_return" ? "Pending Vault Return" :
+                         "Reconciled"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
