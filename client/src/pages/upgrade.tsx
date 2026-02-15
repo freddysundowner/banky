@@ -240,6 +240,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
       } else if (gateway === "stripe" && data.checkout_url) {
         window.location.href = data.checkout_url;
       } else if (gateway === "paystack" && data.access_code) {
+        setShowPaymentDialog(false);
         setPaymentStatus("idle");
         try {
           const PaystackPop = (window as any).PaystackPop;
@@ -247,17 +248,20 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
             const popup = new PaystackPop();
             popup.resumeTransaction(data.access_code, {
               onSuccess: () => {
-                setPaymentStatus("success");
                 payInProgress.current = false;
+                setPaymentStatus("success");
+                setShowPaymentDialog(true);
                 queryClient.invalidateQueries({ queryKey: ["plans", organizationId] });
               },
               onCancel: () => {
-                setPaymentStatus("idle");
                 payInProgress.current = false;
+                setPaymentStatus("idle");
+                setShowPaymentDialog(true);
               },
               onError: () => {
-                setPaymentStatus("failed");
                 payInProgress.current = false;
+                setPaymentStatus("failed");
+                setShowPaymentDialog(true);
                 toast({ title: "Payment Error", description: "Something went wrong. Please try again.", variant: "destructive" });
               }
             });
