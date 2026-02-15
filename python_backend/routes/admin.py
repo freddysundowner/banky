@@ -789,7 +789,8 @@ DEFAULT_PLATFORM_SETTINGS = [
     {"key": "subscription_mpesa_paybill", "value": "", "type": "string", "description": "M-Pesa Paybill/Till number displayed to customers for subscription payments"},
     {"key": "gateway_mpesa_enabled", "value": "true", "type": "boolean", "description": "Enable M-Pesa (KES) as a subscription payment gateway"},
     {"key": "gateway_stripe_enabled", "value": "true", "type": "boolean", "description": "Enable Stripe (USD) as a subscription payment gateway"},
-    {"key": "gateway_paystack_enabled", "value": "true", "type": "boolean", "description": "Enable Paystack (NGN) as a subscription payment gateway"},
+    {"key": "gateway_paystack_enabled", "value": "true", "type": "boolean", "description": "Enable Paystack as a subscription payment gateway"},
+    {"key": "paystack_currency", "value": "NGN", "type": "string", "description": "Currency for Paystack payments (NGN, KES, GHS, ZAR, USD) - must match your Paystack account currency"},
 ]
 
 def initialize_platform_settings(db: Session):

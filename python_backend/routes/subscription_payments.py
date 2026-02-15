@@ -11,6 +11,7 @@ from models.master import (
     SubscriptionPayment, PlatformSettings, OrganizationMember
 )
 from routes.auth import get_current_user
+from services.exchange_rate import fetch_exchange_rates, convert_usd_to
 
 router = APIRouter()
 
@@ -58,15 +59,21 @@ async def initiate_subscription_payment(organization_id: str, data: dict, auth=D
         raise HTTPException(status_code=404, detail="Plan not found")
 
     if billing_period == "annual" and plan.annual_price and float(plan.annual_price) > 0:
-        amount = float(plan.annual_price)
+        amount_usd = float(plan.annual_price)
         period_days = 365
     else:
-        amount = float(plan.monthly_price)
+        amount_usd = float(plan.monthly_price)
         period_days = 30
         billing_period = "monthly"
 
-    if amount <= 0:
+    if amount_usd <= 0:
         raise HTTPException(status_code=400, detail="This plan has no price set. Contact admin.")
+
+    rates = await fetch_exchange_rates()
+    amount = convert_usd_to(amount_usd, "KES", rates)
+
+    if amount <= 0:
+        raise HTTPException(status_code=400, detail="Currency conversion error. Contact admin.")
 
     api_key = get_platform_sunpay_key(db)
 
@@ -74,6 +81,7 @@ async def initiate_subscription_payment(organization_id: str, data: dict, auth=D
         organization_id=organization_id,
         plan_id=plan_id,
         amount=Decimal(str(amount)),
+        currency="KES",
         phone_number=phone,
         billing_period=billing_period,
         status="pending"
@@ -293,11 +301,11 @@ async def initiate_stripe_payment(organization_id: str, data: dict, auth=Depends
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
 
-    if billing_period == "annual" and plan.usd_annual_price and float(plan.usd_annual_price) > 0:
-        amount_usd = float(plan.usd_annual_price)
+    if billing_period == "annual" and plan.annual_price and float(plan.annual_price) > 0:
+        amount_usd = float(plan.annual_price)
         period_days = 365
     else:
-        amount_usd = float(plan.usd_monthly_price)
+        amount_usd = float(plan.monthly_price)
         period_days = 30
         billing_period = "monthly"
 
@@ -380,10 +388,14 @@ async def initiate_paystack_payment(organization_id: str, data: dict, auth=Depen
     email = data.get("email", "")
     billing_period = data.get("billing_period", "monthly")
     channels = data.get("channels")
-    currency = data.get("currency", "NGN").upper()
+
+    paystack_currency_setting = db.query(PlatformSettings).filter(
+        PlatformSettings.setting_key == "paystack_currency"
+    ).first()
+    currency = (paystack_currency_setting.setting_value if paystack_currency_setting else "NGN").upper()
 
     if currency not in ("NGN", "KES", "GHS", "ZAR", "USD"):
-        raise HTTPException(status_code=400, detail="Unsupported currency for Paystack")
+        currency = "NGN"
 
     if not plan_id or not email:
         raise HTTPException(status_code=400, detail="plan_id and email are required")
@@ -392,33 +404,19 @@ async def initiate_paystack_payment(organization_id: str, data: dict, auth=Depen
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
 
-    if currency == "KES":
-        if billing_period == "annual" and plan.annual_price and float(plan.annual_price) > 0:
-            amount = float(plan.annual_price)
-            period_days = 365
-        else:
-            amount = float(plan.monthly_price)
-            period_days = 30
-            billing_period = "monthly"
-    elif currency == "USD":
-        if billing_period == "annual" and plan.usd_annual_price and float(plan.usd_annual_price) > 0:
-            amount = float(plan.usd_annual_price)
-            period_days = 365
-        else:
-            amount = float(plan.usd_monthly_price)
-            period_days = 30
-            billing_period = "monthly"
+    if billing_period == "annual" and plan.annual_price and float(plan.annual_price) > 0:
+        amount_usd = float(plan.annual_price)
+        period_days = 365
     else:
-        if billing_period == "annual" and plan.ngn_annual_price and float(plan.ngn_annual_price) > 0:
-            amount = float(plan.ngn_annual_price)
-            period_days = 365
-        else:
-            amount = float(plan.ngn_monthly_price)
-            period_days = 30
-            billing_period = "monthly"
+        amount_usd = float(plan.monthly_price)
+        period_days = 30
+        billing_period = "monthly"
 
-    if amount <= 0:
-        raise HTTPException(status_code=400, detail=f"{currency} price not set for this plan. Contact admin.")
+    if amount_usd <= 0:
+        raise HTTPException(status_code=400, detail="Price not set for this plan. Contact admin.")
+
+    rates = await fetch_exchange_rates()
+    amount = convert_usd_to(amount_usd, currency, rates)
 
     amount_minor = int(amount * 100)
 

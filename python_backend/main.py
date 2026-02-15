@@ -619,6 +619,31 @@ async def get_public_branding():
         db.close()
 
 
+@app.get("/api/exchange-rates")
+async def get_exchange_rates():
+    """Get current USD exchange rates for subscription pricing."""
+    from services.exchange_rate import fetch_exchange_rates
+    from models.database import SessionLocal
+    from models.master import PlatformSettings
+
+    rates = await fetch_exchange_rates()
+
+    db = SessionLocal()
+    try:
+        paystack_setting = db.query(PlatformSettings).filter(
+            PlatformSettings.setting_key == "paystack_currency"
+        ).first()
+        paystack_currency = paystack_setting.setting_value if paystack_setting else "NGN"
+    finally:
+        db.close()
+
+    return {
+        "base": "USD",
+        "rates": rates,
+        "paystack_currency": paystack_currency
+    }
+
+
 from pydantic import BaseModel, EmailStr
 
 class SalesInquiryRequest(BaseModel):

@@ -19,10 +19,6 @@ interface Plan {
   pricing_model: string;
   monthly_price: number;
   annual_price: number;
-  usd_monthly_price: number;
-  usd_annual_price: number;
-  ngn_monthly_price: number;
-  ngn_annual_price: number;
   max_members: number;
   max_staff: number;
   max_branches: number;
@@ -32,21 +28,26 @@ interface Plan {
   is_downgrade: boolean;
 }
 
+interface ExchangeRateData {
+  base: string;
+  rates: Record<string, number>;
+  paystack_currency: string;
+}
+
 interface UpgradePageProps {
   organizationId: string;
 }
 
 type Gateway = "mpesa" | "stripe" | "paystack";
 type PaystackChannel = "card" | "bank" | "ussd" | "mobile_money" | "bank_transfer" | "qr";
-type PaystackCurrency = "KES" | "NGN" | "GHS" | "ZAR" | "USD";
 
-const PAYSTACK_CURRENCIES: { id: PaystackCurrency; label: string; symbol: string }[] = [
-  { id: "KES", label: "KES - Kenyan Shilling", symbol: "KES " },
-  { id: "NGN", label: "NGN - Nigerian Naira", symbol: "NGN " },
-  { id: "USD", label: "USD - US Dollar", symbol: "$" },
-  { id: "GHS", label: "GHS - Ghanaian Cedi", symbol: "GHS " },
-  { id: "ZAR", label: "ZAR - South African Rand", symbol: "ZAR " },
-];
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  USD: "$",
+  KES: "KES ",
+  NGN: "\u20A6",
+  GHS: "GH\u20B5",
+  ZAR: "R",
+};
 
 const PLAN_COLORS: Record<string, { bg: string; border: string }> = {
   starter: { bg: "bg-slate-50", border: "border-slate-200" },
@@ -60,43 +61,31 @@ const PAYSTACK_CHANNELS: { id: PaystackChannel; label: string; icon: typeof Cred
   { id: "mobile_money", label: "Mobile Money", icon: Smartphone, description: "M-Pesa, MTN MoMo, Airtel" },
 ];
 
-function getPlanPrice(plan: Plan, gateway: Gateway, period: "monthly" | "annual", paystackCurrency?: PaystackCurrency): number {
-  if (gateway === "stripe") {
-    return period === "annual" && plan.usd_annual_price > 0 ? plan.usd_annual_price : plan.usd_monthly_price;
-  }
-  if (gateway === "paystack") {
-    if (paystackCurrency === "KES") {
-      return period === "annual" && plan.annual_price > 0 ? plan.annual_price : plan.monthly_price;
-    }
-    if (paystackCurrency === "USD") {
-      return period === "annual" && plan.usd_annual_price > 0 ? plan.usd_annual_price : plan.usd_monthly_price;
-    }
-    return period === "annual" && plan.ngn_annual_price > 0 ? plan.ngn_annual_price : plan.ngn_monthly_price;
-  }
-  return period === "annual" && plan.annual_price > 0 ? plan.annual_price : plan.monthly_price;
+function convertPrice(amountUsd: number, currency: string, rates: Record<string, number>): number {
+  if (currency === "USD") return amountUsd;
+  const rate = rates[currency] || 1;
+  return Math.round(amountUsd * rate);
 }
 
-function getCurrencySymbol(gateway: Gateway, paystackCurrency?: PaystackCurrency): string {
-  if (gateway === "stripe") return "$";
-  if (gateway === "paystack") {
-    const curr = PAYSTACK_CURRENCIES.find(c => c.id === paystackCurrency);
-    return curr ? curr.symbol : "KES ";
-  }
-  return "KES ";
+function getGatewayCurrency(gateway: Gateway, paystackCurrency: string): string {
+  if (gateway === "stripe") return "USD";
+  if (gateway === "mpesa") return "KES";
+  return paystackCurrency || "NGN";
 }
 
-function formatPrice(amount: number, gateway: Gateway, paystackCurrency?: PaystackCurrency): string {
-  const sym = getCurrencySymbol(gateway, paystackCurrency);
+function getPlanPrice(plan: Plan, gateway: Gateway, period: "monthly" | "annual", rates: Record<string, number>, paystackCurrency: string): number {
+  const amountUsd = period === "annual" && plan.annual_price > 0 ? plan.annual_price : plan.monthly_price;
+  const currency = getGatewayCurrency(gateway, paystackCurrency);
+  return convertPrice(amountUsd, currency, rates);
+}
+
+function formatPrice(amount: number, gateway: Gateway, paystackCurrency: string): string {
+  const currency = getGatewayCurrency(gateway, paystackCurrency);
+  const sym = CURRENCY_SYMBOLS[currency] || currency + " ";
   return `${sym}${amount.toLocaleString()}`;
 }
 
-function hasAnnualForGateway(plan: Plan, gateway: Gateway, paystackCurrency?: PaystackCurrency): boolean {
-  if (gateway === "stripe") return plan.usd_annual_price > 0;
-  if (gateway === "paystack") {
-    if (paystackCurrency === "KES") return plan.annual_price > 0;
-    if (paystackCurrency === "USD") return plan.usd_annual_price > 0;
-    return plan.ngn_annual_price > 0;
-  }
+function hasAnnual(plan: Plan): boolean {
   return plan.annual_price > 0;
 }
 
@@ -108,7 +97,6 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
   const [gateway, setGateway] = useState<Gateway>("mpesa");
   const [paystackChannel, setPaystackChannel] = useState<PaystackChannel>("card");
-  const [paystackCurrency, setPaystackCurrency] = useState<PaystackCurrency>("KES");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [paymentStatus, setPaymentStatus] = useState<"idle" | "sending" | "waiting" | "success" | "failed">("idle");
@@ -133,6 +121,19 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
       return res.json();
     }
   });
+
+  const { data: exchangeRates } = useQuery<ExchangeRateData>({
+    queryKey: ["exchange-rates"],
+    queryFn: async () => {
+      const res = await fetch("/api/exchange-rates");
+      if (!res.ok) return { base: "USD", rates: { USD: 1, KES: 130, NGN: 1550 }, paystack_currency: "NGN" };
+      return res.json();
+    },
+    staleTime: 1000 * 60 * 30,
+  });
+
+  const rates = exchangeRates?.rates || { USD: 1, KES: 130, NGN: 1550 };
+  const paystackCurrency = exchangeRates?.paystack_currency || "NGN";
 
   const { data: enabledGateways } = useQuery<{ mpesa: boolean; stripe: boolean; paystack: boolean }>({
     queryKey: ["enabled-gateways"],
@@ -211,8 +212,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
             plan_id: selectedPlan.id,
             email,
             billing_period: billingPeriod,
-            channels: [paystackChannel],
-            currency: paystackCurrency
+            channels: [paystackChannel]
           })
         });
       }
@@ -290,12 +290,12 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
   }
 
   const saasPlans = plans?.filter(p => p.pricing_model === "saas") || plans || [];
-  const paymentAmount = selectedPlan ? getPlanPrice(selectedPlan, gateway, billingPeriod, paystackCurrency) : 0;
-  const showAnnual = selectedPlan ? hasAnnualForGateway(selectedPlan, gateway, paystackCurrency) : false;
+  const paymentAmount = selectedPlan ? getPlanPrice(selectedPlan, gateway, billingPeriod, rates, paystackCurrency) : 0;
+  const showAnnual = selectedPlan ? hasAnnual(selectedPlan) : false;
 
   const allGateways: { id: Gateway; label: string; sub: string; icon: typeof Smartphone; color: string }[] = [
     { id: "mpesa", label: "M-Pesa", sub: "KES", icon: Smartphone, color: "text-green-600" },
-    { id: "paystack", label: "Paystack", sub: "Multi-currency", icon: Globe, color: "text-blue-600" },
+    { id: "paystack", label: "Paystack", sub: paystackCurrency, icon: Globe, color: "text-blue-600" },
     { id: "stripe", label: "Stripe", sub: "USD", icon: CreditCard, color: "text-purple-600" },
   ];
   const gw = enabledGateways || { mpesa: true, stripe: true, paystack: true };
@@ -337,18 +337,13 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                 <CardTitle className="text-base md:text-lg capitalize">{plan.name}</CardTitle>
                 <CardDescription className="pt-2">
                   <span className="text-2xl md:text-3xl font-bold text-foreground">
-                    KES {plan.monthly_price.toLocaleString()}
+                    ${plan.monthly_price.toLocaleString()}
                   </span>
                   <span className="text-muted-foreground text-sm">/month</span>
                 </CardDescription>
-                <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                  {plan.usd_monthly_price > 0 && (
-                    <span className="text-xs text-muted-foreground">${plan.usd_monthly_price}/mo</span>
-                  )}
-                  {plan.ngn_monthly_price > 0 && (
-                    <span className="text-xs text-muted-foreground">NGN {plan.ngn_monthly_price.toLocaleString()}/mo</span>
-                  )}
-                </div>
+                {plan.annual_price > 0 && (
+                  <span className="text-xs text-muted-foreground mt-1">${plan.annual_price.toLocaleString()}/year</span>
+                )}
               </CardHeader>
 
               <CardContent className="flex-1 pt-4 md:pt-6 p-4 md:p-6">
@@ -445,7 +440,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                       <button
                         key={g.id}
                         type="button"
-                        onClick={() => { setGateway(g.id); setPaymentStatus("idle"); setBillingPeriod("monthly"); }}
+                        onClick={() => { setGateway(g.id); setPaymentStatus("idle"); }}
                         disabled={paymentStatus === "sending" || paymentStatus === "waiting"}
                         className={`flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all ${
                           active ? "border-primary bg-primary/5 shadow-sm" : "border-muted hover:border-muted-foreground/30"
@@ -460,28 +455,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                 </div>
               </div>
 
-              {/* Step 2: Paystack Currency Selection */}
-              {gateway === "paystack" && (
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Currency</Label>
-                  <Select
-                    value={paystackCurrency}
-                    onValueChange={(v) => setPaystackCurrency(v as PaystackCurrency)}
-                    disabled={paymentStatus === "sending" || paymentStatus === "waiting"}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PAYSTACK_CURRENCIES.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {/* Step 3: Paystack Channel Selection */}
+              {/* Step 2: Paystack Channel Selection */}
               {gateway === "paystack" && (
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Payment Method</Label>
@@ -542,10 +516,10 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="monthly">
-                        Monthly ({formatPrice(selectedPlan ? getPlanPrice(selectedPlan, gateway, "monthly", paystackCurrency) : 0, gateway, paystackCurrency)}/mo)
+                        Monthly ({formatPrice(selectedPlan ? getPlanPrice(selectedPlan, gateway, "monthly", rates, paystackCurrency) : 0, gateway, paystackCurrency)}/mo)
                       </SelectItem>
                       <SelectItem value="annual">
-                        Annual ({formatPrice(selectedPlan ? getPlanPrice(selectedPlan, gateway, "annual", paystackCurrency) : 0, gateway, paystackCurrency)}/yr)
+                        Annual ({formatPrice(selectedPlan ? getPlanPrice(selectedPlan, gateway, "annual", rates, paystackCurrency) : 0, gateway, paystackCurrency)}/yr)
                       </SelectItem>
                     </SelectContent>
                   </Select>
