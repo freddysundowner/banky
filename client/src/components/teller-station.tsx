@@ -179,8 +179,13 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(null);
   const [selectedTellerId, setSelectedTellerId] = useState<string | null>(null);
   const [showStatementPage, setShowStatementPage] = useState(false);
-  const [counterNumber, setCounterNumber] = useState<string | null>(null);
+  const [counterNumber, setCounterNumber] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem(`banky_counter_${organizationId}`) || null;
+    } catch { return null; }
+  });
   const [counterInput, setCounterInput] = useState("");
+  const [counterLoading, setCounterLoading] = useState(false);
 
   // Get current user's staff info for display
   const { data: myStaffInfo } = useQuery<Staff | null>({
@@ -246,6 +251,21 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
     staff.role?.toLowerCase() === "teller" && 
     (!selectedBranchId || staff.branch_id === selectedBranchId)
   ) || [];
+
+  const preEffectStaffId = isAdmin && selectedTellerId ? selectedTellerId : myStaffInfo?.id;
+  const preEffectActiveCounter = activeCounters?.find(c => c.staff_id === preEffectStaffId);
+  useEffect(() => {
+    if (!counterNumber && preEffectActiveCounter) {
+      setCounterNumber(preEffectActiveCounter.counter_number);
+      try { localStorage.setItem(`banky_counter_${organizationId}`, preEffectActiveCounter.counter_number); } catch {}
+    } else if (counterNumber && activeCounters && !preEffectActiveCounter) {
+      const takenByOther = activeCounters.find(c => c.counter_number === counterNumber && c.staff_id !== preEffectStaffId);
+      if (takenByOther) {
+        setCounterNumber(null);
+        try { localStorage.removeItem(`banky_counter_${organizationId}`); } catch {}
+      }
+    }
+  }, [preEffectActiveCounter, activeCounters, counterNumber, preEffectStaffId, organizationId]);
 
   const { data: members, isLoading: membersLoading, isError: membersError } = useQuery<Member[]>({
     queryKey: ["/api/organizations", organizationId, "members"],
@@ -1009,8 +1029,10 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
               <Button
                 className="w-full"
                 size="lg"
-                disabled={!counterInput.trim() || !!isCounterInputTaken()}
+                disabled={!counterInput.trim() || !!isCounterInputTaken() || counterLoading}
+                data-testid="button-start-teller-station"
                 onClick={async () => {
+                  setCounterLoading(true);
                   try {
                     const params = new URLSearchParams({ counter_number: counterInput.trim() });
                     if (isAdmin && selectedTellerId) params.set("staff_id", selectedTellerId);
@@ -1025,13 +1047,21 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
                       return;
                     }
                     setCounterNumber(counterInput.trim());
+                    try { localStorage.setItem(`banky_counter_${organizationId}`, counterInput.trim()); } catch {}
                     refetchCounters();
                   } catch (e: any) {
                     toast({ title: "Error", description: e.message, variant: "destructive" });
+                  } finally {
+                    setCounterLoading(false);
                   }
                 }}
               >
-                Start Teller Station
+                {counterLoading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Entering Station...
+                  </span>
+                ) : "Start Teller Station"}
               </Button>
             </CardContent>
           </Card>
