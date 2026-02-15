@@ -454,10 +454,6 @@ def list_plans(admin: AdminUser = Depends(require_admin), db: Session = Depends(
         "pricing_model": p.pricing_model or "saas",
         "monthly_price": float(p.monthly_price) if p.monthly_price else 0,
         "annual_price": float(p.annual_price) if p.annual_price else 0,
-        "usd_monthly_price": float(p.usd_monthly_price) if p.usd_monthly_price else 0,
-        "usd_annual_price": float(p.usd_annual_price) if p.usd_annual_price else 0,
-        "ngn_monthly_price": float(p.ngn_monthly_price) if p.ngn_monthly_price else 0,
-        "ngn_annual_price": float(p.ngn_annual_price) if p.ngn_annual_price else 0,
         "one_time_price": float(p.one_time_price) if p.one_time_price else 0,
         "max_members": p.max_members,
         "max_staff": p.max_staff,
@@ -492,7 +488,7 @@ def update_plan(plan_id: str, data: dict, admin: AdminUser = Depends(require_adm
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
     
-    for field in ["name", "monthly_price", "annual_price", "usd_monthly_price", "usd_annual_price", "ngn_monthly_price", "ngn_annual_price", "one_time_price", "max_members", "max_staff", "max_branches", "sms_credits_monthly", "support_years", "sort_order", "features", "is_active", "pricing_model"]:
+    for field in ["name", "monthly_price", "annual_price", "one_time_price", "max_members", "max_staff", "max_branches", "sms_credits_monthly", "support_years", "sort_order", "features", "is_active", "pricing_model"]:
         if field in data:
             setattr(plan, field, data[field])
     
