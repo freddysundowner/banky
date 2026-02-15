@@ -274,7 +274,7 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
                 <TableHead className="text-right">Actual Balance</TableHead>
                 <TableHead className="text-right">Adjustment Needed</TableHead>
                 <TableHead className="text-right">Your Entry</TableHead>
-                <TableHead></TableHead>
+                <TableHead className="text-center">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -339,79 +339,68 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
                             <span className="text-xs text-muted-foreground italic">-</span>
                           )}
                         </TableCell>
-                        <TableCell className="text-right min-w-[200px]">
+                        <TableCell className="text-right">
                           {alreadyPosted ? (
                             <span className="text-muted-foreground">-</span>
+                          ) : isAuto ? (
+                            <div className="flex items-center justify-end gap-2">
+                              <span className="font-mono font-medium text-green-700 dark:text-green-400">
+                                {formatCurrency(parseFloat(entry.amount) || 0)}
+                              </span>
+                              <Badge variant="secondary" className="text-xs">Auto</Badge>
+                            </div>
+                          ) : isManual ? (
+                            <Input
+                              type="number"
+                              step="0.01"
+                              className="w-36 text-right font-mono ml-auto"
+                              value={entry.amount}
+                              onChange={(e) => updateEntry(acct.account_code, e.target.value, "manual")}
+                              autoFocus
+                              data-testid={`input-amount-${acct.account_code}`}
+                            />
                           ) : (
-                            <div className="space-y-2">
-                              {hasSuggestion && gapExists && (
-                                <div
-                                  className={`flex items-center justify-between gap-2 p-2 rounded-md border cursor-pointer transition-colors ${
-                                    isAuto
-                                      ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
-                                      : "border-muted hover:border-blue-300"
-                                  }`}
+                            <span className="text-muted-foreground text-sm">-</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-center">
+                          {!alreadyPosted && (
+                            <div className="flex items-center justify-center gap-1">
+                              {hasSuggestion && gapExists && !isAuto && (
+                                <Button
+                                  variant="default"
+                                  size="sm"
                                   onClick={() => updateEntry(acct.account_code, String(acct.gap!), "suggested")}
-                                  data-testid={`option-auto-${acct.account_code}`}
+                                  data-testid={`button-auto-${acct.account_code}`}
                                 >
-                                  <div className="flex items-center gap-2">
-                                    <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center ${
-                                      isAuto ? "border-blue-500" : "border-muted-foreground/40"
-                                    }`}>
-                                      {isAuto && <div className="w-2 h-2 rounded-full bg-blue-500" />}
-                                    </div>
-                                    <span className="text-xs font-medium">Auto</span>
-                                  </div>
-                                  <span className="font-mono text-sm font-medium">
-                                    {formatCurrency(acct.gap!)}
-                                  </span>
-                                </div>
+                                  <Wand2 className="h-3.5 w-3.5 mr-1" />
+                                  Auto
+                                </Button>
                               )}
-                              <div
-                                className={`flex items-center gap-2 p-2 rounded-md border cursor-pointer transition-colors ${
-                                  isManual
-                                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
-                                    : "border-muted hover:border-blue-300"
-                                }`}
-                                onClick={() => {
-                                  if (!isManual) updateEntry(acct.account_code, "", "manual");
-                                }}
-                                data-testid={`option-manual-${acct.account_code}`}
-                              >
-                                <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                                  isManual ? "border-blue-500" : "border-muted-foreground/40"
-                                }`}>
-                                  {isManual && <div className="w-2 h-2 rounded-full bg-blue-500" />}
-                                </div>
-                                <span className="text-xs font-medium flex-shrink-0">Manual</span>
-                                {isManual ? (
-                                  <Input
-                                    type="number"
-                                    step="0.01"
-                                    className="h-7 w-28 text-right font-mono text-sm ml-auto"
-                                    value={entry.amount}
-                                    onChange={(e) => updateEntry(acct.account_code, e.target.value, "manual")}
-                                    onClick={(e) => e.stopPropagation()}
-                                    autoFocus
-                                    data-testid={`input-amount-${acct.account_code}`}
-                                  />
-                                ) : (
-                                  <span className="text-xs text-muted-foreground ml-auto">Enter amount</span>
-                                )}
-                              </div>
+                              {!isManual && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => updateEntry(acct.account_code, "", "manual")}
+                                  data-testid={`button-manual-${acct.account_code}`}
+                                >
+                                  <Pencil className="h-3.5 w-3.5 mr-1" />
+                                  Manual
+                                </Button>
+                              )}
                               {hasEntry && (
-                                <button
-                                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
                                   onClick={() => clearEntry(acct.account_code)}
                                   data-testid={`button-clear-${acct.account_code}`}
                                 >
-                                  Clear
-                                </button>
+                                  <RotateCcw className="h-3.5 w-3.5" />
+                                </Button>
                               )}
                             </div>
                           )}
                         </TableCell>
-                        <TableCell />
                       </TableRow>
                     );
                   });
