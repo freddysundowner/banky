@@ -748,7 +748,7 @@ async def reconcile_float(
             teller_float.current_balance = Decimal("0")
             
             vault_txn = VaultTransaction(
-                branch_id=teller_float.branch_id,
+                vault_id=vault.id,
                 transaction_type="vault_deposit",
                 amount=physical,
                 balance_after=vault.current_balance,
@@ -1248,7 +1248,7 @@ async def approve_shortage(
                 teller_float.current_balance = Decimal("0")
                 
                 vault_txn = VaultTransaction(
-                    branch_id=teller_float.branch_id,
+                    vault_id=vault.id,
                     transaction_type="vault_deposit",
                     amount=remaining_cash,
                     balance_after=vault.current_balance,
