@@ -89,6 +89,40 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
     setAutoApplied(prev => ({ ...prev, [code]: false }));
   };
 
+  const applyAllSuggestions = () => {
+    if (!preview?.accounts) return;
+    const newAmounts: Record<string, string> = { ...amounts };
+    const newAuto: Record<string, boolean> = { ...autoApplied };
+    let totalDebit = 0;
+    let totalCredit = 0;
+
+    for (const acct of preview.accounts) {
+      if (acct.gap !== null && Math.abs(acct.gap) > 0.01) {
+        newAmounts[acct.account_code] = String(acct.gap);
+        newAuto[acct.account_code] = true;
+        if (acct.account_type === "asset") {
+          if (acct.gap > 0) totalDebit += acct.gap;
+          else totalCredit += Math.abs(acct.gap);
+        } else {
+          if (acct.gap > 0) totalCredit += acct.gap;
+          else totalDebit += Math.abs(acct.gap);
+        }
+      }
+    }
+
+    const diff = totalCredit - totalDebit;
+    if (Math.abs(diff) > 0.01) {
+      const cashAcct = preview.accounts.find(a => a.account_code === "1000");
+      if (cashAcct) {
+        newAmounts["1000"] = String(Math.round(diff * 100) / 100);
+        newAuto["1000"] = true;
+      }
+    }
+
+    setAmounts(newAmounts);
+    setAutoApplied(newAuto);
+  };
+
   const getEntryAmount = (code: string): number => {
     return parseFloat(amounts[code] || "") || 0;
   };
@@ -224,14 +258,28 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
       )}
 
       {!alreadyPosted && (
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertTitle>How this works</AlertTitle>
-          <AlertDescription>
-            Tap <strong>Auto</strong> to fill the suggested adjustment, or <strong>Enter</strong> to type your own amount.
-            All entries must balance (debits = credits) before posting.
-          </AlertDescription>
-        </Alert>
+        <div className="space-y-3">
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertTitle>How this works</AlertTitle>
+            <AlertDescription>
+              Tap <strong>Auto</strong> on individual accounts, or use the button below to fill all gaps at once.
+              The system will auto-balance to Cash/Bank if needed. All entries must balance before posting.
+            </AlertDescription>
+          </Alert>
+          {preview?.has_gaps && (
+            <Button
+              onClick={applyAllSuggestions}
+              variant="default"
+              className="w-full"
+              size="lg"
+              data-testid="button-apply-all"
+            >
+              <Wand2 className="h-5 w-5 mr-2" />
+              Apply All Suggestions & Auto-Balance
+            </Button>
+          )}
+        </div>
       )}
 
       {grouped.map(group => (
