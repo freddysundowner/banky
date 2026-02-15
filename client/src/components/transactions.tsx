@@ -245,11 +245,11 @@ export default function Transactions({ organizationId }: TransactionsProps) {
     },
   });
   const getSetting = (key: string) => settingsData?.find(s => s.setting_key === key)?.setting_value || "";
-  const actualOrgName = myOrgs?.find((m: any) => m.organizationId === organizationId || m.organization?.id === organizationId)?.organization?.name || "";
-  const orgName = getSetting("organization_name") || actualOrgName || "Organization";
-  const orgPhone = getSetting("organization_phone");
-  const orgEmail = getSetting("organization_email") || getSetting("email_from_address");
-  const orgAddress = getSetting("organization_address");
+  const orgRecord = myOrgs?.find((m: any) => m.organizationId === organizationId || m.organization?.id === organizationId)?.organization;
+  const orgName = getSetting("organization_name") || orgRecord?.name || "Organization";
+  const orgPhone = getSetting("organization_phone") || orgRecord?.phone || "";
+  const orgEmail = getSetting("organization_email") || orgRecord?.email || getSetting("email_from_address");
+  const orgAddress = getSetting("organization_address") || orgRecord?.address || "";
   const orgPostal = getSetting("organization_postal");
   const orgWebsite = getSetting("organization_website");
   const orgRegNo = getSetting("organization_registration_no");
