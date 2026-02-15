@@ -50,10 +50,10 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
 };
 
 const PLAN_COLORS: Record<string, { bg: string; border: string }> = {
-  starter: { bg: "bg-slate-50 dark:bg-slate-900/40", border: "border-slate-200 dark:border-slate-700" },
-  growth: { bg: "bg-blue-50 dark:bg-blue-950/40", border: "border-blue-200 dark:border-blue-800" },
-  professional: { bg: "bg-purple-50 dark:bg-purple-950/40", border: "border-purple-200 dark:border-purple-800" },
-  enterprise: { bg: "bg-amber-50 dark:bg-amber-950/40", border: "border-amber-200 dark:border-amber-800" }
+  starter: { bg: "bg-slate-50", border: "border-slate-200" },
+  growth: { bg: "bg-blue-50", border: "border-blue-200" },
+  professional: { bg: "bg-purple-50", border: "border-purple-200" },
+  enterprise: { bg: "bg-amber-50", border: "border-amber-200" }
 };
 
 const PAYSTACK_CHANNELS: { id: PaystackChannel; label: string; icon: typeof CreditCard; description: string }[] = [
@@ -363,13 +363,13 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
   const availableGateways = allGateways.filter(g => gw[g.id]);
 
   return (
-    <div className="space-y-4 sm:space-y-6 overflow-x-hidden max-w-5xl mx-auto">
+    <div className="space-y-6 overflow-x-hidden">
       <div>
-        <h1 className="text-lg sm:text-xl md:text-2xl font-bold" data-testid="text-page-title">Subscription Plans</h1>
-        <p className="text-xs sm:text-sm md:text-base text-muted-foreground">Choose the plan that best fits your organization's needs</p>
+        <h1 className="text-xl md:text-2xl font-bold">Subscription Plans</h1>
+        <p className="text-sm md:text-base text-muted-foreground">Choose the plan that best fits your organization's needs</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+      <div className="grid gap-4 md:gap-6" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))" }}>
         {saasPlans.map((plan) => {
           const colors = PLAN_COLORS[plan.plan_type] || PLAN_COLORS.starter;
           const isPopular = plan.plan_type === "growth";
@@ -377,7 +377,6 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
           return (
             <Card
               key={plan.id}
-              data-testid={`card-plan-${plan.plan_type}`}
               className={`relative flex flex-col mt-4 ${plan.is_current ? "ring-2 ring-primary shadow-lg" : "hover:shadow-md transition-shadow"}`}
             >
               {plan.is_current && (
@@ -395,45 +394,45 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                 </div>
               )}
 
-              <CardHeader className={`${colors.bg} rounded-t-lg border-b ${colors.border} p-3 sm:p-4 md:p-6`}>
-                <CardTitle className="text-sm sm:text-base md:text-lg capitalize">{plan.name}</CardTitle>
-                <CardDescription className="pt-1 sm:pt-2">
-                  <span className="text-xl sm:text-2xl md:text-3xl font-bold text-foreground">
+              <CardHeader className={`${colors.bg} rounded-t-lg border-b ${colors.border} p-4 md:p-6`}>
+                <CardTitle className="text-base md:text-lg capitalize">{plan.name}</CardTitle>
+                <CardDescription className="pt-2">
+                  <span className="text-2xl md:text-3xl font-bold text-foreground">
                     ${plan.monthly_price.toLocaleString()}
                   </span>
-                  <span className="text-muted-foreground text-xs sm:text-sm">/month</span>
+                  <span className="text-muted-foreground text-sm">/month</span>
                 </CardDescription>
                 {plan.annual_price > 0 && (
-                  <span className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 sm:mt-1">${plan.annual_price.toLocaleString()}/year</span>
+                  <span className="text-xs text-muted-foreground mt-1">${plan.annual_price.toLocaleString()}/year</span>
                 )}
               </CardHeader>
 
-              <CardContent className="flex-1 pt-3 sm:pt-4 md:pt-6 p-3 sm:p-4 md:p-6">
-                <div className="space-y-3 sm:space-y-4 md:space-y-6">
-                  <div className="space-y-1.5 sm:space-y-2">
-                    <h4 className="text-xs sm:text-sm font-medium text-muted-foreground">Limits</h4>
-                    <div className="grid grid-cols-1 gap-1 sm:gap-1.5 text-sm">
-                      <div className="flex justify-between gap-2 py-1 px-2 bg-muted/50 rounded">
-                        <span className="text-muted-foreground text-xs sm:text-sm">Members</span>
-                        <span className="font-medium text-xs sm:text-sm">{plan.max_members >= 999999 ? "Unlimited" : plan.max_members.toLocaleString()}</span>
+              <CardContent className="flex-1 pt-4 md:pt-6 p-4 md:p-6">
+                <div className="space-y-4 md:space-y-6">
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-muted-foreground">Limits</h4>
+                    <div className="grid grid-cols-1 gap-1.5 text-sm">
+                      <div className="flex justify-between py-1 px-2 bg-muted/50 rounded">
+                        <span className="text-muted-foreground text-xs md:text-sm">Members</span>
+                        <span className="font-medium text-xs md:text-sm">{plan.max_members >= 999999 ? "Unlimited" : plan.max_members.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between gap-2 py-1 px-2 bg-muted/50 rounded">
-                        <span className="text-muted-foreground text-xs sm:text-sm">Staff</span>
-                        <span className="font-medium text-xs sm:text-sm">{plan.max_staff >= 999999 ? "Unlimited" : plan.max_staff}</span>
+                      <div className="flex justify-between py-1 px-2 bg-muted/50 rounded">
+                        <span className="text-muted-foreground text-xs md:text-sm">Staff</span>
+                        <span className="font-medium text-xs md:text-sm">{plan.max_staff >= 999999 ? "Unlimited" : plan.max_staff}</span>
                       </div>
-                      <div className="flex justify-between gap-2 py-1 px-2 bg-muted/50 rounded">
-                        <span className="text-muted-foreground text-xs sm:text-sm">Branches</span>
-                        <span className="font-medium text-xs sm:text-sm">{plan.max_branches >= 999999 ? "Unlimited" : plan.max_branches}</span>
+                      <div className="flex justify-between py-1 px-2 bg-muted/50 rounded">
+                        <span className="text-muted-foreground text-xs md:text-sm">Branches</span>
+                        <span className="font-medium text-xs md:text-sm">{plan.max_branches >= 999999 ? "Unlimited" : plan.max_branches}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-1.5 sm:space-y-2">
-                    <h4 className="text-xs sm:text-sm font-medium text-muted-foreground">Features</h4>
-                    <ul className="space-y-1 sm:space-y-1.5">
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-muted-foreground">Features</h4>
+                    <ul className="space-y-1.5">
                       {(plan.features?.enabled || []).slice(0, 6).map((feature: string, i: number) => (
-                        <li key={i} className="flex items-start gap-1.5 text-xs sm:text-sm">
-                          <Check className="h-3 w-3 sm:h-3.5 sm:w-3.5 text-green-500 mt-0.5 flex-shrink-0" />
+                        <li key={i} className="flex items-start gap-1.5 text-xs md:text-sm">
+                          <Check className="h-3.5 w-3.5 text-green-500 mt-0.5 flex-shrink-0" />
                           <span className="break-words min-w-0">{feature}</span>
                         </li>
                       ))}
@@ -442,11 +441,11 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                 </div>
               </CardContent>
 
-              <div className="p-3 sm:p-4 md:p-6 pt-0 mt-auto">
+              <div className="p-4 md:p-6 pt-0 mt-auto">
                 {plan.is_current ? (
-                  <Button className="w-full" variant="outline" disabled data-testid={`button-current-${plan.plan_type}`}>Current Plan</Button>
+                  <Button className="w-full" size="lg" variant="outline" disabled>Current Plan</Button>
                 ) : (
-                  <Button className="w-full" variant={plan.is_upgrade ? "default" : "secondary"} onClick={() => openPaymentDialog(plan)} data-testid={`button-upgrade-${plan.plan_type}`}>
+                  <Button className="w-full" size="lg" variant={plan.is_upgrade ? "default" : "secondary"} onClick={() => openPaymentDialog(plan)}>
                     {plan.is_upgrade ? "Upgrade Now" : plan.is_downgrade ? "Switch Plan" : "Select Plan"}
                   </Button>
                 )}
@@ -457,12 +456,12 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
       </div>
 
       <Card className="bg-gradient-to-r from-slate-900 to-slate-800 text-white">
-        <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 sm:p-4 md:py-6">
+        <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 md:py-6">
           <div className="text-center sm:text-left">
-            <h3 className="text-sm sm:text-base md:text-lg font-semibold">Need a custom solution?</h3>
-            <p className="text-slate-300 text-[11px] sm:text-xs md:text-sm">Contact our sales team for Enterprise pricing and custom development options.</p>
+            <h3 className="text-base md:text-lg font-semibold">Need a custom solution?</h3>
+            <p className="text-slate-300 text-xs md:text-sm">Contact our sales team for Enterprise pricing and custom development options.</p>
           </div>
-          <Button variant="secondary" className="whitespace-nowrap w-full sm:w-auto" onClick={() => setShowContactDialog(true)} data-testid="button-contact-sales">
+          <Button variant="secondary" className="whitespace-nowrap w-full sm:w-auto" onClick={() => setShowContactDialog(true)}>
             <Mail className="h-4 w-4 mr-2" />Contact Sales
           </Button>
         </CardContent>
