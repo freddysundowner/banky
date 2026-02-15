@@ -285,6 +285,7 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
                     const currentVal = amounts[acct.account_code] || "";
                     const isAutoFilled = autoApplied[acct.account_code] === true;
                     const hasValue = currentVal !== "" && parseFloat(currentVal) !== 0;
+                    const showInput = hasValue || gapExists || amounts.hasOwnProperty(acct.account_code);
                     rows.push(
                       <TableRow key={acct.account_code} data-testid={`account-row-${acct.account_code}`}>
                         <TableCell>
@@ -316,7 +317,7 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
                         <TableCell className="text-right">
                           {alreadyPosted ? (
                             <span className="text-muted-foreground">-</span>
-                          ) : (
+                          ) : showInput ? (
                             <div className="flex items-center justify-end gap-2">
                               <Input
                                 type="number"
@@ -331,6 +332,8 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
                                 <Badge variant="secondary" className="text-xs">Auto</Badge>
                               )}
                             </div>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">-</span>
                           )}
                         </TableCell>
                         <TableCell className="text-center">
@@ -345,6 +348,17 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
                                 >
                                   <Wand2 className="h-3.5 w-3.5 mr-1" />
                                   Auto
+                                </Button>
+                              )}
+                              {!showInput && !gapExists && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setAmount(acct.account_code, "")}
+                                  data-testid={`button-manual-${acct.account_code}`}
+                                >
+                                  <Pencil className="h-3.5 w-3.5 mr-1" />
+                                  Enter
                                 </Button>
                               )}
                               {hasValue && (
@@ -372,7 +386,7 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
         </CardContent>
       </Card>
 
-      {!alreadyPosted && hasAnyEntries && (
+      {!alreadyPosted && (
         <Card>
           <CardHeader>
             <CardTitle>Post Opening Balances</CardTitle>
@@ -438,7 +452,7 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
             <div className="flex justify-end">
               <Button
                 onClick={() => setShowConfirm(true)}
-                disabled={!totals.balanced}
+                disabled={!totals.balanced || !hasAnyEntries}
                 data-testid="button-post-opening-balances"
               >
                 <ArrowRightLeft className="h-4 w-4 mr-2" />
