@@ -253,36 +253,39 @@ async def create_transaction(org_id: str, data: TransactionCreate, user=Depends(
         staff = tenant_session.query(Staff).filter(Staff.email == user.email).first()
         processed_by_id = staff.id if staff else None
         
+        from services.feature_flags import check_org_feature
+        has_teller_station = check_org_feature(org_id, "teller_station", db)
+        
         teller_for_float = processed_by_id
-        if data.teller_id:
+        if has_teller_station and data.teller_id:
             teller_staff = tenant_session.query(Staff).filter(Staff.id == data.teller_id).first()
             if not teller_staff:
                 raise HTTPException(status_code=400, detail="Selected teller not found")
             teller_for_float = data.teller_id
+        elif not has_teller_station:
+            teller_for_float = None
         
-        # Check if teller has an open float - required for ALL transactions (teller must be "on duty")
-        if data.transaction_type in ["deposit", "withdrawal"]:
-            if not teller_for_float:
-                raise HTTPException(status_code=400, detail="Transactions require a teller with an active float")
-            
-            # Check if teller has an open float (meaning they're on duty)
-            today = date.today()
-            teller_float = tenant_session.query(TellerFloat).filter(
-                and_(
-                    TellerFloat.staff_id == teller_for_float,
-                    TellerFloat.date == today,
-                    TellerFloat.status == "open"
-                )
-            ).first()
-            
-            if not teller_float:
-                raise HTTPException(status_code=400, detail="Your teller station is closed for the day. You cannot process transactions until a new float is allocated.")
-            
-            # For cash withdrawals, also check sufficient balance
-            if data.transaction_type == "withdrawal" and data.payment_method == "cash":
-                current_float_balance = Decimal(str(teller_float.current_balance or 0))
-                if data.amount > current_float_balance:
-                    raise HTTPException(status_code=400, detail=f"Insufficient cash float balance. Available: {float(current_float_balance)}, Required: {float(data.amount)}")
+        if has_teller_station:
+            if data.transaction_type in ["deposit", "withdrawal"]:
+                if not teller_for_float:
+                    raise HTTPException(status_code=400, detail="Transactions require a teller with an active float")
+                
+                today = date.today()
+                teller_float = tenant_session.query(TellerFloat).filter(
+                    and_(
+                        TellerFloat.staff_id == teller_for_float,
+                        TellerFloat.date == today,
+                        TellerFloat.status == "open"
+                    )
+                ).first()
+                
+                if not teller_float:
+                    raise HTTPException(status_code=400, detail="Your teller station is closed for the day. You cannot process transactions until a new float is allocated.")
+                
+                if data.transaction_type == "withdrawal" and data.payment_method == "cash":
+                    current_float_balance = Decimal(str(teller_float.current_balance or 0))
+                    if data.amount > current_float_balance:
+                        raise HTTPException(status_code=400, detail=f"Insufficient cash float balance. Available: {float(current_float_balance)}, Required: {float(data.amount)}")
         
         balance_field = f"{data.account_type}_balance"
         current_balance = getattr(member, balance_field) or Decimal("0")
@@ -332,13 +335,7 @@ async def create_transaction(org_id: str, data: TransactionCreate, user=Depends(
         
         tenant_session.add(transaction)
         
-        # Update teller float for cash transactions
-        import logging
-        tx_logger = logging.getLogger(__name__)
-        tx_logger.info(f"Transaction created: type={data.transaction_type}, amount={data.amount}, payment={data.payment_method}, teller_for_float={teller_for_float}")
-        
-        if teller_for_float and data.payment_method == "cash":
-            tx_logger.info(f"Calling update_teller_float for teller {teller_for_float}")
+        if has_teller_station and teller_for_float and data.payment_method == "cash":
             update_teller_float(
                 tenant_session, 
                 teller_for_float, 
@@ -346,8 +343,6 @@ async def create_transaction(org_id: str, data: TransactionCreate, user=Depends(
                 data.amount, 
                 data.payment_method
             )
-        else:
-            tx_logger.warning(f"Float NOT updated: teller_for_float={teller_for_float}, payment_method={data.payment_method}")
         
         # Get new balance for audit
         new_balance = Decimal("0")

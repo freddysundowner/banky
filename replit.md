@@ -28,7 +28,8 @@ The frontend is built with React 18 and TypeScript, utilizing Shadcn UI componen
 - **Core Features**: Includes member, staff, and branch management, configurable loan products, and a comprehensive dashboard.
 - **Advanced Loan Features**: Supports loan applications, disbursement (M-Pesa, bank, cash), repayment tracking, restructuring, and a guarantor system.
 - **Financial Management**:
-    - **Teller Station**: Dedicated interface for deposits, withdrawals, and loan repayments, with cash float tracking and end-of-day reconciliation.
+    - **Quick Transactions**: Simplified transaction recording (deposits/withdrawals) for Starter plan. Uses the existing Transactions component (`client/src/components/transactions.tsx`) without requiring teller floats. The backend (`python_backend/routes/transactions.py`) conditionally skips float checks when org doesn't have `teller_station` feature.
+    - **Teller Station**: Dedicated interface for deposits, withdrawals, and loan repayments, with cash float tracking and end-of-day reconciliation. Available on Growth+ plans.
     - **Float Management**: Supervisor interface for allocating floats, managing vault cash, approving replenishment requests, and shift handovers.
     - **Fixed Deposits Module**: Manages fixed deposit products, member deposits, interest calculation, maturity alerts, and early withdrawals. Funds for fixed deposits must originate from savings accounts.
     - **Dividends Module**: Manages dividend declaration, automatic calculation based on share balance, approval workflow, and distribution options (savings or shares).
@@ -75,8 +76,8 @@ The frontend is built with React 18 and TypeScript, utilizing Shadcn UI componen
 BANKY operates as a hybrid SaaS + Enterprise License product:
 
 ### SaaS Model (Small-Medium Saccos)
-- **Starter Plan** ($50/mo): Up to 500 members, 3 staff, 1 branch - Core banking features
-- **Growth Plan** ($150/mo): Up to 2,000 members, 10 staff, 5 branches - Adds analytics, SMS, float management
+- **Starter Plan** ($50/mo): Up to 500 members, 3 staff, 1 branch - Core banking features with Quick Transactions (no teller station/float management)
+- **Growth Plan** ($150/mo): Up to 2,000 members, 10 staff, 5 branches - Adds teller station, float management, analytics, SMS
 - **Professional Plan** ($400/mo): Up to 10,000 members, 50 staff, 20 branches - All features including dividends, fixed deposits, API access
 - **Enterprise Plan**: Custom pricing for large Saccos
 
