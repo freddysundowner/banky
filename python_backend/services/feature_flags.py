@@ -61,7 +61,7 @@ PLAN_FEATURES: Dict[str, Set[str]] = {
 EDITION_FEATURES: Dict[str, Set[str]] = {
     "basic": {
         Feature.CORE_BANKING, Feature.MEMBERS, Feature.SAVINGS, Feature.SHARES,
-        Feature.LOANS, Feature.TELLER_STATION, Feature.AUDIT_LOGS
+        Feature.LOANS, Feature.AUDIT_LOGS, Feature.MPESA_INTEGRATION
     },
     "standard": {
         Feature.CORE_BANKING, Feature.MEMBERS, Feature.SAVINGS, Feature.SHARES,

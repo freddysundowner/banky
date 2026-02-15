@@ -82,8 +82,8 @@ BANKY operates as a hybrid SaaS + Enterprise License product:
 - **Enterprise Plan**: Custom pricing for large Saccos
 
 ### Enterprise License (Self-Hosted)
-- **Basic Edition** ($10,000): Core banking features
-- **Standard Edition** ($20,000): + Analytics, SMS, Float Management
+- **Basic Edition** ($10,000): Core banking with Quick Transactions (no teller station), M-Pesa
+- **Standard Edition** ($20,000): + Teller Station, Float Management, Analytics, SMS, Accounting
 - **Premium Edition** ($35,000): + Fixed Deposits, Dividends, Payroll
 - **Enterprise Edition** ($50,000+): All features + custom development
 
