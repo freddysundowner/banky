@@ -826,8 +826,8 @@ def get_default_plan_id(db: Session) -> Optional[str]:
     setting = db.query(PlatformSettings).filter(PlatformSettings.setting_key == "default_plan_id").first()
     if setting and setting.setting_value:
         return setting.setting_value
-    starter = db.query(SubscriptionPlan).filter(SubscriptionPlan.plan_type == "starter").first()
-    return starter.id if starter else None
+    professional = db.query(SubscriptionPlan).filter(SubscriptionPlan.plan_type == "professional").first()
+    return professional.id if professional else None
 
 def get_trial_days(db: Session) -> int:
     setting = db.query(PlatformSettings).filter(PlatformSettings.setting_key == "trial_days").first()

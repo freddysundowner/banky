@@ -235,18 +235,17 @@ async def register(data: UserRegister, response: Response, db: Session = Depends
         )
         db.add(membership)
         
-        starter_plan = db.query(SubscriptionPlan).filter(
-            SubscriptionPlan.plan_type == 'starter',
-            SubscriptionPlan.is_active == True
-        ).first()
+        from routes.admin import get_default_plan_id, get_trial_days
+        default_plan_id = get_default_plan_id(db)
+        trial_days = get_trial_days(db)
         
-        if starter_plan:
+        if default_plan_id:
             from datetime import timedelta
             subscription = OrganizationSubscription(
                 organization_id=org.id,
-                plan_id=starter_plan.id,
+                plan_id=default_plan_id,
                 status="trial",
-                trial_ends_at=datetime.utcnow() + timedelta(days=14)
+                trial_ends_at=datetime.utcnow() + timedelta(days=trial_days)
             )
             db.add(subscription)
         
