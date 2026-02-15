@@ -41,7 +41,7 @@ PLAN_FEATURES: Dict[str, Set[str]] = {
         Feature.LOANS, Feature.TELLER_STATION, Feature.FLOAT_MANAGEMENT,
         Feature.ANALYTICS, Feature.SMS_NOTIFICATIONS, Feature.EXPENSES,
         Feature.LEAVE_MANAGEMENT, Feature.MULTIPLE_BRANCHES, Feature.AUDIT_LOGS,
-        Feature.ACCOUNTING
+        Feature.ACCOUNTING, Feature.MPESA_INTEGRATION
     },
     "professional": {
         Feature.CORE_BANKING, Feature.MEMBERS, Feature.SAVINGS, Feature.SHARES,
@@ -68,7 +68,7 @@ EDITION_FEATURES: Dict[str, Set[str]] = {
         Feature.LOANS, Feature.TELLER_STATION, Feature.FLOAT_MANAGEMENT,
         Feature.ANALYTICS, Feature.SMS_NOTIFICATIONS, Feature.EXPENSES,
         Feature.LEAVE_MANAGEMENT, Feature.ACCOUNTING, Feature.MULTIPLE_BRANCHES,
-        Feature.AUDIT_LOGS
+        Feature.AUDIT_LOGS, Feature.MPESA_INTEGRATION
     },
     "premium": {
         Feature.CORE_BANKING, Feature.MEMBERS, Feature.SAVINGS, Feature.SHARES,
