@@ -9,14 +9,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -199,11 +191,25 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
 
   const alreadyPosted = preview?.already_posted ?? false;
 
+  const typeLabels: Record<string, string> = {
+    asset: "Assets",
+    liability: "Liabilities",
+    equity: "Equity",
+  };
+  const typeOrder = ["asset", "liability", "equity"];
+  const grouped = typeOrder
+    .map(type => ({
+      type,
+      label: typeLabels[type] || type,
+      accounts: (preview?.accounts || []).filter(a => a.account_type === type),
+    }))
+    .filter(g => g.accounts.length > 0);
+
   return (
-    <div className="space-y-6" data-testid="opening-balances-page">
+    <div className="space-y-4 pb-48" data-testid="opening-balances-page">
       <PageHeader
         title="Opening Balances"
-        description="Set up your ledger with starting balances from your previous system or actual records."
+        description="Set starting balances from your previous system or actual records."
       />
 
       {alreadyPosted && (
@@ -222,238 +228,163 @@ export default function OpeningBalances({ organizationId }: { organizationId: st
           <Info className="h-4 w-4" />
           <AlertTitle>How this works</AlertTitle>
           <AlertDescription>
-            For each account, the system shows what's currently in the ledger and the actual balance
-            from your member data. The "Adjustment Needed" column shows the difference. You can apply
-            the suggested adjustment or enter your own amount from your actual records (bank statements,
-            loan books, etc.). All entries must balance (debits = credits) before posting.
+            Tap <strong>Auto</strong> to fill the suggested adjustment, or <strong>Enter</strong> to type your own amount.
+            All entries must balance (debits = credits) before posting.
           </AlertDescription>
         </Alert>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Account Balances</CardTitle>
-          <CardDescription>
-            {alreadyPosted
-              ? "Current account status. Opening balances have already been recorded."
-              : "Set the opening balance for each account. Use the system suggestion or enter your own amount."
-            }
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table data-testid="accounts-table">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Account</TableHead>
-                <TableHead className="text-right">Current in Ledger</TableHead>
-                <TableHead className="text-right">Actual Balance</TableHead>
-                <TableHead className="text-right">Adjustment Needed</TableHead>
-                <TableHead className="text-right">Your Entry</TableHead>
-                <TableHead className="text-center">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {(() => {
-                const typeLabels: Record<string, string> = {
-                  asset: "Assets",
-                  liability: "Liabilities",
-                  equity: "Equity",
-                  income: "Income",
-                  expense: "Expenses",
-                };
-                const typeOrder = ["asset", "liability", "equity", "income", "expense"];
-                const grouped = typeOrder
-                  .map(type => ({
-                    type,
-                    label: typeLabels[type] || type,
-                    accounts: (preview?.accounts || []).filter(a => a.account_type === type),
-                  }))
-                  .filter(g => g.accounts.length > 0);
+      {grouped.map(group => (
+        <div key={group.type} className="space-y-2" data-testid={`group-${group.type}`}>
+          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide px-1">
+            {group.label}
+          </h3>
+          {group.accounts.map(acct => {
+            const hasSuggestion = acct.suggested_balance !== null;
+            const gapExists = acct.gap !== null && Math.abs(acct.gap) > 0.01;
+            const currentVal = amounts[acct.account_code] || "";
+            const isAutoFilled = autoApplied[acct.account_code] === true;
+            const hasValue = currentVal !== "" && parseFloat(currentVal) !== 0;
+            const showInput = hasValue || gapExists || amounts.hasOwnProperty(acct.account_code);
 
-                const rows: JSX.Element[] = [];
-                grouped.forEach(group => {
-                  rows.push(
-                    <TableRow key={`header-${group.type}`} className="bg-muted/50">
-                      <TableCell colSpan={6} className="font-semibold text-sm py-2">
-                        {group.label}
-                      </TableCell>
-                    </TableRow>
-                  );
-                  group.accounts.forEach((acct) => {
-                    const hasSuggestion = acct.suggested_balance !== null;
-                    const gapExists = acct.gap !== null && Math.abs(acct.gap) > 0.01;
-                    const currentVal = amounts[acct.account_code] || "";
-                    const isAutoFilled = autoApplied[acct.account_code] === true;
-                    const hasValue = currentVal !== "" && parseFloat(currentVal) !== 0;
-                    const showInput = hasValue || gapExists || amounts.hasOwnProperty(acct.account_code);
-                    rows.push(
-                      <TableRow key={acct.account_code} data-testid={`account-row-${acct.account_code}`}>
-                        <TableCell>
-                          <div className="font-mono text-sm font-medium">{acct.account_code}</div>
-                          <div className="text-sm">{acct.account_name}</div>
-                          <div className="text-xs text-muted-foreground">{acct.detail}</div>
-                        </TableCell>
-                        <TableCell className="text-right font-mono">
-                          {formatCurrency(acct.current_gl_balance)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {hasSuggestion ? (
-                            <span className="font-mono">{formatCurrency(acct.suggested_balance!)}</span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground italic">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {hasSuggestion && gapExists ? (
-                            <span className="font-mono text-orange-600 dark:text-orange-400">
-                              {formatCurrency(acct.gap!)}
-                            </span>
-                          ) : hasSuggestion ? (
-                            <Badge variant="outline" className="text-xs">Matched</Badge>
-                          ) : (
-                            <span className="text-xs text-muted-foreground italic">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {alreadyPosted ? (
-                            <span className="text-muted-foreground">-</span>
-                          ) : showInput ? (
-                            <div className="flex items-center justify-end gap-2">
-                              <Input
-                                type="number"
-                                step="0.01"
-                                placeholder="0.00"
-                                className={`w-36 text-right font-mono ${isAutoFilled ? "border-green-500 bg-green-50 dark:bg-green-950" : ""}`}
-                                value={currentVal}
-                                onChange={(e) => setAmount(acct.account_code, e.target.value)}
-                                data-testid={`input-amount-${acct.account_code}`}
-                              />
-                              {isAutoFilled && (
-                                <Badge variant="secondary" className="text-xs">Auto</Badge>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">-</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-center">
-                          {!alreadyPosted && (
-                            <div className="flex items-center justify-center gap-1">
-                              {hasSuggestion && gapExists && (
-                                <Button
-                                  variant="default"
-                                  size="sm"
-                                  onClick={() => applyAuto(acct.account_code, acct.gap!)}
-                                  data-testid={`button-auto-${acct.account_code}`}
-                                >
-                                  <Wand2 className="h-3.5 w-3.5 mr-1" />
-                                  Auto
-                                </Button>
-                              )}
-                              {!showInput && !gapExists && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => setAmount(acct.account_code, "")}
-                                  data-testid={`button-manual-${acct.account_code}`}
-                                >
-                                  <Pencil className="h-3.5 w-3.5 mr-1" />
-                                  Enter
-                                </Button>
-                              )}
-                              {hasValue && (
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => clearAmount(acct.account_code)}
-                                  data-testid={`button-clear-${acct.account_code}`}
-                                >
-                                  <RotateCcw className="h-3.5 w-3.5 mr-1" />
-                                  Clear
-                                </Button>
-                              )}
-                            </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  });
-                });
-                return rows;
-              })()}
-            </TableBody>
-          </Table>
-
-          {!alreadyPosted && (
-            <div className="mt-6 space-y-4 border-t pt-6">
-              <div className="flex flex-wrap items-center gap-4 p-4 rounded-lg bg-muted/50">
-                <div className="text-center">
-                  <div className="text-xs text-muted-foreground uppercase tracking-wide">Total Debits</div>
-                  <div className="text-lg font-mono font-semibold">{formatCurrency(totals.debit)}</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-muted-foreground uppercase tracking-wide">Total Credits</div>
-                  <div className="text-lg font-mono font-semibold">{formatCurrency(totals.credit)}</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-muted-foreground uppercase tracking-wide">Difference</div>
-                  <div className={`text-lg font-mono font-semibold ${totals.balanced ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-                    {formatCurrency(Math.abs(totals.debit - totals.credit))}
+            return (
+              <Card
+                key={acct.account_code}
+                className={`${isAutoFilled ? "border-green-400 dark:border-green-600" : ""}`}
+                data-testid={`account-row-${acct.account_code}`}
+              >
+                <CardContent className="p-3 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm font-semibold">{acct.account_code}</span>
+                        {isAutoFilled && <Badge variant="secondary" className="text-xs">Auto</Badge>}
+                      </div>
+                      <div className="text-sm font-medium truncate">{acct.account_name}</div>
+                    </div>
+                    {!alreadyPosted && (
+                      <div className="flex gap-1 shrink-0">
+                        {hasSuggestion && gapExists && (
+                          <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => applyAuto(acct.account_code, acct.gap!)}
+                            data-testid={`button-auto-${acct.account_code}`}
+                          >
+                            <Wand2 className="h-3.5 w-3.5 mr-1" />
+                            Auto
+                          </Button>
+                        )}
+                        {!showInput && !gapExists && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setAmount(acct.account_code, "")}
+                            data-testid={`button-manual-${acct.account_code}`}
+                          >
+                            <Pencil className="h-3.5 w-3.5 mr-1" />
+                            Enter
+                          </Button>
+                        )}
+                        {hasValue && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => clearAmount(acct.account_code)}
+                            data-testid={`button-clear-${acct.account_code}`}
+                          >
+                            <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                            Clear
+                          </Button>
+                        )}
+                      </div>
+                    )}
                   </div>
-                </div>
-                <Badge variant={totals.balanced ? "default" : "destructive"} className="ml-auto" data-testid="balance-status">
-                  {totals.balanced ? "Balanced" : "Out of Balance"}
-                </Badge>
-              </div>
 
-              {hasAnyEntries && !totals.balanced && (
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Entry Not Balanced</AlertTitle>
-                  <AlertDescription>
-                    Total debits ({formatCurrency(totals.debit)}) do not equal total credits ({formatCurrency(totals.credit)}).
-                    Adjust amounts so debits and credits are equal.
-                  </AlertDescription>
-                </Alert>
-              )}
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div>
+                      <div className="text-muted-foreground">GL Balance</div>
+                      <div className="font-mono font-medium">{formatCurrency(acct.current_gl_balance)}</div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Actual</div>
+                      <div className="font-mono font-medium">
+                        {hasSuggestion ? formatCurrency(acct.suggested_balance!) : "-"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Gap</div>
+                      <div className={`font-mono font-medium ${gapExists ? "text-orange-600 dark:text-orange-400" : ""}`}>
+                        {hasSuggestion && gapExists
+                          ? formatCurrency(acct.gap!)
+                          : hasSuggestion
+                            ? "Matched"
+                            : "-"}
+                      </div>
+                    </div>
+                  </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="effective-date">Effective Date</Label>
-                  <Input
-                    id="effective-date"
-                    type="date"
-                    value={effectiveDate}
-                    onChange={(e) => setEffectiveDate(e.target.value)}
-                    data-testid="input-effective-date"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes (optional)</Label>
-                  <Input
-                    id="notes"
-                    placeholder="e.g. Migration from legacy system"
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    data-testid="input-notes"
-                  />
-                </div>
+                  {!alreadyPosted && showInput && (
+                    <div className="pt-1">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="Enter adjustment amount"
+                        className={`text-right font-mono ${isAutoFilled ? "border-green-500 bg-green-50 dark:bg-green-950" : ""}`}
+                        value={currentVal}
+                        onChange={(e) => setAmount(acct.account_code, e.target.value)}
+                        data-testid={`input-amount-${acct.account_code}`}
+                      />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      ))}
+
+      {!alreadyPosted && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t-2 shadow-2xl p-4" data-testid="post-section">
+          <div className="max-w-3xl mx-auto space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 text-sm">
+                <span>Dr: <strong className="font-mono">{formatCurrency(totals.debit)}</strong></span>
+                <span>Cr: <strong className="font-mono">{formatCurrency(totals.credit)}</strong></span>
               </div>
-              <div className="flex justify-end">
-                <Button
-                  size="lg"
-                  onClick={() => setShowConfirm(true)}
-                  disabled={!totals.balanced || !hasAnyEntries}
-                  data-testid="button-post-opening-balances"
-                >
-                  <ArrowRightLeft className="h-4 w-4 mr-2" />
-                  Post Opening Balances
-                </Button>
-              </div>
+              <Badge variant={totals.balanced ? "default" : "destructive"} data-testid="balance-status">
+                {totals.balanced ? "Balanced" : `Off by ${formatCurrency(Math.abs(totals.debit - totals.credit))}`}
+              </Badge>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div className="flex gap-2">
+              <Input
+                type="date"
+                className="w-36"
+                value={effectiveDate}
+                onChange={(e) => setEffectiveDate(e.target.value)}
+                data-testid="input-effective-date"
+              />
+              <Input
+                placeholder="Notes (optional)"
+                className="flex-1"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                data-testid="input-notes"
+              />
+            </div>
+            <Button
+              size="lg"
+              className="w-full text-base"
+              onClick={() => setShowConfirm(true)}
+              disabled={!totals.balanced || !hasAnyEntries}
+              data-testid="button-post-opening-balances"
+            >
+              <ArrowRightLeft className="h-5 w-5 mr-2" />
+              Post Opening Balances
+            </Button>
+          </div>
+        </div>
+      )}
 
       <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
         <DialogContent>
