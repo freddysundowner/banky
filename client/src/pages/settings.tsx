@@ -121,13 +121,14 @@ export default function SettingsPage({ organizationId }: SettingsPageProps) {
     enabled: !!organizationId,
   });
 
-  const { data: orgData } = useQuery<{ staff_email_domain?: string; name?: string }>({
+  const { data: orgData } = useQuery<{ staff_email_domain?: string; name?: string; phone?: string; email?: string; address?: string }>({
     queryKey: ["/api/organizations", organizationId, "info"],
     queryFn: async () => {
       const memberships = await fetch("/api/organizations/my", { credentials: "include" }).then(r => r.json());
       const membership = memberships?.find((m: any) => m.organizationId === organizationId || m.organization?.id === organizationId);
       if (membership?.organization) {
-        return { staff_email_domain: membership.organization.staff_email_domain, name: membership.organization.name };
+        const org = membership.organization;
+        return { staff_email_domain: org.staff_email_domain, name: org.name, phone: org.phone, email: org.email, address: org.address };
       }
       return {};
     },
@@ -167,10 +168,18 @@ export default function SettingsPage({ organizationId }: SettingsPageProps) {
     },
   });
 
+  const orgFieldFallbacks: Record<string, string> = {
+    organization_name: orgData?.name || "",
+    organization_phone: orgData?.phone || "",
+    organization_email: orgData?.email || "",
+    organization_address: orgData?.address || "",
+  };
+
   const getValue = (key: string): string => {
     if (settings[key] !== undefined) return settings[key];
     const setting = settingsData?.find(s => s.setting_key === key);
-    return setting?.setting_value || "";
+    if (setting?.setting_value) return setting.setting_value;
+    return orgFieldFallbacks[key] || "";
   };
 
   const getBoolValue = (key: string): boolean => {
