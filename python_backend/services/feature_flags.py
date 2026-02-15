@@ -221,7 +221,7 @@ def generate_license_key(edition: str, org_name: str) -> str:
     return f"BANKY-{edition_code}-{year}-{unique}"
 
 
-CORE_FEATURES = {Feature.MPESA_INTEGRATION}
+CORE_FEATURES: Set[str] = set()
 
 def get_org_features(organization_id: str, db) -> Set[str]:
     from models.master import OrganizationSubscription

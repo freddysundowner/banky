@@ -221,7 +221,9 @@ def get_available_plans(organization_id: str, auth = Depends(get_current_user), 
         "teller_station": "Teller Station",
         "float_management": "Float Management",
         "analytics": "Analytics Dashboard",
+        "analytics_export": "Analytics Export",
         "sms_notifications": "SMS Notifications",
+        "bulk_sms": "Bulk SMS",
         "expenses": "Expense Tracking",
         "leave_management": "Leave Management",
         "multiple_branches": "Multiple Branches",
@@ -234,6 +236,8 @@ def get_available_plans(organization_id: str, auth = Depends(get_current_user), 
         "api_access": "API Access",
         "custom_reports": "Custom Reports",
         "white_label": "White Label",
+        "mpesa_integration": "M-Pesa Integration",
+        "bank_integration": "Bank Integration",
         "priority_support": "Priority Support"
     }
     
