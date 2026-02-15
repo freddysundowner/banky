@@ -729,7 +729,6 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
       refetchShortages();
       setShowShortageApproval(false);
       setPendingShortageId(null);
-      setApproverStaffNumber("");
       setApproverPin("");
       setApprovalNotes("");
       setPhysicalCount("");
