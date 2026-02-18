@@ -1387,7 +1387,7 @@ async def approve_shortage(
             "amount": total_amount,
             "distributions": [{"action": d.action, "amount": d.amount} for d in dists],
             "teller_name": f"{teller.first_name} {teller.last_name}" if teller else None,
-            "approved_by": f"{approver_staff.first_name} {approver_staff.last_name}"
+            "approved_by": f"{approver_staff.first_name} {approver_staff.last_name}" if approver_staff else (f"{approver_master.full_name}" if approver_master else "Admin")
         }
     finally:
         session.close()
