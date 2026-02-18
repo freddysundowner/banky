@@ -599,6 +599,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
   const [showShortageApproval, setShowShortageApproval] = useState(false);
   const [pendingShortageId, setPendingShortageId] = useState<string | null>(null);
   const [approverPin, setApproverPin] = useState("");
+  const [approverStaffNumber, setApproverStaffNumber] = useState("");
   const [shortageDists, setShortageDists] = useState<Array<{action: "deduct" | "hold" | "expense"; amount: string}>>([{action: "deduct", amount: ""}]);
   const [approvalNotes, setApprovalNotes] = useState("");
 
@@ -685,6 +686,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
         amount: parseFloat(d.amount) || (shortageDists.length === 1 ? shortageTotal : 0),
       }));
       const res = await apiRequest("POST", `/api/organizations/${organizationId}/shortages/${pendingShortageId}/approve`, {
+        staff_number: approverStaffNumber,
         pin: approverPin,
         distributions,
         notes: approvalNotes,
@@ -697,6 +699,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
       setShowShortageApproval(false);
       setPendingShortageId(null);
       setApproverPin("");
+      setApproverStaffNumber("");
       setShortageDists([{action: "deduct", amount: ""}]);
       setApprovalNotes("");
       setPhysicalCount("");
@@ -727,6 +730,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
       setShowShortageApproval(false);
       setPendingShortageId(null);
       setApproverPin("");
+      setApproverStaffNumber("");
       setApprovalNotes("");
       setPhysicalCount("");
       setReconcileNotes("");
@@ -2113,7 +2117,19 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
                 )}
 
                 <div className="space-y-2">
-                  <Label htmlFor="approver-pin">Manager Approval PIN</Label>
+                  <Label htmlFor="approver-staff-number">Staff Number</Label>
+                  <Input
+                    id="approver-staff-number"
+                    placeholder="Enter staff number or ADMIN"
+                    value={approverStaffNumber}
+                    onChange={(e) => setApproverStaffNumber(e.target.value)}
+                    autoFocus
+                    data-testid="input-approver-staff-number"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="approver-pin">Approval PIN</Label>
                   <Input
                     id="approver-pin"
                     type="password"
@@ -2122,7 +2138,6 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
                     placeholder="Enter 4-6 digit PIN"
                     value={approverPin}
                     onChange={(e) => setApproverPin(e.target.value)}
-                    autoFocus
                     data-testid="input-approver-pin"
                   />
                 </div>
@@ -2231,6 +2246,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
               <Button variant="outline" onClick={() => {
                 setShowShortageApproval(false);
                 setApproverPin("");
+                setApproverStaffNumber("");
                 setShortageDists([{action: "deduct", amount: ""}]);
                 setApprovalNotes("");
               }}>
@@ -2238,7 +2254,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
               </Button>
               <Button
                 onClick={() => approveShortagueMutation.mutate()}
-                disabled={!approverPin || approveShortagueMutation.isPending || (() => {
+                disabled={!approverPin || !approverStaffNumber || approveShortagueMutation.isPending || (() => {
                   if (shortageDists.length <= 1) return false;
                   const total = myShortages?.shortages?.find(s => s.id === pendingShortageId)?.shortage_amount || 0;
                   const distSum = shortageDists.reduce((s, d) => s + (parseFloat(d.amount) || 0), 0);

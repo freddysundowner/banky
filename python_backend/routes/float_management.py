@@ -1163,15 +1163,31 @@ async def approve_shortage(
     session = tenant_ctx.create_session()
     
     try:
+        from models.master import User as MasterUser, OrganizationMember
+        
         approver_staff = None
+        approver_master = None
         if request.staff_number:
-            approver_staff = session.query(Staff).filter(Staff.staff_number == request.staff_number).first()
-            if not approver_staff:
-                raise HTTPException(status_code=401, detail="Invalid PIN")
-            if not approver_staff.approval_pin:
-                raise HTTPException(status_code=400, detail="This staff member has not set an approval PIN.")
-            if not bcrypt.checkpw(request.pin.encode('utf-8'), approver_staff.approval_pin.encode('utf-8')):
-                raise HTTPException(status_code=401, detail="Invalid PIN")
+            if request.staff_number == "ADMIN":
+                members = db.query(OrganizationMember).filter(
+                    OrganizationMember.organization_id == org_id,
+                    OrganizationMember.role.in_(["owner", "admin"])
+                ).all()
+                for m in members:
+                    mu = db.query(MasterUser).filter(MasterUser.id == m.user_id).first()
+                    if mu and mu.approval_pin and bcrypt.checkpw(request.pin.encode('utf-8'), mu.approval_pin.encode('utf-8')):
+                        approver_master = mu
+                        break
+                if not approver_master:
+                    raise HTTPException(status_code=401, detail="Invalid PIN")
+            else:
+                approver_staff = session.query(Staff).filter(Staff.staff_number == request.staff_number).first()
+                if not approver_staff:
+                    raise HTTPException(status_code=401, detail="Invalid PIN")
+                if not approver_staff.approval_pin:
+                    raise HTTPException(status_code=400, detail="This staff member has not set an approval PIN.")
+                if not bcrypt.checkpw(request.pin.encode('utf-8'), approver_staff.approval_pin.encode('utf-8')):
+                    raise HTTPException(status_code=401, detail="Invalid PIN")
         else:
             candidates = session.query(Staff).filter(Staff.approval_pin.isnot(None)).all()
             for candidate in candidates:
@@ -1179,11 +1195,25 @@ async def approve_shortage(
                     approver_staff = candidate
                     break
             if not approver_staff:
-                raise HTTPException(status_code=401, detail="Invalid PIN")
+                members = db.query(OrganizationMember).filter(
+                    OrganizationMember.organization_id == org_id,
+                    OrganizationMember.role.in_(["owner", "admin"])
+                ).all()
+                for m in members:
+                    mu = db.query(MasterUser).filter(MasterUser.id == m.user_id).first()
+                    if mu and mu.approval_pin and bcrypt.checkpw(request.pin.encode('utf-8'), mu.approval_pin.encode('utf-8')):
+                        approver_master = mu
+                        break
+                if not approver_master:
+                    raise HTTPException(status_code=401, detail="Invalid PIN")
         
-        allowed_roles = ("manager", "admin", "supervisor", "branch_manager", "chief_teller")
-        if not approver_staff.role or approver_staff.role.lower() not in allowed_roles:
-            raise HTTPException(status_code=403, detail="You do not have permission to approve shortages")
+        if approver_staff:
+            allowed_roles = ("manager", "admin", "supervisor", "branch_manager", "chief_teller")
+            if not approver_staff.role or approver_staff.role.lower() not in allowed_roles:
+                raise HTTPException(status_code=403, detail="You do not have permission to approve shortages")
+            approver_id = approver_staff.id
+        else:
+            approver_id = approver_master.id
         
         shortage = session.query(ShortageRecord).filter(ShortageRecord.id == shortage_id).first()
         if not shortage:
@@ -1216,7 +1246,7 @@ async def approve_shortage(
         if is_split:
             shortage.status = "resolved"
             shortage.resolution = "split"
-            shortage.approved_by_id = approver_staff.id
+            shortage.approved_by_id = approver_id
             shortage.approved_at = datetime.utcnow()
             shortage.notes = request.notes
             shortage.distributions = json_module.dumps([{"action": d.action, "amount": d.amount} for d in dists])
@@ -1229,7 +1259,7 @@ async def approve_shortage(
                     staff_id=shortage.staff_id,
                     date=shortage.date,
                     shortage_amount=d.amount,
-                    approved_by_id=approver_staff.id,
+                    approved_by_id=approver_id,
                     approved_at=datetime.utcnow(),
                     notes=request.notes,
                     parent_shortage_id=shortage.id,
@@ -1242,7 +1272,7 @@ async def approve_shortage(
             if d.action == "deduct":
                 target.status = "deducted"
                 target.resolution = "deduct_salary"
-                target.approved_by_id = approver_staff.id
+                target.approved_by_id = approver_id
                 target.approved_at = datetime.utcnow()
                 target.notes = request.notes
                 salary_deduction = SalaryDeduction(
@@ -1253,7 +1283,7 @@ async def approve_shortage(
                     deduction_date=date.today(),
                     pay_period=date.today().strftime("%Y-%m"),
                     status="pending",
-                    approved_by_id=approver_staff.id,
+                    approved_by_id=approver_id,
                     notes=request.notes
                 )
                 session.add(salary_deduction)
@@ -1261,14 +1291,14 @@ async def approve_shortage(
             elif d.action == "hold":
                 target.status = "held"
                 target.resolution = "hold"
-                target.approved_by_id = approver_staff.id
+                target.approved_by_id = approver_id
                 target.approved_at = datetime.utcnow()
                 target.notes = request.notes
                 action_parts.append(f"{d.amount:,.0f} put on hold")
             elif d.action == "expense":
                 target.status = "expensed"
                 target.resolution = "expense"
-                target.approved_by_id = approver_staff.id
+                target.approved_by_id = approver_id
                 target.approved_at = datetime.utcnow()
                 target.notes = request.notes or "Written off as organizational expense"
                 action_parts.append(f"{d.amount:,.0f} written off as expense")
@@ -1303,7 +1333,7 @@ async def approve_shortage(
             teller_float.closing_balance = remaining_cash
             teller_float.status = "reconciled"
             teller_float.reconciled_at = datetime.utcnow()
-            teller_float.reconciled_by_id = approver_staff.id
+            teller_float.reconciled_by_id = approver_id
             
             if remaining_cash > 0:
                 vault = get_or_create_branch_vault(session, teller_float.branch_id)
@@ -1320,7 +1350,7 @@ async def approve_shortage(
                     amount=remaining_cash,
                     balance_after=vault.current_balance,
                     description=f"End-of-day return after shortage approval",
-                    performed_by_id=approver_staff.id,
+                    performed_by_id=approver_id,
                     status="completed"
                 )
                 session.add(vault_txn)
@@ -1342,7 +1372,7 @@ async def approve_shortage(
             ).first()
             if float_txn:
                 float_txn.status = "completed"
-                float_txn.approved_by_id = approver_staff.id
+                float_txn.approved_by_id = approver_id
                 float_txn.balance_after = Decimal("0")
                 float_txn.description = (float_txn.description or "") + " Cash returned to vault."
         
@@ -1382,12 +1412,18 @@ async def set_approval_pin(
     
     try:
         staff = session.query(Staff).filter(Staff.email == user.email).first()
-        if not staff:
-            raise HTTPException(status_code=404, detail="Staff not found")
-        
         hashed = bcrypt.hashpw(pin.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        staff.approval_pin = hashed
-        session.commit()
+        
+        if staff:
+            staff.approval_pin = hashed
+            session.commit()
+        else:
+            from models.master import User as MasterUser
+            master_user = db.query(MasterUser).filter(MasterUser.email == user.email).first()
+            if not master_user:
+                raise HTTPException(status_code=404, detail="User not found")
+            master_user.approval_pin = hashed
+            db.commit()
         
         return {"message": "Approval PIN set successfully"}
     finally:

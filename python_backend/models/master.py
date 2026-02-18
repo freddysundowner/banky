@@ -157,6 +157,7 @@ class User(Base):
     last_name = Column(String(100))
     phone = Column(String(50))
     is_email_verified = Column(Boolean, default=False)
+    approval_pin = Column(String(255))
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     
