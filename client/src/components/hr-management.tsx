@@ -1515,6 +1515,12 @@ export default function HRManagement({ organizationId }: HRManagementProps) {
                       <span>Loan Deductions</span>
                       <span className="font-mono">{formatCurrency(selectedPayslip.loan_deductions || 0)}</span>
                     </div>
+                    {(selectedPayslip.shortage_deductions || 0) > 0 && (
+                      <div className="flex justify-between">
+                        <span>Shortage Deductions</span>
+                        <span className="font-mono">{formatCurrency(selectedPayslip.shortage_deductions || 0)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span>Other Deductions</span>
                       <span className="font-mono">{formatCurrency(selectedPayslip.other_deductions || 0)}</span>

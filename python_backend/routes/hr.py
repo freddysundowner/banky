@@ -12,7 +12,7 @@ from models.tenant import (
     LeaveType, LeaveBalance, LeaveRequest, Attendance,
     PayrollConfig, Payslip, EmployeeDocument, StaffProfile,
     DisciplinaryRecord, TrainingRecord, PayPeriod, PayrollRun, SalaryAdvance,
-    OrganizationSettings
+    SalaryDeduction, OrganizationSettings
 )
 from schemas.tenant import (
     PerformanceReviewCreate, PerformanceReviewResponse,
@@ -1590,6 +1590,13 @@ async def run_payroll(org_id: str, period_id: str, user=Depends(get_current_user
                 deduct = min(monthly_recovery, remaining)
                 advance_deduction += deduct
             
+            pending_shortage_deds = tenant_session.query(SalaryDeduction).filter(
+                SalaryDeduction.staff_id == config.staff_id,
+                SalaryDeduction.status == "pending",
+                SalaryDeduction.pay_period == pay_period_str
+            ).all()
+            shortage_deduction = sum(Decimal(str(sd.amount)) for sd in pending_shortage_deds)
+            
             basic = config.basic_salary or Decimal("0")
             house = config.house_allowance or Decimal("0")
             transport = config.transport_allowance or Decimal("0")
@@ -1601,7 +1608,7 @@ async def run_payroll(org_id: str, period_id: str, user=Depends(get_current_user
             paye = config.paye_tax or Decimal("0")
             other_ded = config.other_deductions or Decimal("0")
             base_deductions = nhif + nssf + paye + other_ded
-            deductions = base_deductions + advance_deduction
+            deductions = base_deductions + advance_deduction + shortage_deduction
             net = gross - deductions
             
             payslip = Payslip(
@@ -1617,6 +1624,7 @@ async def run_payroll(org_id: str, period_id: str, user=Depends(get_current_user
                 nssf_deduction=config.nssf_deduction or Decimal("0"),
                 paye_tax=config.paye_tax or Decimal("0"),
                 loan_deductions=advance_deduction,
+                shortage_deductions=shortage_deduction,
                 other_deductions=config.other_deductions or Decimal("0"),
                 total_deductions=deductions,
                 net_salary=net,
@@ -1636,6 +1644,14 @@ async def run_payroll(org_id: str, period_id: str, user=Depends(get_current_user
         period.staff_count = staff_count
         period.processed_by_id = staff.id if staff else None
         period.processed_at = datetime.utcnow()
+        
+        all_pending_deds = tenant_session.query(SalaryDeduction).filter(
+            SalaryDeduction.status == "pending",
+            SalaryDeduction.pay_period == pay_period_str
+        ).all()
+        for sd in all_pending_deds:
+            sd.status = "processed"
+            sd.processed_at = datetime.utcnow()
         
         tenant_session.commit()
         
