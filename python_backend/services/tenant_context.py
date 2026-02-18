@@ -4,7 +4,7 @@ from models.master import Organization, OrganizationMember
 from models.tenant import TenantBase
 
 _migrated_tenants = set()
-_migration_version = 19  # Increment to force re-migration
+_migration_version = 20  # Increment to force re-migration
 
 def _get_db_migration_version(engine):
     """Check the migration version stored in the tenant database"""
@@ -61,6 +61,7 @@ def add_column_if_not_exists(conn, table_name, col_name, col_type):
     if not result.fetchone():
         try:
             conn.execute(text("SAVEPOINT add_col_sp"))
+            conn.execute(text("SET LOCAL statement_timeout = '30s'"))
             conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS {col_name} {col_type}"))
             conn.execute(text("RELEASE SAVEPOINT add_col_sp"))
         except Exception as e:
