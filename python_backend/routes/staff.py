@@ -29,6 +29,7 @@ def ensure_staff_has_member_account(tenant_session: Session, staff: Staff) -> Me
         membership_type="staff"
     )
     tenant_session.add(member)
+    tenant_session.flush()
     return member
 
 @router.get("/{org_id}/staff")
