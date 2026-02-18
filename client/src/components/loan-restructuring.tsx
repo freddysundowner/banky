@@ -95,8 +95,7 @@ export default function LoanRestructuring({
   const { toast } = useToast();
   const { currency, symbol, formatAmount } = useCurrency(organizationId);
   const [showDialog, setShowDialog] = useState(false);
-  const termPeriodLabels: Record<string, string> = { daily: "days", weekly: "weeks", bi_weekly: "bi-weeks", monthly: "months" };
-  const periodLabel = termPeriodLabels[repaymentFrequency] || "months";
+  const periodLabel = "months";
   const { canWrite } = useResourcePermissions(organizationId, RESOURCES.RESTRUCTURE);
   const [restructureType, setRestructureType] = useState("extend_term");
   const [newTermMonths, setNewTermMonths] = useState("");

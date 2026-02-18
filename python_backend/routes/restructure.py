@@ -11,7 +11,7 @@ from schemas.tenant import LoanRestructureCreate, LoanRestructureResponse
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission
 from services.instalment_service import regenerate_instalments_after_restructure
-from routes.loans import calculate_loan
+from routes.loans import calculate_loan, term_months_to_instalments, instalments_to_term_months
 
 router = APIRouter()
 
@@ -57,23 +57,44 @@ def get_remaining_principal_and_paid_interest(tenant_session, loan: LoanApplicat
     ).scalar()
     return remaining_principal, Decimal(str(preserved_interest or 0))
 
-def recalculate_loan(remaining_principal: Decimal, product: LoanProduct, loan: LoanApplication, new_term: int = None, new_rate: Decimal = None):
-    """Recalculate loan based on remaining principal with correct formula per interest type."""
-    term = new_term or loan.term_months
+def recalculate_loan_by_instalments(remaining_principal: Decimal, product: LoanProduct, loan: LoanApplication, remaining_instalments: int, new_rate: Decimal = None):
+    """Recalculate loan based on remaining principal using number of remaining instalments directly."""
     rate = new_rate if new_rate is not None else loan.interest_rate
     interest_deducted_upfront = bool(getattr(loan, 'interest_deducted_upfront', False))
+    n = remaining_instalments
 
     if interest_deducted_upfront:
-        periodic_payment = remaining_principal / term if term > 0 else Decimal("0")
+        periodic_payment = remaining_principal / n if n > 0 else Decimal("0")
         return {
             "monthly_repayment": round(periodic_payment, 2),
             "total_repayment": round(remaining_principal, 2),
-            "total_interest": Decimal("0")
+            "total_interest": Decimal("0"),
+            "num_instalments": n
         }
 
     interest_type = getattr(product, 'interest_type', 'reducing_balance') if product else 'reducing_balance'
     freq = getattr(product, 'repayment_frequency', 'monthly') if product else 'monthly'
-    return calculate_loan(remaining_principal, term, rate, interest_type, freq, freq)
+    from routes.loans import get_periodic_rate
+    periodic_rate = get_periodic_rate(rate, freq, freq)
+
+    if interest_type == "flat":
+        total_interest = remaining_principal * periodic_rate * n
+        total_repayment = remaining_principal + total_interest
+        periodic_payment = total_repayment / n if n > 0 else Decimal("0")
+    else:
+        if periodic_rate > 0:
+            periodic_payment = remaining_principal * (periodic_rate * (1 + periodic_rate) ** n) / ((1 + periodic_rate) ** n - 1)
+        else:
+            periodic_payment = remaining_principal / n if n > 0 else Decimal("0")
+        total_repayment = periodic_payment * n
+        total_interest = total_repayment - remaining_principal
+
+    return {
+        "total_interest": round(total_interest, 2),
+        "total_repayment": round(total_repayment, 2),
+        "monthly_repayment": round(periodic_payment, 2),
+        "num_instalments": n
+    }
 
 @router.get("/{org_id}/loans/{loan_id}/restructures")
 async def list_loan_restructures(org_id: str, loan_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
@@ -126,12 +147,15 @@ async def restructure_loan(org_id: str, loan_id: str, data: LoanRestructureCreat
             reason=data.reason
         )
         
+        freq = getattr(product, 'repayment_frequency', 'monthly') or 'monthly'
+
         if data.restructure_type == "extend_term" and data.new_term_months:
             if data.new_term_months <= loan.term_months:
                 raise HTTPException(status_code=400, detail="New term must be greater than current term")
             
-            remaining_periods = data.new_term_months - completed_count
-            recalc = recalculate_loan(remaining_principal, product, loan, new_term=remaining_periods)
+            new_total_instalments = term_months_to_instalments(data.new_term_months, freq)
+            remaining_instalments = new_total_instalments - completed_count
+            recalc = recalculate_loan_by_instalments(remaining_principal, product, loan, remaining_instalments)
             restructure.new_term_months = data.new_term_months
             restructure.new_monthly_repayment = recalc["monthly_repayment"]
             
@@ -165,20 +189,22 @@ async def restructure_loan(org_id: str, loan_id: str, data: LoanRestructureCreat
             else:
                 new_term = max(int(math.ceil(float(remaining_principal / new_payment))), 1)
 
-            recalc = recalculate_loan(remaining_principal, product, loan, new_term=new_term)
+            recalc = recalculate_loan_by_instalments(remaining_principal, product, loan, new_term)
             
-            total_term = new_term + completed_count
+            total_instalments = new_term + completed_count
+            new_term_in_months = instalments_to_term_months(total_instalments, freq)
             restructure.new_monthly_repayment = new_payment
-            restructure.new_term_months = total_term
+            restructure.new_term_months = new_term_in_months
             loan.monthly_repayment = new_payment
-            loan.term_months = total_term
+            loan.term_months = new_term_in_months
             loan.total_interest = preserved_interest + recalc["total_interest"]
             loan.total_repayment = amount_already_paid + recalc["total_repayment"]
             loan.outstanding_balance = recalc["total_repayment"]
         
         elif data.restructure_type == "adjust_interest" and data.new_interest_rate is not None:
-            remaining_periods = int(loan.term_months) - completed_count
-            recalc = recalculate_loan(remaining_principal, product, loan, new_term=remaining_periods, new_rate=data.new_interest_rate)
+            total_instalments = term_months_to_instalments(int(loan.term_months), freq)
+            remaining_instalments = total_instalments - completed_count
+            recalc = recalculate_loan_by_instalments(remaining_principal, product, loan, remaining_instalments, new_rate=data.new_interest_rate)
             restructure.new_interest_rate = data.new_interest_rate
             restructure.new_monthly_repayment = recalc["monthly_repayment"]
             
@@ -244,10 +270,17 @@ async def preview_restructure(
             "outstanding_balance": float(remaining_principal)
         }
         
+        freq = getattr(product, 'repayment_frequency', 'monthly') or 'monthly'
         new_term = new_term_months or loan.term_months
         new_rate = Decimal(str(new_interest_rate)) if new_interest_rate else loan.interest_rate
         
-        recalc = recalculate_loan(remaining_principal, product, loan, new_term=new_term, new_rate=new_rate)
+        completed_count = tenant_session.query(LoanInstalment).filter(
+            LoanInstalment.loan_id == str(loan.id),
+            LoanInstalment.status.in_(["paid", "partial"])
+        ).count()
+        new_total_instalments = term_months_to_instalments(new_term, freq)
+        remaining_instalments = max(new_total_instalments - completed_count, 1)
+        recalc = recalculate_loan_by_instalments(remaining_principal, product, loan, remaining_instalments, new_rate=new_rate)
         
         proposed = {
             "term_months": new_term,

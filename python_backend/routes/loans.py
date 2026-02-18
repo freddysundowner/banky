@@ -69,25 +69,38 @@ def get_periodic_rate(interest_rate: Decimal, interest_rate_period: str, repayme
         annual_rate = rate_as_decimal * Decimal(str(rate_periods))
         return annual_rate / Decimal(str(freq_periods))
 
-def calculate_loan(amount: Decimal, term: int, interest_rate: Decimal, interest_type: str = "reducing_balance", repayment_frequency: str = "monthly", interest_rate_period: str = "monthly"):
-    periodic_rate = get_periodic_rate(interest_rate, interest_rate_period, repayment_frequency)
+def term_months_to_instalments(term_months: int, repayment_frequency: str) -> int:
+    periods_per_year = {"daily": 365, "weekly": 52, "bi_weekly": 26, "monthly": 12}
+    ppy = periods_per_year.get(repayment_frequency, 12)
+    return max(round(term_months * ppy / 12), 1)
 
+def instalments_to_term_months(num_instalments: int, repayment_frequency: str) -> int:
+    periods_per_year = {"daily": 365, "weekly": 52, "bi_weekly": 26, "monthly": 12}
+    ppy = periods_per_year.get(repayment_frequency, 12)
+    return max(round(num_instalments * 12 / ppy), 1)
+
+def calculate_loan(amount: Decimal, term_months: int, interest_rate: Decimal, interest_type: str = "reducing_balance", repayment_frequency: str = "monthly", interest_rate_period: str = "monthly"):
+    periodic_rate = get_periodic_rate(interest_rate, interest_rate_period, repayment_frequency)
+    num_instalments = term_months_to_instalments(term_months, repayment_frequency)
+
+    n = num_instalments
     if interest_type == "flat":
-        total_interest = amount * periodic_rate * term
+        total_interest = amount * periodic_rate * n
         total_repayment = amount + total_interest
-        periodic_payment = total_repayment / term if term > 0 else Decimal("0")
+        periodic_payment = total_repayment / n if n > 0 else Decimal("0")
     else:
         if periodic_rate > 0:
-            periodic_payment = amount * (periodic_rate * (1 + periodic_rate) ** term) / ((1 + periodic_rate) ** term - 1)
+            periodic_payment = amount * (periodic_rate * (1 + periodic_rate) ** n) / ((1 + periodic_rate) ** n - 1)
         else:
-            periodic_payment = amount / term if term > 0 else Decimal("0")
-        total_repayment = periodic_payment * term
+            periodic_payment = amount / n if n > 0 else Decimal("0")
+        total_repayment = periodic_payment * n
         total_interest = total_repayment - amount
 
     return {
         "total_interest": round(total_interest, 2),
         "total_repayment": round(total_repayment, 2),
-        "monthly_repayment": round(periodic_payment, 2)
+        "monthly_repayment": round(periodic_payment, 2),
+        "num_instalments": n
     }
 
 def generate_code(db: Session, prefix: str):
@@ -192,6 +205,7 @@ async def list_loans(org_id: str, status: str = None, member_id: str = None, bra
             loan_dict["member_first_name"] = member.first_name if member else ""
             loan_dict["member_last_name"] = member.last_name if member else ""
             loan_dict["product_name"] = product.name if product else ""
+            loan_dict["repayment_frequency"] = getattr(product, 'repayment_frequency', 'monthly') if product else "monthly"
             loan_dict["created_by_name"] = f"{created_by.first_name} {created_by.last_name}" if created_by else None
             loan_dict["reviewed_by_name"] = f"{reviewed_by.first_name} {reviewed_by.last_name}" if reviewed_by else None
             result.append(loan_dict)
@@ -246,11 +260,8 @@ async def create_loan(org_id: str, data: LoanApplicationCreate, user=Depends(get
         if data.amount < product.min_amount or data.amount > product.max_amount:
             raise HTTPException(status_code=400, detail=f"Amount must be between {product.min_amount} and {product.max_amount}")
         
-        freq = getattr(product, 'repayment_frequency', 'monthly')
-        period_labels = {"daily": "days", "weekly": "weeks", "bi_weekly": "bi-weeks", "monthly": "months"}
-        period_label = period_labels.get(freq, "months")
         if data.term_months < product.min_term_months or data.term_months > product.max_term_months:
-            raise HTTPException(status_code=400, detail=f"Term must be between {product.min_term_months} and {product.max_term_months} {period_label}")
+            raise HTTPException(status_code=400, detail=f"Term must be between {product.min_term_months} and {product.max_term_months} months")
         
         rate_period = getattr(product, 'interest_rate_period', None) or 'monthly'
         calc = calculate_loan(data.amount, data.term_months, product.interest_rate, product.interest_type, getattr(product, 'repayment_frequency', 'monthly'), rate_period)
@@ -749,10 +760,10 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
         if deduct_interest_upfront:
             # Deduct interest from disbursement amount
             net_amount = net_amount - (loan.total_interest or Decimal("0"))
-            # Outstanding balance is just the principal (interest already paid)
             outstanding_balance = loan.amount
-            # Recalculate monthly repayment as principal only / term
-            monthly_repayment = loan.amount / loan.term_months if loan.term_months > 0 else loan.amount
+            freq = getattr(product, 'repayment_frequency', 'monthly') or 'monthly'
+            n_inst = term_months_to_instalments(loan.term_months, freq)
+            monthly_repayment = loan.amount / n_inst if n_inst > 0 else loan.amount
         else:
             outstanding_balance = loan.total_repayment
             monthly_repayment = loan.monthly_repayment
@@ -1092,11 +1103,8 @@ async def update_loan(org_id: str, loan_id: str, data: LoanApplicationUpdate, us
             loan.amount = data.amount
         
         if data.term_months is not None:
-            edit_freq = getattr(product, 'repayment_frequency', 'monthly')
-            edit_period_labels = {"daily": "days", "weekly": "weeks", "bi_weekly": "bi-weeks", "monthly": "months"}
-            edit_period_label = edit_period_labels.get(edit_freq, "months")
             if data.term_months < product.min_term_months or data.term_months > product.max_term_months:
-                raise HTTPException(status_code=400, detail=f"Term must be between {product.min_term_months} and {product.max_term_months} {edit_period_label}")
+                raise HTTPException(status_code=400, detail=f"Term must be between {product.min_term_months} and {product.max_term_months} months")
             loan.term_months = data.term_months
         
         if data.purpose is not None:

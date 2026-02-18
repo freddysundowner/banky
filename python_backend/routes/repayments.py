@@ -68,7 +68,10 @@ def calculate_payment_allocation(loan: LoanApplication, amount: Decimal, tenant_
         interest_type = getattr(product, 'interest_type', 'reducing_balance') if product else 'reducing_balance'
 
         if interest_type == "flat":
-            interest_per_period = (loan.total_interest or Decimal("0")) / loan.term_months if loan.term_months > 0 else Decimal("0")
+            from routes.loans import term_months_to_instalments
+            freq = getattr(product, 'repayment_frequency', 'monthly') or 'monthly'
+            n_inst = term_months_to_instalments(loan.term_months, freq)
+            interest_per_period = (loan.total_interest or Decimal("0")) / n_inst if n_inst > 0 else Decimal("0")
             interest_portion = min(amount, interest_per_period)
         else:
             periodic_rate = loan.interest_rate / Decimal("100")

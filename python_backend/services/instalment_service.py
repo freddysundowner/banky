@@ -5,6 +5,10 @@ from models.tenant import LoanInstalment, LoanApplication, LoanProduct
 FREQ_DAYS = {"daily": 1, "weekly": 7, "bi_weekly": 14, "monthly": 30}
 PERIODS_PER_YEAR = {"daily": 365, "weekly": 52, "bi_weekly": 26, "monthly": 12}
 
+def term_months_to_instalments(term_months: int, repayment_frequency: str) -> int:
+    ppy = PERIODS_PER_YEAR.get(repayment_frequency, 12)
+    return max(round(term_months * ppy / 12), 1)
+
 def _calc_insurance_for_period(balance, cli_rate, cli_freq, freq):
     if not cli_rate or cli_rate <= 0:
         return Decimal("0")
@@ -16,11 +20,10 @@ def _calc_insurance_for_period(balance, cli_rate, cli_freq, freq):
         return round(balance * rate, 2)
 
 def generate_instalment_schedule(tenant_session, loan: LoanApplication, product: LoanProduct):
-    term = int(loan.term_months)
+    freq = getattr(product, 'repayment_frequency', 'monthly') or 'monthly'
+    term = term_months_to_instalments(int(loan.term_months), freq)
     if term <= 0:
         return []
-    
-    freq = getattr(product, 'repayment_frequency', 'monthly') or 'monthly'
     period_days = FREQ_DAYS.get(freq, 30)
     
     deduct_upfront = bool(getattr(loan, 'interest_deducted_upfront', False))
@@ -146,7 +149,9 @@ def regenerate_instalments_after_restructure(tenant_session, loan: LoanApplicati
         LoanInstalment.status.in_(["pending", "overdue"])
     ).delete(synchronize_session="fetch")
 
-    remaining_term = int(loan.term_months) - paid_count
+    freq = getattr(product, 'repayment_frequency', 'monthly') or 'monthly'
+    total_instalments = term_months_to_instalments(int(loan.term_months), freq)
+    remaining_term = total_instalments - paid_count
     if remaining_term <= 0:
         return
 

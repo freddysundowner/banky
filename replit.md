@@ -43,3 +43,12 @@ The frontend uses React 18 and TypeScript with Shadcn UI components and Tailwind
 - **Stripe**: Subscription payment gateway.
 - **Paystack**: Subscription payment gateway.
 - **exchangerate-api.com**: For currency exchange rates.
+
+## Recent Changes
+
+### 2026-02-18: Loan Term Calculation Fix
+- **Change**: `term_months` field now always represents months. The system converts to the correct number of payment instalments based on repayment frequency (weekly=52/12, bi-weekly=26/12, daily=365/12 periods per month).
+- **Conversion**: `term_months_to_instalments(term_months, frequency)` and `instalments_to_term_months(instalments, frequency)` utility functions added to `routes/loans.py` and `services/instalment_service.py`.
+- **Frontend**: Term always displays as "months" with instalment count shown for non-monthly frequencies (e.g., "1 month (4 weekly instalments)"). Loan form preview now correctly converts rates and computes instalment count.
+- **Backend**: `calculate_loan`, `generate_instalment_schedule`, `regenerate_instalments_after_restructure`, restructure endpoints, and repayment allocation all updated to use proper month-to-instalment conversion.
+- **Impact**: All new loans will use correct calculations. Existing loan LN0001 was created with old logic (term=4 treated as 4 periods).

@@ -146,13 +146,10 @@ export default function LoanProducts({ organizationId }: LoanProductsProps) {
     },
   });
 
-  const watchedFrequency = form.watch("repayment_frequency") || "monthly";
-  const termPeriodLabels: Record<string, string> = { daily: "days", weekly: "weeks", bi_weekly: "bi-weeks", monthly: "months" };
-  const termPeriodLabel = termPeriodLabels[watchedFrequency] || "months";
+  const termPeriodLabel = "months";
 
-  const getProductTermLabel = (product: any) => {
-    const freq = product?.repayment_frequency || "monthly";
-    return termPeriodLabels[freq] || "months";
+  const getProductTermLabel = (_product: any) => {
+    return "months";
   };
 
   const createMutation = useMutation({

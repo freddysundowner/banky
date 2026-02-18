@@ -965,17 +965,20 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
     createMutation.mutate(payload as any);
   };
 
+  const PERIODS_PER_YEAR: Record<string, number> = { daily: 365, weekly: 52, bi_weekly: 26, monthly: 12 };
+  const termMonthsToInstalments = (termMonths: number, freq: string) => Math.max(Math.round(termMonths * (PERIODS_PER_YEAR[freq] || 12) / 12), 1);
+
   const getFreqLabel = (loanOrProduct: any) => {
     const freq = loanOrProduct?.repayment_frequency 
       || (products?.find((p: any) => p.id === (loanOrProduct?.product_id || loanOrProduct?.loan_product_id)) as any)?.repayment_frequency 
       || "monthly";
-    const labels: Record<string, { period: string; payment: string }> = {
-      daily: { period: "days", payment: "Daily Payment", rateLabel: "per day" },
-      weekly: { period: "weeks", payment: "Weekly Payment", rateLabel: "per week" },
-      bi_weekly: { period: "bi-weeks", payment: "Bi-Weekly Payment", rateLabel: "per 2 weeks" },
-      monthly: { period: "months", payment: "Monthly Payment", rateLabel: "per month" },
+    const labels: Record<string, { period: string; payment: string; rateLabel: string; instalmentUnit: string }> = {
+      daily: { period: "months", payment: "Daily Payment", rateLabel: "per day", instalmentUnit: "daily" },
+      weekly: { period: "months", payment: "Weekly Payment", rateLabel: "per week", instalmentUnit: "weekly" },
+      bi_weekly: { period: "months", payment: "Bi-Weekly Payment", rateLabel: "per 2 weeks", instalmentUnit: "bi-weekly" },
+      monthly: { period: "months", payment: "Monthly Payment", rateLabel: "per month", instalmentUnit: "monthly" },
     };
-    return labels[freq] || labels.monthly;
+    return { ...(labels[freq] || labels.monthly), freq };
   };
 
   if (selectedLoan) {
@@ -1018,7 +1021,7 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
           "LOAN DETAILS",
           `Principal Amount: ${symbol} ${safeParse(selectedLoan.amount).toLocaleString()}`,
           `Interest Rate: ${selectedLoan.interest_rate || 0}% p.a.`,
-          `Term: ${selectedLoan.term_months || 0} ${loanFreq.period}`,
+          `Term: ${selectedLoan.term_months || 0} months (${termMonthsToInstalments(selectedLoan.term_months || 0, loanFreq.freq)} ${loanFreq.instalmentUnit} instalments)`,
           `${loanFreq.payment}: ${symbol} ${safeParse(selectedLoan.monthly_repayment).toLocaleString()}`,
           `Total Interest: ${symbol} ${safeParse(selectedLoan.total_interest).toLocaleString()}`,
           `Total Repayment: ${symbol} ${safeParse(selectedLoan.total_repayment).toLocaleString()}`,
@@ -1229,7 +1232,8 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
               </div>
               <div>
                 <div className="text-sm text-muted-foreground">Term</div>
-                <div className="text-lg font-bold">{loan.term_months || 0} {loanFreq.period}</div>
+                <div className="text-lg font-bold">{loan.term_months || 0} months</div>
+                {loanFreq.freq !== "monthly" && <div className="text-xs text-muted-foreground">({termMonthsToInstalments(loan.term_months || 0, loanFreq.freq)} {loanFreq.instalmentUnit} instalments)</div>}
               </div>
               <div>
                 <div className="text-sm text-muted-foreground">Interest Rate</div>
@@ -1713,19 +1717,30 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
     const term = formInstance.watch("term") || 0;
     
     const frequency = (product as any)?.repayment_frequency || "monthly";
-    const frequencyLabels: Record<string, { period: string; payment: string }> = {
-      daily: { period: "Days", payment: "Daily Payment" },
-      weekly: { period: "Weeks", payment: "Weekly Payment" },
-      bi_weekly: { period: "Bi-Weeks", payment: "Bi-Weekly Payment" },
-      monthly: { period: "Months", payment: "Monthly Payment" },
+    const frequencyLabels: Record<string, { period: string; payment: string; instalmentUnit: string }> = {
+      daily: { period: "Months", payment: "Daily Payment", instalmentUnit: "daily" },
+      weekly: { period: "Months", payment: "Weekly Payment", instalmentUnit: "weekly" },
+      bi_weekly: { period: "Months", payment: "Bi-Weekly Payment", instalmentUnit: "bi-weekly" },
+      monthly: { period: "Months", payment: "Monthly Payment", instalmentUnit: "monthly" },
     };
     const freqInfo = frequencyLabels[frequency] || frequencyLabels.monthly;
-    const periodicRate = product ? parseFloat(product.interest_rate) / 100 : 0;
+    const ratePeriod = (product as any)?.interest_rate_period || "monthly";
+    const rawRate = product ? parseFloat(product.interest_rate) / 100 : 0;
+    const getPeriodicRate = (rate: number, rp: string, freq: string) => {
+      const ppy: Record<string, number> = { daily: 365, weekly: 52, bi_weekly: 26, monthly: 12, annual: 1 };
+      const freqPeriods = ppy[freq] || 12;
+      const ratePeriods = ppy[rp] || 12;
+      if (rp === "annual") return rate / freqPeriods;
+      if (ratePeriods === freqPeriods) return rate;
+      return (rate * ratePeriods) / freqPeriods;
+    };
+    const periodicRate = getPeriodicRate(rawRate, ratePeriod, frequency);
+    const numInstalments = termMonthsToInstalments(term, frequency);
 
     const totalInterest = product?.interest_type === "flat" 
-      ? amount * periodicRate
-      : periodicRate > 0 && term > 0 ? (amount * periodicRate * Math.pow(1 + periodicRate, term)) / (Math.pow(1 + periodicRate, term) - 1) * term - amount : 0;
-    const periodicPayment = term > 0 ? (amount + totalInterest) / term : 0;
+      ? amount * periodicRate * numInstalments
+      : periodicRate > 0 && numInstalments > 0 ? (amount * periodicRate * Math.pow(1 + periodicRate, numInstalments)) / (Math.pow(1 + periodicRate, numInstalments) - 1) * numInstalments - amount : 0;
+    const periodicPayment = numInstalments > 0 ? (amount + totalInterest) / numInstalments : 0;
     const processingFee = product ? amount * (parseFloat(product.processing_fee || "0") / 100) : 0;
     const insuranceFee = product ? amount * (parseFloat(product.insurance_fee || "0") / 100) : 0;
     const appraisalFee = product ? amount * (parseFloat((product as any).appraisal_fee || "0") / 100) : 0;
@@ -1873,7 +1888,7 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                       <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-md text-sm">
                         <div className="grid gap-2 md:grid-cols-2">
                           <div><span className="text-muted-foreground">Amount Range:</span> {parseFloat(product.min_amount).toLocaleString()} - {parseFloat(product.max_amount).toLocaleString()}</div>
-                          <div><span className="text-muted-foreground">Term Range:</span> {product.min_term_months} - {product.max_term_months} {freqInfo.period.toLowerCase()}</div>
+                          <div><span className="text-muted-foreground">Term Range:</span> {product.min_term_months} - {product.max_term_months} months</div>
                           <div><span className="text-muted-foreground">Processing Fee:</span> {formatPercent(product.processing_fee)}</div>
                           <div><span className="text-muted-foreground">Insurance Fee:</span> {formatPercent(product.insurance_fee)}</div>
                           {parseFloat((product as any).appraisal_fee || "0") > 0 && <div><span className="text-muted-foreground">Appraisal Fee:</span> {formatPercent((product as any).appraisal_fee)}</div>}
@@ -1920,8 +1935,9 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                   )} />
                   <FormField control={formInstance.control} name="term" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Repayment Term ({freqInfo.period}) <span className="text-destructive">*</span></FormLabel>
+                      <FormLabel>Repayment Term (Months) <span className="text-destructive">*</span></FormLabel>
                       <FormControl><Input {...field} type="number" placeholder="e.g. 12" data-testid="input-application-term" /></FormControl>
+                      {frequency !== "monthly" && term > 0 && <div className="text-xs text-muted-foreground">{numInstalments} {freqInfo.instalmentUnit} instalments</div>}
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -1929,7 +1945,7 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
 
                 {product && amount > 0 && term > 0 && (
                   <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-                    <h4 className="font-medium mb-3 text-green-800 dark:text-green-200">Loan Calculation Preview</h4>
+                    <h4 className="font-medium mb-3 text-green-800 dark:text-green-200">Loan Calculation Preview {frequency !== "monthly" && <span className="font-normal text-xs">({numInstalments} {freqInfo.instalmentUnit} instalments over {term} months)</span>}</h4>
                     <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4 text-sm">
                       <div className="p-2 bg-white dark:bg-background rounded">
                         <div className="text-muted-foreground">Principal</div>
@@ -2443,7 +2459,7 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                     </TableCell>
                     <TableCell className="hidden md:table-cell">{(app as any).product_name}</TableCell>
                     <TableCell>{parseFloat(app.amount).toLocaleString()}</TableCell>
-                    <TableCell className="hidden lg:table-cell">{(app as any).term_months} {getFreqLabel(app).period}</TableCell>
+                    <TableCell className="hidden lg:table-cell">{(app as any).term_months} months</TableCell>
                     <TableCell>
                       <Badge variant={statusColors[app.status] || "secondary"}>
                         {app.status.replace("_", " ")}
