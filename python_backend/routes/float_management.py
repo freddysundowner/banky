@@ -1213,7 +1213,7 @@ async def approve_shortage(
                 raise HTTPException(status_code=403, detail="You do not have permission to approve shortages")
             approver_id = approver_staff.id
         else:
-            approver_id = approver_master.id
+            approver_id = None
         
         shortage = session.query(ShortageRecord).filter(ShortageRecord.id == shortage_id).first()
         if not shortage:
