@@ -1,12 +1,35 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 from models.database import get_db
-from models.tenant import Staff, Branch
+from models.tenant import Staff, Branch, Member
 from schemas.tenant import StaffCreate, StaffUpdate, StaffResponse
 from routes.auth import get_current_user
-from routes.common import generate_code, get_tenant_session_context, require_permission, require_role, invalidate_permissions_cache
+from routes.common import generate_code, generate_account_number, get_tenant_session_context, require_permission, require_role, invalidate_permissions_cache
 
 router = APIRouter()
+
+
+def ensure_staff_has_member_account(tenant_session: Session, staff: Staff) -> Member:
+    existing = tenant_session.query(Member).filter(Member.email == staff.email).first()
+    if existing:
+        return existing
+    
+    branch = tenant_session.query(Branch).filter(Branch.id == staff.branch_id).first()
+    branch_code = branch.code if branch else "BR01"
+    member_number = generate_account_number(tenant_session, branch_code)
+    
+    member = Member(
+        member_number=member_number,
+        first_name=staff.first_name,
+        last_name=staff.last_name,
+        email=staff.email,
+        phone=staff.phone,
+        branch_id=staff.branch_id,
+        status="active",
+        membership_type="staff"
+    )
+    tenant_session.add(member)
+    return member
 
 @router.get("/{org_id}/staff")
 async def get_staff(
@@ -324,10 +347,8 @@ async def create_staff(
         
         staff = Staff(**staff_data)
         tenant_session.add(staff)
-        tenant_session.commit()
-        tenant_session.refresh(staff)
+        tenant_session.flush()
         
-        # Create staff profile with the profile fields
         from models.tenant import StaffProfile
         from datetime import datetime
         profile = StaffProfile(
@@ -340,10 +361,11 @@ async def create_staff(
             next_of_kin_relationship=profile_data.get('next_of_kin_relationship')
         )
         tenant_session.add(profile)
-        tenant_session.commit()
         
-        # Staff authentication is now fully contained in tenant database
-        # No master User/OrganizationMember records needed
+        ensure_staff_has_member_account(tenant_session, staff)
+        
+        tenant_session.commit()
+        tenant_session.refresh(staff)
         
         return StaffResponse.model_validate(staff)
     finally:

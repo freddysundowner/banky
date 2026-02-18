@@ -1729,25 +1729,26 @@ async def disburse_payroll(org_id: str, period_id: str, data: DisbursementReques
         total_loan_deductions = Decimal("0")
         total_other_deductions = Decimal("0")
         
+        from routes.staff import ensure_staff_has_member_account
+        
         for ps in payslips:
             if data.method == "savings_account":
                 staff_member = tenant_session.query(Staff).filter(Staff.id == ps.staff_id).first()
                 if staff_member:
-                    member = tenant_session.query(Member).filter(Member.email == staff_member.email).first()
-                    if member:
-                        member.savings_balance = (member.savings_balance or Decimal("0")) + ps.net_salary
-                        
-                        tx = Transaction(
-                            member_id=member.id,
-                            branch_id=staff_member.branch_id,
-                            transaction_type="salary_credit",
-                            amount=ps.net_salary,
-                            description=f"Salary for {period.name}",
-                            payment_method="internal",
-                            status="completed",
-                            performed_by_id=staff_member.id
-                        )
-                        tenant_session.add(tx)
+                    member = ensure_staff_has_member_account(tenant_session, staff_member)
+                    member.savings_balance = (member.savings_balance or Decimal("0")) + ps.net_salary
+                    
+                    tx = Transaction(
+                        member_id=member.id,
+                        branch_id=staff_member.branch_id,
+                        transaction_type="salary_credit",
+                        amount=ps.net_salary,
+                        description=f"Salary for {period.name}",
+                        payment_method="internal",
+                        status="completed",
+                        performed_by_id=staff_member.id
+                    )
+                    tenant_session.add(tx)
             
             ps.status = "paid"
             ps.paid_at = datetime.utcnow()
