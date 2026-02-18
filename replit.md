@@ -52,3 +52,9 @@ The frontend uses React 18 and TypeScript with Shadcn UI components and Tailwind
 - **Frontend**: Term always displays as "months" with instalment count shown for non-monthly frequencies (e.g., "1 month (4 weekly instalments)"). Loan form preview now correctly converts rates and computes instalment count.
 - **Backend**: `calculate_loan`, `generate_instalment_schedule`, `regenerate_instalments_after_restructure`, restructure endpoints, and repayment allocation all updated to use proper month-to-instalment conversion.
 - **Impact**: All new loans will use correct calculations. Existing loan LN0001 was created with old logic (term=4 treated as 4 periods).
+
+### 2026-02-18: Loan Eligibility Rules
+- **No Duplicate Product Loans**: `allow_multiple_loans` flag on LoanProduct (default: true). When disabled, a member cannot have two active loans (pending/approved/disbursed/defaulted/restructured) of the same product type.
+- **Good Standing Requirement**: `require_good_standing` flag on LoanProduct (default: false). When enabled, blocks loan applications if the member has any overdue instalments on existing loans.
+- **Migration**: Version 19 adds both columns to `loan_products` table.
+- **Frontend**: Toggle switches added to loan product configuration form.

@@ -343,6 +343,8 @@ class LoanProductCreate(BaseModel):
     shares_multiplier: Optional[Decimal] = Decimal("0")
     min_shares_required: Optional[Decimal] = Decimal("0")
     deduct_interest_upfront: Optional[bool] = False
+    allow_multiple_loans: Optional[bool] = True
+    require_good_standing: Optional[bool] = False
 
 class LoanProductUpdate(BaseModel):
     name: Optional[str] = None
@@ -369,6 +371,8 @@ class LoanProductUpdate(BaseModel):
     shares_multiplier: Optional[Decimal] = None
     min_shares_required: Optional[Decimal] = None
     deduct_interest_upfront: Optional[bool] = None
+    allow_multiple_loans: Optional[bool] = None
+    require_good_standing: Optional[bool] = None
     is_active: Optional[bool] = None
 
 class LoanProductResponse(BaseModel):
@@ -398,6 +402,8 @@ class LoanProductResponse(BaseModel):
     shares_multiplier: Optional[Decimal] = Decimal("0")
     min_shares_required: Optional[Decimal] = Decimal("0")
     deduct_interest_upfront: Optional[bool] = False
+    allow_multiple_loans: Optional[bool] = True
+    require_good_standing: Optional[bool] = False
     is_active: bool
     created_at: Optional[datetime] = None
     

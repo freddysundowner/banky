@@ -242,6 +242,36 @@ async def create_loan(org_id: str, data: LoanApplicationCreate, user=Depends(get
         if not product:
             raise HTTPException(status_code=404, detail="Loan product not found")
         
+        active_loan_statuses = ["pending", "approved", "disbursed", "defaulted", "restructured"]
+        
+        if not getattr(product, 'allow_multiple_loans', True):
+            existing_loan = tenant_session.query(LoanApplication).filter(
+                LoanApplication.member_id == data.member_id,
+                LoanApplication.loan_product_id == data.loan_product_id,
+                LoanApplication.status.in_(active_loan_statuses)
+            ).first()
+            if existing_loan:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Member already has an active {product.name} loan ({existing_loan.application_number}). This product does not allow multiple loans."
+                )
+        
+        if getattr(product, 'require_good_standing', False):
+            active_loans = tenant_session.query(LoanApplication).filter(
+                LoanApplication.member_id == data.member_id,
+                LoanApplication.status.in_(["disbursed", "defaulted", "restructured"])
+            ).all()
+            for active_loan in active_loans:
+                overdue_instalments = tenant_session.query(LoanInstalment).filter(
+                    LoanInstalment.loan_id == active_loan.id,
+                    LoanInstalment.status == "overdue"
+                ).count()
+                if overdue_instalments > 0:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Member has overdue payments on loan {active_loan.application_number}. All existing loans must be in good standing before applying for this product."
+                    )
+        
         # Shares-based eligibility checks (warning only - enforcement at disbursement)
         member_shares = Decimal(str(member.shares_balance or 0))
         shares_multiplier = Decimal(str(product.shares_multiplier or 0))

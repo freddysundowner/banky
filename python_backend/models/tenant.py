@@ -234,6 +234,10 @@ class LoanProduct(TenantBase):
     # Interest deduction option
     deduct_interest_upfront = Column(Boolean, default=False)
     
+    # Loan eligibility rules
+    allow_multiple_loans = Column(Boolean, default=True)
+    require_good_standing = Column(Boolean, default=False)
+    
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     

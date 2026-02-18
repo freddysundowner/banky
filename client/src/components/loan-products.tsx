@@ -78,6 +78,8 @@ const productSchema = z.object({
   shares_multiplier: z.string().default("0"),
   min_shares_required: z.string().default("0"),
   deduct_interest_upfront: z.boolean().default(false),
+  allow_multiple_loans: z.boolean().default(true),
+  require_good_standing: z.boolean().default(false),
   is_active: z.boolean().default(true),
 });
 
@@ -142,6 +144,8 @@ export default function LoanProducts({ organizationId }: LoanProductsProps) {
       shares_multiplier: "0",
       min_shares_required: "0",
       deduct_interest_upfront: false,
+      allow_multiple_loans: true,
+      require_good_standing: false,
       is_active: true,
     },
   });
@@ -241,6 +245,8 @@ export default function LoanProducts({ organizationId }: LoanProductsProps) {
       shares_multiplier: String(parseFloat((product as any).shares_multiplier) ?? 0),
       min_shares_required: String(parseFloat((product as any).min_shares_required) ?? 0),
       deduct_interest_upfront: (product as any).deduct_interest_upfront || false,
+      allow_multiple_loans: (product as any).allow_multiple_loans !== false,
+      require_good_standing: (product as any).require_good_standing || false,
       is_active: product.is_active,
     });
     setViewMode("edit");
@@ -394,6 +400,28 @@ export default function LoanProducts({ organizationId }: LoanProductsProps) {
                     </div>
                     <FormControl>
                       <Switch checked={field.value} onCheckedChange={field.onChange} data-testid="switch-product-deduct-interest" />
+                    </FormControl>
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="allow_multiple_loans" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel>Allow Multiple Loans</FormLabel>
+                      <FormDescription>Allow a member to have more than one active loan of this product type</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} data-testid="switch-product-allow-multiple" />
+                    </FormControl>
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="require_good_standing" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel>Require Good Standing</FormLabel>
+                      <FormDescription>Member must have no overdue payments on any existing loans to apply</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} data-testid="switch-product-require-good-standing" />
                     </FormControl>
                   </FormItem>
                 )} />

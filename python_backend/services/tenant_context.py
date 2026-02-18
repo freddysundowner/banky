@@ -4,7 +4,7 @@ from models.master import Organization, OrganizationMember
 from models.tenant import TenantBase
 
 _migrated_tenants = set()
-_migration_version = 18  # Increment to force re-migration
+_migration_version = 19  # Increment to force re-migration
 
 def _get_db_migration_version(engine):
     """Check the migration version stored in the tenant database"""
@@ -222,6 +222,8 @@ def run_tenant_schema_migration(engine):
             ("excise_duty_rate", "NUMERIC(10,4) DEFAULT 20"),
             ("credit_life_insurance_rate", "NUMERIC(10,4) DEFAULT 0"),
             ("credit_life_insurance_freq", "VARCHAR(20) DEFAULT 'annual'"),
+            ("allow_multiple_loans", "BOOLEAN DEFAULT TRUE"),
+            ("require_good_standing", "BOOLEAN DEFAULT FALSE"),
             ("is_active", "BOOLEAN DEFAULT TRUE"),
             ("created_at", "TIMESTAMP DEFAULT NOW()"),
         ]
