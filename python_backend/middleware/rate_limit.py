@@ -46,3 +46,11 @@ def check_register_rate_limit(request: Request):
 def reset_login_rate_limit(request: Request):
     client_ip = request.client.host if request.client else "unknown"
     login_limiter.reset(f"login:{client_ip}")
+
+
+forgot_password_limiter = RateLimiter()
+
+
+def check_forgot_password_rate_limit(request: Request):
+    client_ip = request.client.host if request.client else "unknown"
+    forgot_password_limiter.check(f"forgot_password:{client_ip}", max_attempts=5, window_seconds=900)

@@ -266,6 +266,27 @@ async def register(data: UserRegister, request: Request, response: Response, db:
     import asyncio
     asyncio.create_task(_send_welcome_email(user.first_name, user.email, data.organization_name))
     
+    import secrets as secrets_mod
+    from models.master import EmailVerificationToken
+    verify_token = secrets_mod.token_urlsafe(32)
+    verification_token = EmailVerificationToken(
+        user_id=user.id,
+        token=verify_token,
+        expires_at=datetime.utcnow() + timedelta(hours=24)
+    )
+    db.add(verification_token)
+    db.commit()
+    
+    origin = request.headers.get("origin", "")
+    dev_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+    if dev_domain:
+        reg_app_url = f"https://{dev_domain}"
+    elif origin:
+        reg_app_url = origin
+    else:
+        reg_app_url = ""
+    asyncio.create_task(_send_verification_email(user.first_name or "User", user.email, verify_token, reg_app_url))
+    
     return user
 
 
@@ -619,6 +640,277 @@ async def logout(request: Request, response: Response, db: Session = Depends(get
     
     response.delete_cookie(SESSION_COOKIE_NAME)
     return {"message": "Logged out successfully"}
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    password: str
+
+@router.post("/forgot-password")
+async def forgot_password(data: ForgotPasswordRequest, request: Request, db: Session = Depends(get_db)):
+    from middleware.rate_limit import check_forgot_password_rate_limit
+    check_forgot_password_rate_limit(request)
+    import secrets
+    from models.master import User, PasswordResetToken, PlatformSettings
+    
+    user = db.query(User).filter(User.email == data.email).first()
+    
+    if user:
+        token = secrets.token_urlsafe(32)
+        reset_token = PasswordResetToken(
+            user_id=user.id,
+            token=token,
+            expires_at=datetime.utcnow() + timedelta(hours=1)
+        )
+        db.add(reset_token)
+        db.commit()
+        
+        origin = request.headers.get("origin", "")
+        dev_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+        if dev_domain:
+            app_url = f"https://{dev_domain}"
+        elif origin:
+            app_url = origin
+        else:
+            app_url = ""
+        
+        import asyncio
+        asyncio.create_task(_send_password_reset_email(user.first_name or "User", user.email, token, app_url))
+    
+    return {"message": "If an account exists with that email, we've sent a password reset link."}
+
+@router.post("/reset-password")
+async def reset_password(data: ResetPasswordRequest, db: Session = Depends(get_db)):
+    from models.master import PasswordResetToken, User
+    from services.auth import hash_password
+    
+    reset_token = db.query(PasswordResetToken).filter(
+        PasswordResetToken.token == data.token,
+        PasswordResetToken.expires_at > datetime.utcnow()
+    ).first()
+    
+    if not reset_token:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    
+    user = db.query(User).filter(User.id == reset_token.user_id).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="User not found")
+    
+    user.password = hash_password(data.password)
+    db.delete(reset_token)
+    db.commit()
+    
+    return {"message": "Password has been reset successfully"}
+
+@router.get("/verify-reset-token/{token}")
+async def verify_reset_token(token: str, db: Session = Depends(get_db)):
+    from models.master import PasswordResetToken
+    
+    reset_token = db.query(PasswordResetToken).filter(
+        PasswordResetToken.token == token,
+        PasswordResetToken.expires_at > datetime.utcnow()
+    ).first()
+    
+    if not reset_token:
+        raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+    
+    return {"valid": True}
+
+async def _send_password_reset_email(first_name: str, email: str, token: str, app_url: str):
+    try:
+        import httpx
+        from models.database import SessionLocal
+        from models.master import PlatformSettings
+        
+        db = SessionLocal()
+        try:
+            brevo_key_setting = db.query(PlatformSettings).filter(
+                PlatformSettings.key == "brevo_api_key"
+            ).first()
+            from_email_setting = db.query(PlatformSettings).filter(
+                PlatformSettings.key == "platform_email"
+            ).first()
+            platform_name_setting = db.query(PlatformSettings).filter(
+                PlatformSettings.key == "platform_name"
+            ).first()
+        finally:
+            db.close()
+        
+        api_key = brevo_key_setting.value if brevo_key_setting else None
+        from_email = from_email_setting.value if from_email_setting else None
+        platform_name = platform_name_setting.value if platform_name_setting else "BANKY"
+        
+        if not api_key or not from_email:
+            return
+        
+        reset_link = f"{app_url}/reset-password?token={token}"
+        
+        html = f"""
+        <html><body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #2563eb, #4338ca); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h1 style="margin: 0; font-size: 28px;">{platform_name}</h1>
+        </div>
+        <div style="padding: 30px; background: #f9fafb; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+            <p>Hi <strong>{first_name}</strong>,</p>
+            <p>We received a request to reset your password. Click the button below to set a new password:</p>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{reset_link}" style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Reset Password</a>
+            </div>
+            <p style="color: #6b7280; font-size: 13px;">This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email.</p>
+            <p style="color: #6b7280; font-size: 13px;">If the button doesn't work, copy and paste this link into your browser:</p>
+            <p style="color: #6b7280; font-size: 12px; word-break: break-all;">{reset_link}</p>
+            <p style="color: #6b7280; font-size: 13px; margin-top: 30px;">
+                - The {platform_name} Team
+            </p>
+        </div>
+        </body></html>
+        """
+        
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                "https://api.brevo.com/v3/smtp/email",
+                headers={"api-key": api_key, "Content-Type": "application/json"},
+                json={
+                    "sender": {"name": platform_name, "email": from_email},
+                    "to": [{"email": email, "name": first_name}],
+                    "subject": f"Reset your {platform_name} password",
+                    "htmlContent": html
+                },
+                timeout=15.0
+            )
+    except Exception:
+        pass
+
+async def _send_verification_email(first_name: str, email: str, token: str, app_url: str):
+    try:
+        import httpx
+        from models.database import SessionLocal
+        from models.master import PlatformSettings
+        
+        db = SessionLocal()
+        try:
+            brevo_key_setting = db.query(PlatformSettings).filter(
+                PlatformSettings.key == "brevo_api_key"
+            ).first()
+            from_email_setting = db.query(PlatformSettings).filter(
+                PlatformSettings.key == "platform_email"
+            ).first()
+            platform_name_setting = db.query(PlatformSettings).filter(
+                PlatformSettings.key == "platform_name"
+            ).first()
+        finally:
+            db.close()
+        
+        api_key = brevo_key_setting.value if brevo_key_setting else None
+        from_email = from_email_setting.value if from_email_setting else None
+        platform_name = platform_name_setting.value if platform_name_setting else "BANKY"
+        
+        if not api_key or not from_email:
+            return
+        
+        verify_link = f"{app_url}/verify-email?token={token}"
+        
+        html = f"""
+        <html><body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #2563eb, #4338ca); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h1 style="margin: 0; font-size: 28px;">{platform_name}</h1>
+        </div>
+        <div style="padding: 30px; background: #f9fafb; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+            <p>Hi <strong>{first_name}</strong>,</p>
+            <p>Please verify your email address by clicking the button below:</p>
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{verify_link}" style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Verify Email</a>
+            </div>
+            <p style="color: #6b7280; font-size: 13px;">This link will expire in 24 hours. If you didn't create an account, you can safely ignore this email.</p>
+            <p style="color: #6b7280; font-size: 13px;">If the button doesn't work, copy and paste this link into your browser:</p>
+            <p style="color: #6b7280; font-size: 12px; word-break: break-all;">{verify_link}</p>
+            <p style="color: #6b7280; font-size: 13px; margin-top: 30px;">
+                - The {platform_name} Team
+            </p>
+        </div>
+        </body></html>
+        """
+        
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                "https://api.brevo.com/v3/smtp/email",
+                headers={"api-key": api_key, "Content-Type": "application/json"},
+                json={
+                    "sender": {"name": platform_name, "email": from_email},
+                    "to": [{"email": email, "name": first_name}],
+                    "subject": f"Verify your {platform_name} email address",
+                    "htmlContent": html
+                },
+                timeout=15.0
+            )
+    except Exception:
+        pass
+
+@router.post("/send-verification-email")
+async def send_verification_email(request: Request, auth: AuthContext = Depends(get_current_user), db: Session = Depends(get_db)):
+    import secrets
+    from models.master import EmailVerificationToken, User
+    
+    if auth.is_staff:
+        raise HTTPException(status_code=400, detail="Email verification is only available for account owners")
+    
+    user = auth.user
+    
+    if user.is_email_verified:
+        return {"message": "Email is already verified"}
+    
+    db.query(EmailVerificationToken).filter(EmailVerificationToken.user_id == user.id).delete()
+    
+    token = secrets.token_urlsafe(32)
+    verification_token = EmailVerificationToken(
+        user_id=user.id,
+        token=token,
+        expires_at=datetime.utcnow() + timedelta(hours=24)
+    )
+    db.add(verification_token)
+    db.commit()
+    
+    origin = request.headers.get("origin", "")
+    dev_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+    if dev_domain:
+        app_url = f"https://{dev_domain}"
+    elif origin:
+        app_url = origin
+    else:
+        app_url = ""
+    
+    import asyncio
+    asyncio.create_task(_send_verification_email(user.first_name or "User", user.email, token, app_url))
+    
+    return {"message": "Verification email sent successfully"}
+
+@router.get("/verify-email/{token}")
+async def verify_email(token: str, db: Session = Depends(get_db)):
+    from models.master import EmailVerificationToken, User
+    
+    verification_token = db.query(EmailVerificationToken).filter(
+        EmailVerificationToken.token == token,
+        EmailVerificationToken.expires_at > datetime.utcnow()
+    ).first()
+    
+    if not verification_token:
+        raise HTTPException(status_code=400, detail="Invalid or expired verification token")
+    
+    user = db.query(User).filter(User.id == verification_token.user_id).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="User not found")
+    
+    user.is_email_verified = True
+    db.delete(verification_token)
+    db.commit()
+    
+    return {"message": "Email verified successfully", "verified": True}
+
+@router.post("/skip-email-verification")
+async def skip_email_verification(auth: AuthContext = Depends(get_current_user)):
+    return {"message": "Email verification skipped"}
 
 @router.get("/me")
 async def get_me(auth: AuthContext = Depends(get_current_user)):

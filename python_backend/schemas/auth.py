@@ -24,6 +24,7 @@ class UserResponse(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     phone: Optional[str] = None
+    is_email_verified: bool = False
     created_at: datetime
     
     class Config:

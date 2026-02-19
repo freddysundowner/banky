@@ -63,6 +63,13 @@ The frontend uses React 18 and TypeScript with Shadcn UI components and Tailwind
 - **CSV Data Export**: Export endpoints for members, transactions, and loans at `/api/organizations/{org_id}/export/{type}`. Export buttons added to Members and Transactions pages.
 - **Landing Page CTAs**: Navbar Sign In/Start Free Trial buttons now properly link to /login and /register.
 
+### 2026-02-19: User Authentication Enhancements
+- **Password Reset Flow**: Full forgot-password flow with email-based reset tokens (1hr expiry). Backend endpoints: `POST /api/auth/forgot-password`, `POST /api/auth/reset-password`, `GET /api/auth/verify-reset-token/{token}`. Frontend pages: `/forgot-password`, `/reset-password`. Rate limited (5/15min). Emails sent via Brevo.
+- **Optional Email Verification**: Verification tokens (24hr expiry) sent on registration. Backend endpoints: `POST /api/auth/send-verification-email`, `GET /api/auth/verify-email/{token}`, `POST /api/auth/skip-email-verification`. Frontend page: `/verify-email`. Dismissible amber banner on dashboard. Non-blocking - users can skip.
+- **Onboarding Wizard**: 3-step dialog wizard for new org owners (Org Details, Create Branch, Done). Auto-detects new orgs without branches. Fully skippable. Stored dismissal in localStorage.
+- **Terms of Service Checkbox**: Required checkbox on registration form with links to Terms of Service and Privacy Policy.
+- **New Models**: `PasswordResetToken`, `EmailVerificationToken` in master.py.
+
 ### 2026-02-18: Loan Eligibility Rules
 - **No Duplicate Product Loans**: `allow_multiple_loans` flag on LoanProduct (default: true). When disabled, a member cannot have two active loans (pending/approved/disbursed/defaulted/restructured) of the same product type.
 - **Good Standing Requirement**: `require_good_standing` flag on LoanProduct (default: false). When enabled, blocks loan applications if the member has any overdue instalments on existing loans.

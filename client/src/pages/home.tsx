@@ -108,10 +108,13 @@ import JournalEntries from "@/components/journal-entries";
 import { Dividends } from "@/components/dividends";
 import OpeningBalances from "@/components/opening-balances";
 import { TrialBanner } from "@/components/trial-banner";
+import { OnboardingWizard } from "@/components/onboarding-wizard";
 import SettingsPage from "@/pages/settings";
 import UpgradePage from "@/pages/upgrade";
 import MyAccountPage from "@/pages/my-account";
 import type { Organization } from "@shared/schema";
+import { Link } from "wouter";
+import { X, Mail } from "lucide-react";
 
 interface OrganizationMembership {
   id: string;
@@ -277,6 +280,8 @@ export default function Home() {
     }
     return "dashboard";
   });
+  const [emailBannerDismissed, setEmailBannerDismissed] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const queryClient = useQueryClient();
   const prevSectionRef = useRef(activeSection);
 
@@ -429,6 +434,22 @@ export default function Home() {
       setSelectedOrg(memberships[0].organization);
     }
   }, [memberships, selectedOrg]);
+
+  useEffect(() => {
+    if (!selectedOrg || !memberships) return;
+    const membership = memberships.find(m => m.organization.id === selectedOrg.id);
+    if (!membership?.isOwner) return;
+    const dismissedKey = `onboarding_dismissed_${selectedOrg.id}`;
+    if (localStorage.getItem(dismissedKey)) return;
+    fetch(`/api/organizations/${selectedOrg.id}/branches`, { credentials: "include" })
+      .then(res => res.json())
+      .then((branches: unknown[]) => {
+        if (Array.isArray(branches) && branches.length === 0) {
+          setShowOnboarding(true);
+        }
+      })
+      .catch(() => {});
+  }, [selectedOrg, memberships]);
 
   const createMutation = useMutation({
     mutationFn: async (data: CreateOrgFormData) => {
@@ -731,6 +752,13 @@ export default function Home() {
   return (
     <SidebarProvider style={sidebarStyle as React.CSSProperties}>
       <div className="flex flex-col h-screen w-full overflow-hidden">
+        {showOnboarding && selectedOrg && (
+          <OnboardingWizard
+            organizationId={selectedOrg.id}
+            organizationName={selectedOrg.name}
+            onComplete={() => setShowOnboarding(false)}
+          />
+        )}
         <TrialBanner
           isExpired={isExpired}
           isTrial={isTrial}
@@ -738,6 +766,30 @@ export default function Home() {
           message={trialMessage}
           onUpgrade={() => setActiveSection("upgrade")}
         />
+        {!emailBannerDismissed && user && !(user as any)?.isStaff && (user as any)?.is_email_verified === false && (
+          <div className="flex items-center justify-between gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800" data-testid="banner-email-verification">
+            <div className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
+              <Mail className="h-4 w-4 shrink-0" />
+              <span>Please verify your email address.</span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Link href="/verify-email">
+                <Button variant="outline" size="sm" data-testid="button-verify-now">
+                  Verify Now
+                </Button>
+              </Link>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setEmailBannerDismissed(true)}
+                data-testid="button-dismiss-verification"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
         <div className="flex flex-1 overflow-hidden">
         <Sidebar>
           <SidebarContent>

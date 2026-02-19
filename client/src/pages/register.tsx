@@ -27,6 +27,9 @@ const registerSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   phone: z.string().optional(),
+  acceptTerms: z.boolean().refine((val) => val === true, {
+    message: "You must accept the Terms of Service and Privacy Policy",
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -50,6 +53,7 @@ export default function Register() {
       firstName: "",
       lastName: "",
       phone: "",
+      acceptTerms: false,
     },
   });
 
@@ -207,6 +211,49 @@ export default function Register() {
                           </Button>
                         </div>
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="acceptTerms"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-start gap-3">
+                        <FormControl>
+                          <input
+                            type="checkbox"
+                            checked={field.value}
+                            onChange={field.onChange}
+                            className="mt-1 h-4 w-4 rounded border-border accent-primary cursor-pointer"
+                            data-testid="checkbox-accept-terms"
+                          />
+                        </FormControl>
+                        <FormLabel className="text-sm font-normal leading-snug cursor-pointer">
+                          I agree to the{" "}
+                          <a
+                            href="/terms"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                            data-testid="link-terms"
+                          >
+                            Terms of Service
+                          </a>{" "}
+                          and{" "}
+                          <a
+                            href="/privacy"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline"
+                            data-testid="link-privacy"
+                          >
+                            Privacy Policy
+                          </a>
+                        </FormLabel>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}

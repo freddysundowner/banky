@@ -8,7 +8,10 @@ import { BrandingProvider } from "@/context/BrandingContext";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
+import ForgotPassword from "@/pages/forgot-password";
+import ResetPassword from "@/pages/reset-password";
 import Home from "@/pages/home";
+import VerifyEmail from "@/pages/verify-email";
 
 function Router() {
   const { user, isLoading } = useAuth();
@@ -30,6 +33,7 @@ function Router() {
     return (
       <Switch>
         <Route path="/" component={Home} />
+        <Route path="/verify-email" component={VerifyEmail} />
         <Route component={NotFound} />
       </Switch>
     );
@@ -41,6 +45,9 @@ function Router() {
       <Route path="/" component={Login} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/forgot-password" component={ForgotPassword} />
+      <Route path="/reset-password" component={ResetPassword} />
+      <Route path="/verify-email" component={VerifyEmail} />
       <Route component={NotFound} />
     </Switch>
   );
