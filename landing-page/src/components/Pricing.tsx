@@ -19,7 +19,7 @@ interface EnterprisePlan {
   max_staff: number;
   max_branches: number;
   support_years?: number;
-  features: string[];
+  features: string[] | { enabled: string[] };
 }
 
 interface PlansResponse {
@@ -277,7 +277,7 @@ export default function Pricing() {
                         {plan.support_years || 1} year{(plan.support_years || 1) > 1 ? 's' : ''} support & updates
                       </span>
                     </li>
-                    {plan.features.map((feature) => (
+                    {(Array.isArray(plan.features) ? plan.features : (plan.features as { enabled: string[] }).enabled || []).map((feature) => (
                       <li key={feature} className="flex items-start gap-3">
                         <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                         <span className="text-gray-600">{feature}</span>
