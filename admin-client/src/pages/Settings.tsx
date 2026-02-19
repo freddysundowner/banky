@@ -15,7 +15,7 @@ interface Plan {
   plan_type: string
 }
 
-type TabType = 'general' | 'payments' | 'email' | 'appearance'
+type TabType = 'general' | 'payments' | 'email' | 'appearance' | 'legal'
 
 async function fetchSettings() {
   const res = await fetch('/api/admin/settings', { credentials: 'include' })
@@ -97,6 +97,11 @@ export default function Settings() {
     { id: 'appearance' as TabType, label: 'Appearance', icon: (
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+      </svg>
+    )},
+    { id: 'legal' as TabType, label: 'Legal Pages', icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>
     )},
   ]
@@ -725,6 +730,80 @@ export default function Settings() {
                         </span>
                       </div>
                     </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'legal' && (
+              <div className="space-y-8">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Legal Pages
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1">Manage Terms of Service and Privacy Policy content displayed on your landing page and app</p>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Terms of Service
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500">Last updated:</span>
+                        <input
+                          type="text"
+                          value={getValue('terms_last_updated')}
+                          onChange={(e) => handleChange('terms_last_updated', e.target.value)}
+                          placeholder="e.g. February 2026"
+                          className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white w-48"
+                        />
+                      </div>
+                    </div>
+                    <textarea
+                      value={getValue('terms_of_service')}
+                      onChange={(e) => handleChange('terms_of_service', e.target.value)}
+                      placeholder="Enter your Terms of Service content here. You can use HTML tags for formatting (e.g. <h2>, <p>, <ul>, <li>, <strong>)."
+                      rows={20}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-mono text-sm leading-relaxed"
+                    />
+                    <p className="text-sm text-gray-500 mt-2">
+                      Use HTML for formatting. Supported tags: &lt;h2&gt;, &lt;h3&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;li&gt;, &lt;ol&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;a&gt;.
+                      Leave empty to show default terms content.
+                    </p>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Privacy Policy
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500">Last updated:</span>
+                        <input
+                          type="text"
+                          value={getValue('privacy_last_updated')}
+                          onChange={(e) => handleChange('privacy_last_updated', e.target.value)}
+                          placeholder="e.g. February 2026"
+                          className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white w-48"
+                        />
+                      </div>
+                    </div>
+                    <textarea
+                      value={getValue('privacy_policy')}
+                      onChange={(e) => handleChange('privacy_policy', e.target.value)}
+                      placeholder="Enter your Privacy Policy content here. You can use HTML tags for formatting (e.g. <h2>, <p>, <ul>, <li>, <strong>)."
+                      rows={20}
+                      className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-mono text-sm leading-relaxed"
+                    />
+                    <p className="text-sm text-gray-500 mt-2">
+                      Use HTML for formatting. Supported tags: &lt;h2&gt;, &lt;h3&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;li&gt;, &lt;ol&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;a&gt;.
+                      Leave empty to show default privacy policy content.
+                    </p>
                   </div>
                 </div>
               </div>

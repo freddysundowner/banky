@@ -42,6 +42,35 @@ def get_public_branding(db: Session = Depends(get_db)):
     
     return result
 
+@router.get("/public/legal/{page_type}")
+def get_public_legal_content(page_type: str, db: Session = Depends(get_db)):
+    """Get public legal page content (terms or privacy) - no auth required"""
+    initialize_platform_settings(db)
+    
+    if page_type not in ("terms", "privacy"):
+        raise HTTPException(status_code=404, detail="Page not found")
+    
+    key_map = {
+        "terms": ("terms_of_service", "terms_last_updated"),
+        "privacy": ("privacy_policy", "privacy_last_updated"),
+    }
+    
+    content_key, date_key = key_map[page_type]
+    
+    settings = db.query(PlatformSettings).filter(
+        PlatformSettings.setting_key.in_([content_key, date_key, "platform_name"])
+    ).all()
+    
+    result = {}
+    for s in settings:
+        result[s.setting_key] = s.setting_value or ""
+    
+    return {
+        "content": result.get(content_key, ""),
+        "last_updated": result.get(date_key, ""),
+        "platform_name": result.get("platform_name", "BANKY"),
+    }
+
 @router.get("/public/enabled-gateways")
 def get_enabled_gateways(db: Session = Depends(get_db)):
     """Get which payment gateways are enabled (no auth required)"""
@@ -791,6 +820,10 @@ DEFAULT_PLATFORM_SETTINGS = [
     {"key": "stripe_publishable_key", "value": "", "type": "string", "description": "Stripe publishable key for frontend checkout"},
     {"key": "paystack_secret_key", "value": "", "type": "string", "description": "Paystack secret key for processing payments"},
     {"key": "paystack_public_key", "value": "", "type": "string", "description": "Paystack public key for frontend integration"},
+    {"key": "terms_of_service", "value": "", "type": "text", "description": "Terms of Service page content (HTML)"},
+    {"key": "privacy_policy", "value": "", "type": "text", "description": "Privacy Policy page content (HTML)"},
+    {"key": "terms_last_updated", "value": "", "type": "string", "description": "Terms of Service last updated date"},
+    {"key": "privacy_last_updated", "value": "", "type": "string", "description": "Privacy Policy last updated date"},
 ]
 
 def initialize_platform_settings(db: Session):
