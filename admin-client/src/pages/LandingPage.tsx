@@ -15,6 +15,12 @@ interface LandingSettings {
   landing_stats_transactions: string
   landing_stats_members: string
   landing_stats_uptime: string
+  landing_docs_mode: string
+  landing_docs_codecanyon_title: string
+  landing_docs_codecanyon_subtitle: string
+  landing_docs_direct_title: string
+  landing_docs_direct_subtitle: string
+  landing_docs_support_email: string
 }
 
 interface FeatureItem {
@@ -50,7 +56,7 @@ interface CTASectionData {
   secondary_button_text: string
 }
 
-type TabType = 'hero' | 'cta' | 'stats' | 'urls' | 'features' | 'testimonials' | 'faq' | 'how_it_works' | 'cta_section'
+type TabType = 'hero' | 'cta' | 'stats' | 'urls' | 'features' | 'testimonials' | 'faq' | 'how_it_works' | 'cta_section' | 'docs'
 
 const ICON_OPTIONS = [
   'Users', 'DollarSign', 'CreditCard', 'Wallet', 'UserPlus', 'BookOpen',
@@ -74,6 +80,7 @@ const tabs: { id: TabType; label: string }[] = [
   { id: 'faq', label: 'FAQ' },
   { id: 'how_it_works', label: 'How It Works' },
   { id: 'cta_section', label: 'CTA Section' },
+  { id: 'docs', label: 'Docs Page' },
 ]
 
 const DEFAULT_FEATURES: FeatureItem[] = [
@@ -144,7 +151,13 @@ export default function LandingPageSettings() {
     landing_stats_saccos: '',
     landing_stats_transactions: '',
     landing_stats_members: '',
-    landing_stats_uptime: ''
+    landing_stats_uptime: '',
+    landing_docs_mode: 'both',
+    landing_docs_codecanyon_title: 'CodeCanyon Purchase',
+    landing_docs_codecanyon_subtitle: 'Installation guide for buyers who purchased BANKY from CodeCanyon marketplace.',
+    landing_docs_direct_title: 'Enterprise License',
+    landing_docs_direct_subtitle: 'Installation guide for organizations who purchased BANKY directly from our sales team.',
+    landing_docs_support_email: 'support@banky.co.ke',
   })
   const [saved, setSaved] = useState(false)
 
@@ -230,7 +243,7 @@ export default function LandingPageSettings() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (['hero', 'cta', 'stats', 'urls'].includes(activeTab)) {
+    if (['hero', 'cta', 'stats', 'urls', 'docs'].includes(activeTab)) {
       saveMutation.mutate(formData)
     } else if (activeTab === 'features') {
       saveContentMutation.mutate({ section: 'features', data: features })
@@ -570,6 +583,57 @@ export default function LandingPageSettings() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Secondary Button Text</label>
                     <input type="text" value={ctaSection.secondary_button_text} onChange={e => setCtaSection({ ...ctaSection, secondary_button_text: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g. Schedule a Demo" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'docs' && (
+              <div className="space-y-6">
+                <p className="text-sm text-gray-600 mb-2">Control which documentation guides are shown on the /docs page. You can show one or both.</p>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Documentation Mode</label>
+                  <select value={formData.landing_docs_mode || 'both'} onChange={e => handleChange('landing_docs_mode', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                    <option value="both">Show Both Guides (Tabbed)</option>
+                    <option value="codecanyon">CodeCanyon Guide Only</option>
+                    <option value="direct">Direct/Enterprise Guide Only</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">When both guides are shown, visitors switch between them using tabs. When only one is shown, no tabs appear.</p>
+                </div>
+
+                <div className="border-t border-gray-200 pt-4">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">CodeCanyon Guide</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Tab Title</label>
+                      <input type="text" value={formData.landing_docs_codecanyon_title || ''} onChange={e => handleChange('landing_docs_codecanyon_title', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g. CodeCanyon Purchase" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Tab Subtitle</label>
+                      <textarea value={formData.landing_docs_codecanyon_subtitle || ''} onChange={e => handleChange('landing_docs_codecanyon_subtitle', e.target.value)} rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="Brief description for CodeCanyon buyers" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200 pt-4">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Direct/Enterprise Guide</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Tab Title</label>
+                      <input type="text" value={formData.landing_docs_direct_title || ''} onChange={e => handleChange('landing_docs_direct_title', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g. Enterprise License" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Tab Subtitle</label>
+                      <textarea value={formData.landing_docs_direct_subtitle || ''} onChange={e => handleChange('landing_docs_direct_subtitle', e.target.value)} rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="Brief description for direct enterprise clients" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200 pt-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Support Email</label>
+                    <input type="email" value={formData.landing_docs_support_email || ''} onChange={e => handleChange('landing_docs_support_email', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g. support@banky.co.ke" />
+                    <p className="text-xs text-gray-500 mt-1">Shown in troubleshooting sections of both guides</p>
                   </div>
                 </div>
               </div>

@@ -80,7 +80,8 @@ The frontend uses React 18 and TypeScript with Shadcn UI components and Tailwind
 ### 2026-02-19: Landing Page CMS Content Management
 - **CMS API**: Admin endpoints `GET/PUT /api/admin/landing-content/{section}` for features, testimonials, faq, how_it_works, cta_section. Public endpoint `GET /api/public/landing-content/{section}`.
 - **Storage**: JSON content stored in `platform_settings` table with keys like `landing_content_features`, `landing_content_testimonials`, etc.
-- **Admin UI**: 9 tabs in Landing Page settings (Hero, Buttons, Stats, URLs, Features, Testimonials, FAQ, How It Works, CTA Section) with full CRUD, reordering, and inline editing.
+- **Admin UI**: 10 tabs in Landing Page settings (Hero, Buttons, Stats, URLs, Features, Testimonials, FAQ, How It Works, CTA Section, Docs Page) with full CRUD, reordering, and inline editing.
+- **Docs Page Configuration**: Admin controls which documentation guides to show (`codecanyon`, `direct`, or `both`). When both are shown, tabs appear. When only one is shown, no tabs. Configurable tab titles, subtitles, and support email. Public endpoint: `GET /api/public/docs-config`. Settings stored as `landing_docs_*` keys in platform_settings.
 - **Landing Page Components**: Features, Testimonials, FAQ, HowItWorks, and CTA components fetch from API with hardcoded defaults as fallback.
 - **Validation**: Server-side payload validation ensures correct data shapes per section type.
 - **Icon/Color Options**: 24 Lucide icons and 13 color schemes available for features and steps.

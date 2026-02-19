@@ -731,7 +731,13 @@ def get_landing_page_settings(admin: AdminUser = Depends(require_admin), db: Ses
         "landing_stats_saccos": "500+",
         "landing_stats_transactions": "KES 2B+",
         "landing_stats_members": "1M+",
-        "landing_stats_uptime": "99.9%"
+        "landing_stats_uptime": "99.9%",
+        "landing_docs_mode": "both",
+        "landing_docs_codecanyon_title": "CodeCanyon Purchase",
+        "landing_docs_codecanyon_subtitle": "Installation guide for buyers who purchased BANKY from CodeCanyon marketplace.",
+        "landing_docs_direct_title": "Enterprise License",
+        "landing_docs_direct_subtitle": "Installation guide for organizations who purchased BANKY directly from our sales team.",
+        "landing_docs_support_email": "support@banky.co.ke",
     }
     
     result = defaults.copy()
@@ -749,7 +755,11 @@ def update_landing_page_settings(data: dict, admin: AdminUser = Depends(require_
         "landing_cta_secondary_text", "landing_cta_secondary_url",
         "landing_demo_video_url", "landing_app_url",
         "landing_stats_saccos", "landing_stats_transactions",
-        "landing_stats_members", "landing_stats_uptime"
+        "landing_stats_members", "landing_stats_uptime",
+        "landing_docs_mode",
+        "landing_docs_codecanyon_title", "landing_docs_codecanyon_subtitle",
+        "landing_docs_direct_title", "landing_docs_direct_subtitle",
+        "landing_docs_support_email",
     ]
     
     for key, value in data.items():

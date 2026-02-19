@@ -1050,6 +1050,41 @@ async def get_public_landing_content(section: str):
     finally:
         db.close()
 
+@app.get("/api/public/docs-config", tags=["Public"])
+async def get_public_docs_config():
+    """Get docs page configuration (which guides to show)."""
+    from models.database import SessionLocal
+    from models.master import PlatformSettings
+    
+    db = SessionLocal()
+    try:
+        keys = [
+            "landing_docs_mode",
+            "landing_docs_codecanyon_title", "landing_docs_codecanyon_subtitle",
+            "landing_docs_direct_title", "landing_docs_direct_subtitle",
+            "landing_docs_support_email",
+        ]
+        settings = db.query(PlatformSettings).filter(
+            PlatformSettings.setting_key.in_(keys)
+        ).all()
+        
+        defaults = {
+            "docs_mode": "both",
+            "codecanyon_title": "CodeCanyon Purchase",
+            "codecanyon_subtitle": "Installation guide for buyers who purchased BANKY from CodeCanyon marketplace.",
+            "direct_title": "Enterprise License",
+            "direct_subtitle": "Installation guide for organizations who purchased BANKY directly from our sales team.",
+            "support_email": "support@banky.co.ke",
+        }
+        
+        for s in settings:
+            key = s.setting_key.replace("landing_docs_", "")
+            defaults[key] = s.setting_value
+        
+        return defaults
+    finally:
+        db.close()
+
 if DIST_PATH.exists():
     assets_path = DIST_PATH / "assets"
     if assets_path.exists():
