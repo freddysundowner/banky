@@ -497,16 +497,9 @@ export default function Plans() {
                 return visibleCustom.length > 0 ? (
                 <div className="grid grid-cols-2 gap-1 mb-3">
                   {visibleCustom.map(feature => (
-                    <label key={feature} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer group">
+                    <label key={feature} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
                       <input type="checkbox" checked={customFeatures.includes(feature)} onChange={() => toggleCustomFeature(feature)} className="w-4 h-4 text-purple-600 rounded" />
-                      <span className="text-sm flex-1">{feature}</span>
-                      <button
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); if (confirm(`Remove "${feature}" from all plans?`)) { setCustomFeatures(prev => prev.filter(f => f !== feature)) } }}
-                        className="invisible group-hover:visible text-gray-300 hover:text-red-500 p-0.5"
-                        title="Remove from this plan"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                      </button>
+                      <span className="text-sm">{feature}</span>
                     </label>
                   ))}
                 </div>
