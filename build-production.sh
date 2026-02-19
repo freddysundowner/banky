@@ -171,12 +171,12 @@ build_compiled() {
     echo ""
     echo ">>> Compiling Python backend to binary..."
     
+    local PROJECT_ROOT="$(pwd)"
+    
     rm -rf packages/enterprise
     mkdir -p packages/enterprise
     
-    cd python_backend
-    
-    cat > banky_server.py << 'ENTRYPOINT'
+    cat > python_backend/banky_server.py << 'ENTRYPOINT'
 import sys
 import os
 
@@ -190,6 +190,9 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=port)
 ENTRYPOINT
 
+    BINARY_BUILD=false
+    
+    cd python_backend
     pyinstaller --onefile \
         --name banky-server \
         --hidden-import=uvicorn \
@@ -218,25 +221,19 @@ ENTRYPOINT
         --collect-all=fastapi \
         --collect-all=starlette \
         --collect-all=pydantic \
-        banky_server.py 2>/dev/null || {
-            echo ">>> PyInstaller failed. Creating source package instead..."
-            cd ..
-            cp -r python_backend packages/enterprise/backend
-            rm -f packages/enterprise/backend/banky_server.py
-            find packages/enterprise/backend -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-            find packages/enterprise/backend -type f -name "*.pyc" -delete 2>/dev/null || true
-            BINARY_BUILD=false
-        }
+        banky_server.py 2>&1 && BINARY_BUILD=true || BINARY_BUILD=false
+    cd "$PROJECT_ROOT"
     
-    if [ -f dist/banky-server ]; then
-        cp dist/banky-server ../packages/enterprise/
-        rm -rf build dist *.spec banky_server.py
-        cd ..
-        BINARY_BUILD=true
+    if [ "$BINARY_BUILD" = true ] && [ -f python_backend/dist/banky-server ]; then
+        cp python_backend/dist/banky-server packages/enterprise/
+        rm -rf python_backend/build python_backend/dist python_backend/*.spec python_backend/banky_server.py
     else
-        # If we haven't already cd'd back (fallback case handles it)
-        [ "$(basename $(pwd))" = "python_backend" ] && cd ..
+        echo ">>> PyInstaller failed. Creating source package instead..."
         BINARY_BUILD=false
+        cp -r python_backend packages/enterprise/backend
+        rm -f packages/enterprise/backend/banky_server.py
+        find packages/enterprise/backend -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+        find packages/enterprise/backend -type f -name "*.pyc" -delete 2>/dev/null || true
     fi
     
     cp -r dist/public packages/enterprise/frontend
@@ -344,6 +341,7 @@ build_codecanyon() {
     cp package-lock.json packages/codecanyon/banky/ 2>/dev/null || true
     cp vite.config.ts packages/codecanyon/banky/
     cp tsconfig.json packages/codecanyon/banky/
+    cp drizzle.config.ts packages/codecanyon/banky/ 2>/dev/null || true
     cp tailwind.config.ts packages/codecanyon/banky/ 2>/dev/null || true
     cp postcss.config.js packages/codecanyon/banky/ 2>/dev/null || true
     cp components.json packages/codecanyon/banky/ 2>/dev/null || true

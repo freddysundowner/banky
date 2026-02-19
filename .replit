@@ -1,7 +1,7 @@
 modules = ["nodejs-20", "python-3.11", "bash", "web", "postgresql-16"]
 [nix]
 channel = "stable-25_05"
-packages = ["cargo", "freetype", "glibcLocales", "libiconv", "libxcrypt", "rustc", "unzip"]
+packages = ["cargo", "freetype", "glibcLocales", "libiconv", "libxcrypt", "rustc", "unzip", "zip"]
 
 [agent]
 expertMode = true
