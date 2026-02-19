@@ -120,18 +120,6 @@ class NeonTenantService:
                 
                 conn.commit()
             
-            with engine.connect() as conn:
-                result = conn.execute(text("SELECT COUNT(*) FROM branches"))
-                branch_count = result.scalar()
-                if branch_count == 0:
-                    import uuid
-                    branch_id = str(uuid.uuid4())
-                    conn.execute(text("""
-                        INSERT INTO branches (id, name, code, is_active, created_at)
-                        VALUES (:id, :name, :code, TRUE, NOW())
-                    """), {"id": branch_id, "name": "Main Branch", "code": "BR0001"})
-                    conn.commit()
-            
             engine.dispose()
         except Exception as e:
             print(f"Error running tenant migrations: {e}")

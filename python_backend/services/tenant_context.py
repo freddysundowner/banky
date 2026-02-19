@@ -843,17 +843,6 @@ def run_tenant_schema_migration(engine):
                 except:
                     pass
         
-        if table_exists(conn, "branches"):
-            result = conn.execute(text("SELECT COUNT(*) FROM branches"))
-            branch_count = result.scalar()
-            if branch_count == 0:
-                import uuid
-                branch_id = str(uuid.uuid4())
-                conn.execute(text("""
-                    INSERT INTO branches (id, name, code, is_active, created_at)
-                    VALUES (:id, :name, :code, TRUE, NOW())
-                """), {"id": branch_id, "name": "Main Branch", "code": "BR0001"})
-        
         # Loan instalment columns migration
         instalment_columns = [
             ("loan_id", "VARCHAR(255)"),
