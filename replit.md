@@ -53,6 +53,16 @@ The frontend uses React 18 and TypeScript with Shadcn UI components and Tailwind
 - **Backend**: `calculate_loan`, `generate_instalment_schedule`, `regenerate_instalments_after_restructure`, restructure endpoints, and repayment allocation all updated to use proper month-to-instalment conversion.
 - **Impact**: All new loans will use correct calculations. Existing loan LN0001 was created with old logic (term=4 treated as 4 periods).
 
+### 2026-02-19: Platform Improvements
+- **Landing Page Enhancements**: Added Testimonials section (6 reviews with color-coded avatars), How It Works (3-step process with numbered steps), Terms of Service and Privacy Policy pages, Contact page with form, annual/monthly pricing toggle, improved footer with legal links.
+- **Auth Security**: Rate limiting on login (10/15min) and register (5/hr) endpoints using in-memory rate limiter (`python_backend/middleware/rate_limit.py`).
+- **Welcome Email**: Automated welcome/onboarding email sent via Brevo API on signup (fire-and-forget async via `asyncio.create_task`).
+- **Subscription Renewal Reminders**: Cron job (`cron_renewal_reminders.py`) runs every 12 hours to check for trial expiry (3 days), subscription renewal (7 days), and past-due subscriptions.
+- **Usage Dashboard**: New "Usage" tab in Settings page showing plan limits vs current usage (members, staff, branches, SMS) with progress bars and upgrade CTA. Backend endpoint: `GET /api/organizations/{org_id}/usage`.
+- **In-App Notification Center**: Bell icon in header with notification popover. Model `InAppNotification` in tenant DB. Backend routes in `python_backend/routes/notifications.py`. Migration version bumped to 21.
+- **CSV Data Export**: Export endpoints for members, transactions, and loans at `/api/organizations/{org_id}/export/{type}`. Export buttons added to Members and Transactions pages.
+- **Landing Page CTAs**: Navbar Sign In/Start Free Trial buttons now properly link to /login and /register.
+
 ### 2026-02-18: Loan Eligibility Rules
 - **No Duplicate Product Loans**: `allow_multiple_loans` flag on LoanProduct (default: true). When disabled, a member cannot have two active loans (pending/approved/disbursed/defaulted/restructured) of the same product type.
 - **Good Standing Requirement**: `require_good_standing` flag on LoanProduct (default: false). When enabled, blocks loan applications if the member has any overdue instalments on existing loans.

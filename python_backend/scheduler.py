@@ -54,6 +54,11 @@ JOBS = {
         "description": "Auto-deduct loan repayments from savings",
         "run_at_hour": True,
     },
+    "renewal_reminders": {
+        "module": "cron_renewal_reminders",
+        "interval_hours": 12,
+        "description": "Send subscription renewal reminders",
+    },
 }
 
 shutdown_requested = False

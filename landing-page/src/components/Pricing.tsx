@@ -60,6 +60,7 @@ function getSaasFeatures(plan: SaaSPlan): string[] {
 
 export default function Pricing() {
   const [pricingType, setPricingType] = useState<'saas' | 'enterprise'>('saas');
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
   const [saasPlans, setSaasPlans] = useState<SaaSPlan[]>([]);
   const [enterprisePlans, setEnterprisePlans] = useState<EnterprisePlan[]>([]);
   const [title, setTitle] = useState('Choose Your Plan');
@@ -98,6 +99,8 @@ export default function Pricing() {
   const popularSaasPlan = 'growth';
   const popularEnterprisePlan = 'Standard';
 
+  const hasAnnualPricing = saasPlans.some(p => p.annual_price > 0);
+
   return (
     <section id="pricing" className="py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -111,7 +114,7 @@ export default function Pricing() {
           <p className="text-xl text-gray-600">{subtitle}</p>
         </div>
 
-        <div className="flex justify-center mb-12">
+        <div className="flex justify-center mb-8">
           <div className="inline-flex bg-gray-200 rounded-lg p-1">
             <button
               className={`px-6 py-2 rounded-md font-medium transition ${
@@ -132,6 +135,36 @@ export default function Pricing() {
           </div>
         </div>
 
+        {pricingType === 'saas' && hasAnnualPricing && !loading && !error && (
+          <div className="flex justify-center mb-8">
+            <div className="inline-flex items-center gap-3">
+              <span className={`text-sm font-medium ${billingPeriod === 'monthly' ? 'text-gray-900' : 'text-gray-500'}`}>
+                Monthly
+              </span>
+              <button
+                onClick={() => setBillingPeriod(billingPeriod === 'monthly' ? 'annual' : 'monthly')}
+                className={`relative w-12 h-6 rounded-full transition ${
+                  billingPeriod === 'annual' ? 'bg-blue-600' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                    billingPeriod === 'annual' ? 'translate-x-6' : ''
+                  }`}
+                />
+              </button>
+              <span className={`text-sm font-medium ${billingPeriod === 'annual' ? 'text-gray-900' : 'text-gray-500'}`}>
+                Annual
+              </span>
+              {billingPeriod === 'annual' && (
+                <span className="ml-1 text-xs font-medium text-green-600 bg-green-100 px-2 py-0.5 rounded-full">
+                  Save up to 20%
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
         {loading ? (
           <div className="text-center py-12">
             <div className="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
@@ -145,6 +178,11 @@ export default function Pricing() {
             {saasPlans.map((plan) => {
               const isPopular = plan.plan_type === popularSaasPlan;
               const features = getSaasFeatures(plan);
+              const price = billingPeriod === 'annual' && plan.annual_price > 0
+                ? Math.round(plan.annual_price / 12)
+                : plan.monthly_price;
+              const monthlyEquiv = billingPeriod === 'annual' && plan.annual_price > 0;
+
               return (
                 <div
                   key={plan.name}
@@ -160,9 +198,14 @@ export default function Pricing() {
                   <div className="text-center mb-6">
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">{plan.name}</h3>
                     <div className="text-4xl font-bold text-gray-900">
-                      ${plan.monthly_price}
+                      ${price}
                       <span className="text-lg font-normal text-gray-500">/month</span>
                     </div>
+                    {monthlyEquiv && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        ${plan.annual_price}/year (billed annually)
+                      </p>
+                    )}
                   </div>
                   <ul className="space-y-4 mb-8">
                     {features.map((feature) => (
@@ -172,15 +215,16 @@ export default function Pricing() {
                       </li>
                     ))}
                   </ul>
-                  <button
-                    className={`w-full py-3 rounded-lg font-medium transition ${
+                  <a
+                    href="/register"
+                    className={`block w-full py-3 rounded-lg font-medium transition text-center ${
                       isPopular
                         ? 'bg-blue-600 text-white hover:bg-blue-700'
                         : 'border border-gray-300 text-gray-700 hover:border-gray-400'
                     }`}
                   >
                     Start Free Trial
-                  </button>
+                  </a>
                 </div>
               );
             })}
@@ -240,15 +284,16 @@ export default function Pricing() {
                       </li>
                     ))}
                   </ul>
-                  <button
-                    className={`w-full py-3 rounded-lg font-medium transition ${
+                  <a
+                    href="/contact"
+                    className={`block w-full py-3 rounded-lg font-medium transition text-center ${
                       isPopular
                         ? 'bg-blue-600 text-white hover:bg-blue-700'
                         : 'border border-gray-300 text-gray-700 hover:border-gray-400'
                     }`}
                   >
                     Contact Sales
-                  </button>
+                  </a>
                 </div>
               );
             })}

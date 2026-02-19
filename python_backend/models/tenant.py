@@ -1330,3 +1330,16 @@ class Expense(TenantBase):
     created_by = relationship("Staff", foreign_keys=[created_by_id])
     approved_by = relationship("Staff", foreign_keys=[approved_by_id])
 
+
+class InAppNotification(TenantBase):
+    __tablename__ = "in_app_notifications"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    staff_id = Column(String, ForeignKey("staff.id"), nullable=True)
+    title = Column(String(255), nullable=False)
+    message = Column(Text, nullable=False)
+    notification_type = Column(String(50), default="info")
+    link = Column(String(500), nullable=True)
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+

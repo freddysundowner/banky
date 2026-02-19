@@ -29,17 +29,17 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
               <a href="#features" className="text-gray-600 hover:text-gray-900 transition">Features</a>
               <a href="#pricing" className="text-gray-600 hover:text-gray-900 transition">Pricing</a>
               <Link href="/docs" className="text-gray-600 hover:text-gray-900 transition">Docs</Link>
-              <a href="#faq" className="text-gray-600 hover:text-gray-900 transition">FAQ</a>
+              <Link href="/contact" className="text-gray-600 hover:text-gray-900 transition">Contact</Link>
             </div>
             
             <div className="hidden md:flex items-center gap-4">
-              <a href="#demo" className="px-4 py-2 text-gray-700 hover:text-gray-900 transition">Live Demo</a>
+              <a href="/login" className="px-4 py-2 text-gray-700 hover:text-gray-900 transition">Sign In</a>
               <a 
-                href="#pricing" 
+                href="/register" 
                 className="px-4 py-2 text-white rounded-lg transition"
                 style={{ backgroundColor: theme_primary_color }}
               >
-                Get Started
+                Start Free Trial
               </a>
             </div>
             
@@ -59,16 +59,17 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
             <a href="#features" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>Features</a>
             <a href="#pricing" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
             <Link href="/docs" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>Docs</Link>
+            <Link href="/contact" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
             <a href="#faq" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
             <hr className="my-2" />
-            <a href="#demo" className="py-3 text-center border border-gray-300 rounded-lg" onClick={() => setMobileMenuOpen(false)}>Live Demo</a>
+            <a href="/login" className="py-3 text-center border border-gray-300 rounded-lg" onClick={() => setMobileMenuOpen(false)}>Sign In</a>
             <a 
-              href="#pricing" 
+              href="/register" 
               className="py-3 text-center text-white rounded-lg" 
               style={{ backgroundColor: theme_primary_color }}
               onClick={() => setMobileMenuOpen(false)}
             >
-              Get Started
+              Start Free Trial
             </a>
           </div>
         </div>

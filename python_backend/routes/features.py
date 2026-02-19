@@ -7,7 +7,8 @@ from models.database import get_db
 from models.master import Organization, OrganizationSubscription, SubscriptionPlan, OrganizationMember
 from services.feature_flags import (
     get_deployment_mode, get_license_key, get_feature_access_for_enterprise,
-    get_feature_access_for_saas, Feature, PLAN_LIMITS, BASELINE_FEATURES
+    get_feature_access_for_saas, Feature, PLAN_LIMITS, BASELINE_FEATURES,
+    get_org_limits
 )
 from routes.auth import get_current_user
 
@@ -303,4 +304,72 @@ def upgrade_plan(organization_id: str, data: dict, auth = Depends(get_current_us
     return {
         "message": f"Successfully upgraded to {plan.name}",
         "plan": plan.plan_type
+    }
+
+
+@router.get("/{organization_id}/usage")
+def get_organization_usage(
+    organization_id: str,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    from services.tenant_context import get_tenant_context_simple
+    from models.tenant import Member, Staff, Branch
+
+    org = db.query(Organization).filter(Organization.id == organization_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    limits = get_org_limits(organization_id, db)
+
+    subscription = db.query(OrganizationSubscription).filter(
+        OrganizationSubscription.organization_id == organization_id
+    ).first()
+    status_info = get_subscription_status_info(subscription)
+    plan_name = subscription.plan.name if subscription and subscription.plan else "No Plan"
+    plan_type = subscription.plan.plan_type if subscription and subscription.plan else "starter"
+
+    tenant_ctx = get_tenant_context_simple(organization_id, db)
+    members_count = 0
+    staff_count = 0
+    branches_count = 0
+
+    if tenant_ctx:
+        tenant_session = tenant_ctx.create_session()
+        try:
+            members_count = tenant_session.query(Member).count()
+            staff_count = tenant_session.query(Staff).count()
+            branches_count = tenant_session.query(Branch).count()
+        finally:
+            tenant_session.close()
+
+    def usage_item(label, current, limit_val, icon):
+        if limit_val is None:
+            percentage = 0
+            limit_display = "Unlimited"
+        else:
+            percentage = round((current / limit_val) * 100) if limit_val > 0 else 0
+            limit_display = str(limit_val)
+        return {
+            "label": label,
+            "current": current,
+            "limit": limit_val,
+            "limit_display": limit_display,
+            "percentage": min(percentage, 100),
+            "icon": icon
+        }
+
+    usage = [
+        usage_item("Members", members_count, limits.get("max_members"), "users"),
+        usage_item("Staff", staff_count, limits.get("max_staff"), "user-cog"),
+        usage_item("Branches", branches_count, limits.get("max_branches"), "building"),
+        usage_item("SMS Credits / Month", 0, limits.get("sms_monthly"), "message-square"),
+    ]
+
+    return {
+        "plan_name": plan_name,
+        "plan_type": plan_type,
+        "subscription_status": status_info,
+        "usage": usage,
+        "limits": limits
     }

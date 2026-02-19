@@ -191,7 +191,9 @@ def get_optional_user(request: Request, db: Session = Depends(get_db)):
     return None
 
 @router.post("/register", response_model=UserResponse)
-async def register(data: UserRegister, response: Response, db: Session = Depends(get_db)):
+async def register(data: UserRegister, request: Request, response: Response, db: Session = Depends(get_db)):
+    from middleware.rate_limit import check_register_rate_limit
+    check_register_rate_limit(request)
     from models.master import Organization, OrganizationMember, OrganizationSubscription, SubscriptionPlan
     
     existing = get_user_by_email(db, data.email)
@@ -261,7 +263,81 @@ async def register(data: UserRegister, response: Response, db: Session = Depends
         max_age=7 * 24 * 60 * 60
     )
     
+    import asyncio
+    asyncio.create_task(_send_welcome_email(user.first_name, user.email, data.organization_name))
+    
     return user
+
+
+async def _send_welcome_email(first_name: str, email: str, org_name: str = None):
+    """Send welcome email to newly registered user (fire-and-forget)"""
+    try:
+        import httpx
+        from models.database import SessionLocal
+        from models.master import PlatformSettings
+        
+        db = SessionLocal()
+        try:
+            brevo_key_setting = db.query(PlatformSettings).filter(
+                PlatformSettings.key == "brevo_api_key"
+            ).first()
+            from_email_setting = db.query(PlatformSettings).filter(
+                PlatformSettings.key == "platform_email"
+            ).first()
+            platform_name_setting = db.query(PlatformSettings).filter(
+                PlatformSettings.key == "platform_name"
+            ).first()
+        finally:
+            db.close()
+        
+        api_key = brevo_key_setting.value if brevo_key_setting else None
+        from_email = from_email_setting.value if from_email_setting else None
+        platform_name = platform_name_setting.value if platform_name_setting else "BANKY"
+        
+        if not api_key or not from_email:
+            return
+        
+        org_line = f"<p>Your organization <strong>{org_name}</strong> has been set up with a free trial.</p>" if org_name else ""
+        
+        html = f"""
+        <html><body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: linear-gradient(135deg, #2563eb, #4338ca); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h1 style="margin: 0; font-size: 28px;">Welcome to {platform_name}</h1>
+        </div>
+        <div style="padding: 30px; background: #f9fafb; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+            <p>Hi <strong>{first_name}</strong>,</p>
+            <p>Thank you for signing up! We're excited to have you on board.</p>
+            {org_line}
+            <p>Here's what you can do next:</p>
+            <ul style="line-height: 2;">
+                <li>Set up your branches and staff accounts</li>
+                <li>Configure your loan products</li>
+                <li>Start registering members</li>
+                <li>Explore the dashboard and analytics</li>
+            </ul>
+            <p>If you need any help getting started, check out our documentation or reach out to our support team.</p>
+            <p style="color: #6b7280; font-size: 13px; margin-top: 30px;">
+                - The {platform_name} Team
+            </p>
+        </div>
+        </body></html>
+        """
+        
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                "https://api.brevo.com/v3/smtp/email",
+                headers={"api-key": api_key, "Content-Type": "application/json"},
+                json={
+                    "sender": {"name": platform_name, "email": from_email},
+                    "to": [{"email": email, "name": first_name}],
+                    "subject": f"Welcome to {platform_name}!",
+                    "htmlContent": html
+                },
+                timeout=15.0
+            )
+    except Exception:
+        pass
+
 
 def create_staff_session(tenant_session, staff_id: str) -> str:
     """Create a session in the tenant database for staff"""
@@ -297,6 +373,8 @@ def get_staff_by_session(tenant_session, token: str):
 
 @router.post("/login")
 async def login(data: UserLogin, request: Request, response: Response, db: Session = Depends(get_db)):
+    from middleware.rate_limit import check_login_rate_limit
+    check_login_rate_limit(request)
     from services.tenant_context import get_tenant_context_simple
     from models.tenant import Staff
     from models.master import Organization

@@ -1441,6 +1441,17 @@ export default function MemberManagement({ organizationId }: MemberManagementPro
               <span className="hidden sm:inline">Loan Form</span>
               <span className="sm:hidden">Loan</span>
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                window.open(`/api/organizations/${organizationId}/export/members`, '_blank');
+              }}
+              data-testid="button-export-members"
+            >
+              <Download className="h-4 w-4 mr-1" />
+              <span className="hidden sm:inline">Export CSV</span>
+              <span className="sm:hidden">CSV</span>
+            </Button>
             {canWrite && (
               <Button onClick={handleNewMember} data-testid="button-new-member">
                 <Plus className="h-4 w-4 mr-1" />

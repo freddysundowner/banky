@@ -57,6 +57,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { NotificationCenter } from "@/components/notification-center";
 import {
   Landmark,
   Building2,
@@ -820,6 +821,9 @@ export default function Home() {
                 </div>
               )}
               <div className="h-4 w-px bg-border hidden md:block" />
+              {selectedOrg && (
+                <NotificationCenter organizationId={selectedOrg} />
+              )}
               <div className="flex items-center gap-2">
                 <Avatar className="h-7 w-7">
                   <AvatarFallback className="text-xs bg-primary/10 text-primary">

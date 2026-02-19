@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Save, Building2, Smartphone, Users, Clock, Shield, MessageSquare, Mail, Copy, CheckCircle2, Info, Landmark, Play } from "lucide-react";
+import { Loader2, Save, Building2, Smartphone, Users, Clock, Shield, MessageSquare, Mail, Copy, CheckCircle2, Info, Landmark, Play, BarChart3, UserCog, GitBranch, ArrowUpRight } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import RolesManagement from "@/components/roles-management";
 import { CURRENCIES, getCurrencySymbol } from "@/lib/currency";
 
@@ -105,6 +106,135 @@ function RoleCard({ title, description, permissions, badge }: RoleCardProps) {
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+interface UsageItem {
+  label: string;
+  current: number;
+  limit: number | null;
+  limit_display: string;
+  percentage: number;
+  icon: string;
+}
+
+interface UsageData {
+  plan_name: string;
+  plan_type: string;
+  subscription_status: {
+    status: string;
+    is_active: boolean;
+    is_trial: boolean;
+    trial_days_remaining: number;
+    is_expired: boolean;
+    message: string | null;
+  };
+  usage: UsageItem[];
+}
+
+function UsageDashboard({ organizationId }: { organizationId: string }) {
+  const { data, isLoading } = useQuery<UsageData>({
+    queryKey: ["/api/organizations", organizationId, "usage"],
+    enabled: !!organizationId,
+  });
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!data) return null;
+
+  const iconMap: Record<string, typeof Users> = {
+    "users": Users,
+    "user-cog": UserCog,
+    "building": GitBranch,
+    "message-square": MessageSquare,
+  };
+
+  function getProgressColor(percentage: number): string {
+    if (percentage >= 90) return "bg-destructive";
+    if (percentage >= 70) return "bg-yellow-500";
+    return "bg-primary";
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Plan Usage
+          </CardTitle>
+          <CardDescription>
+            Your current plan: <strong>{data.plan_name}</strong>
+            {data.subscription_status.is_trial && (
+              <span className="ml-2 text-yellow-600 dark:text-yellow-400">
+                (Trial - {data.subscription_status.trial_days_remaining} days remaining)
+              </span>
+            )}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {data.subscription_status.message && (
+            <div className={`mb-4 p-3 rounded-md text-sm ${
+              data.subscription_status.is_expired
+                ? "bg-destructive/10 text-destructive border border-destructive/20"
+                : "bg-yellow-50 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-800"
+            }`}>
+              {data.subscription_status.message}
+            </div>
+          )}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {data.usage.map((item) => {
+              const IconComponent = iconMap[item.icon] || Users;
+              return (
+                <div key={item.label} className="space-y-2 p-4 border rounded-md" data-testid={`usage-card-${item.label.toLowerCase().replace(/\s+/g, '-')}`}>
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <IconComponent className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium text-sm">{item.label}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {item.current} / {item.limit_display}
+                    </span>
+                  </div>
+                  {item.limit !== null && (
+                    <div className="relative h-2 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${getProgressColor(item.percentage)}`}
+                        style={{ width: `${item.percentage}%` }}
+                      />
+                    </div>
+                  )}
+                  {item.limit === null && (
+                    <p className="text-xs text-muted-foreground">No limit on your current plan</p>
+                  )}
+                  {item.percentage >= 90 && item.limit !== null && (
+                    <p className="text-xs text-destructive">Approaching limit - consider upgrading your plan</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <Button variant="outline" size="sm" asChild data-testid="button-upgrade-plan">
+              <a href="/upgrade">
+                <ArrowUpRight className="mr-2 h-4 w-4" />
+                Upgrade Plan
+              </a>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -247,6 +377,10 @@ export default function SettingsPage({ organizationId }: SettingsPageProps) {
                 <TabsTrigger value="roles" className="relative h-12 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-3 font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none gap-2" data-testid="tab-roles">
                   <Shield className="h-4 w-4" />
                   <span className="hidden sm:inline">Roles</span>
+                </TabsTrigger>
+                <TabsTrigger value="usage" className="relative h-12 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-3 font-medium text-muted-foreground shadow-none transition-none data-[state=active]:border-b-primary data-[state=active]:text-foreground data-[state=active]:shadow-none gap-2" data-testid="tab-usage">
+                  <BarChart3 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Usage</span>
                 </TabsTrigger>
               </TabsList>
             </div>
@@ -1079,6 +1213,10 @@ export default function SettingsPage({ organizationId }: SettingsPageProps) {
 
           <TabsContent value="roles" className="space-y-4">
             <RolesManagement organizationId={organizationId} />
+          </TabsContent>
+
+          <TabsContent value="usage" className="space-y-4">
+            <UsageDashboard organizationId={organizationId} />
           </TabsContent>
 
         </Tabs>

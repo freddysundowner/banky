@@ -41,6 +41,8 @@ from routes.expenses import router as expenses_router
 from accounting.routes import router as accounting_router
 from routes.admin import router as admin_router
 from routes.features import router as features_router
+from routes.notifications import router as notifications_router
+from routes.exports import router as exports_router
 from routes.subscription_payments import router as subscription_payments_router
 from models.database import engine, Base
 from middleware.audit import AuditMiddleware
@@ -306,6 +308,8 @@ app.include_router(expenses_router, prefix="/api", tags=["Expenses"])
 app.include_router(accounting_router, prefix="/api/organizations", tags=["Accounting"])
 app.include_router(admin_router, prefix="/api", tags=["Admin"])
 app.include_router(features_router, prefix="/api/organizations", tags=["Features"])
+app.include_router(notifications_router, prefix="/api/organizations", tags=["Notifications"])
+app.include_router(exports_router, prefix="/api/organizations", tags=["Data Export"])
 app.include_router(subscription_payments_router, prefix="/api/organizations", tags=["Subscription Payments"])
 
 @app.get("/api/health")
@@ -702,6 +706,81 @@ class SalesInquiryRequest(BaseModel):
     email: str
     organization: str = ""
     message: str
+
+class ContactFormRequest(BaseModel):
+    name: str
+    email: str
+    subject: str = "General Inquiry"
+    message: str
+
+@app.post("/api/public/contact", tags=["Public"])
+async def submit_contact_form(request: ContactFormRequest):
+    """Handle contact form submissions from the landing page."""
+    from models.database import SessionLocal
+    from models.master import PlatformSettings
+    from services.email_service import BrevoEmailService
+    import logging
+
+    db = SessionLocal()
+    try:
+        settings_keys = ["platform_name", "support_email", "brevo_api_key"]
+        settings = db.query(PlatformSettings).filter(
+            PlatformSettings.setting_key.in_(settings_keys)
+        ).all()
+        config = {s.setting_key: s.setting_value for s in settings}
+
+        platform_name = config.get("platform_name", "BANKY")
+        support_email = config.get("support_email")
+        brevo_api_key = config.get("brevo_api_key")
+
+        if not support_email or not brevo_api_key:
+            logging.warning("Contact form: email service not configured")
+            return {"success": True, "message": "Thank you for reaching out! We'll get back to you soon."}
+
+        service = BrevoEmailService(
+            api_key=brevo_api_key,
+            from_name=f"{platform_name} Contact",
+            from_email=support_email
+        )
+
+        html_content = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background-color: #1e40af; color: white; padding: 20px; text-align: center;">
+                <h1 style="margin: 0;">New Contact Form Submission</h1>
+            </div>
+            <div style="padding: 20px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr><td style="padding: 8px 0; font-weight: bold; width: 100px;">Name:</td><td>{request.name}</td></tr>
+                    <tr><td style="padding: 8px 0; font-weight: bold;">Email:</td><td><a href="mailto:{request.email}">{request.email}</a></td></tr>
+                    <tr><td style="padding: 8px 0; font-weight: bold;">Subject:</td><td>{request.subject}</td></tr>
+                </table>
+                <h3 style="color: #1e40af; margin-top: 20px;">Message</h3>
+                <div style="background-color: #f8fafc; padding: 15px; border-radius: 8px; border-left: 4px solid #1e40af;">
+                    {request.message.replace(chr(10), '<br>')}
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        try:
+            await service.send_email(
+                to_email=support_email,
+                to_name=f"{platform_name} Support",
+                subject=f"Contact Form: {request.subject} - from {request.name}",
+                html_content=html_content,
+                text_content=f"Name: {request.name}\nEmail: {request.email}\nSubject: {request.subject}\n\nMessage:\n{request.message}"
+            )
+        except Exception as e:
+            logging.error(f"Failed to send contact email: {e}")
+
+        return {"success": True, "message": "Thank you for reaching out! We'll get back to you soon."}
+    except Exception as e:
+        logging.error(f"Contact form error: {e}")
+        return {"success": True, "message": "Thank you for reaching out! We'll get back to you soon."}
+    finally:
+        db.close()
 
 @app.post("/api/public/sales-inquiry", tags=["Public"])
 async def send_sales_inquiry(request: SalesInquiryRequest):

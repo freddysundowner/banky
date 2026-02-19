@@ -43,7 +43,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { ArrowDownLeft, ArrowUpRight, Plus, Wallet, AlertCircle, ChevronsUpDown, Check, ChevronLeft, ChevronRight, Loader2, Printer, Eye } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Plus, Wallet, AlertCircle, ChevronsUpDown, Check, ChevronLeft, ChevronRight, Loader2, Printer, Eye, Download } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
@@ -463,6 +463,16 @@ export default function Transactions({ organizationId }: TransactionsProps) {
         </div>
         <div className="flex items-center gap-2">
           <RefreshButton organizationId={organizationId} />
+          <Button
+            variant="outline"
+            onClick={() => window.open(`/api/organizations/${organizationId}/export/transactions`, '_blank')}
+            data-testid="button-export-transactions"
+            className="shrink-0"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Export CSV</span>
+            <span className="sm:hidden">CSV</span>
+          </Button>
           {canWrite && (
             <Button onClick={() => setShowDialog(true)} data-testid="button-add-transaction" className="shrink-0">
               <Plus className="mr-2 h-4 w-4" />
