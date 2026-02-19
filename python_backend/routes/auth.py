@@ -1,9 +1,12 @@
 import os
+import logging
 from datetime import datetime, time, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from models.database import get_db
+
+logger = logging.getLogger(__name__)
 from schemas.auth import UserRegister, UserLogin, UserResponse
 from services.auth import (
     get_user_by_email, create_user, verify_password, 
@@ -299,22 +302,27 @@ async def _send_welcome_email(first_name: str, email: str, org_name: str = None)
         db = SessionLocal()
         try:
             brevo_key_setting = db.query(PlatformSettings).filter(
-                PlatformSettings.key == "brevo_api_key"
+                PlatformSettings.setting_key == "brevo_api_key"
             ).first()
             from_email_setting = db.query(PlatformSettings).filter(
-                PlatformSettings.key == "platform_email"
+                PlatformSettings.setting_key == "brevo_sender_email"
             ).first()
             platform_name_setting = db.query(PlatformSettings).filter(
-                PlatformSettings.key == "platform_name"
+                PlatformSettings.setting_key == "platform_name"
+            ).first()
+            sender_name_setting = db.query(PlatformSettings).filter(
+                PlatformSettings.setting_key == "brevo_sender_name"
             ).first()
         finally:
             db.close()
         
-        api_key = brevo_key_setting.value if brevo_key_setting else None
-        from_email = from_email_setting.value if from_email_setting else None
-        platform_name = platform_name_setting.value if platform_name_setting else "BANKY"
+        api_key = brevo_key_setting.setting_value if brevo_key_setting else None
+        from_email = from_email_setting.setting_value if from_email_setting else None
+        platform_name = platform_name_setting.setting_value if platform_name_setting else "BANKY"
+        sender_name = sender_name_setting.setting_value if sender_name_setting else platform_name
         
         if not api_key or not from_email:
+            logger.warning(f"Welcome email not sent: missing brevo_api_key or brevo_sender_email in platform settings")
             return
         
         org_line = f"<p>Your organization <strong>{org_name}</strong> has been set up with a free trial.</p>" if org_name else ""
@@ -344,19 +352,22 @@ async def _send_welcome_email(first_name: str, email: str, org_name: str = None)
         """
         
         async with httpx.AsyncClient() as client:
-            await client.post(
+            resp = await client.post(
                 "https://api.brevo.com/v3/smtp/email",
                 headers={"api-key": api_key, "Content-Type": "application/json"},
                 json={
-                    "sender": {"name": platform_name, "email": from_email},
+                    "sender": {"name": sender_name, "email": from_email},
                     "to": [{"email": email, "name": first_name}],
                     "subject": f"Welcome to {platform_name}!",
                     "htmlContent": html
                 },
                 timeout=15.0
             )
-    except Exception:
-        pass
+            logger.info(f"Welcome email sent to {email}, status: {resp.status_code}")
+            if resp.status_code != 201:
+                logger.error(f"Welcome email failed: {resp.text}")
+    except Exception as e:
+        logger.error(f"Failed to send welcome email to {email}: {e}")
 
 
 def create_staff_session(tenant_session, staff_id: str) -> str:
@@ -725,22 +736,27 @@ async def _send_password_reset_email(first_name: str, email: str, token: str, ap
         db = SessionLocal()
         try:
             brevo_key_setting = db.query(PlatformSettings).filter(
-                PlatformSettings.key == "brevo_api_key"
+                PlatformSettings.setting_key == "brevo_api_key"
             ).first()
             from_email_setting = db.query(PlatformSettings).filter(
-                PlatformSettings.key == "platform_email"
+                PlatformSettings.setting_key == "brevo_sender_email"
             ).first()
             platform_name_setting = db.query(PlatformSettings).filter(
-                PlatformSettings.key == "platform_name"
+                PlatformSettings.setting_key == "platform_name"
+            ).first()
+            sender_name_setting = db.query(PlatformSettings).filter(
+                PlatformSettings.setting_key == "brevo_sender_name"
             ).first()
         finally:
             db.close()
         
-        api_key = brevo_key_setting.value if brevo_key_setting else None
-        from_email = from_email_setting.value if from_email_setting else None
-        platform_name = platform_name_setting.value if platform_name_setting else "BANKY"
+        api_key = brevo_key_setting.setting_value if brevo_key_setting else None
+        from_email = from_email_setting.setting_value if from_email_setting else None
+        platform_name = platform_name_setting.setting_value if platform_name_setting else "BANKY"
+        sender_name = sender_name_setting.setting_value if sender_name_setting else platform_name
         
         if not api_key or not from_email:
+            logger.warning(f"Password reset email not sent: missing brevo_api_key or brevo_sender_email in platform settings")
             return
         
         reset_link = f"{app_url}/reset-password?token={token}"
@@ -767,19 +783,22 @@ async def _send_password_reset_email(first_name: str, email: str, token: str, ap
         """
         
         async with httpx.AsyncClient() as client:
-            await client.post(
+            resp = await client.post(
                 "https://api.brevo.com/v3/smtp/email",
                 headers={"api-key": api_key, "Content-Type": "application/json"},
                 json={
-                    "sender": {"name": platform_name, "email": from_email},
+                    "sender": {"name": sender_name, "email": from_email},
                     "to": [{"email": email, "name": first_name}],
                     "subject": f"Reset your {platform_name} password",
                     "htmlContent": html
                 },
                 timeout=15.0
             )
-    except Exception:
-        pass
+            logger.info(f"Password reset email sent to {email}, status: {resp.status_code}")
+            if resp.status_code != 201:
+                logger.error(f"Password reset email failed: {resp.text}")
+    except Exception as e:
+        logger.error(f"Failed to send password reset email to {email}: {e}")
 
 async def _send_verification_email(first_name: str, email: str, token: str, app_url: str):
     try:
@@ -790,22 +809,27 @@ async def _send_verification_email(first_name: str, email: str, token: str, app_
         db = SessionLocal()
         try:
             brevo_key_setting = db.query(PlatformSettings).filter(
-                PlatformSettings.key == "brevo_api_key"
+                PlatformSettings.setting_key == "brevo_api_key"
             ).first()
             from_email_setting = db.query(PlatformSettings).filter(
-                PlatformSettings.key == "platform_email"
+                PlatformSettings.setting_key == "brevo_sender_email"
             ).first()
             platform_name_setting = db.query(PlatformSettings).filter(
-                PlatformSettings.key == "platform_name"
+                PlatformSettings.setting_key == "platform_name"
+            ).first()
+            sender_name_setting = db.query(PlatformSettings).filter(
+                PlatformSettings.setting_key == "brevo_sender_name"
             ).first()
         finally:
             db.close()
         
-        api_key = brevo_key_setting.value if brevo_key_setting else None
-        from_email = from_email_setting.value if from_email_setting else None
-        platform_name = platform_name_setting.value if platform_name_setting else "BANKY"
+        api_key = brevo_key_setting.setting_value if brevo_key_setting else None
+        from_email = from_email_setting.setting_value if from_email_setting else None
+        platform_name = platform_name_setting.setting_value if platform_name_setting else "BANKY"
+        sender_name = sender_name_setting.setting_value if sender_name_setting else platform_name
         
         if not api_key or not from_email:
+            logger.warning(f"Verification email not sent: missing brevo_api_key or brevo_sender_email in platform settings")
             return
         
         verify_link = f"{app_url}/verify-email?token={token}"
@@ -832,19 +856,22 @@ async def _send_verification_email(first_name: str, email: str, token: str, app_
         """
         
         async with httpx.AsyncClient() as client:
-            await client.post(
+            resp = await client.post(
                 "https://api.brevo.com/v3/smtp/email",
                 headers={"api-key": api_key, "Content-Type": "application/json"},
                 json={
-                    "sender": {"name": platform_name, "email": from_email},
+                    "sender": {"name": sender_name, "email": from_email},
                     "to": [{"email": email, "name": first_name}],
                     "subject": f"Verify your {platform_name} email address",
                     "htmlContent": html
                 },
                 timeout=15.0
             )
-    except Exception:
-        pass
+            logger.info(f"Verification email sent to {email}, status: {resp.status_code}")
+            if resp.status_code != 201:
+                logger.error(f"Verification email failed: {resp.text}")
+    except Exception as e:
+        logger.error(f"Failed to send verification email to {email}: {e}")
 
 @router.post("/send-verification-email")
 async def send_verification_email(request: Request, auth: AuthContext = Depends(get_current_user), db: Session = Depends(get_db)):

@@ -563,6 +563,34 @@ export default function Settings() {
                   />
                   <p className="text-sm text-gray-500 mt-2">Required for sending emails via Brevo</p>
                 </div>
+
+                <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Sender Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={getValue('brevo_sender_email')}
+                    onChange={(e) => handleChange('brevo_sender_email', e.target.value)}
+                    placeholder="noreply@yourdomain.com"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white text-sm"
+                  />
+                  <p className="text-sm text-gray-500 mt-2">This email must be verified in your Brevo account. Used for verification, welcome, and password reset emails.</p>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Sender Name
+                  </label>
+                  <input
+                    type="text"
+                    value={getValue('brevo_sender_name')}
+                    onChange={(e) => handleChange('brevo_sender_name', e.target.value)}
+                    placeholder="BANKY"
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white text-sm"
+                  />
+                  <p className="text-sm text-gray-500 mt-2">Display name shown in the "From" field of platform emails</p>
+                </div>
               </div>
             )}
 

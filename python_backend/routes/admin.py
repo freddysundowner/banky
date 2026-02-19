@@ -851,6 +851,8 @@ DEFAULT_PLATFORM_SETTINGS = [
     {"key": "support_email", "value": "", "type": "string", "description": "Support email address"},
     {"key": "sales_email", "value": "", "type": "string", "description": "Sales email address for enterprise inquiries"},
     {"key": "brevo_api_key", "value": "", "type": "string", "description": "Brevo API key for sending emails (sales inquiries, notifications)"},
+    {"key": "brevo_sender_email", "value": "", "type": "string", "description": "Verified sender email for platform emails (verification, welcome, password reset)"},
+    {"key": "brevo_sender_name", "value": "", "type": "string", "description": "Display name for platform emails"},
     {"key": "theme_primary_color", "value": "#2563eb", "type": "string", "description": "Primary brand color for buttons and links"},
     {"key": "theme_secondary_color", "value": "#64748b", "type": "string", "description": "Secondary color for supporting elements"},
     {"key": "theme_accent_color", "value": "#10b981", "type": "string", "description": "Accent color for success states and highlights"},
