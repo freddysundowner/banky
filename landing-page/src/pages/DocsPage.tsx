@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Server, Key, Terminal, CheckCircle, ArrowRight, Shield, Settings, Globe, HardDrive, RefreshCw, Mail, AlertTriangle, FileText, ShoppingCart, Building2 } from 'lucide-react';
 
 type SectionId = 'overview' | 'requirements' | 'installation' | 'license' | 'nginx' | 'ssl' | 'mpesa' | 'sms' | 'backup' | 'updates' | 'troubleshooting';
@@ -880,6 +880,7 @@ function GuideContent({ guide, activeSection, supportEmail }: { guide: GuideType
 export default function DocsPage() {
   const [activeSection, setActiveSection] = useState<SectionId>('overview');
   const [activeGuide, setActiveGuide] = useState<GuideType>('codecanyon');
+  const contentRef = useRef<HTMLDivElement>(null);
   const [config, setConfig] = useState<DocsConfig>({
     docs_mode: 'both',
     codecanyon_title: 'CodeCanyon Purchase',
@@ -889,6 +890,15 @@ export default function DocsPage() {
     support_email: 'support@banky.co.ke',
   });
   const [loading, setLoading] = useState(true);
+
+  const handleSectionChange = (sectionId: SectionId) => {
+    setActiveSection(sectionId);
+    if (contentRef.current) {
+      contentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   useEffect(() => {
     const fetchConfig = async () => {
@@ -982,7 +992,7 @@ export default function DocsPage() {
               {sections.map(s => (
                 <button
                   key={s.id}
-                  onClick={() => setActiveSection(s.id)}
+                  onClick={() => handleSectionChange(s.id)}
                   className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
                     activeSection === s.id
                       ? 'bg-purple-100 text-purple-700 font-medium'
@@ -995,11 +1005,11 @@ export default function DocsPage() {
             </div>
           </nav>
 
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0" ref={contentRef} style={{ scrollMarginTop: '100px' }}>
             <div className="lg:hidden mb-6">
               <select
                 value={activeSection}
-                onChange={e => setActiveSection(e.target.value as SectionId)}
+                onChange={e => handleSectionChange(e.target.value as SectionId)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm font-medium bg-white"
               >
                 {sections.map(s => (
