@@ -11,7 +11,8 @@ from models.database import get_db, get_tenant_session
 from services.neon_tenant import neon_tenant_service
 from models.master import (
     Organization, OrganizationMember, User, AdminUser, AdminSession,
-    SubscriptionPlan, OrganizationSubscription, LicenseKey, PlatformSettings
+    SubscriptionPlan, OrganizationSubscription, LicenseKey, PlatformSettings,
+    Session as UserSession, PasswordResetToken, EmailVerificationToken
 )
 from services.feature_flags import (
     get_all_features, PLAN_LIMITS, 
@@ -424,6 +425,11 @@ async def admin_delete_organization(org_id: str, admin: AdminUser = Depends(requ
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to delete organization database: {str(e)}")
     
+    all_members = db.query(OrganizationMember).filter(
+        OrganizationMember.organization_id == org_id
+    ).all()
+    user_ids_to_check = [m.user_id for m in all_members]
+    
     db.query(OrganizationSubscription).filter(
         OrganizationSubscription.organization_id == org_id
     ).delete()
@@ -431,6 +437,17 @@ async def admin_delete_organization(org_id: str, admin: AdminUser = Depends(requ
         OrganizationMember.organization_id == org_id
     ).delete()
     db.delete(org)
+    
+    for uid in user_ids_to_check:
+        other_memberships = db.query(OrganizationMember).filter(
+            OrganizationMember.user_id == uid
+        ).count()
+        if other_memberships == 0:
+            db.query(PasswordResetToken).filter(PasswordResetToken.user_id == uid).delete()
+            db.query(EmailVerificationToken).filter(EmailVerificationToken.user_id == uid).delete()
+            db.query(UserSession).filter(UserSession.user_id == uid).delete()
+            db.query(User).filter(User.id == uid).delete()
+    
     db.commit()
     
     return {"message": "Organization deleted successfully"}

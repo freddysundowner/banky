@@ -258,9 +258,8 @@ function DeleteOrganizationSection({ organizationId }: { organizationId: string 
     onSuccess: () => {
       toast({ title: "Organization deleted", description: "The organization and all its data have been permanently removed." });
       setShowDeleteDialog(false);
-      queryClient.invalidateQueries({ queryKey: ['/api/organizations/my'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/organizations'] });
-      window.location.href = "/";
+      queryClient.clear();
+      window.location.href = "/login";
     },
     onError: (error: Error) => {
       toast({ title: "Delete failed", description: error.message, variant: "destructive" });

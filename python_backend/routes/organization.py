@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime, timedelta
 from models.database import get_db
-from models.master import Organization, OrganizationMember, OrganizationSubscription, SubscriptionPlan
+from models.master import Organization, OrganizationMember, OrganizationSubscription, SubscriptionPlan, User, Session as UserSession, PasswordResetToken, EmailVerificationToken
 from schemas.organization import OrganizationCreate, OrganizationUpdate, OrganizationResponse, OrganizationMemberResponse
 from routes.auth import get_current_user
 from services.neon_tenant import neon_tenant_service
@@ -228,6 +228,11 @@ async def delete_organization(org_id: str, user = Depends(get_current_user), db:
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Failed to delete organization database: {str(e)}")
     
+    all_members = db.query(OrganizationMember).filter(
+        OrganizationMember.organization_id == org_id
+    ).all()
+    user_ids_to_check = [m.user_id for m in all_members]
+    
     db.query(OrganizationSubscription).filter(
         OrganizationSubscription.organization_id == org_id
     ).delete()
@@ -235,6 +240,17 @@ async def delete_organization(org_id: str, user = Depends(get_current_user), db:
         OrganizationMember.organization_id == org_id
     ).delete()
     db.delete(org)
+    
+    for uid in user_ids_to_check:
+        other_memberships = db.query(OrganizationMember).filter(
+            OrganizationMember.user_id == uid
+        ).count()
+        if other_memberships == 0:
+            db.query(PasswordResetToken).filter(PasswordResetToken.user_id == uid).delete()
+            db.query(EmailVerificationToken).filter(EmailVerificationToken.user_id == uid).delete()
+            db.query(UserSession).filter(UserSession.user_id == uid).delete()
+            db.query(User).filter(User.id == uid).delete()
+    
     db.commit()
     
     return {"message": "Organization deleted successfully"}
