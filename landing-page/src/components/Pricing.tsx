@@ -31,10 +31,13 @@ interface PlansResponse {
   enterprise: EnterprisePlan[];
 }
 
-function extractFeatures(features: string[] | { enabled: string[] } | Record<string, boolean>): string[] {
+function extractFeatures(features: string[] | { enabled: string[]; custom?: string[] } | Record<string, boolean>): string[] {
   if (Array.isArray(features)) return features;
   if (features && typeof features === 'object' && 'enabled' in features) {
-    return (features as { enabled: string[] }).enabled || [];
+    const f = features as { enabled: string[]; custom?: string[] };
+    const enabled = f.enabled || [];
+    const custom = f.custom || [];
+    return [...enabled, ...custom];
   }
   return [];
 }

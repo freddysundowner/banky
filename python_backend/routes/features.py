@@ -242,6 +242,7 @@ def get_available_plans(organization_id: str, auth = Depends(get_current_user), 
     for plan in plans:
         plan_order_val = plan_order.get(plan.plan_type, 0)
         enabled_features = plan.features.get("enabled", []) if plan.features else []
+        custom_features = plan.features.get("custom", []) if plan.features else []
         display_features = [feature_display_names.get(f, f.replace("_", " ").title()) for f in enabled_features]
         
         result.append({
@@ -254,7 +255,7 @@ def get_available_plans(organization_id: str, auth = Depends(get_current_user), 
             "max_members": plan.max_members,
             "max_staff": plan.max_staff,
             "max_branches": plan.max_branches,
-            "features": {"enabled": display_features},
+            "features": {"enabled": display_features, "custom": custom_features},
             "is_current": plan.plan_type == current_plan_type,
             "is_upgrade": plan_order_val > current_order,
             "is_downgrade": plan_order_val < current_order

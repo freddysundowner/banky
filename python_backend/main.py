@@ -724,7 +724,8 @@ async def get_public_plans():
         
         def get_display_features(plan):
             enabled = plan.features.get("enabled", []) if plan.features else []
-            return {"enabled": [feature_display_names.get(f, f.replace("_", " ").title()) for f in enabled]}
+            custom = plan.features.get("custom", []) if plan.features else []
+            return {"enabled": [feature_display_names.get(f, f.replace("_", " ").title()) for f in enabled], "custom": custom}
         
         return {
             "title": settings.get('pricing_title', 'Choose Your Plan'),
