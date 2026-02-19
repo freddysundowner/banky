@@ -93,7 +93,7 @@ export default function Testimonials() {
             Testimonials
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Loved by Banks, Saccos & Chamas Across East Africa
+            Loved by Banks, Saccos & Chamas Worldwide
           </h2>
           <p className="text-xl text-gray-600">
             Hear from organizations that replaced spreadsheets and legacy systems with BANKY
