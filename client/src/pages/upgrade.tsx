@@ -22,7 +22,7 @@ interface Plan {
   max_members: number;
   max_staff: number;
   max_branches: number;
-  features: { enabled?: string[] };
+  features: { enabled?: string[]; custom?: string[] };
   is_current: boolean;
   is_upgrade: boolean;
   is_downgrade: boolean;
@@ -88,6 +88,43 @@ function formatPrice(amount: number, gateway: Gateway, paystackCurrency: string,
 
 function hasAnnual(plan: Plan): boolean {
   return plan.annual_price > 0;
+}
+
+const FEATURE_LABELS: Record<string, string> = {
+  core_banking: "Core Banking",
+  members: "Members Management",
+  savings: "Savings Accounts",
+  shares: "Share Accounts",
+  loans: "Loans",
+  teller_station: "Teller Station",
+  float_management: "Float Management",
+  fixed_deposits: "Fixed Deposits",
+  dividends: "Dividends",
+  analytics: "Analytics",
+  analytics_export: "Analytics Export",
+  sms_notifications: "SMS Notifications",
+  bulk_sms: "Bulk SMS",
+  expenses: "Expenses Management",
+  leave_management: "Leave Management",
+  payroll: "Payroll",
+  accounting: "Accounting",
+  audit_logs: "Audit Logs",
+  multiple_branches: "Multiple Branches",
+  api_access: "API Access",
+  white_label: "White Label",
+  custom_reports: "Custom Reports",
+  mpesa_integration: "M-Pesa Integration",
+  bank_integration: "Bank Integration",
+};
+
+function getFeatureLabel(featureId: string): string {
+  return FEATURE_LABELS[featureId] || featureId;
+}
+
+function getAllPlanFeatures(plan: Plan): string[] {
+  const systemFeatures = (plan.features?.enabled || []).map(getFeatureLabel);
+  const customFeatures = plan.features?.custom || [];
+  return [...systemFeatures, ...customFeatures];
 }
 
 export default function UpgradePage({ organizationId }: UpgradePageProps) {
@@ -430,12 +467,15 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-muted-foreground">Features</h4>
                     <ul className="space-y-1.5">
-                      {(plan.features?.enabled || []).slice(0, 6).map((feature: string, i: number) => (
+                      {getAllPlanFeatures(plan).slice(0, 8).map((feature: string, i: number) => (
                         <li key={i} className="flex items-start gap-1.5 text-xs md:text-sm">
                           <Check className="h-3.5 w-3.5 text-green-500 mt-0.5 flex-shrink-0" />
                           <span className="break-words min-w-0">{feature}</span>
                         </li>
                       ))}
+                      {getAllPlanFeatures(plan).length > 8 && (
+                        <li className="text-xs text-muted-foreground pl-5">+{getAllPlanFeatures(plan).length - 8} more</li>
+                      )}
                     </ul>
                   </div>
                 </div>

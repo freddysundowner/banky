@@ -704,7 +704,8 @@ def reset_plan_features_to_defaults(admin: AdminUser = Depends(require_admin), d
     for plan in plans:
         default_features = DEFAULT_PLAN_FEATURES.get(plan.plan_type)
         if default_features:
-            plan.features = {"enabled": list(default_features)}
+            existing_custom = plan.features.get("custom", []) if plan.features else []
+            plan.features = {"enabled": list(default_features), "custom": existing_custom}
             updated += 1
     
     db.commit()

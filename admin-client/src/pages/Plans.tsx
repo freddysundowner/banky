@@ -46,7 +46,7 @@ interface Plan {
   max_branches: number | null
   sms_credits_monthly: number
   support_years: number
-  features: { enabled?: string[] }
+  features: { enabled?: string[]; custom?: string[] }
   is_active: boolean
   sort_order: number
 }
@@ -60,6 +60,8 @@ export default function Plans() {
   const [editData, setEditData] = useState<Partial<Plan>>({})
   const [editingFeatures, setEditingFeatures] = useState<string | null>(null)
   const [selectedFeatures, setSelectedFeatures] = useState<string[]>([])
+  const [customFeatures, setCustomFeatures] = useState<string[]>([])
+  const [newCustomFeature, setNewCustomFeature] = useState('')
   const [showResetConfirm, setShowResetConfirm] = useState(false)
   const [newPlan, setNewPlan] = useState<Partial<Plan>>({
     name: '',
@@ -152,7 +154,7 @@ export default function Plans() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ features: { enabled: selectedFeatures } })
+        body: JSON.stringify({ features: { enabled: selectedFeatures, custom: customFeatures } })
       })
       if (!res.ok) throw new Error('Failed to update plan features')
       return res.json()
@@ -162,6 +164,8 @@ export default function Plans() {
       queryClient.invalidateQueries({ queryKey: ['features'] })
       setEditingFeatures(null)
       setSelectedFeatures([])
+      setCustomFeatures([])
+      setNewCustomFeature('')
       toast.success('Features updated')
     }
   })
@@ -188,6 +192,20 @@ export default function Plans() {
     setEditingFeatures(plan.id)
     const currentFeatures = plan.features?.enabled || []
     setSelectedFeatures(currentFeatures)
+    setCustomFeatures(plan.features?.custom || [])
+    setNewCustomFeature('')
+  }
+
+  const addCustomFeature = () => {
+    const trimmed = newCustomFeature.trim()
+    if (trimmed && !customFeatures.includes(trimmed)) {
+      setCustomFeatures(prev => [...prev, trimmed])
+      setNewCustomFeature('')
+    }
+  }
+
+  const removeCustomFeature = (feature: string) => {
+    setCustomFeatures(prev => prev.filter(f => f !== feature))
   }
 
   const toggleFeature = (featureId: string) => {
@@ -358,7 +376,7 @@ export default function Plans() {
                   </div>
                   <div className="border-t p-4 bg-gray-50 space-y-2">
                     <button onClick={() => { setEditing(plan.id); setEditData({}) }} className="w-full bg-white border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-50">Edit Plan</button>
-                    <button onClick={() => startEditingFeatures(plan)} className="w-full bg-primary-100 text-primary-700 py-2 rounded-lg hover:bg-primary-200">Edit Features ({plan.features?.enabled?.length || 0})</button>
+                    <button onClick={() => startEditingFeatures(plan)} className="w-full bg-primary-100 text-primary-700 py-2 rounded-lg hover:bg-primary-200">Edit Features ({(plan.features?.enabled?.length || 0) + (plan.features?.custom?.length || 0)})</button>
                   </div>
                 </>
               )}
@@ -457,8 +475,41 @@ export default function Plans() {
                 )
               })}
             </div>
+            <div className="px-6 pb-4 border-t pt-4">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Custom Display Features</h3>
+              <p className="text-xs text-gray-500 mb-3">Add features that appear on pricing pages (e.g., "Email Support", "Priority Support"). These are display-only and not connected to app logic.</p>
+              <div className="flex gap-2 mb-3">
+                <input
+                  type="text"
+                  value={newCustomFeature}
+                  onChange={(e) => setNewCustomFeature(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomFeature() } }}
+                  placeholder="e.g., Email Support, Dedicated Account Manager"
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+                <button
+                  onClick={addCustomFeature}
+                  disabled={!newCustomFeature.trim()}
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 text-sm whitespace-nowrap"
+                >
+                  Add
+                </button>
+              </div>
+              {customFeatures.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {customFeatures.map((feature) => (
+                    <span key={feature} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 rounded-full text-sm border border-purple-200">
+                      {feature}
+                      <button onClick={() => removeCustomFeature(feature)} className="text-purple-400 hover:text-purple-700">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="p-6 border-t flex gap-3 justify-end">
-              <button onClick={() => { setEditingFeatures(null); setSelectedFeatures([]) }} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancel</button>
+              <button onClick={() => { setEditingFeatures(null); setSelectedFeatures([]); setCustomFeatures([]); setNewCustomFeature('') }} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancel</button>
               <button onClick={() => updatePlanFeatures.mutate(editingFeatures)} className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700" disabled={updatePlanFeatures.isPending}>{updatePlanFeatures.isPending ? 'Saving...' : 'Save Features'}</button>
             </div>
           </div>
