@@ -127,6 +127,19 @@ async def create_member(
         member_data = data.model_dump()
         member_data['status'] = 'pending'
         
+        id_number = member_data.get('id_number')
+        if id_number:
+            inactive_statuses = ['suspended', 'dormant', 'deceased', 'closed']
+            existing = tenant_session.query(Member).filter(
+                Member.id_number == id_number,
+                ~Member.status.in_(inactive_statuses)
+            ).first()
+            if existing:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"A member with ID number '{id_number}' already exists (Member No: {existing.member_number})"
+                )
+        
         # Server-side branch enforcement: override branch_id for restricted users
         staff_branch_id = get_branch_filter(user)
         if staff_branch_id:
@@ -197,6 +210,20 @@ async def update_member(
         
         update_data = data.model_dump(exclude_unset=True)
         update_data.pop('member_number', None)
+        
+        new_id_number = update_data.get('id_number')
+        if new_id_number and new_id_number != member.id_number:
+            inactive_statuses = ['suspended', 'dormant', 'deceased', 'closed']
+            existing = tenant_session.query(Member).filter(
+                Member.id_number == new_id_number,
+                Member.id != member_id,
+                ~Member.status.in_(inactive_statuses)
+            ).first()
+            if existing:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"A member with ID number '{new_id_number}' already exists (Member No: {existing.member_number})"
+                )
         
         old_values = {k: getattr(member, k) for k in update_data.keys() if hasattr(member, k)}
         
