@@ -26,8 +26,8 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
             </Link>
             
             <div className="hidden md:flex items-center gap-8">
-              <a href="#features" className="text-gray-600 hover:text-gray-900 transition">Features</a>
-              <a href="#pricing" className="text-gray-600 hover:text-gray-900 transition">Pricing</a>
+              <a href="/#features" className="text-gray-600 hover:text-gray-900 transition">Features</a>
+              <a href="/#pricing" className="text-gray-600 hover:text-gray-900 transition">Pricing</a>
               <Link href="/docs" className="text-gray-600 hover:text-gray-900 transition">Docs</Link>
               <Link href="/contact" className="text-gray-600 hover:text-gray-900 transition">Contact</Link>
             </div>
@@ -56,11 +56,11 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
       {mobileMenuOpen && (
         <div className="fixed inset-0 top-16 bg-white z-40 md:hidden">
           <div className="flex flex-col p-6 gap-4">
-            <a href="#features" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>Features</a>
-            <a href="#pricing" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
+            <a href="/#features" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>Features</a>
+            <a href="/#pricing" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
             <Link href="/docs" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>Docs</Link>
             <Link href="/contact" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
-            <a href="#faq" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
+            <a href="/#faq" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
             <hr className="my-2" />
             <a href="/login" className="py-3 text-center border border-gray-300 rounded-lg" onClick={() => setMobileMenuOpen(false)}>Sign In</a>
             <a 

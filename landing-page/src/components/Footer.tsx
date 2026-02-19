@@ -26,10 +26,10 @@ export default function Footer() {
           <div>
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Product</h4>
             <ul className="space-y-3 text-sm">
-              <li><a href="#features" className="hover:text-white transition">Features</a></li>
-              <li><a href="#pricing" className="hover:text-white transition">Pricing</a></li>
-              <li><a href="#how-it-works" className="hover:text-white transition">How It Works</a></li>
-              <li><a href="#testimonials" className="hover:text-white transition">Testimonials</a></li>
+              <li><a href="/#features" className="hover:text-white transition">Features</a></li>
+              <li><a href="/#pricing" className="hover:text-white transition">Pricing</a></li>
+              <li><a href="/#how-it-works" className="hover:text-white transition">How It Works</a></li>
+              <li><a href="/#testimonials" className="hover:text-white transition">Testimonials</a></li>
               <li><Link href="/docs" className="hover:text-white transition">Documentation</Link></li>
             </ul>
           </div>
@@ -38,7 +38,7 @@ export default function Footer() {
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">Company</h4>
             <ul className="space-y-3 text-sm">
               <li><Link href="/contact" className="hover:text-white transition">Contact Us</Link></li>
-              <li><a href="#faq" className="hover:text-white transition">FAQ</a></li>
+              <li><a href="/#faq" className="hover:text-white transition">FAQ</a></li>
               <li><a href="mailto:sales@banky.co.ke" className="hover:text-white transition">Enterprise Sales</a></li>
             </ul>
           </div>
