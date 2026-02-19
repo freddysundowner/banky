@@ -442,13 +442,22 @@ export default function Home() {
     const dismissedKey = `onboarding_dismissed_${selectedOrg.id}`;
     if (localStorage.getItem(dismissedKey)) return;
     fetch(`/api/organizations/${selectedOrg.id}/branches`, { credentials: "include" })
-      .then(res => res.json())
-      .then((branches: unknown[]) => {
+      .then(res => {
+        if (!res.ok) {
+          setShowOnboarding(true);
+          return null;
+        }
+        return res.json();
+      })
+      .then((branches) => {
+        if (branches === null) return;
         if (Array.isArray(branches) && branches.length === 0) {
           setShowOnboarding(true);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        setShowOnboarding(true);
+      });
   }, [selectedOrg, memberships]);
 
   const createMutation = useMutation({
