@@ -61,26 +61,14 @@ build_saas() {
     rm -rf packages/saas/backend/tests 2>/dev/null || true
     
     cat > packages/saas/.env.example << 'EOF'
+# Database connection
 DATABASE_URL=postgresql://user:password@host:5432/banky_master
+
+# Deployment mode (saas = multi-tenant platform)
 DEPLOYMENT_MODE=saas
-SESSION_SECRET=your-secure-session-secret
+
+# Neon API key (required for SaaS - provisions databases for each organization)
 NEON_API_KEY=your-neon-api-key
-
-# Optional: SMS Gateway
-SMS_API_KEY=
-SMS_SENDER_ID=
-
-# Optional: M-Pesa Integration
-MPESA_CONSUMER_KEY=
-MPESA_CONSUMER_SECRET=
-MPESA_PASSKEY=
-MPESA_SHORTCODE=
-
-# Optional: Stripe (for subscription payments)
-STRIPE_SECRET_KEY=
-
-# Optional: Brevo (for emails)
-BREVO_API_KEY=
 EOF
 
     cat > packages/saas/ecosystem.config.js << 'PMEOF'
@@ -199,6 +187,9 @@ build_compiled() {
     cat > packages/enterprise/banky/.env.example << 'EOF'
 # Database connection
 DATABASE_URL=postgresql://user:password@host:5432/banky
+
+# Deployment mode
+DEPLOYMENT_MODE=enterprise
 
 # License Key (provided after purchase - REQUIRED)
 LICENSE_KEY=
@@ -589,6 +580,9 @@ build_codecanyon() {
     cat > packages/codecanyon/banky/.env.example << EOF
 # Database connection
 DATABASE_URL=postgresql://user:password@host:5432/banky
+
+# Deployment mode
+DEPLOYMENT_MODE=enterprise
 
 # License Key (lifetime key - all features unlocked forever)
 LICENSE_KEY=${CODECANYON_KEY}
