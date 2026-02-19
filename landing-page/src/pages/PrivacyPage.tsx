@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'wouter';
-import { ArrowLeft, Shield } from 'lucide-react';
-import { useBranding } from '../context/BrandingContext';
+import { Shield } from 'lucide-react';
 
 const DEFAULT_PRIVACY = `<section>
 <h2>1. Introduction</h2>
@@ -91,7 +89,6 @@ const DEFAULT_PRIVACY = `<section>
 </section>`;
 
 export default function PrivacyPage() {
-  const { platform_name } = useBranding();
   const [content, setContent] = useState('');
   const [lastUpdated, setLastUpdated] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -121,25 +118,8 @@ export default function PrivacyPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="w-full px-6 sm:px-10 lg:px-16">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="w-8 h-8 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold">
-                {platform_name.charAt(0)}
-              </span>
-              <span className="text-xl font-bold text-gray-900">{platform_name}</span>
-            </Link>
-            <Link href="/" className="flex items-center gap-2 text-blue-600 hover:text-blue-700">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Home
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      <main className="w-full px-6 sm:px-10 lg:px-16 py-12">
+    <div className="min-h-screen bg-gray-50 pt-16">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex items-center gap-3 mb-8">
           <Shield className="w-8 h-8 text-blue-600" />
           <h1 className="text-3xl font-bold text-gray-900">Privacy Policy</h1>

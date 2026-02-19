@@ -12,29 +12,29 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <Switch>
-      <Route path="/docs">
-        <DocsPage />
-      </Route>
-      <Route path="/terms">
-        <TermsPage />
-      </Route>
-      <Route path="/privacy">
-        <PrivacyPage />
-      </Route>
-      <Route path="/contact">
-        <ContactPage />
-      </Route>
-      <Route>
-        <div className="min-h-screen bg-white">
-          <Navbar 
-            mobileMenuOpen={mobileMenuOpen} 
-            setMobileMenuOpen={setMobileMenuOpen} 
-          />
+    <div className="min-h-screen bg-white">
+      <Navbar 
+        mobileMenuOpen={mobileMenuOpen} 
+        setMobileMenuOpen={setMobileMenuOpen} 
+      />
+      <Switch>
+        <Route path="/docs">
+          <DocsPage />
+        </Route>
+        <Route path="/terms">
+          <TermsPage />
+        </Route>
+        <Route path="/privacy">
+          <PrivacyPage />
+        </Route>
+        <Route path="/contact">
+          <ContactPage />
+        </Route>
+        <Route>
           <HomePage />
-          <Footer />
-        </div>
-      </Route>
-    </Switch>
+        </Route>
+      </Switch>
+      <Footer />
+    </div>
   );
 }
