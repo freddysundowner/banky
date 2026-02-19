@@ -1,4 +1,5 @@
-import { Star, Quote } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Star, Quote, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const testimonials = [
   {
@@ -59,6 +60,23 @@ const bgColors = [
 ];
 
 export default function Testimonials() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const visibleCount = 3;
+  const maxIndex = testimonials.length - visibleCount;
+
+  const next = useCallback(() => {
+    setCurrentIndex(prev => (prev >= maxIndex ? 0 : prev + 1));
+  }, [maxIndex]);
+
+  const prev = useCallback(() => {
+    setCurrentIndex(prev => (prev <= 0 ? maxIndex : prev - 1));
+  }, [maxIndex]);
+
+  useEffect(() => {
+    const timer = setInterval(next, 5000);
+    return () => clearInterval(timer);
+  }, [next]);
+
   return (
     <section id="testimonials" className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -74,47 +92,82 @@ export default function Testimonials() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {testimonials.map((testimonial, index) => (
+        <div className="relative">
+          <div className="overflow-hidden">
             <div
-              key={testimonial.name}
-              className="relative bg-gray-50 rounded-xl p-6 border border-gray-100"
+              className="flex transition-transform duration-500 ease-in-out"
+              style={{ transform: `translateX(-${currentIndex * (100 / visibleCount)}%)` }}
             >
-              <Quote className="absolute top-4 right-4 w-8 h-8 text-blue-100" />
-
-              <div className="flex items-center gap-1 mb-4">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-4 h-4 ${
-                      i < testimonial.rating
-                        ? 'text-yellow-400 fill-yellow-400'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                ))}
-              </div>
-
-              <p className="text-gray-600 mb-6 leading-relaxed">
-                "{testimonial.quote}"
-              </p>
-
-              <div className="flex items-center gap-3">
+              {testimonials.map((testimonial, index) => (
                 <div
-                  className={`w-10 h-10 rounded-full ${bgColors[index % bgColors.length]} text-white flex items-center justify-center text-sm font-semibold`}
+                  key={testimonial.name}
+                  className="flex-shrink-0 px-3"
+                  style={{ width: `${100 / visibleCount}%` }}
                 >
-                  {getInitials(testimonial.name)}
+                  <div className="relative bg-gray-50 rounded-xl p-6 border border-gray-100 h-full">
+                    <Quote className="absolute top-4 right-4 w-8 h-8 text-blue-100" />
+
+                    <div className="flex items-center gap-1 mb-4">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-4 h-4 ${
+                            i < testimonial.rating
+                              ? 'text-yellow-400 fill-yellow-400'
+                              : 'text-gray-300'
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    <p className="text-gray-600 mb-6 leading-relaxed">
+                      "{testimonial.quote}"
+                    </p>
+
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-full ${bgColors[index % bgColors.length]} text-white flex items-center justify-center text-sm font-semibold`}
+                      >
+                        {getInitials(testimonial.name)}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900 text-sm">
+                          {testimonial.name}
+                        </p>
+                        <p className="text-gray-500 text-xs">
+                          {testimonial.role}, {testimonial.organization}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-semibold text-gray-900 text-sm">
-                    {testimonial.name}
-                  </p>
-                  <p className="text-gray-500 text-xs">
-                    {testimonial.role}, {testimonial.organization}
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
+          </div>
+
+          <button
+            onClick={prev}
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-10 h-10 bg-white rounded-full shadow-md border border-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 transition"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <button
+            onClick={next}
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-10 h-10 bg-white rounded-full shadow-md border border-gray-200 flex items-center justify-center text-gray-600 hover:text-gray-900 transition"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="flex justify-center gap-2 mt-8">
+          {Array.from({ length: maxIndex + 1 }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentIndex(i)}
+              className={`w-2.5 h-2.5 rounded-full transition ${
+                i === currentIndex ? 'bg-blue-600' : 'bg-gray-300'
+              }`}
+            />
           ))}
         </div>
       </div>
