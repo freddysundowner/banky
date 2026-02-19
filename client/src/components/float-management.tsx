@@ -757,42 +757,44 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
-          <TabsTrigger value="floats" className="flex items-center gap-1 text-xs md:text-sm">
-            <Wallet className="h-4 w-4 shrink-0" />
-            <span className="hidden sm:inline">Today's</span> Floats
-          </TabsTrigger>
-          <TabsTrigger value="vault" className="flex items-center gap-1 text-xs md:text-sm">
-            <Building2 className="h-4 w-4 shrink-0" />
-            Vault
-          </TabsTrigger>
-          <TabsTrigger value="pending" className="flex items-center gap-1 text-xs md:text-sm relative">
-            <Clock className="h-4 w-4 shrink-0" />
-            Pending
-            {(pendingReturnCount + pendingRequestCount) > 0 && (
-              <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                {pendingReturnCount + pendingRequestCount}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="held" className="flex items-center gap-1 text-xs md:text-sm relative" data-testid="tab-held-shortages">
-            <Shield className="h-4 w-4 shrink-0" />
-            Held
-            {(heldShortages?.shortages?.length ?? 0) > 0 && (
-              <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                {heldShortages?.shortages?.length}
-              </Badge>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="handovers" className="flex items-center gap-1 text-xs md:text-sm">
-            <ArrowRightLeft className="h-4 w-4 shrink-0" />
-            Handovers
-          </TabsTrigger>
-          <TabsTrigger value="report" className="flex items-center gap-1 text-xs md:text-sm">
-            <FileText className="h-4 w-4 shrink-0" />
-            <span className="hidden sm:inline">Daily</span> Report
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+          <TabsList className="inline-flex w-auto min-w-full md:grid md:w-full md:grid-cols-6 h-auto flex-nowrap">
+            <TabsTrigger value="floats" className="flex items-center gap-1 text-xs md:text-sm whitespace-nowrap">
+              <Wallet className="h-4 w-4 shrink-0" />
+              Floats
+            </TabsTrigger>
+            <TabsTrigger value="vault" className="flex items-center gap-1 text-xs md:text-sm whitespace-nowrap">
+              <Building2 className="h-4 w-4 shrink-0" />
+              Vault
+            </TabsTrigger>
+            <TabsTrigger value="pending" className="flex items-center gap-1 text-xs md:text-sm whitespace-nowrap relative">
+              <Clock className="h-4 w-4 shrink-0" />
+              Pending
+              {(pendingReturnCount + pendingRequestCount) > 0 && (
+                <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                  {pendingReturnCount + pendingRequestCount}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="held" className="flex items-center gap-1 text-xs md:text-sm whitespace-nowrap relative" data-testid="tab-held-shortages">
+              <Shield className="h-4 w-4 shrink-0" />
+              Held
+              {(heldShortages?.shortages?.length ?? 0) > 0 && (
+                <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                  {heldShortages?.shortages?.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="handovers" className="flex items-center gap-1 text-xs md:text-sm whitespace-nowrap">
+              <ArrowRightLeft className="h-4 w-4 shrink-0" />
+              Handovers
+            </TabsTrigger>
+            <TabsTrigger value="report" className="flex items-center gap-1 text-xs md:text-sm whitespace-nowrap">
+              <FileText className="h-4 w-4 shrink-0" />
+              Report
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="floats" className="space-y-4">
           <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
