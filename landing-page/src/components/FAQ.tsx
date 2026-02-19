@@ -1,43 +1,32 @@
-const faqs = [
-  {
-    question: 'Is BANKY right for my chama or small group?',
-    answer: 'Absolutely. Whether you have 15 members or 15,000, BANKY scales with you. Chamas love the loan tracking, savings accounts, M-Pesa integration, and automated dividend sharing -- no more WhatsApp spreadsheets.',
-  },
-  {
-    question: 'How is BANKY different from a spreadsheet?',
-    answer: 'Spreadsheets break when you grow. BANKY gives you real-time dashboards, automatic interest calculations, M-Pesa integration, SMS notifications, audit trails, and proper double-entry accounting -- all without manual data entry.',
-  },
-  {
-    question: 'What is the difference between SaaS and Enterprise?',
-    answer: 'SaaS is hosted by us -- you log in and start using it immediately with monthly billing. Enterprise is a one-time purchase where you install BANKY on your own servers for full control. Both have the same powerful features.',
-  },
-  {
-    question: 'Does BANKY work with M-Pesa?',
-    answer: 'Yes. Members can deposit, repay loans, and receive disbursements directly via M-Pesa STK Push. Transactions reconcile automatically -- no manual entry needed.',
-  },
-  {
-    question: 'Is my data safe and private?',
-    answer: 'Every organization gets its own isolated database -- your data is never shared or mixed with anyone else\'s. We use bank-grade encryption, role-based access control, and maintain detailed audit logs of every action.',
-  },
-  {
-    question: 'Can I switch from SaaS to Enterprise later?',
-    answer: 'Yes. We can migrate your entire database and member records from our cloud platform to your own self-hosted Enterprise installation whenever you are ready.',
-  },
-  {
-    question: 'Do you offer training and support?',
-    answer: 'All plans include online training and email support. Growth and Professional plans get priority support. Enterprise customers can request on-site training and a dedicated account manager.',
-  },
-  {
-    question: 'What reports can I generate for regulators?',
-    answer: 'BANKY generates Trial Balance, Income Statement, Balance Sheet, loan portfolio reports, member statements, and transaction summaries -- all exportable to CSV or PDF with a single click.',
-  },
-  {
-    question: 'How quickly can we go live?',
-    answer: 'Most organizations sign up and process their first transaction within an hour. Larger Saccos migrating historical data typically go live within a week with our support team\'s help.',
-  },
+import { useState, useEffect } from 'react';
+
+interface FAQItem {
+  question: string;
+  answer: string;
+}
+
+const defaultFaqs: FAQItem[] = [
+  { question: 'Is BANKY right for my chama or small group?', answer: 'Absolutely. Whether you have 15 members or 15,000, BANKY scales with you. Chamas love the loan tracking, savings accounts, M-Pesa integration, and automated dividend sharing -- no more WhatsApp spreadsheets.' },
+  { question: 'How is BANKY different from a spreadsheet?', answer: 'Spreadsheets break when you grow. BANKY gives you real-time dashboards, automatic interest calculations, M-Pesa integration, SMS notifications, audit trails, and proper double-entry accounting -- all without manual data entry.' },
+  { question: 'What is the difference between SaaS and Enterprise?', answer: 'SaaS is hosted by us -- you log in and start using it immediately with monthly billing. Enterprise is a one-time purchase where you install BANKY on your own servers for full control. Both have the same powerful features.' },
+  { question: 'Does BANKY work with M-Pesa?', answer: 'Yes. Members can deposit, repay loans, and receive disbursements directly via M-Pesa STK Push. Transactions reconcile automatically -- no manual entry needed.' },
+  { question: 'Is my data safe and private?', answer: "Every organization gets its own isolated database -- your data is never shared or mixed with anyone else's. We use bank-grade encryption, role-based access control, and maintain detailed audit logs of every action." },
+  { question: 'Can I switch from SaaS to Enterprise later?', answer: 'Yes. We can migrate your entire database and member records from our cloud platform to your own self-hosted Enterprise installation whenever you are ready.' },
+  { question: 'Do you offer training and support?', answer: 'All plans include online training and email support. Growth and Professional plans get priority support. Enterprise customers can request on-site training and a dedicated account manager.' },
+  { question: 'What reports can I generate for regulators?', answer: 'BANKY generates Trial Balance, Income Statement, Balance Sheet, loan portfolio reports, member statements, and transaction summaries -- all exportable to CSV or PDF with a single click.' },
+  { question: 'How quickly can we go live?', answer: "Most organizations sign up and process their first transaction within an hour. Larger Saccos migrating historical data typically go live within a week with our support team's help." },
 ];
 
 export default function FAQ() {
+  const [faqs, setFaqs] = useState<FAQItem[]>(defaultFaqs);
+
+  useEffect(() => {
+    fetch('/api/public/landing-content/faq')
+      .then(res => res.json())
+      .then(data => { if (data.data) setFaqs(data.data); })
+      .catch(() => {});
+  }, []);
+
   return (
     <section id="faq" className="py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

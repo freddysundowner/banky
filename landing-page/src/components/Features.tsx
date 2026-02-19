@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { 
   Users, 
   DollarSign, 
@@ -12,94 +13,49 @@ import {
   Building2,
   Database,
   Briefcase,
-  Smartphone
+  Smartphone,
+  Globe,
+  Lock,
+  Settings,
+  TrendingUp,
+  PieChart,
+  FileText,
+  Mail,
+  Phone,
+  Map,
+  Award,
+  type LucideIcon
 } from 'lucide-react';
 
-const features = [
-  {
-    icon: Users,
-    title: 'Member Management',
-    description: 'Register members in seconds. Track KYC documents, next-of-kin, shares, and account status -- whether you have 20 members or 200,000.',
-    color: 'blue'
-  },
-  {
-    icon: DollarSign,
-    title: 'Loan Management',
-    description: 'Create unlimited loan products with custom interest rates, terms, and repayment schedules. Disburse via M-Pesa, bank, or cash -- and track every shilling.',
-    color: 'green'
-  },
-  {
-    icon: CreditCard,
-    title: 'Savings & Shares',
-    description: 'Multiple account types for savings, shares, and special deposits. Automatic interest calculations and seamless member withdrawals.',
-    color: 'purple'
-  },
-  {
-    icon: Wallet,
-    title: 'Fixed Deposits',
-    description: 'Offer competitive fixed deposit products with automatic maturity tracking, interest accrual, and flexible rollover options.',
-    color: 'orange'
-  },
-  {
-    icon: UserPlus,
-    title: 'Dividends & Profit Sharing',
-    description: 'Declare dividends, calculate payouts based on share balances, and distribute to members -- perfect for Saccos and chama profit-sharing.',
-    color: 'pink'
-  },
-  {
-    icon: BookOpen,
-    title: 'Full Accounting Suite',
-    description: 'Double-entry bookkeeping that runs itself. Chart of Accounts, journal entries, Trial Balance, Income Statement, and Balance Sheet -- all automated.',
-    color: 'teal'
-  },
-  {
-    icon: LayoutGrid,
-    title: 'Teller Station',
-    description: 'A dedicated counter interface for daily operations. Process deposits, withdrawals, and repayments with real-time cash float tracking.',
-    color: 'indigo'
-  },
-  {
-    icon: Smartphone,
-    title: 'M-Pesa Integration',
-    description: 'Accept deposits, disburse loans, and collect repayments via M-Pesa STK Push. Your members transact from their phones, you reconcile automatically.',
-    color: 'green'
-  },
-  {
-    icon: Bell,
-    title: 'SMS & Notifications',
-    description: 'Keep members informed with automated SMS alerts for every transaction, loan approval, due date reminder, and dividend payout.',
-    color: 'red'
-  },
-  {
-    icon: Shield,
-    title: 'Audit & Compliance',
-    description: 'Every action is logged. Full audit trails with user, timestamp, and change details for regulatory compliance and internal governance.',
-    color: 'cyan'
-  },
-  {
-    icon: BarChart3,
-    title: 'Real-time Analytics',
-    description: 'Live dashboards showing portfolio performance, loan arrears, member growth, and financial health. Generate regulator reports in one click.',
-    color: 'lime'
-  },
-  {
-    icon: Building2,
-    title: 'Multi-Branch Operations',
-    description: 'Manage headquarters, branches, and satellite offices from one platform. Role-based access ensures staff see only what they need.',
-    color: 'amber'
-  },
-  {
-    icon: Briefcase,
-    title: 'HR & Payroll',
-    description: 'Manage employee records, process payroll, track leave, and handle statutory deductions -- with automatic journal entries to your books.',
-    color: 'rose'
-  },
-  {
-    icon: Database,
-    title: 'Isolated & Secure',
-    description: 'Every organization gets its own dedicated database. Your data never mixes with anyone else\'s. Bank-grade encryption at rest and in transit.',
-    color: 'violet'
-  },
+interface FeatureItem {
+  icon: string;
+  title: string;
+  description: string;
+  color: string;
+}
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  Users, DollarSign, CreditCard, Wallet, UserPlus, BookOpen,
+  LayoutGrid, Bell, Shield, BarChart3, Building2, Database,
+  Briefcase, Smartphone, Globe, Lock, Settings, TrendingUp,
+  PieChart, FileText, Mail, Phone, Map, Award,
+};
+
+const defaultFeatures: FeatureItem[] = [
+  { icon: 'Users', title: 'Member Management', description: 'Register members in seconds. Track KYC documents, next-of-kin, shares, and account status -- whether you have 20 members or 200,000.', color: 'blue' },
+  { icon: 'DollarSign', title: 'Loan Management', description: 'Create unlimited loan products with custom interest rates, terms, and repayment schedules. Disburse via M-Pesa, bank, or cash -- and track every shilling.', color: 'green' },
+  { icon: 'CreditCard', title: 'Savings & Shares', description: 'Multiple account types for savings, shares, and special deposits. Automatic interest calculations and seamless member withdrawals.', color: 'purple' },
+  { icon: 'Wallet', title: 'Fixed Deposits', description: 'Offer competitive fixed deposit products with automatic maturity tracking, interest accrual, and flexible rollover options.', color: 'orange' },
+  { icon: 'UserPlus', title: 'Dividends & Profit Sharing', description: 'Declare dividends, calculate payouts based on share balances, and distribute to members -- perfect for Saccos and chama profit-sharing.', color: 'pink' },
+  { icon: 'BookOpen', title: 'Full Accounting Suite', description: 'Double-entry bookkeeping that runs itself. Chart of Accounts, journal entries, Trial Balance, Income Statement, and Balance Sheet -- all automated.', color: 'teal' },
+  { icon: 'LayoutGrid', title: 'Teller Station', description: 'A dedicated counter interface for daily operations. Process deposits, withdrawals, and repayments with real-time cash float tracking.', color: 'indigo' },
+  { icon: 'Smartphone', title: 'M-Pesa Integration', description: 'Accept deposits, disburse loans, and collect repayments via M-Pesa STK Push. Your members transact from their phones, you reconcile automatically.', color: 'green' },
+  { icon: 'Bell', title: 'SMS & Notifications', description: 'Keep members informed with automated SMS alerts for every transaction, loan approval, due date reminder, and dividend payout.', color: 'red' },
+  { icon: 'Shield', title: 'Audit & Compliance', description: 'Every action is logged. Full audit trails with user, timestamp, and change details for regulatory compliance and internal governance.', color: 'cyan' },
+  { icon: 'BarChart3', title: 'Real-time Analytics', description: 'Live dashboards showing portfolio performance, loan arrears, member growth, and financial health. Generate regulator reports in one click.', color: 'lime' },
+  { icon: 'Building2', title: 'Multi-Branch Operations', description: 'Manage headquarters, branches, and satellite offices from one platform. Role-based access ensures staff see only what they need.', color: 'amber' },
+  { icon: 'Briefcase', title: 'HR & Payroll', description: 'Manage employee records, process payroll, track leave, and handle statutory deductions -- with automatic journal entries to your books.', color: 'rose' },
+  { icon: 'Database', title: 'Isolated & Secure', description: "Every organization gets its own dedicated database. Your data never mixes with anyone else's. Bank-grade encryption at rest and in transit.", color: 'violet' },
 ];
 
 const colorClasses: Record<string, string> = {
@@ -119,6 +75,15 @@ const colorClasses: Record<string, string> = {
 };
 
 export default function Features() {
+  const [features, setFeatures] = useState<FeatureItem[]>(defaultFeatures);
+
+  useEffect(() => {
+    fetch('/api/public/landing-content/features')
+      .then(res => res.json())
+      .then(data => { if (data.data) setFeatures(data.data); })
+      .catch(() => {});
+  }, []);
+
   return (
     <section id="features" className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -133,15 +98,18 @@ export default function Features() {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feature) => (
-            <div key={feature.title} className="p-6 rounded-xl border border-gray-200 hover:border-blue-200 hover:shadow-lg transition-all">
-              <div className={`w-12 h-12 rounded-lg ${colorClasses[feature.color]} flex items-center justify-center mb-4`}>
-                <feature.icon size={24} />
+          {features.map((feature) => {
+            const IconComponent = ICON_MAP[feature.icon] || Users;
+            return (
+              <div key={feature.title} className="p-6 rounded-xl border border-gray-200 hover:border-blue-200 hover:shadow-lg transition-all">
+                <div className={`w-12 h-12 rounded-lg ${colorClasses[feature.color] || colorClasses.blue} flex items-center justify-center mb-4`}>
+                  <IconComponent size={24} />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
+                <p className="text-gray-600">{feature.description}</p>
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">{feature.title}</h3>
-              <p className="text-gray-600">{feature.description}</p>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

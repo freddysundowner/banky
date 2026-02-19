@@ -77,6 +77,14 @@ The frontend uses React 18 and TypeScript with Shadcn UI components and Tailwind
 - **Current version**: 2 (covers `users.is_email_verified`, `users.approval_pin`, org columns, subscription columns, platform settings columns).
 - **CMS Legal Pages**: Terms of Service and Privacy Policy managed via admin Settings > Legal Pages tab. Content served from `GET /api/admin/public/legal/{terms|privacy}`. Frontend falls back to default content if admin hasn't set custom content.
 
+### 2026-02-19: Landing Page CMS Content Management
+- **CMS API**: Admin endpoints `GET/PUT /api/admin/landing-content/{section}` for features, testimonials, faq, how_it_works, cta_section. Public endpoint `GET /api/public/landing-content/{section}`.
+- **Storage**: JSON content stored in `platform_settings` table with keys like `landing_content_features`, `landing_content_testimonials`, etc.
+- **Admin UI**: 9 tabs in Landing Page settings (Hero, Buttons, Stats, URLs, Features, Testimonials, FAQ, How It Works, CTA Section) with full CRUD, reordering, and inline editing.
+- **Landing Page Components**: Features, Testimonials, FAQ, HowItWorks, and CTA components fetch from API with hardcoded defaults as fallback.
+- **Validation**: Server-side payload validation ensures correct data shapes per section type.
+- **Icon/Color Options**: 24 Lucide icons and 13 color schemes available for features and steps.
+
 ### 2026-02-18: Loan Eligibility Rules
 - **No Duplicate Product Loans**: `allow_multiple_loans` flag on LoanProduct (default: true). When disabled, a member cannot have two active loans (pending/approved/disbursed/defaulted/restructured) of the same product type.
 - **Good Standing Requirement**: `require_good_standing` flag on LoanProduct (default: false). When enabled, blocks loan applications if the member has any overdue instalments on existing loans.

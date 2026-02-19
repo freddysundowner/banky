@@ -1,8 +1,29 @@
+import { useState, useEffect } from 'react';
 import { ArrowRight, Calendar } from 'lucide-react';
 import { useBranding } from '../context/BrandingContext';
 
+interface CTASectionData {
+  heading: string;
+  subheading: string;
+  primary_button_text: string;
+  secondary_button_text: string;
+}
+
 export default function CTA() {
   const { platform_name } = useBranding();
+  const [data, setData] = useState<CTASectionData>({
+    heading: 'Stop Managing Finances on Spreadsheets',
+    subheading: `500+ banks, Saccos, and chamas have already switched to ${platform_name}. Start your free trial today and see why they never looked back.`,
+    primary_button_text: 'Start Free Trial',
+    secondary_button_text: 'Schedule a Demo',
+  });
+
+  useEffect(() => {
+    fetch('/api/public/landing-content/cta_section')
+      .then(res => res.json())
+      .then(result => { if (result.data) setData(result.data); })
+      .catch(() => {});
+  }, []);
 
   return (
     <section className="py-20 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 relative overflow-hidden">
@@ -13,25 +34,24 @@ export default function CTA() {
       
       <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-          Stop Managing Finances on Spreadsheets
+          {data.heading}
         </h2>
         <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-          500+ banks, Saccos, and chamas have already switched to {platform_name}. 
-          Start your free trial today and see why they never looked back.
+          {data.subheading}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a 
             href="#pricing" 
             className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-blue-700 rounded-xl text-lg font-semibold hover:bg-blue-50 transition shadow-xl"
           >
-            Start Free Trial
+            {data.primary_button_text}
             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           </a>
           <button 
             className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-white/30 text-white rounded-xl text-lg font-semibold hover:bg-white/10 transition"
           >
             <Calendar className="w-5 h-5" />
-            Schedule a Demo
+            {data.secondary_button_text}
           </button>
         </div>
       </div>

@@ -764,6 +764,71 @@ def update_landing_page_settings(data: dict, admin: AdminUser = Depends(require_
     db.commit()
     return {"message": "Landing page settings updated"}
 
+LANDING_CONTENT_KEYS = [
+    "landing_content_features",
+    "landing_content_testimonials",
+    "landing_content_faq",
+    "landing_content_how_it_works",
+    "landing_content_cta_section",
+]
+
+@router.get("/landing-content/{section}")
+def get_landing_content(section: str, admin: AdminUser = Depends(require_admin), db: Session = Depends(get_db)):
+    """Get landing page content for a specific section"""
+    import json
+    key = f"landing_content_{section}"
+    if key not in LANDING_CONTENT_KEYS:
+        raise HTTPException(status_code=400, detail="Invalid section")
+    setting = db.query(PlatformSettings).filter(PlatformSettings.setting_key == key).first()
+    if setting and setting.setting_value:
+        try:
+            return {"section": section, "data": json.loads(setting.setting_value)}
+        except json.JSONDecodeError:
+            pass
+    return {"section": section, "data": None}
+
+@router.put("/landing-content/{section}")
+def update_landing_content(section: str, payload: dict, admin: AdminUser = Depends(require_admin), db: Session = Depends(get_db)):
+    """Update landing page content for a specific section"""
+    import json
+    key = f"landing_content_{section}"
+    if key not in LANDING_CONTENT_KEYS:
+        raise HTTPException(status_code=400, detail="Invalid section")
+    data = payload.get("data", [])
+    if section in ("features", "testimonials", "faq", "how_it_works") and not isinstance(data, list):
+        raise HTTPException(status_code=400, detail="Data must be a list")
+    if section == "cta_section" and not isinstance(data, dict):
+        raise HTTPException(status_code=400, detail="Data must be an object")
+    if section == "features":
+        for item in data:
+            if not isinstance(item, dict) or not all(k in item for k in ("title", "description", "icon", "color")):
+                raise HTTPException(status_code=400, detail="Each feature must have title, description, icon, and color")
+    elif section == "testimonials":
+        for item in data:
+            if not isinstance(item, dict) or not all(k in item for k in ("name", "role", "organization", "quote", "rating")):
+                raise HTTPException(status_code=400, detail="Each testimonial must have name, role, organization, quote, and rating")
+    elif section == "faq":
+        for item in data:
+            if not isinstance(item, dict) or not all(k in item for k in ("question", "answer")):
+                raise HTTPException(status_code=400, detail="Each FAQ must have question and answer")
+    elif section == "how_it_works":
+        for item in data:
+            if not isinstance(item, dict) or not all(k in item for k in ("title", "description", "color")):
+                raise HTTPException(status_code=400, detail="Each step must have title, description, and color")
+    elif section == "cta_section":
+        if not all(k in data for k in ("heading", "subheading", "primary_button_text", "secondary_button_text")):
+            raise HTTPException(status_code=400, detail="CTA section must have heading, subheading, primary_button_text, and secondary_button_text")
+    value = json.dumps(data)
+    setting = db.query(PlatformSettings).filter(PlatformSettings.setting_key == key).first()
+    if setting:
+        setting.setting_value = value
+        setting.updated_at = datetime.utcnow()
+    else:
+        setting = PlatformSettings(setting_key=key, setting_value=value, setting_type="json")
+        db.add(setting)
+    db.commit()
+    return {"message": f"{section} content updated"}
+
 @router.post("/plans")
 def create_plan(data: dict, admin: AdminUser = Depends(require_admin), db: Session = Depends(get_db)):
     """Create a new subscription plan"""

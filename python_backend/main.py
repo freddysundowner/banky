@@ -1026,6 +1026,30 @@ async def get_public_landing_settings():
     finally:
         db.close()
 
+@app.get("/api/public/landing-content/{section}", tags=["Public"])
+async def get_public_landing_content(section: str):
+    """Get landing page content for a specific section (public endpoint)."""
+    import json as json_lib
+    from models.database import SessionLocal
+    from models.master import PlatformSettings
+    
+    allowed = ["features", "testimonials", "faq", "how_it_works", "cta_section"]
+    if section not in allowed:
+        raise HTTPException(status_code=400, detail="Invalid section")
+    
+    db = SessionLocal()
+    try:
+        key = f"landing_content_{section}"
+        setting = db.query(PlatformSettings).filter(PlatformSettings.setting_key == key).first()
+        if setting and setting.setting_value:
+            try:
+                return {"section": section, "data": json_lib.loads(setting.setting_value)}
+            except json_lib.JSONDecodeError:
+                pass
+        return {"section": section, "data": None}
+    finally:
+        db.close()
+
 if DIST_PATH.exists():
     assets_path = DIST_PATH / "assets"
     if assets_path.exists():
