@@ -9,7 +9,7 @@ interface SaaSPlan {
   max_members: number;
   max_staff: number;
   max_branches: number;
-  features: Record<string, boolean>;
+  features: string[] | { enabled: string[] } | Record<string, boolean>;
 }
 
 interface EnterprisePlan {
@@ -31,31 +31,26 @@ interface PlansResponse {
   enterprise: EnterprisePlan[];
 }
 
+function extractFeatures(features: string[] | { enabled: string[] } | Record<string, boolean>): string[] {
+  if (Array.isArray(features)) return features;
+  if (features && typeof features === 'object' && 'enabled' in features) {
+    return (features as { enabled: string[] }).enabled || [];
+  }
+  return [];
+}
 
 function getSaasFeatures(plan: SaaSPlan): string[] {
-  const features: string[] = [];
-  features.push(`Up to ${plan.max_members.toLocaleString()} members`);
-  features.push(`${plan.max_staff} staff accounts`);
-  features.push(`${plan.max_branches} branch${plan.max_branches > 1 ? 'es' : ''}`);
-  
-  if (plan.plan_type === 'starter') {
-    features.push('Core banking features');
-    features.push('Email support');
-  } else if (plan.plan_type === 'growth') {
-    features.push('All Starter features');
-    features.push('Analytics dashboard');
-    features.push('SMS notifications');
-    features.push('Float management');
-    features.push('Priority support');
-  } else if (plan.plan_type === 'professional') {
-    features.push('All Growth features');
-    features.push('Fixed deposits');
-    features.push('Dividends module');
-    features.push('API access');
-    features.push('Dedicated support');
+  const result: string[] = [];
+  result.push(`Up to ${plan.max_members.toLocaleString()} members`);
+  result.push(`${plan.max_staff} staff accounts`);
+  result.push(`${plan.max_branches} branch${plan.max_branches > 1 ? 'es' : ''}`);
+
+  const dbFeatures = extractFeatures(plan.features);
+  for (const f of dbFeatures) {
+    result.push(f);
   }
-  
-  return features;
+
+  return result;
 }
 
 export default function Pricing() {
@@ -277,7 +272,7 @@ export default function Pricing() {
                         {plan.support_years || 1} year{(plan.support_years || 1) > 1 ? 's' : ''} support & updates
                       </span>
                     </li>
-                    {(Array.isArray(plan.features) ? plan.features : (plan.features as { enabled: string[] }).enabled || []).map((feature) => (
+                    {extractFeatures(plan.features).map((feature) => (
                       <li key={feature} className="flex items-start gap-3">
                         <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                         <span className="text-gray-600">{feature}</span>
