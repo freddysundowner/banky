@@ -1020,7 +1020,7 @@ export default function Home() {
             )}
 
             {activeSection === "settings" && selectedOrg && (
-              <SettingsPage organizationId={selectedOrg.id} />
+              <SettingsPage organizationId={selectedOrg.id} isOwner={memberships?.find(m => m.organizationId === selectedOrg.id)?.isOwner ?? false} />
             )}
 
             {activeSection === "upgrade" && selectedOrg && (

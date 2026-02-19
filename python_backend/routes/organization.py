@@ -203,6 +203,42 @@ async def update_organization(org_id: str, data: OrganizationUpdate, user = Depe
     
     return sanitize_org(org)
 
+@router.delete("/{org_id}")
+async def delete_organization(org_id: str, user = Depends(get_current_user), db: Session = Depends(get_db)):
+    membership = db.query(OrganizationMember).filter(
+        OrganizationMember.organization_id == org_id,
+        OrganizationMember.user_id == user.id,
+        OrganizationMember.is_owner == True
+    ).first()
+    
+    if not membership:
+        raise HTTPException(status_code=403, detail="Only the organization owner can delete the organization")
+    
+    org = db.query(Organization).filter(Organization.id == org_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    
+    if org.neon_project_id:
+        try:
+            deleted = await neon_tenant_service.delete_tenant_database(org.neon_project_id)
+            if not deleted:
+                raise HTTPException(status_code=500, detail="Failed to delete organization database. Please try again.")
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to delete organization database: {str(e)}")
+    
+    db.query(OrganizationSubscription).filter(
+        OrganizationSubscription.organization_id == org_id
+    ).delete()
+    db.query(OrganizationMember).filter(
+        OrganizationMember.organization_id == org_id
+    ).delete()
+    db.delete(org)
+    db.commit()
+    
+    return {"message": "Organization deleted successfully"}
+
 @router.get("/{org_id}/team")
 async def get_organization_team(org_id: str, user = Depends(get_current_user), db: Session = Depends(get_db)):
     membership = db.query(OrganizationMember).filter(

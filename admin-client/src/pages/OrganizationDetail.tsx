@@ -1,15 +1,18 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { useParams, Link } from 'wouter'
+import { useParams, Link, useLocation } from 'wouter'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
 export default function OrganizationDetail() {
   const { id } = useParams<{ id: string }>()
+  const [, setLocation] = useLocation()
   const queryClient = useQueryClient()
   const [selectedPlan, setSelectedPlan] = useState('')
   const [selectedStatus, setSelectedStatus] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [showResetPassword, setShowResetPassword] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteConfirmName, setDeleteConfirmName] = useState('')
 
   const { data: org, isLoading } = useQuery({
     queryKey: ['organization', id],
@@ -84,6 +87,28 @@ export default function OrganizationDetail() {
       toast.success(data.message || 'Password reset successfully')
       setNewPassword('')
       setShowResetPassword(false)
+    },
+    onError: (err: Error) => {
+      toast.error(err.message)
+    }
+  })
+
+  const deleteOrg = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/admin/organizations/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.detail || 'Failed to delete organization')
+      }
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['organizations'] })
+      toast.success('Organization deleted permanently')
+      setLocation('/organizations')
     },
     onError: (err: Error) => {
       toast.error(err.message)
@@ -296,6 +321,61 @@ export default function OrganizationDetail() {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="mt-6 bg-white rounded-lg shadow border border-red-200 p-4 sm:p-6">
+        <h2 className="text-lg font-semibold text-red-700 mb-2 flex items-center gap-2">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+          Danger Zone
+        </h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Permanently delete this organization, its database, and all associated data. This cannot be undone.
+        </p>
+
+        {!showDeleteConfirm ? (
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            Delete Organization
+          </button>
+        ) : (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 space-y-3">
+            <p className="text-sm text-red-700">
+              To confirm, type the organization name: <strong>{org.name}</strong>
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmName}
+              onChange={e => setDeleteConfirmName(e.target.value)}
+              placeholder="Type organization name to confirm"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmName('') }}
+                className="flex-1 py-2 text-sm border border-gray-300 text-gray-600 rounded-lg hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => deleteOrg.mutate()}
+                disabled={deleteConfirmName !== org.name || deleteOrg.isPending}
+                className="flex-1 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {deleteOrg.isPending && (
+                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                )}
+                Permanently Delete
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

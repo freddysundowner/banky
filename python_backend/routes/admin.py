@@ -8,6 +8,7 @@ import secrets
 import os
 
 from models.database import get_db, get_tenant_session
+from services.neon_tenant import neon_tenant_service
 from models.master import (
     Organization, OrganizationMember, User, AdminUser, AdminSession,
     SubscriptionPlan, OrganizationSubscription, LicenseKey, PlatformSettings
@@ -406,6 +407,33 @@ def get_organization_details(org_id: str, admin: AdminUser = Depends(require_adm
         } if sub else None,
         "usage": usage
     }
+
+@router.delete("/organizations/{org_id}")
+async def admin_delete_organization(org_id: str, admin: AdminUser = Depends(require_admin), db: Session = Depends(get_db)):
+    org = db.query(Organization).filter(Organization.id == org_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+    
+    if org.neon_project_id:
+        try:
+            deleted = await neon_tenant_service.delete_tenant_database(org.neon_project_id)
+            if not deleted:
+                raise HTTPException(status_code=500, detail="Failed to delete organization database. Please try again.")
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to delete organization database: {str(e)}")
+    
+    db.query(OrganizationSubscription).filter(
+        OrganizationSubscription.organization_id == org_id
+    ).delete()
+    db.query(OrganizationMember).filter(
+        OrganizationMember.organization_id == org_id
+    ).delete()
+    db.delete(org)
+    db.commit()
+    
+    return {"message": "Organization deleted successfully"}
 
 @router.put("/organizations/{org_id}/subscription")
 def update_subscription(org_id: str, data: dict, admin: AdminUser = Depends(require_admin), db: Session = Depends(get_db)):

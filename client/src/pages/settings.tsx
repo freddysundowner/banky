@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2, Save, Building2, Smartphone, Users, Clock, Shield, MessageSquare, Mail, Copy, CheckCircle2, Info, Landmark, Play, BarChart3, UserCog, GitBranch, ArrowUpRight } from "lucide-react";
+import { Loader2, Save, Building2, Smartphone, Users, Clock, Shield, MessageSquare, Mail, Copy, CheckCircle2, Info, Landmark, Play, BarChart3, UserCog, GitBranch, ArrowUpRight, Trash2, AlertTriangle } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import RolesManagement from "@/components/roles-management";
 import { CURRENCIES, getCurrencySymbol } from "@/lib/currency";
@@ -25,6 +26,7 @@ interface Setting {
 
 interface SettingsPageProps {
   organizationId: string;
+  isOwner?: boolean;
 }
 
 function RunDeductionButton({ organizationId }: { organizationId: string }) {
@@ -239,7 +241,106 @@ function UsageDashboard({ organizationId }: { organizationId: string }) {
   );
 }
 
-export default function SettingsPage({ organizationId }: SettingsPageProps) {
+function DeleteOrganizationSection({ organizationId }: { organizationId: string }) {
+  const { toast } = useToast();
+  const [confirmName, setConfirmName] = useState("");
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const orgQuery = useQuery<{ name: string }>({
+    queryKey: ['/api/organizations', organizationId],
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("DELETE", `/api/organizations/${organizationId}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Organization deleted", description: "The organization and all its data have been permanently removed." });
+      setShowDeleteDialog(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/organizations/my'] });
+      window.location.reload();
+    },
+    onError: (error: Error) => {
+      toast({ title: "Delete failed", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const orgName = orgQuery.data?.name ?? "";
+  const canDelete = confirmName === orgName && orgName.length > 0;
+
+  return (
+    <Card className="border-destructive/50">
+      <CardHeader>
+        <CardTitle className="text-destructive flex items-center gap-2">
+          <AlertTriangle className="h-5 w-5" />
+          Delete Organization
+        </CardTitle>
+        <CardDescription>
+          Permanently delete this organization and all its data. This action cannot be undone.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="rounded-md bg-destructive/10 p-4 text-sm space-y-2">
+          <p className="font-medium text-destructive">This will permanently delete:</p>
+          <ul className="list-disc list-inside text-muted-foreground space-y-1">
+            <li>All members, staff, and branch data</li>
+            <li>All loans, transactions, and financial records</li>
+            <li>All settings and configurations</li>
+            <li>The organization's database</li>
+          </ul>
+        </div>
+        <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <DialogTrigger asChild>
+            <Button variant="destructive" data-testid="button-delete-org-trigger">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete This Organization
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="text-destructive">Delete Organization</DialogTitle>
+              <DialogDescription>
+                This action is permanent and cannot be undone. All data will be lost.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <p className="text-sm text-muted-foreground">
+                To confirm, type the organization name: <span className="font-semibold text-foreground">{orgName}</span>
+              </p>
+              <Input
+                value={confirmName}
+                onChange={(e) => setConfirmName(e.target.value)}
+                placeholder="Type organization name to confirm"
+                data-testid="input-confirm-delete-org"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => { setShowDeleteDialog(false); setConfirmName(""); }} data-testid="button-cancel-delete-org">
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                disabled={!canDelete || deleteMutation.isPending}
+                onClick={() => deleteMutation.mutate()}
+                data-testid="button-confirm-delete-org"
+              >
+                {deleteMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="mr-2 h-4 w-4" />
+                )}
+                Permanently Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function SettingsPage({ organizationId, isOwner }: SettingsPageProps) {
   const { toast } = useToast();
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [hasChanges, setHasChanges] = useState(false);
@@ -382,6 +483,12 @@ export default function SettingsPage({ organizationId }: SettingsPageProps) {
                   <BarChart3 className="h-4 w-4" />
                   <span className="hidden sm:inline">Usage</span>
                 </TabsTrigger>
+                {isOwner && (
+                  <TabsTrigger value="danger" className="relative h-12 rounded-none border-b-2 border-b-transparent bg-transparent px-4 pb-3 pt-3 font-medium text-destructive shadow-none transition-none data-[state=active]:border-b-destructive data-[state=active]:text-destructive data-[state=active]:shadow-none gap-2" data-testid="tab-danger">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span className="hidden sm:inline">Danger Zone</span>
+                  </TabsTrigger>
+                )}
               </TabsList>
             </div>
           </div>
@@ -1217,6 +1324,10 @@ export default function SettingsPage({ organizationId }: SettingsPageProps) {
 
           <TabsContent value="usage" className="space-y-4">
             <UsageDashboard organizationId={organizationId} />
+          </TabsContent>
+
+          <TabsContent value="danger" className="space-y-4">
+            <DeleteOrganizationSection organizationId={organizationId} />
           </TabsContent>
 
         </Tabs>
