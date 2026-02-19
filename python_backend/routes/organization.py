@@ -7,6 +7,7 @@ from models.master import Organization, OrganizationMember, OrganizationSubscrip
 from schemas.organization import OrganizationCreate, OrganizationUpdate, OrganizationResponse, OrganizationMemberResponse
 from routes.auth import get_current_user
 from services.neon_tenant import neon_tenant_service
+from services.tenant_context import TenantContext
 from routes.admin import get_default_plan_id, get_trial_days
 
 router = APIRouter()
@@ -62,6 +63,12 @@ async def create_organization(data: OrganizationCreate, user = Depends(get_curre
         org.neon_branch_id = tenant_info["branch_id"]
         org.connection_string = tenant_info["connection_string"]
         db.commit()
+        
+        if tenant_info.get("connection_string"):
+            try:
+                TenantContext(tenant_info["connection_string"])
+            except Exception as migration_err:
+                print(f"Tenant migration during creation: {migration_err}")
     except Exception as e:
         print(f"Error provisioning tenant database: {e}")
         # Rollback the organization creation if tenant provisioning fails
