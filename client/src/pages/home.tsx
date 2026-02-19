@@ -571,122 +571,121 @@ export default function Home() {
         </main>
 
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Create Organization</DialogTitle>
-              <DialogDescription>
-                Set up your financial institution
-              </DialogDescription>
+          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader className="pb-2">
+              <div className="flex items-center gap-3 mb-1">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
+                  <Building2 className="h-5 w-5 text-primary-foreground" />
+                </div>
+                <div>
+                  <DialogTitle className="text-lg">Create Organization</DialogTitle>
+                  <DialogDescription className="text-sm">
+                    Set up your financial institution in just a few steps
+                  </DialogDescription>
+                </div>
+              </div>
             </DialogHeader>
             <Form {...createForm}>
-              <form onSubmit={createForm.handleSubmit((data) => createMutation.mutate(data))} className="space-y-4">
-                <FormField
-                  control={createForm.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Organization Name</FormLabel>
-                      <FormControl>
-                        <Input {...field} placeholder="My Sacco Ltd" data-testid="input-create-org-name" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={createForm.control}
-                  name="code"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Organization Code</FormLabel>
-                      <FormControl>
-                        <Input {...field} readOnly className="bg-muted" placeholder="Auto-generated" data-testid="input-create-org-code" />
-                      </FormControl>
-                      <FormDescription>Auto-generated from the organization name</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <div className="grid gap-4 sm:grid-cols-2">
+              <form onSubmit={createForm.handleSubmit((data) => createMutation.mutate(data))} className="space-y-5">
+                <div className="space-y-4">
                   <FormField
                     control={createForm.control}
-                    name="email"
+                    name="name"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Email</FormLabel>
+                        <FormLabel>Organization Name <span className="text-destructive">*</span></FormLabel>
                         <FormControl>
-                          <Input {...field} type="email" placeholder="info@mysacco.com" data-testid="input-create-org-email" />
+                          <Input {...field} placeholder="e.g. Unity Sacco Ltd" data-testid="input-create-org-name" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
+                    <FormField
+                      control={createForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Email</FormLabel>
+                          <FormControl>
+                            <Input {...field} type="email" placeholder="info@mysacco.com" data-testid="input-create-org-email" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={createForm.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Phone</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="+254 700 000000" data-testid="input-create-org-phone" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
                   <FormField
                     control={createForm.control}
-                    name="phone"
+                    name="staffEmailDomain"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Phone</FormLabel>
+                        <FormLabel>Staff Email Domain <span className="text-destructive">*</span></FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="+254 700 000000" data-testid="input-create-org-phone" />
+                          <div className="flex items-center">
+                            <span className="flex items-center justify-center px-3 h-9 bg-muted border border-r-0 rounded-l-md text-muted-foreground text-sm">@</span>
+                            <Input 
+                              {...field} 
+                              value={field.value?.replace('@', '') || ''} 
+                              onChange={(e) => field.onChange(e.target.value.replace('@', ''))}
+                              placeholder="mysacco.co.ke" 
+                              className="rounded-l-none"
+                              data-testid="input-create-org-staff-domain" 
+                            />
+                          </div>
                         </FormControl>
+                        <FormDescription>Staff emails will use this domain (e.g. john@mysacco.co.ke)</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={createForm.control}
+                    name="currency"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Primary Currency</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-create-currency">
+                              <SelectValue placeholder="Select currency" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent className="max-h-60">
+                            {CURRENCIES.map(c => (
+                              <SelectItem key={c.code} value={c.code}>{c.code} - {c.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-                <FormField
-                  control={createForm.control}
-                  name="staffEmailDomain"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Staff Email Domain <span className="text-destructive">*</span></FormLabel>
-                      <FormControl>
-                        <div className="flex items-center">
-                          <span className="px-3 py-2 bg-muted border border-r-0 rounded-l-md text-muted-foreground text-sm">@</span>
-                          <Input 
-                            {...field} 
-                            value={field.value?.replace('@', '') || ''} 
-                            onChange={(e) => field.onChange(e.target.value.replace('@', ''))}
-                            placeholder="mysacco.co.ke" 
-                            className="rounded-l-none"
-                            data-testid="input-create-org-staff-domain" 
-                          />
-                        </div>
-                      </FormControl>
-                      <p className="text-xs text-muted-foreground">Work emails for staff will be generated using this domain (e.g. john@mysacco.co.ke)</p>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={createForm.control}
-                  name="currency"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Currency</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger data-testid="select-create-currency">
-                            <SelectValue placeholder="Select currency" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="max-h-60">
-                          {CURRENCIES.map(c => (
-                            <SelectItem key={c.code} value={c.code}>{c.code} - {c.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <DialogFooter>
-                  <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
+
+                <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2 pt-2">
+                  <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)} className="w-full sm:w-auto">
                     Cancel
                   </Button>
-                  <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-create-org">
-                    {createMutation.isPending ? "Creating..." : "Create Organization"}
+                  <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-create-org" className="w-full sm:w-auto">
+                    {createMutation.isPending ? "Setting up your organization..." : "Create Organization"}
                   </Button>
                 </DialogFooter>
               </form>
