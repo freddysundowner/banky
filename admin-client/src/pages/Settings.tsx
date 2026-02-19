@@ -764,6 +764,21 @@ export default function Settings() {
                         />
                       </div>
                     </div>
+                    {!getValue('terms_of_service') && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleChange('terms_of_service', `<section>\n<h2>1. Acceptance of Terms</h2>\n<p>By accessing or using this platform ("the Service"), you agree to be bound by these Terms of Service.</p>\n</section>\n\n<section>\n<h2>2. Description of Service</h2>\n<p>This platform provides a cloud-based banking and Sacco management platform that enables organizations to manage members, loans, savings, fixed deposits, dividends, and other financial operations.</p>\n</section>\n\n<section>\n<h2>3. Account Registration</h2>\n<p>To use the Service, you must create an account and provide accurate, complete information. You are responsible for maintaining the confidentiality of your account credentials and all activities that occur under your account.</p>\n</section>\n\n<section>\n<h2>4. Subscription Plans &amp; Billing</h2>\n<p>The Service offers multiple subscription tiers. Subscriptions renew automatically unless cancelled. Prices are denominated in USD. Refunds are handled on a case-by-case basis within 30 days of payment.</p>\n</section>\n\n<section>\n<h2>5. Data Ownership &amp; Privacy</h2>\n<p>You retain all ownership rights to your data. Each organization's data is stored in an isolated database. We will not access, share, or sell your data except as necessary to provide the Service or as required by law.</p>\n</section>\n\n<section>\n<h2>6. Acceptable Use</h2>\n<p>You agree not to use the Service for any unlawful purpose, attempt unauthorized access, interfere with the Service, or reverse engineer the platform.</p>\n</section>\n\n<section>\n<h2>7. Limitation of Liability</h2>\n<p>To the maximum extent permitted by law, this platform shall not be liable for any indirect, incidental, special, or consequential damages arising from the use of the Service.</p>\n</section>\n\n<section>\n<h2>8. Changes to Terms</h2>\n<p>We may update these terms from time to time. We will notify you of significant changes via email or in-app notification at least 30 days before they take effect.</p>\n</section>`);
+                          if (!getValue('terms_last_updated')) handleChange('terms_last_updated', 'February 2026');
+                        }}
+                        className="mb-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-700 bg-primary-50 border border-primary-200 rounded-lg hover:bg-primary-100 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Load default Terms of Service
+                      </button>
+                    )}
                     <textarea
                       value={getValue('terms_of_service')}
                       onChange={(e) => handleChange('terms_of_service', e.target.value)}
@@ -773,7 +788,6 @@ export default function Settings() {
                     />
                     <p className="text-sm text-gray-500 mt-2">
                       Use HTML for formatting. Supported tags: &lt;h2&gt;, &lt;h3&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;li&gt;, &lt;ol&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;a&gt;.
-                      Leave empty to show default terms content.
                     </p>
                   </div>
 
@@ -793,6 +807,21 @@ export default function Settings() {
                         />
                       </div>
                     </div>
+                    {!getValue('privacy_policy') && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          handleChange('privacy_policy', `<section>\n<h2>1. Introduction</h2>\n<p>We are committed to protecting the privacy of our users. This Privacy Policy explains how we collect, use, store, and protect information when you use our platform.</p>\n</section>\n\n<section>\n<h2>2. Information We Collect</h2>\n<p>We collect account information (name, email, phone), organizational data (member records, transactions, staff data), and usage data (login activity, feature usage).</p>\n</section>\n\n<section>\n<h2>3. Data Isolation &amp; Security</h2>\n<p>Each organization's data is stored in a completely separate, isolated database. Data is encrypted at rest and in transit. Role-based access control and audit logging are enforced.</p>\n</section>\n\n<section>\n<h2>4. How We Use Your Data</h2>\n<p>We use your data to provide and maintain the Service, process transactions, send important notifications, provide support, and improve the Service based on anonymized usage patterns.</p>\n</section>\n\n<section>\n<h2>5. Data Sharing</h2>\n<p>We do not sell or rent your data. We may share data only with payment processors, SMS providers, infrastructure providers, or when required by law.</p>\n</section>\n\n<section>\n<h2>6. Your Rights</h2>\n<p>You have the right to access, correct, delete, and export your data. You may withdraw consent for optional data processing at any time.</p>\n</section>\n\n<section>\n<h2>7. Changes to This Policy</h2>\n<p>We may update this Privacy Policy from time to time. We will notify you of significant changes at least 30 days before they take effect.</p>\n</section>`);
+                          if (!getValue('privacy_last_updated')) handleChange('privacy_last_updated', 'February 2026');
+                        }}
+                        className="mb-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary-700 bg-primary-50 border border-primary-200 rounded-lg hover:bg-primary-100 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Load default Privacy Policy
+                      </button>
+                    )}
                     <textarea
                       value={getValue('privacy_policy')}
                       onChange={(e) => handleChange('privacy_policy', e.target.value)}
@@ -802,7 +831,6 @@ export default function Settings() {
                     />
                     <p className="text-sm text-gray-500 mt-2">
                       Use HTML for formatting. Supported tags: &lt;h2&gt;, &lt;h3&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;li&gt;, &lt;ol&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;a&gt;.
-                      Leave empty to show default privacy policy content.
                     </p>
                   </div>
                 </div>
