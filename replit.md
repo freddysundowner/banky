@@ -70,6 +70,13 @@ The frontend uses React 18 and TypeScript with Shadcn UI components and Tailwind
 - **Terms of Service Checkbox**: Required checkbox on registration form with links to Terms of Service and Privacy Policy.
 - **New Models**: `PasswordResetToken`, `EmailVerificationToken` in master.py.
 
+### 2026-02-19: Master Database Migration System
+- **Migration System**: Added automatic master DB migration system in `python_backend/main.py` (mirrors tenant migration pattern).
+- **How it works**: `_MASTER_SCHEMA_VERSION` tracks version. On startup, `run_master_migrations()` checks `_master_migration_meta` table and applies any pending column additions.
+- **Adding new columns**: Add column to model in `master.py`, add to `run_master_migrations()` column list, bump `_MASTER_SCHEMA_VERSION`.
+- **Current version**: 2 (covers `users.is_email_verified`, `users.approval_pin`, org columns, subscription columns, platform settings columns).
+- **CMS Legal Pages**: Terms of Service and Privacy Policy managed via admin Settings > Legal Pages tab. Content served from `GET /api/admin/public/legal/{terms|privacy}`. Frontend falls back to default content if admin hasn't set custom content.
+
 ### 2026-02-18: Loan Eligibility Rules
 - **No Duplicate Product Loans**: `allow_multiple_loans` flag on LoanProduct (default: true). When disabled, a member cannot have two active loans (pending/approved/disbursed/defaulted/restructured) of the same product type.
 - **Good Standing Requirement**: `require_good_standing` flag on LoanProduct (default: false). When enabled, blocks loan applications if the member has any overdue instalments on existing loans.

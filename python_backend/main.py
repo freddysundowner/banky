@@ -44,6 +44,7 @@ from routes.features import router as features_router
 from routes.notifications import router as notifications_router
 from routes.exports import router as exports_router
 from routes.subscription_payments import router as subscription_payments_router
+from sqlalchemy import text
 from models.database import engine, Base
 from middleware.audit import AuditMiddleware
 
@@ -212,11 +213,120 @@ def run_pending_migrations_sync():
         db.close()
     print("All tenant migrations complete")
 
+_MASTER_SCHEMA_VERSION = 2
+
+def _get_master_migration_version():
+    """Check the migration version stored in the master database"""
+    try:
+        with engine.connect() as conn:
+            result = conn.execute(text("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_name = '_master_migration_meta'
+                )
+            """))
+            if not result.scalar():
+                return -1
+            result = conn.execute(text("SELECT version FROM _master_migration_meta LIMIT 1"))
+            row = result.fetchone()
+            return row[0] if row else -1
+    except Exception:
+        return -1
+
+def _set_master_migration_version(version):
+    """Store the migration version in the master database"""
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS _master_migration_meta (
+                    id INTEGER PRIMARY KEY DEFAULT 1,
+                    version INTEGER NOT NULL,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            """))
+            conn.execute(text("DELETE FROM _master_migration_meta"))
+            conn.execute(text(f"INSERT INTO _master_migration_meta (id, version) VALUES (1, {version})"))
+    except Exception as e:
+        print(f"Error storing master migration version: {e}")
+
+def _add_master_column_if_not_exists(conn, table_name, col_name, col_type):
+    """Helper to add a column to a master DB table if it doesn't exist"""
+    result = conn.execute(text(f"""
+        SELECT column_name FROM information_schema.columns 
+        WHERE table_name = '{table_name}' AND column_name = '{col_name}'
+    """))
+    if not result.fetchone():
+        try:
+            conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN IF NOT EXISTS {col_name} {col_type}"))
+        except Exception as e:
+            print(f"Master migration warning: Could not add {table_name}.{col_name}: {e}")
+
+def run_master_migrations():
+    """Run incremental migrations on the master database"""
+    current_version = _get_master_migration_version()
+    if current_version >= _MASTER_SCHEMA_VERSION:
+        return
+    
+    print(f"Running master DB migrations (v{current_version} -> v{_MASTER_SCHEMA_VERSION})...")
+    
+    with engine.begin() as conn:
+        user_columns = [
+            ("is_email_verified", "BOOLEAN DEFAULT FALSE"),
+            ("approval_pin", "VARCHAR(255)"),
+        ]
+        for col_name, col_type in user_columns:
+            _add_master_column_if_not_exists(conn, "users", col_name, col_type)
+        
+        org_columns = [
+            ("logo", "TEXT"),
+            ("email", "VARCHAR(255)"),
+            ("phone", "VARCHAR(50)"),
+            ("address", "TEXT"),
+            ("staff_email_domain", "VARCHAR(255)"),
+            ("deployment_mode", "VARCHAR(50) DEFAULT 'saas'"),
+            ("working_hours_start", "TIME"),
+            ("working_hours_end", "TIME"),
+            ("working_days", "JSONB"),
+            ("currency", "VARCHAR(10) DEFAULT 'KES'"),
+            ("financial_year_start", "VARCHAR(10)"),
+            ("enforce_working_hours", "BOOLEAN DEFAULT FALSE"),
+            ("auto_logout_minutes", "VARCHAR(10)"),
+            ("require_two_factor_auth", "BOOLEAN DEFAULT FALSE"),
+            ("updated_at", "TIMESTAMP DEFAULT NOW()"),
+        ]
+        for col_name, col_type in org_columns:
+            _add_master_column_if_not_exists(conn, "organizations", col_name, col_type)
+        
+        sub_columns = [
+            ("trial_ends_at", "TIMESTAMP"),
+            ("current_period_start", "TIMESTAMP"),
+            ("current_period_end", "TIMESTAMP"),
+            ("cancelled_at", "TIMESTAMP"),
+            ("gateway", "VARCHAR(50)"),
+            ("gateway_subscription_id", "VARCHAR(255)"),
+            ("gateway_customer_id", "VARCHAR(255)"),
+        ]
+        for col_name, col_type in sub_columns:
+            _add_master_column_if_not_exists(conn, "organization_subscriptions", col_name, col_type)
+        
+        platform_columns = [
+            ("setting_type", "VARCHAR(50) DEFAULT 'string'"),
+            ("description", "TEXT"),
+            ("updated_at", "TIMESTAMP DEFAULT NOW()"),
+        ]
+        for col_name, col_type in platform_columns:
+            _add_master_column_if_not_exists(conn, "platform_settings", col_name, col_type)
+    
+    _set_master_migration_version(_MASTER_SCHEMA_VERSION)
+    print(f"Master DB migrations complete (now at v{_MASTER_SCHEMA_VERSION})")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     import threading
     
     Base.metadata.create_all(bind=engine)
+    
+    run_master_migrations()
     
     seed_default_plans()
     
