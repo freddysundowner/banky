@@ -442,6 +442,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!selectedOrg || !memberships) return;
+    if (showSetupProgress || showOnboarding) return;
     const membership = memberships.find(m => m.organization.id === selectedOrg.id);
     if (!membership?.isOwner) return;
     const dismissedKey = `onboarding_dismissed_${selectedOrg.id}`;
@@ -463,7 +464,7 @@ export default function Home() {
       .catch(() => {
         setShowOnboarding(true);
       });
-  }, [selectedOrg, memberships]);
+  }, [selectedOrg, memberships, showSetupProgress, showOnboarding]);
 
   const [setupReady, setSetupReady] = useState(false);
   const setupReadyRef = useRef(false);
