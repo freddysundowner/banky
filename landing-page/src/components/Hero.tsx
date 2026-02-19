@@ -74,14 +74,15 @@ export default function Hero() {
   };
 
   const formatTitle = (title: string) => {
-    const words = title.split(' ');
-    if (words.length <= 3) return <>{title}</>;
-    const mid = Math.ceil(words.length / 2);
+    const forIndex = title.toLowerCase().indexOf(' for ');
+    if (forIndex === -1) return <>{title}</>;
+    const before = title.slice(0, forIndex + 5);
+    const after = title.slice(forIndex + 5);
     return (
       <>
-        {words.slice(0, mid).join(' ')}
-        <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-cyan-200">
-          {words.slice(mid).join(' ')}
+        {before}
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-cyan-200">
+          {after}
         </span>
       </>
     );
