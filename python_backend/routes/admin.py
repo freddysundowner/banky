@@ -592,10 +592,12 @@ def get_enterprise_plans_for_license(admin: AdminUser = Depends(require_admin), 
 @router.get("/licenses")
 def list_licenses(admin: AdminUser = Depends(require_admin), db: Session = Depends(get_db)):
     licenses = db.query(LicenseKey).order_by(LicenseKey.issued_at.desc()).all()
+    from services.feature_flags import is_perpetual_license
     return [{
         "id": l.id,
         "license_key": l.license_key,
         "edition": l.edition,
+        "perpetual": is_perpetual_license(l.license_key),
         "organization_name": l.organization_name,
         "contact_email": l.contact_email,
         "features": l.features,
@@ -642,12 +644,14 @@ def create_license(data: dict, admin: AdminUser = Depends(require_admin), db: Se
         features = list(_get_edition_features_from_db(edition, db))
         support_years = 1
     
-    license_key = generate_license_key(edition, org_name)
+    is_perpetual = data.get("perpetual", False)
+    license_key = generate_license_key(edition, org_name, perpetual=is_perpetual)
     
     expires_at = None
-    expires_in_years = data.get("expires_in_years") or support_years
-    if expires_in_years:
-        expires_at = datetime.utcnow() + timedelta(days=365 * int(expires_in_years))
+    if not is_perpetual:
+        expires_in_years = data.get("expires_in_years") or support_years
+        if expires_in_years:
+            expires_at = datetime.utcnow() + timedelta(days=365 * int(expires_in_years))
     
     license = LicenseKey(
         license_key=license_key,
@@ -668,6 +672,7 @@ def create_license(data: dict, admin: AdminUser = Depends(require_admin), db: Se
         "id": license.id,
         "license_key": license.license_key,
         "edition": edition,
+        "perpetual": is_perpetual,
         "expires_at": expires_at.isoformat() if expires_at else None,
         "message": "License created"
     }

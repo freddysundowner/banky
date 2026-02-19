@@ -169,7 +169,8 @@ ENTRYPOINT
     cat > packages/enterprise/.env.example << 'EOF'
 DATABASE_URL=postgresql://user:password@host:5432/banky
 DEPLOYMENT_MODE=enterprise
-LICENSE_KEY=BANKY-XXX-2026-XXXXXXXX
+# License key provided by admin after purchase (REQUIRED)
+LICENSE_KEY=
 SESSION_SECRET=your-secure-session-secret
 EOF
 
@@ -240,8 +241,12 @@ build_codecanyon() {
     find packages/codecanyon/banky -type f -name ".env" -delete 2>/dev/null || true
     find packages/codecanyon/banky -type d -name "dist" -exec rm -rf {} + 2>/dev/null || true
     
-    # Create env example
-    cat > packages/codecanyon/banky/.env.example << 'EOF'
+    # Generate perpetual lifetime license key for CodeCanyon
+    CODECANYON_KEY="BANKY-ENT-PERP-$(cat /dev/urandom | tr -dc 'A-Z0-9' | fold -w 8 | head -n 1)"
+    echo ">>> Generated CodeCanyon lifetime key: $CODECANYON_KEY"
+
+    # Create env example with pre-filled perpetual key
+    cat > packages/codecanyon/banky/.env.example << EOF
 # Database
 DATABASE_URL=postgresql://user:password@host:5432/banky
 
@@ -251,8 +256,8 @@ DEPLOYMENT_MODE=saas
 # For SaaS mode - Neon API for multi-tenant database provisioning
 NEON_API_KEY=your-neon-api-key
 
-# For Enterprise mode - License key
-LICENSE_KEY=BANKY-XXX-2026-XXXXXXXX
+# For Enterprise mode - License key (lifetime key included)
+LICENSE_KEY=${CODECANYON_KEY}
 
 # Security
 SESSION_SECRET=your-secure-session-secret

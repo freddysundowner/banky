@@ -35,6 +35,10 @@ BASELINE_FEATURES: Set[str] = {
     Feature.CORE_BANKING, Feature.MEMBERS, Feature.SAVINGS, Feature.SHARES, Feature.LOANS
 }
 
+ALL_FEATURES: Set[str] = {f.value for f in Feature}
+
+UNLIMITED_LIMITS: Dict = {"max_members": None, "max_staff": None, "max_branches": None, "sms_monthly": None}
+
 def _get_plan_features_from_db(plan_type: str, db=None) -> Set[str]:
     if db is None:
         return BASELINE_FEATURES
@@ -107,6 +111,12 @@ def get_deployment_mode() -> str:
 def get_license_key() -> Optional[str]:
     return os.environ.get("LICENSE_KEY")
 
+def is_perpetual_license(license_key: str) -> bool:
+    if not license_key:
+        return False
+    parts = license_key.split("-")
+    return len(parts) >= 4 and parts[2].upper() == "PERP"
+
 def validate_license_key(license_key: str, db=None) -> Optional[Dict]:
     if not license_key or not license_key.startswith("BANKY-"):
         return None
@@ -115,15 +125,25 @@ def validate_license_key(license_key: str, db=None) -> Optional[Dict]:
     if len(parts) < 4:
         return None
     
-    edition_code = parts[1].lower()
-    edition_map = {"BAS": "basic", "STD": "standard", "PRE": "premium", "ENT": "enterprise"}
+    edition_map = {"BAS": "basic", "STD": "standard", "PRE": "premium", "ENT": "enterprise", "FUL": "enterprise"}
     edition = edition_map.get(parts[1].upper(), "basic")
+    
+    perpetual = parts[2].upper() == "PERP"
+    
+    if perpetual:
+        features = ALL_FEATURES
+        limits = UNLIMITED_LIMITS
+    else:
+        db_features = _get_edition_features_from_db(edition, db)
+        features = db_features if db_features != BASELINE_FEATURES else ALL_FEATURES if edition == "enterprise" else db_features
+        limits = EDITION_LIMITS.get(edition, EDITION_LIMITS["basic"])
     
     return {
         "edition": edition,
         "valid": True,
-        "features": _get_edition_features_from_db(edition, db),
-        "limits": EDITION_LIMITS.get(edition, EDITION_LIMITS["basic"])
+        "perpetual": perpetual,
+        "features": features,
+        "limits": limits
     }
 
 def get_feature_access_for_saas(plan_type: str = "starter", db=None) -> FeatureAccess:
@@ -139,22 +159,29 @@ def get_feature_access_for_saas(plan_type: str = "starter", db=None) -> FeatureA
     )
 
 def get_feature_access_for_enterprise(license_key: Optional[str] = None, db=None) -> FeatureAccess:
+    import logging
+    logger = logging.getLogger("banky.license")
+    
     if license_key:
         license_info = validate_license_key(license_key, db)
         if license_info:
+            logger.info(f"License validated: edition={license_info['edition']}, perpetual={license_info.get('perpetual', False)}")
             return FeatureAccess(
                 enabled_features=license_info["features"],
                 limits=license_info["limits"],
                 mode="enterprise",
                 plan_or_edition=license_info["edition"]
             )
+        else:
+            logger.warning(f"Invalid license key format: {license_key[:10]}...")
+    else:
+        logger.warning("No LICENSE_KEY configured. Running with basic features only. Set a valid LICENSE_KEY in .env to unlock features.")
     
-    edition = os.environ.get("LICENSE_EDITION", "basic").lower()
     return FeatureAccess(
-        enabled_features=_get_edition_features_from_db(edition, db),
-        limits=EDITION_LIMITS.get(edition, EDITION_LIMITS["basic"]),
+        enabled_features=BASELINE_FEATURES,
+        limits=EDITION_LIMITS.get("basic", EDITION_LIMITS["basic"]),
         mode="enterprise",
-        plan_or_edition=edition
+        plan_or_edition="basic"
     )
 
 def get_feature_access(organization_subscription: Optional[Dict] = None, db=None) -> FeatureAccess:
@@ -204,17 +231,20 @@ def get_feature_category(feature: Feature) -> str:
             return category
     return "other"
 
-def generate_license_key(edition: str, org_name: str) -> str:
+def generate_license_key(edition: str, org_name: str, perpetual: bool = False) -> str:
     edition_codes = {"basic": "BAS", "standard": "STD", "premium": "PRE", "enterprise": "ENT"}
     edition_code = edition_codes.get(edition.lower(), "BAS")
     
-    from datetime import datetime
-    year = datetime.now().strftime("%Y")
+    if perpetual:
+        time_segment = "PERP"
+    else:
+        from datetime import datetime
+        time_segment = datetime.now().strftime("%Y")
     
     import uuid
     unique = str(uuid.uuid4())[:8].upper()
     
-    return f"BANKY-{edition_code}-{year}-{unique}"
+    return f"BANKY-{edition_code}-{time_segment}-{unique}"
 
 
 def get_org_features(organization_id: str, db) -> Set[str]:

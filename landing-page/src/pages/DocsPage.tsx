@@ -17,7 +17,7 @@ const allSections: { id: SectionId; label: string; guidesOnly?: GuideType }[] = 
   { id: 'overview', label: 'Overview' },
   { id: 'requirements', label: 'Requirements' },
   { id: 'installation', label: 'Installation' },
-  { id: 'license', label: 'License Activation', guidesOnly: 'direct' },
+  { id: 'license', label: 'License Activation' },
   { id: 'nginx', label: 'Domain & Nginx' },
   { id: 'ssl', label: 'SSL Certificates' },
   { id: 'mpesa', label: 'M-Pesa Setup' },
@@ -61,8 +61,8 @@ function OverviewSection({ guide }: { guide: GuideType }) {
         <h2 className="text-2xl font-bold text-gray-900 mb-4">What You Get</h2>
         <p className="text-gray-600 mb-6">
           {guide === 'codecanyon'
-            ? 'When you purchase BANKY from CodeCanyon, you receive a complete self-hosted banking and Sacco management system. Download the package from your CodeCanyon account and follow this guide to deploy on your server.'
-            : 'When you purchase BANKY directly from our team, you receive a complete self-hosted banking and Sacco management system with dedicated support and a license key for feature activation. Your license key and package are delivered to your email.'}
+            ? 'When you purchase BANKY from CodeCanyon, you receive a complete self-hosted banking and Sacco management system with a lifetime license key pre-included. Download the package from your CodeCanyon account and follow this guide to deploy on your server.'
+            : 'When you purchase BANKY directly from our team, you receive a complete self-hosted banking and Sacco management system with dedicated support. Your license key and package are delivered to your email after purchase.'}
         </p>
         <div className="grid md:grid-cols-2 gap-6">
           <div className="bg-white rounded-xl p-5 shadow-sm">
@@ -86,7 +86,7 @@ function OverviewSection({ guide }: { guide: GuideType }) {
             </h3>
             <ul className="space-y-2 text-sm text-gray-600">
               <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Single dedicated PostgreSQL database</li>
-              <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />{guide === 'codecanyon' ? 'All features included — no restrictions' : 'License-based feature unlocking'}</li>
+              <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />{guide === 'codecanyon' ? 'Lifetime license included — all features unlocked' : 'License-based feature unlocking'}</li>
               <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />M-Pesa integration ready</li>
               <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />SMS notifications support</li>
               <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Complete data ownership on your server</li>
@@ -292,6 +292,9 @@ DATABASE_URL=postgresql://banky:your_password@localhost:5432/banky
 # Must be "enterprise" for self-hosted installations
 DEPLOYMENT_MODE=enterprise
 
+# Lifetime license key (pre-included — do not remove)
+LICENSE_KEY=BANKY-ENT-PERP-XXXXXXXX
+
 # Random secret for session encryption (min 32 characters)
 SESSION_SECRET=generate-a-long-random-string-here
 
@@ -383,7 +386,7 @@ pm2 logs
           </div>
 
           <Tip type="success">
-            <strong>First Login:</strong> After installation, open <code className="bg-green-100 px-1 rounded">http://your-server-ip:5000</code> in your browser. Register your organization {guide === 'direct' ? 'and the system will activate using your license key automatically' : 'and start using the system immediately — all features are available'}.
+            <strong>First Login:</strong> After installation, open <code className="bg-green-100 px-1 rounded">http://your-server-ip:5000</code> in your browser. Register your organization {guide === 'codecanyon' ? '— your lifetime license key is already configured and all features are available' : 'and the system will activate using your license key automatically'}.
           </Tip>
         </div>
       </div>
@@ -399,67 +402,92 @@ function LicenseSection({ guide, supportEmail }: { guide: GuideType; supportEmai
           <Key className="w-7 h-7 text-purple-600" />
           License Activation
         </h2>
-        <p className="text-gray-600 mb-6">Your license key determines which features and limits are available in your installation. It is provided after purchase.</p>
 
-        <div className="space-y-6">
-          <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
-            <h3 className="font-semibold text-gray-900 mb-3">License Key Format</h3>
-            <div className="font-mono text-lg text-purple-700 mb-4">BANKY-{'{EDITION}'}-{'{YEAR}'}-{'{UNIQUE_ID}'}</div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-              {[
-                { code: 'BAS', label: 'Basic' },
-                { code: 'STD', label: 'Standard' },
-                { code: 'PRE', label: 'Premium' },
-                { code: 'ENT', label: 'Enterprise' },
-              ].map(e => (
-                <div key={e.code} className="bg-white rounded-lg p-3 text-center border border-purple-100">
-                  <div className="font-mono font-bold text-purple-600">{e.code}</div>
-                  <div className="text-gray-500 mt-1">{e.label}</div>
-                </div>
-              ))}
+        {guide === 'codecanyon' ? (
+          <div className="space-y-6">
+            <p className="text-gray-600">Your CodeCanyon package includes a <strong>lifetime license key</strong> that is already pre-filled in your <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">.env.example</code> file. This key unlocks all features with no limits and never expires.</p>
+
+            <div className="bg-green-50 rounded-xl p-6 border border-green-200">
+              <h3 className="font-semibold text-gray-900 mb-3">Your Lifetime Key</h3>
+              <div className="font-mono text-lg text-green-700 mb-3">BANKY-ENT-PERP-XXXXXXXX</div>
+              <p className="text-sm text-gray-600">The <code className="bg-white px-1.5 py-0.5 rounded text-sm">PERP</code> segment means <strong>perpetual</strong> -- this key never expires. The <code className="bg-white px-1.5 py-0.5 rounded text-sm">ENT</code> segment means <strong>Enterprise edition</strong> -- all features unlocked, no member/staff/branch limits.</p>
             </div>
-          </div>
 
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-3">How to Activate</h3>
-            <ol className="space-y-3 text-gray-600">
-              <li className="flex items-start gap-3">
-                <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">1</span>
-                <span>Add your license key to the <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">LICENSE_KEY</code> variable in your <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">.env</code> file</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">2</span>
-                <span>Restart the application: <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">pm2 restart all</code></span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">3</span>
-                <span>The system validates your key on startup and unlocks the corresponding features and limits</span>
-              </li>
-            </ol>
-          </div>
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3">Verification</h3>
+              <p className="text-gray-600 mb-3">Your license key should already be set. To verify:</p>
+              <ol className="space-y-3 text-gray-600">
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">1</span>
+                  <span>Open your <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">.env</code> file and confirm the <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">LICENSE_KEY</code> line has a value starting with <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">BANKY-ENT-PERP-</code></span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">2</span>
+                  <span>Start or restart the application -- the key is validated automatically on startup</span>
+                </li>
+              </ol>
+            </div>
 
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-3">Upgrading Your License</h3>
-            <p className="text-gray-600 mb-3">To upgrade from one edition to another (e.g., Basic to Standard):</p>
-            <ol className="space-y-2 text-gray-600 text-sm">
-              <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Purchase the higher edition license</li>
-              <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Replace the <code className="bg-gray-100 px-1 rounded">LICENSE_KEY</code> value in your <code className="bg-gray-100 px-1 rounded">.env</code> file</li>
-              <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Restart: <code className="bg-gray-100 px-1 rounded">pm2 restart all</code></li>
-              <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />All your data is preserved -- only limits and features change</li>
-            </ol>
-          </div>
-
-          {guide === 'codecanyon' ? (
             <Tip type="warning">
-              <strong>CodeCanyon Buyers:</strong> Your license key is emailed to you after purchase. If you haven't received it, check your spam folder or contact us at <a href={`mailto:${supportEmail}`} className="text-amber-900 underline">{supportEmail}</a>.
-              Also check your CodeCanyon downloads page -- the license key may be included in the readme file.
+              <strong>Important:</strong> Do not remove or modify your license key. If your <code className="bg-amber-100 px-1 rounded text-sm">.env</code> file was created fresh without the key, check the <code className="bg-amber-100 px-1 rounded text-sm">.env.example</code> file -- the key is included there. If you still cannot find it, contact us at <a href={`mailto:${supportEmail}`} className="text-amber-900 underline">{supportEmail}</a>.
             </Tip>
-          ) : (
+          </div>
+        ) : (
+          <div className="space-y-6">
+            <p className="text-gray-600">Your license key determines which features and limits are available in your installation. It is provided by the admin after purchase.</p>
+
+            <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
+              <h3 className="font-semibold text-gray-900 mb-3">License Key Format</h3>
+              <div className="font-mono text-lg text-purple-700 mb-4">BANKY-{'{EDITION}'}-{'{YEAR}'}-{'{UNIQUE_ID}'}</div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                {[
+                  { code: 'BAS', label: 'Basic' },
+                  { code: 'STD', label: 'Standard' },
+                  { code: 'PRE', label: 'Premium' },
+                  { code: 'ENT', label: 'Enterprise' },
+                ].map(e => (
+                  <div key={e.code} className="bg-white rounded-lg p-3 text-center border border-purple-100">
+                    <div className="font-mono font-bold text-purple-600">{e.code}</div>
+                    <div className="text-gray-500 mt-1">{e.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3">How to Activate</h3>
+              <ol className="space-y-3 text-gray-600">
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">1</span>
+                  <span>Add your license key to the <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">LICENSE_KEY</code> variable in your <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">.env</code> file</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">2</span>
+                  <span>Restart the application: <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">pm2 restart all</code></span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">3</span>
+                  <span>The system validates your key on startup and unlocks the corresponding features and limits</span>
+                </li>
+              </ol>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3">Upgrading Your License</h3>
+              <p className="text-gray-600 mb-3">To upgrade from one edition to another (e.g., Basic to Standard):</p>
+              <ol className="space-y-2 text-gray-600 text-sm">
+                <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Purchase the higher edition license</li>
+                <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Replace the <code className="bg-gray-100 px-1 rounded">LICENSE_KEY</code> value in your <code className="bg-gray-100 px-1 rounded">.env</code> file</li>
+                <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Restart: <code className="bg-gray-100 px-1 rounded">pm2 restart all</code></li>
+                <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />All your data is preserved -- only limits and features change</li>
+              </ol>
+            </div>
+
             <Tip type="info">
               <strong>Direct Purchase:</strong> Your license key was emailed along with your package download link. If you need it resent, contact <a href={`mailto:${supportEmail}`} className="text-blue-900 underline">{supportEmail}</a> with your order reference.
             </Tip>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -86,6 +86,16 @@ The frontend uses React 18 and TypeScript with Shadcn UI components and Tailwind
 - **Validation**: Server-side payload validation ensures correct data shapes per section type.
 - **Icon/Color Options**: 24 Lucide icons and 13 color schemes available for features and steps.
 
+### 2026-02-19: Unified License Key System
+- **Change**: Both CodeCanyon and Direct/Enterprise distributions now use license keys (previously CodeCanyon had no key).
+- **CodeCanyon**: Build script auto-generates a perpetual lifetime key (`BANKY-ENT-PERP-XXXXXXXX`) and pre-fills it in `.env.example`. All features unlocked, no limits, never expires.
+- **Direct/Enterprise**: `.env` has `LICENSE_KEY=` left blank. Admin generates keys per customer via admin panel based on purchased edition.
+- **Perpetual keys**: Format `BANKY-{EDITION}-PERP-{UNIQUE}`. Validated in `feature_flags.py` to always grant ALL_FEATURES and UNLIMITED_LIMITS regardless of DB state.
+- **Non-perpetual keys**: Format `BANKY-{EDITION}-{YEAR}-{UNIQUE}`. Features/limits resolved from DB or edition defaults.
+- **Fallback**: No license key = BASELINE_FEATURES only (core banking basics). Warning logged to help diagnose.
+- **Admin panel**: License generation supports `perpetual: true` flag. License list shows perpetual status.
+- **Docs page**: License Activation section now visible for both CodeCanyon and Direct guides with tailored content.
+
 ### 2026-02-18: Loan Eligibility Rules
 - **No Duplicate Product Loans**: `allow_multiple_loans` flag on LoanProduct (default: true). When disabled, a member cannot have two active loans (pending/approved/disbursed/defaulted/restructured) of the same product type.
 - **Good Standing Requirement**: `require_good_standing` flag on LoanProduct (default: false). When enabled, blocks loan applications if the member has any overdue instalments on existing loans.
