@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "python-3.11", "bash", "web", "postgresql-16"]
+modules = ["nodejs-20", "python-3.11", "bash", "web"]
 [nix]
 channel = "stable-25_05"
 packages = ["cargo", "freetype", "glibcLocales", "libiconv", "libxcrypt", "rustc", "unzip"]
@@ -19,10 +19,6 @@ author = "agent"
 task = "workflow.run"
 args = "Start application"
 
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Landing Page"
-
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -35,18 +31,6 @@ task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
 
-[[workflows.workflow]]
-name = "Landing Page"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd landing-page && npx vite --host 0.0.0.0 --port 3002"
-waitForPort = 3002
-
 [[ports]]
 localPort = 3001
 externalPort = 3001
@@ -58,10 +42,6 @@ externalPort = 3002
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 5001
-externalPort = 3000
 
 [[ports]]
 localPort = 5002
