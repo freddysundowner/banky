@@ -833,37 +833,6 @@ export default function Home() {
             onFinalize={handleWizardFinalize}
           />
         )}
-        <TrialBanner
-          isExpired={isExpired}
-          isTrial={isTrial}
-          trialDaysRemaining={trialDaysRemaining}
-          message={trialMessage}
-          onUpgrade={() => setActiveSection("upgrade")}
-        />
-        {!emailBannerDismissed && user && !(user as any)?.isStaff && (user as any)?.is_email_verified === false && (
-          <div className="flex items-center justify-between gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800" data-testid="banner-email-verification">
-            <div className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
-              <Mail className="h-4 w-4 shrink-0" />
-              <span>Please verify your email address.</span>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <Link href="/verify-email">
-                <Button variant="outline" size="sm" data-testid="button-verify-now">
-                  Verify Now
-                </Button>
-              </Link>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                onClick={() => setEmailBannerDismissed(true)}
-                data-testid="button-dismiss-verification"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        )}
         <div className="flex flex-1 overflow-hidden">
         <Sidebar>
           <SidebarContent>
@@ -924,6 +893,37 @@ export default function Home() {
         </Sidebar>
 
         <div className="flex flex-col flex-1 overflow-hidden">
+          <TrialBanner
+            isExpired={isExpired}
+            isTrial={isTrial}
+            trialDaysRemaining={trialDaysRemaining}
+            message={trialMessage}
+            onUpgrade={() => setActiveSection("upgrade")}
+          />
+          {!emailBannerDismissed && user && !(user as any)?.isStaff && (user as any)?.is_email_verified === false && (
+            <div className="flex items-center justify-between gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800" data-testid="banner-email-verification">
+              <div className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">
+                <Mail className="h-4 w-4 shrink-0" />
+                <span>Please verify your email address.</span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Link href="/verify-email">
+                  <Button variant="outline" size="sm" data-testid="button-verify-now">
+                    Verify Now
+                  </Button>
+                </Link>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => setEmailBannerDismissed(true)}
+                  data-testid="button-dismiss-verification"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
           <header className="flex h-12 items-center justify-between border-b bg-card px-4">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
             <div className="flex items-center gap-2">
