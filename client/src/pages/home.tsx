@@ -948,7 +948,7 @@ export default function Home() {
               )}
               <div className="h-4 w-px bg-border hidden md:block" />
               {selectedOrg && (
-                <NotificationCenter organizationId={selectedOrg} />
+                <NotificationCenter organizationId={selectedOrg.id} />
               )}
               <div className="flex items-center gap-2">
                 <Avatar className="h-7 w-7">
