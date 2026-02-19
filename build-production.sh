@@ -57,6 +57,8 @@ build_saas() {
     rm -rf packages/saas/backend/__pycache__
     find packages/saas/backend -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
     find packages/saas/backend -type f -name "*.pyc" -delete 2>/dev/null || true
+    rm -rf packages/saas/backend/uploads 2>/dev/null || true
+    rm -rf packages/saas/backend/tests 2>/dev/null || true
     
     cat > packages/saas/.env.example << 'EOF'
 DATABASE_URL=postgresql://user:password@host:5432/banky_master
@@ -234,6 +236,8 @@ ENTRYPOINT
         rm -f packages/enterprise/backend/banky_server.py
         find packages/enterprise/backend -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
         find packages/enterprise/backend -type f -name "*.pyc" -delete 2>/dev/null || true
+        rm -rf packages/enterprise/backend/uploads 2>/dev/null || true
+        rm -rf packages/enterprise/backend/tests 2>/dev/null || true
     fi
     
     cp -r dist/public packages/enterprise/frontend
@@ -341,11 +345,8 @@ build_codecanyon() {
     cp package-lock.json packages/codecanyon/banky/ 2>/dev/null || true
     cp vite.config.ts packages/codecanyon/banky/
     cp tsconfig.json packages/codecanyon/banky/
-    cp drizzle.config.ts packages/codecanyon/banky/ 2>/dev/null || true
     cp tailwind.config.ts packages/codecanyon/banky/ 2>/dev/null || true
     cp postcss.config.js packages/codecanyon/banky/ 2>/dev/null || true
-    cp components.json packages/codecanyon/banky/ 2>/dev/null || true
-    cp theme.json packages/codecanyon/banky/ 2>/dev/null || true
     cp ecosystem.config.js packages/codecanyon/banky/ 2>/dev/null || true
     
     # Clean up unnecessary files
@@ -355,6 +356,11 @@ build_codecanyon() {
     find packages/codecanyon/banky -type f -name "*.pyc" -delete 2>/dev/null || true
     find packages/codecanyon/banky -type f -name ".env" -delete 2>/dev/null || true
     find packages/codecanyon/banky -type d -name "dist" -exec rm -rf {} + 2>/dev/null || true
+    find packages/codecanyon/banky -name ".DS_Store" -delete 2>/dev/null || true
+    rm -rf packages/codecanyon/banky/python_backend/tests 2>/dev/null || true
+    rm -rf packages/codecanyon/banky/python_backend/uploads 2>/dev/null || true
+    rm -f packages/codecanyon/banky/drizzle.config.ts 2>/dev/null || true
+    rm -f packages/codecanyon/banky/components.json 2>/dev/null || true
     
     # Generate perpetual lifetime license key for CodeCanyon
     CODECANYON_KEY="BANKY-ENT-PERP-$(cat /dev/urandom | tr -dc 'A-Z0-9' | fold -w 8 | head -n 1)"
