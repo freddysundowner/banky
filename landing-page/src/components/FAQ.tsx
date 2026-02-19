@@ -38,7 +38,7 @@ export default function FAQ() {
           </h2>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="grid md:grid-cols-3 gap-6">
           {faqs.map((faq) => (
             <div key={faq.question} className="bg-white p-6 rounded-xl border border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">{faq.question}</h3>
