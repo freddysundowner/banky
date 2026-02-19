@@ -231,6 +231,13 @@ export default function Pricing() {
           <div className={`grid gap-8 ${enterprisePlans.length === 4 ? 'md:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'}`}>
             {enterprisePlans.map((plan) => {
               const isPopular = plan.name === popularEnterprisePlan;
+              const features: string[] = [];
+              features.push(plan.max_members === -1 ? 'Unlimited members' : `Up to ${plan.max_members.toLocaleString()} members`);
+              features.push(plan.max_staff === -1 ? 'Unlimited staff' : `${plan.max_staff} staff accounts`);
+              features.push(plan.max_branches === -1 ? 'Unlimited branches' : `${plan.max_branches} branch${plan.max_branches > 1 ? 'es' : ''}`);
+              features.push(`${plan.support_years || 1} year${(plan.support_years || 1) > 1 ? 's' : ''} support & updates`);
+              features.push(...extractFeatures(plan.features));
+
               return (
                 <div
                   key={plan.name}
@@ -247,35 +254,11 @@ export default function Pricing() {
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">{plan.name}</h3>
                     <div className="text-4xl font-bold text-gray-900">
                       ${plan.price.toLocaleString()}{plan.name === 'Enterprise' ? '+' : ''}
-                      <span className="text-lg font-normal text-gray-500">one-time</span>
+                      <span className="text-lg font-normal text-gray-500"> one-time</span>
                     </div>
                   </div>
                   <ul className="space-y-4 mb-8">
-                    <li className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-600">
-                        {plan.max_members === -1 ? 'Unlimited members' : `${plan.max_members.toLocaleString()} members`}
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-600">
-                        {plan.max_staff === -1 ? 'Unlimited staff' : `${plan.max_staff} staff accounts`}
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-600">
-                        {plan.max_branches === -1 ? 'Unlimited branches' : `${plan.max_branches} branches`}
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-600">
-                        {plan.support_years || 1} year{(plan.support_years || 1) > 1 ? 's' : ''} support & updates
-                      </span>
-                    </li>
-                    {extractFeatures(plan.features).map((feature) => (
+                    {features.map((feature) => (
                       <li key={feature} className="flex items-start gap-3">
                         <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                         <span className="text-gray-600">{feature}</span>
