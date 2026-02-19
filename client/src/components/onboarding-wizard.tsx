@@ -116,7 +116,17 @@ export function OnboardingWizard({ organizationId, organizationName, onComplete 
     },
   });
 
-  const handleDismiss = () => {
+  const handleDismiss = async () => {
+    if (!completedSteps.branchCreated) {
+      try {
+        await apiRequest("POST", `/api/organizations/${organizationId}/branches`, {
+          name: "Main Branch",
+          code: "BR0001",
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "branches"] });
+      } catch (e) {
+      }
+    }
     localStorage.setItem(`onboarding_dismissed_${organizationId}`, "true");
     onComplete();
   };
