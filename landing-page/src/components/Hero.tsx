@@ -113,7 +113,7 @@ export default function Hero() {
                 {settings.hero_badge}
               </div>
               
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
                 {formatTitle(settings.hero_title)}
               </h1>
               
