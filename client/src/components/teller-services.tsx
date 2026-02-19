@@ -36,38 +36,40 @@ export function TellerServices({ organizationId }: TellerServicesProps) {
   const [activeTab, setActiveTab] = useState(() => availableTabs[0] || "cheques");
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Teller Services</h2>
-          <p className="text-muted-foreground">Manage payments, cheques, transfers, and queue</p>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight">Teller Services</h2>
+          <p className="text-sm text-muted-foreground">Manage payments, cheques, transfers, and queue</p>
         </div>
         <RefreshButton organizationId={organizationId} />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className={`grid w-full grid-cols-${availableTabs.length}`}>
-          {hasMpesa && (
-            <TabsTrigger value="mpesa" className="flex items-center gap-2">
-              <Smartphone className="h-4 w-4" />
-              M-Pesa Log
+        <div className="overflow-x-auto -mx-4 md:mx-0 px-4 md:px-0">
+          <TabsList className="inline-flex w-auto min-w-full md:grid md:w-full md:grid-cols-4 h-auto flex-nowrap">
+            {hasMpesa && (
+              <TabsTrigger value="mpesa" className="flex items-center gap-1 text-xs md:text-sm whitespace-nowrap">
+                <Smartphone className="h-4 w-4 shrink-0" />
+                M-Pesa
+              </TabsTrigger>
+            )}
+            <TabsTrigger value="cheques" className="flex items-center gap-1 text-xs md:text-sm whitespace-nowrap">
+              <FileText className="h-4 w-4 shrink-0" />
+              Cheques
             </TabsTrigger>
-          )}
-          <TabsTrigger value="cheques" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Cheques
-          </TabsTrigger>
-          {hasBankIntegration && (
-            <TabsTrigger value="bank" className="flex items-center gap-2">
-              <Building className="h-4 w-4" />
-              Bank Transfers
+            {hasBankIntegration && (
+              <TabsTrigger value="bank" className="flex items-center gap-1 text-xs md:text-sm whitespace-nowrap">
+                <Building className="h-4 w-4 shrink-0" />
+                Transfers
+              </TabsTrigger>
+            )}
+            <TabsTrigger value="queue" className="flex items-center gap-1 text-xs md:text-sm whitespace-nowrap">
+              <Ticket className="h-4 w-4 shrink-0" />
+              Queue
             </TabsTrigger>
-          )}
-          <TabsTrigger value="queue" className="flex items-center gap-2">
-            <Ticket className="h-4 w-4" />
-            Queue
-          </TabsTrigger>
-        </TabsList>
+          </TabsList>
+        </div>
 
         {hasMpesa && (
           <TabsContent value="mpesa">
@@ -156,7 +158,7 @@ function MpesaLog({ organizationId }: { organizationId: string }) {
         <CardDescription>View and manage incoming M-Pesa payments</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-3">
           <div className="flex-1">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -169,7 +171,7 @@ function MpesaLog({ organizationId }: { organizationId: string }) {
             </div>
           </div>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-40">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -181,53 +183,55 @@ function MpesaLog({ organizationId }: { organizationId: string }) {
           </Select>
         </div>
 
-        <div className="border rounded-lg">
-          <table className="w-full">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="text-left p-3 font-medium">Date/Time</th>
-                <th className="text-left p-3 font-medium">M-Pesa Code</th>
-                <th className="text-left p-3 font-medium">Phone</th>
-                <th className="text-left p-3 font-medium">Sender</th>
-                <th className="text-right p-3 font-medium">Amount</th>
-                <th className="text-left p-3 font-medium">Account Ref</th>
-                <th className="text-left p-3 font-medium">Member</th>
-                <th className="text-left p-3 font-medium">Status</th>
-                <th className="text-left p-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr><td colSpan={9} className="text-center p-4">Loading...</td></tr>
-              ) : payments.length === 0 ? (
-                <tr><td colSpan={9} className="text-center p-4 text-muted-foreground">No M-Pesa payments found</td></tr>
-              ) : (
-                payments.map((p: any) => (
-                  <tr key={p.id} className="border-t hover:bg-muted/30">
-                    <td className="p-3 text-sm">{p.created_at ? new Date(p.created_at).toLocaleString() : "-"}</td>
-                    <td className="p-3 font-mono text-sm">{p.trans_id}</td>
-                    <td className="p-3 text-sm">{p.phone_number}</td>
-                    <td className="p-3 text-sm">{p.sender_name}</td>
-                    <td className="p-3 text-right font-medium">{symbol} {p.amount?.toLocaleString()}</td>
-                    <td className="p-3 text-sm">{p.bill_ref_number}</td>
-                    <td className="p-3 text-sm">{p.member_name || <span className="text-muted-foreground">-</span>}</td>
-                    <td className="p-3">{getStatusBadge(p.status)}</td>
-                    <td className="p-3">
-                      {p.status === "unmatched" && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => { setSelectedPayment(p); setCreditDialogOpen(true); }}
-                        >
-                          Credit
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="overflow-x-auto -mx-4 md:mx-0">
+          <div className="border rounded-lg min-w-[600px] md:min-w-0">
+            <table className="w-full">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="text-left p-3 font-medium">Date/Time</th>
+                  <th className="text-left p-3 font-medium">M-Pesa Code</th>
+                  <th className="text-left p-3 font-medium hidden md:table-cell">Phone</th>
+                  <th className="text-left p-3 font-medium">Sender</th>
+                  <th className="text-right p-3 font-medium">Amount</th>
+                  <th className="text-left p-3 font-medium hidden lg:table-cell">Account Ref</th>
+                  <th className="text-left p-3 font-medium hidden md:table-cell">Member</th>
+                  <th className="text-left p-3 font-medium">Status</th>
+                  <th className="text-left p-3 font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr><td colSpan={9} className="text-center p-4">Loading...</td></tr>
+                ) : payments.length === 0 ? (
+                  <tr><td colSpan={9} className="text-center p-4 text-muted-foreground">No M-Pesa payments found</td></tr>
+                ) : (
+                  payments.map((p: any) => (
+                    <tr key={p.id} className="border-t hover:bg-muted/30">
+                      <td className="p-3 text-sm">{p.created_at ? new Date(p.created_at).toLocaleString() : "-"}</td>
+                      <td className="p-3 font-mono text-sm">{p.trans_id}</td>
+                      <td className="p-3 text-sm hidden md:table-cell">{p.phone_number}</td>
+                      <td className="p-3 text-sm">{p.sender_name}</td>
+                      <td className="p-3 text-right font-medium">{symbol} {p.amount?.toLocaleString()}</td>
+                      <td className="p-3 text-sm hidden lg:table-cell">{p.bill_ref_number}</td>
+                      <td className="p-3 text-sm hidden md:table-cell">{p.member_name || <span className="text-muted-foreground">-</span>}</td>
+                      <td className="p-3">{getStatusBadge(p.status)}</td>
+                      <td className="p-3">
+                        {p.status === "unmatched" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => { setSelectedPayment(p); setCreditDialogOpen(true); }}
+                          >
+                            Credit
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <Dialog open={creditDialogOpen} onOpenChange={setCreditDialogOpen}>
@@ -378,7 +382,7 @@ function ChequeDeposits({ organizationId }: { organizationId: string }) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
@@ -388,7 +392,7 @@ function ChequeDeposits({ organizationId }: { organizationId: string }) {
         </div>
         <Dialog open={newChequeOpen} onOpenChange={setNewChequeOpen}>
           <DialogTrigger asChild>
-            <Button>New Cheque Deposit</Button>
+            <Button className="w-full sm:w-auto">New Cheque Deposit</Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -430,7 +434,7 @@ function ChequeDeposits({ organizationId }: { organizationId: string }) {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>Cheque Number</Label>
                   <Input value={formData.cheque_number} onChange={(e) => setFormData({...formData, cheque_number: e.target.value})} />
@@ -440,7 +444,7 @@ function ChequeDeposits({ organizationId }: { organizationId: string }) {
                   <Input type="number" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value})} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>Bank Name</Label>
                   <Input value={formData.bank_name} onChange={(e) => setFormData({...formData, bank_name: e.target.value})} />
@@ -483,7 +487,7 @@ function ChequeDeposits({ organizationId }: { organizationId: string }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -494,52 +498,54 @@ function ChequeDeposits({ organizationId }: { organizationId: string }) {
           </SelectContent>
         </Select>
 
-        <div className="border rounded-lg">
-          <table className="w-full">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="text-left p-3 font-medium">Date</th>
-                <th className="text-left p-3 font-medium">Member</th>
-                <th className="text-left p-3 font-medium">Cheque #</th>
-                <th className="text-left p-3 font-medium">Bank</th>
-                <th className="text-right p-3 font-medium">Amount</th>
-                <th className="text-left p-3 font-medium">Expected Clear</th>
-                <th className="text-left p-3 font-medium">Status</th>
-                <th className="text-left p-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr><td colSpan={8} className="text-center p-4">Loading...</td></tr>
-              ) : cheques.length === 0 ? (
-                <tr><td colSpan={8} className="text-center p-4 text-muted-foreground">No cheque deposits found</td></tr>
-              ) : (
-                cheques.map((c: any) => (
-                  <tr key={c.id} className="border-t hover:bg-muted/30">
-                    <td className="p-3 text-sm">{c.deposit_date}</td>
-                    <td className="p-3 text-sm">{c.member_name}</td>
-                    <td className="p-3 font-mono text-sm">{c.cheque_number}</td>
-                    <td className="p-3 text-sm">{c.bank_name}</td>
-                    <td className="p-3 text-right font-medium">{symbol} {c.amount?.toLocaleString()}</td>
-                    <td className="p-3 text-sm">{c.expected_clearance_date}</td>
-                    <td className="p-3">{getStatusBadge(c.status)}</td>
-                    <td className="p-3 space-x-2">
-                      {c.status === "pending" && (
-                        <>
-                          <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => actionMutation.mutate({ chequeId: c.id, action: "clear" })}>
-                            Clear
-                          </Button>
-                          <Button size="sm" variant="destructive" onClick={() => actionMutation.mutate({ chequeId: c.id, action: "bounce", reason: "Insufficient funds" })}>
-                            Bounce
-                          </Button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="overflow-x-auto -mx-4 md:mx-0">
+          <div className="border rounded-lg min-w-[500px] md:min-w-0">
+            <table className="w-full">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="text-left p-3 font-medium hidden md:table-cell">Date</th>
+                  <th className="text-left p-3 font-medium">Member</th>
+                  <th className="text-left p-3 font-medium">Cheque #</th>
+                  <th className="text-left p-3 font-medium hidden lg:table-cell">Bank</th>
+                  <th className="text-right p-3 font-medium">Amount</th>
+                  <th className="text-left p-3 font-medium hidden md:table-cell">Expected Clear</th>
+                  <th className="text-left p-3 font-medium">Status</th>
+                  <th className="text-left p-3 font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr><td colSpan={8} className="text-center p-4">Loading...</td></tr>
+                ) : cheques.length === 0 ? (
+                  <tr><td colSpan={8} className="text-center p-4 text-muted-foreground">No cheque deposits found</td></tr>
+                ) : (
+                  cheques.map((c: any) => (
+                    <tr key={c.id} className="border-t hover:bg-muted/30">
+                      <td className="p-3 text-sm hidden md:table-cell">{c.deposit_date}</td>
+                      <td className="p-3 text-sm">{c.member_name}</td>
+                      <td className="p-3 font-mono text-sm">{c.cheque_number}</td>
+                      <td className="p-3 text-sm hidden lg:table-cell">{c.bank_name}</td>
+                      <td className="p-3 text-right font-medium">{symbol} {c.amount?.toLocaleString()}</td>
+                      <td className="p-3 text-sm hidden md:table-cell">{c.expected_clearance_date}</td>
+                      <td className="p-3">{getStatusBadge(c.status)}</td>
+                      <td className="p-3">
+                        {c.status === "pending" && (
+                          <div className="flex gap-1 flex-wrap">
+                            <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => actionMutation.mutate({ chequeId: c.id, action: "clear" })}>
+                              Clear
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={() => actionMutation.mutate({ chequeId: c.id, action: "bounce", reason: "Insufficient funds" })}>
+                              Bounce
+                            </Button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -634,7 +640,7 @@ function BankTransfers({ organizationId }: { organizationId: string }) {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <CardTitle className="flex items-center gap-2">
             <Building className="h-5 w-5" />
@@ -644,14 +650,14 @@ function BankTransfers({ organizationId }: { organizationId: string }) {
         </div>
         <Dialog open={newTransferOpen} onOpenChange={setNewTransferOpen}>
           <DialogTrigger asChild>
-            <Button>Record Transfer</Button>
+            <Button className="w-full sm:w-auto">Record Transfer</Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Record Bank Transfer</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>Bank Name</Label>
                   <Input value={formData.bank_name} onChange={(e) => setFormData({...formData, bank_name: e.target.value})} />
@@ -661,7 +667,7 @@ function BankTransfers({ organizationId }: { organizationId: string }) {
                   <Input type="number" value={formData.amount} onChange={(e) => setFormData({...formData, amount: e.target.value})} />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label>Bank Account</Label>
                   <Input value={formData.bank_account} onChange={(e) => setFormData({...formData, bank_account: e.target.value})} />
@@ -687,7 +693,7 @@ function BankTransfers({ organizationId }: { organizationId: string }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -698,53 +704,57 @@ function BankTransfers({ organizationId }: { organizationId: string }) {
           </SelectContent>
         </Select>
 
-        <div className="border rounded-lg">
-          <table className="w-full">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="text-left p-3 font-medium">Date</th>
-                <th className="text-left p-3 font-medium">Bank</th>
-                <th className="text-left p-3 font-medium">Reference</th>
-                <th className="text-right p-3 font-medium">Amount</th>
-                <th className="text-left p-3 font-medium">Member</th>
-                <th className="text-left p-3 font-medium">Status</th>
-                <th className="text-left p-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr><td colSpan={7} className="text-center p-4">Loading...</td></tr>
-              ) : transfers.length === 0 ? (
-                <tr><td colSpan={7} className="text-center p-4 text-muted-foreground">No bank transfers found</td></tr>
-              ) : (
-                transfers.map((t: any) => (
-                  <tr key={t.id} className="border-t hover:bg-muted/30">
-                    <td className="p-3 text-sm">{t.transfer_date || t.created_at?.split("T")[0]}</td>
-                    <td className="p-3 text-sm">{t.bank_name}</td>
-                    <td className="p-3 font-mono text-sm">{t.bank_reference}</td>
-                    <td className="p-3 text-right font-medium">{symbol} {t.amount?.toLocaleString()}</td>
-                    <td className="p-3 text-sm">{t.member_name || <span className="text-muted-foreground">-</span>}</td>
-                    <td className="p-3">{getStatusBadge(t.status)}</td>
-                    <td className="p-3 space-x-2">
-                      {t.status === "pending" && (
-                        <Button size="sm" variant="outline" onClick={() => actionMutation.mutate({ transferId: t.id, action: "verify" })}>
-                          Verify
-                        </Button>
-                      )}
-                      {(t.status === "pending" || t.status === "verified") && (
-                        <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => {
-                          setSelectedTransfer(t);
-                          setCreditDialogOpen(true);
-                        }}>
-                          Credit
-                        </Button>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="overflow-x-auto -mx-4 md:mx-0">
+          <div className="border rounded-lg min-w-[500px] md:min-w-0">
+            <table className="w-full">
+              <thead className="bg-muted/50">
+                <tr>
+                  <th className="text-left p-3 font-medium hidden md:table-cell">Date</th>
+                  <th className="text-left p-3 font-medium">Bank</th>
+                  <th className="text-left p-3 font-medium">Reference</th>
+                  <th className="text-right p-3 font-medium">Amount</th>
+                  <th className="text-left p-3 font-medium hidden md:table-cell">Member</th>
+                  <th className="text-left p-3 font-medium">Status</th>
+                  <th className="text-left p-3 font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr><td colSpan={7} className="text-center p-4">Loading...</td></tr>
+                ) : transfers.length === 0 ? (
+                  <tr><td colSpan={7} className="text-center p-4 text-muted-foreground">No bank transfers found</td></tr>
+                ) : (
+                  transfers.map((t: any) => (
+                    <tr key={t.id} className="border-t hover:bg-muted/30">
+                      <td className="p-3 text-sm hidden md:table-cell">{t.transfer_date || t.created_at?.split("T")[0]}</td>
+                      <td className="p-3 text-sm">{t.bank_name}</td>
+                      <td className="p-3 font-mono text-sm">{t.bank_reference}</td>
+                      <td className="p-3 text-right font-medium">{symbol} {t.amount?.toLocaleString()}</td>
+                      <td className="p-3 text-sm hidden md:table-cell">{t.member_name || <span className="text-muted-foreground">-</span>}</td>
+                      <td className="p-3">{getStatusBadge(t.status)}</td>
+                      <td className="p-3">
+                        <div className="flex gap-1 flex-wrap">
+                          {t.status === "pending" && (
+                            <Button size="sm" variant="outline" onClick={() => actionMutation.mutate({ transferId: t.id, action: "verify" })}>
+                              Verify
+                            </Button>
+                          )}
+                          {(t.status === "pending" || t.status === "verified") && (
+                            <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => {
+                              setSelectedTransfer(t);
+                              setCreditDialogOpen(true);
+                            }}>
+                              Credit
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <Dialog open={creditDialogOpen} onOpenChange={setCreditDialogOpen}>
@@ -910,7 +920,7 @@ function QueueManagement({ organizationId }: { organizationId: string }) {
         <CardDescription>Manage customer queue and call next ticket</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex gap-4 items-end">
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
           {(branches as any[]).length > 1 && (
           <div className="flex-1">
             <Label>Select Branch</Label>
@@ -927,7 +937,7 @@ function QueueManagement({ organizationId }: { organizationId: string }) {
           </div>
           )}
           {selectedBranch && (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button onClick={() => callNextMutation.mutate({ branchId: selectedBranch })} disabled={callNextMutation.isPending}>
                 Call Next
               </Button>
@@ -942,7 +952,7 @@ function QueueManagement({ organizationId }: { organizationId: string }) {
         </div>
 
         {selectedBranch && (
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-lg">Now Serving ({servingTickets.length})</CardTitle>
@@ -953,16 +963,16 @@ function QueueManagement({ organizationId }: { organizationId: string }) {
                 ) : (
                   <div className="space-y-2">
                     {servingTickets.map((t: any) => (
-                      <div key={t.id} className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
-                        <div className="flex items-center gap-3">
+                      <div key={t.id} className="flex items-center justify-between gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                        <div className="flex items-center gap-3 min-w-0">
                           {getCategoryIcon(t.service_category)}
-                          <div>
+                          <div className="min-w-0">
                             <div className="font-bold text-lg">{t.ticket_number}</div>
-                            <div className="text-sm text-muted-foreground">{t.member_name || "Guest"}</div>
+                            <div className="text-sm text-muted-foreground truncate">{t.member_name || "Guest"}</div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm">Counter {t.counter_number || "1"}</span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-sm hidden sm:inline">Counter {t.counter_number || "1"}</span>
                           <Button size="sm" onClick={() => completeMutation.mutate(t.id)}>Done</Button>
                         </div>
                       </div>
@@ -982,11 +992,11 @@ function QueueManagement({ organizationId }: { organizationId: string }) {
                 ) : (
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {waitingTickets.slice(0, 10).map((t: any) => (
-                      <div key={t.id} className="flex items-center justify-between p-2 border rounded">
-                        <div className="flex items-center gap-2">
+                      <div key={t.id} className="flex items-center justify-between gap-2 p-2 border rounded">
+                        <div className="flex items-center gap-2 min-w-0">
                           {getCategoryIcon(t.service_category)}
                           <span className="font-medium">{t.ticket_number}</span>
-                          <span className="text-sm text-muted-foreground">{t.member_name || "Guest"}</span>
+                          <span className="text-sm text-muted-foreground truncate">{t.member_name || "Guest"}</span>
                         </div>
                         {getStatusBadge(t.status)}
                       </div>
