@@ -64,7 +64,7 @@ export default function PrivacyPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-3xl mx-auto px-4 py-10">
+      <div className="w-full px-6 sm:px-10 py-10">
         <div className="mb-6">
           <Link href="/register" className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline">
             <ArrowLeft className="w-4 h-4" />
