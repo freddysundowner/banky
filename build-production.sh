@@ -197,27 +197,11 @@ build_compiled() {
     rm -f packages/enterprise/banky/components.json 2>/dev/null || true
     
     cat > packages/enterprise/banky/.env.example << 'EOF'
-# Database
+# Database connection
 DATABASE_URL=postgresql://user:password@host:5432/banky
 
 # License Key (provided after purchase - REQUIRED)
 LICENSE_KEY=
-
-# Security
-SESSION_SECRET=your-secure-session-secret
-
-# Optional: SMS Gateway
-SMS_API_KEY=
-SMS_SENDER_ID=
-
-# Optional: M-Pesa Integration
-MPESA_CONSUMER_KEY=
-MPESA_CONSUMER_SECRET=
-MPESA_PASSKEY=
-MPESA_SHORTCODE=
-
-# Optional: Brevo (for emails)
-BREVO_API_KEY=
 EOF
 
     # Create install script
@@ -603,27 +587,11 @@ build_codecanyon() {
     echo ">>> Generated CodeCanyon lifetime key: $CODECANYON_KEY"
 
     cat > packages/codecanyon/banky/.env.example << EOF
-# Database
+# Database connection
 DATABASE_URL=postgresql://user:password@host:5432/banky
 
 # License Key (lifetime key - all features unlocked forever)
 LICENSE_KEY=${CODECANYON_KEY}
-
-# Security
-SESSION_SECRET=your-secure-session-secret
-
-# Optional: SMS Gateway
-SMS_API_KEY=
-SMS_SENDER_ID=
-
-# Optional: M-Pesa Integration
-MPESA_CONSUMER_KEY=
-MPESA_CONSUMER_SECRET=
-MPESA_PASSKEY=
-MPESA_SHORTCODE=
-
-# Optional: Brevo (for emails)
-BREVO_API_KEY=
 EOF
 
     # Create install script
