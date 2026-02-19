@@ -416,6 +416,8 @@ sudo npm install -g pm2
 
 ### Step 2: Setup Database
 
+BANKY uses a single PostgreSQL database for everything (users, organization data, members, loans, transactions, accounting). No external database service required.
+
 ```bash
 sudo -u postgres psql
 CREATE USER banky WITH PASSWORD 'your_secure_password';
@@ -794,6 +796,8 @@ sudo npm install -g pm2
 ```
 
 ### Step 2: Setup Database
+
+BANKY uses a single PostgreSQL database for everything (users, organization data, members, loans, transactions, accounting). No external database service required.
 
 ```bash
 sudo -u postgres psql

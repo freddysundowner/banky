@@ -14,10 +14,10 @@ The frontend uses React 18 and TypeScript with Shadcn UI components and Tailwind
 ### Technical Implementations
 - **Frontend**: React 18, TypeScript, TanStack Query, Wouter.
 - **Backend**: Python FastAPI with SQLAlchemy ORM.
-- **Database**: PostgreSQL with Neon for database-per-tenant provisioning.
+- **Database**: PostgreSQL. SaaS mode uses Neon for database-per-tenant provisioning. Enterprise mode uses a single database for everything.
 - **Authentication**: Supports both master users (stored in master DB) and tenant-isolated staff users (stored in tenant DBs).
 - **Performance Optimization**: Includes database connection pooling, a session bundle API endpoint to reduce requests, and React Query caching for permissions and features.
-- **Multi-Tenancy**: Each organization has its own isolated Neon PostgreSQL database.
+- **Multi-Tenancy**: SaaS mode: each org gets its own isolated Neon PostgreSQL database. Enterprise mode: single database, single org, no Neon required.
 - **Core Features**: Member, staff, and branch management; configurable loan products; comprehensive dashboard.
 - **Advanced Loan Features**: Loan applications, various disbursement methods, repayment tracking, restructuring, and guarantor system.
 - **Financial Management**:
@@ -45,6 +45,15 @@ The frontend uses React 18 and TypeScript with Shadcn UI components and Tailwind
 - **exchangerate-api.com**: For currency exchange rates.
 
 ## Recent Changes
+
+### 2026-02-19: Enterprise Single-Database Support
+- **Change**: Enterprise/CodeCanyon deployments now work with a single PostgreSQL database (no Neon API required).
+- **Organization Creation**: When `DEPLOYMENT_MODE=enterprise`, `routes/organization.py` skips Neon API call and sets `org.connection_string = DATABASE_URL`. Tenant tables (57) are created in the same database as master tables (13) — no name collisions.
+- **Single-Org Enforcement**: Enterprise mode allows only one organization per deployment. Second org creation returns HTTP 400.
+- **Migration Safety**: Master uses `_master_migration_meta`, tenant uses `_migration_meta` — no conflict in shared database.
+- **No Other Code Changes**: All routes, login, cron jobs, and frontend hooks work unchanged because they all use `org.connection_string` which is now set to `DATABASE_URL`.
+- **Delete Safety**: `delete_organization` already checks `if org.neon_project_id` before calling Neon API, so enterprise orgs skip Neon cleanup automatically.
+- **Build Script**: Updated enterprise and CodeCanyon READMEs to clarify single-database architecture.
 
 ### 2026-02-18: Loan Term Calculation Fix
 - **Change**: `term_months` field now always represents months. The system converts to the correct number of payment instalments based on repayment frequency (weekly=52/12, bi-weekly=26/12, daily=365/12 periods per month).

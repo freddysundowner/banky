@@ -1,3 +1,4 @@
+import os
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
@@ -8,6 +9,7 @@ from schemas.organization import OrganizationCreate, OrganizationUpdate, Organiz
 from routes.auth import get_current_user
 from services.neon_tenant import neon_tenant_service
 from services.tenant_context import TenantContext
+from services.feature_flags import get_deployment_mode
 from routes.admin import get_default_plan_id, get_trial_days
 
 router = APIRouter()
@@ -34,7 +36,16 @@ def generate_org_code(db: Session) -> str:
 
 @router.post("", response_model=OrganizationResponse)
 async def create_organization(data: OrganizationCreate, user = Depends(get_current_user), db: Session = Depends(get_db)):
-    # Auto-generate organization code
+    deployment_mode = get_deployment_mode()
+    
+    if deployment_mode == "enterprise":
+        existing_org = db.query(Organization).first()
+        if existing_org:
+            raise HTTPException(
+                status_code=400,
+                detail="This deployment supports one organization. An organization already exists."
+            )
+    
     code = generate_org_code(db)
     
     staff_domain = data.staffEmailDomain.lstrip('@').strip() if data.staffEmailDomain else None
@@ -49,7 +60,7 @@ async def create_organization(data: OrganizationCreate, user = Depends(get_curre
         phone=data.phone,
         address=data.address,
         staff_email_domain=staff_domain,
-        deployment_mode="saas",
+        deployment_mode=deployment_mode,
         currency=data.currency or "KES",
         financial_year_start="01-01"
     )
@@ -57,27 +68,44 @@ async def create_organization(data: OrganizationCreate, user = Depends(get_curre
     db.commit()
     db.refresh(org)
     
-    try:
-        tenant_info = await neon_tenant_service.create_tenant_database(org.id, org.name)
-        org.neon_project_id = tenant_info["project_id"]
-        org.neon_branch_id = tenant_info["branch_id"]
-        org.connection_string = tenant_info["connection_string"]
+    if deployment_mode == "enterprise":
+        database_url = os.environ.get("DATABASE_URL")
+        if not database_url:
+            db.delete(org)
+            db.commit()
+            raise HTTPException(status_code=500, detail="DATABASE_URL not configured.")
+        
+        org.connection_string = database_url
+        org.neon_project_id = None
+        org.neon_branch_id = None
         db.commit()
         
-        if tenant_info.get("connection_string"):
-            try:
-                TenantContext(tenant_info["connection_string"])
-            except Exception as migration_err:
-                print(f"Tenant migration during creation: {migration_err}")
-    except Exception as e:
-        print(f"Error provisioning tenant database: {e}")
-        # Rollback the organization creation if tenant provisioning fails
-        db.delete(org)
-        db.commit()
-        raise HTTPException(
-            status_code=500, 
-            detail="Failed to provision organization database. Please try again."
-        )
+        try:
+            TenantContext(database_url)
+            print(f"Enterprise: tenant tables created in shared database for org {org.id}")
+        except Exception as migration_err:
+            print(f"Enterprise tenant migration: {migration_err}")
+    else:
+        try:
+            tenant_info = await neon_tenant_service.create_tenant_database(org.id, org.name)
+            org.neon_project_id = tenant_info["project_id"]
+            org.neon_branch_id = tenant_info["branch_id"]
+            org.connection_string = tenant_info["connection_string"]
+            db.commit()
+            
+            if tenant_info.get("connection_string"):
+                try:
+                    TenantContext(tenant_info["connection_string"])
+                except Exception as migration_err:
+                    print(f"Tenant migration during creation: {migration_err}")
+        except Exception as e:
+            print(f"Error provisioning tenant database: {e}")
+            db.delete(org)
+            db.commit()
+            raise HTTPException(
+                status_code=500, 
+                detail="Failed to provision organization database. Please try again."
+            )
     
     membership = OrganizationMember(
         organization_id=org.id,
