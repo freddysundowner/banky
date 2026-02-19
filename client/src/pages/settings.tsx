@@ -255,14 +255,12 @@ function DeleteOrganizationSection({ organizationId }: { organizationId: string 
       const res = await apiRequest("DELETE", `/api/organizations/${organizationId}`);
       return res.json();
     },
-    onSuccess: async () => {
+    onSuccess: () => {
       toast({ title: "Organization deleted", description: "The organization and all its data have been permanently removed." });
       setShowDeleteDialog(false);
-      try {
-        await apiRequest("POST", "/api/auth/logout");
-      } catch {}
-      queryClient.clear();
-      window.location.href = "/login";
+      queryClient.invalidateQueries({ queryKey: ['/api/organizations/my'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/organizations'] });
+      window.location.href = "/";
     },
     onError: (error: Error) => {
       toast({ title: "Delete failed", description: error.message, variant: "destructive" });
