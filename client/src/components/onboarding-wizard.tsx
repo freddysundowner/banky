@@ -99,6 +99,23 @@ export function OnboardingWizard({ organizationId, organizationName, onComplete 
     },
   });
 
+  const createDefaultBranchMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", `/api/organizations/${organizationId}/branches`, {
+        name: "Main Branch",
+        code: "BR0001",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "branches"] });
+      setCompletedSteps(prev => ({ ...prev, branchCreated: true }));
+      setStep(3);
+    },
+    onError: () => {
+      toast({ title: "Failed to create default branch", variant: "destructive" });
+    },
+  });
+
   const handleDismiss = () => {
     localStorage.setItem(`onboarding_dismissed_${organizationId}`, "true");
     onComplete();
@@ -251,10 +268,11 @@ export function OnboardingWizard({ organizationId, organizationName, onComplete 
                 </Button>
                 <Button
                   variant="ghost"
-                  onClick={() => { setStep(3); }}
+                  onClick={() => { createDefaultBranchMutation.mutate(); }}
+                  disabled={createDefaultBranchMutation.isPending}
                   data-testid="button-skip-branch"
                 >
-                  Skip this step
+                  {createDefaultBranchMutation.isPending ? "Setting up..." : "Skip this step"}
                 </Button>
               </div>
               <Button
