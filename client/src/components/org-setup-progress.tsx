@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Building2, Database, Shield, CheckCircle2, Loader2 } from "lucide-react";
 
 interface SetupStep {
@@ -16,12 +16,16 @@ const SETUP_STEPS: SetupStep[] = [
 
 interface OrgSetupProgressProps {
   orgName: string;
+  ready?: boolean;
   onComplete: () => void;
 }
 
-export function OrgSetupProgress({ orgName, onComplete }: OrgSetupProgressProps) {
+export function OrgSetupProgress({ orgName, ready = false, onComplete }: OrgSetupProgressProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [completed, setCompleted] = useState(false);
+  const [animationDone, setAnimationDone] = useState(false);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout>;
@@ -31,15 +35,24 @@ export function OrgSetupProgress({ orgName, onComplete }: OrgSetupProgressProps)
         setCurrentStep(step);
         timeout = setTimeout(() => advanceStep(step + 1), SETUP_STEPS[step].duration);
       } else {
-        setCompleted(true);
-        timeout = setTimeout(() => onComplete(), 600);
+        setAnimationDone(true);
       }
     };
 
     advanceStep(0);
 
     return () => clearTimeout(timeout);
-  }, [onComplete]);
+  }, []);
+
+  useEffect(() => {
+    if (animationDone && ready) {
+      setCompleted(true);
+      const timeout = setTimeout(() => onCompleteRef.current(), 800);
+      return () => clearTimeout(timeout);
+    }
+  }, [animationDone, ready]);
+
+  const showCompleted = completed;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
@@ -49,10 +62,10 @@ export function OrgSetupProgress({ orgName, onComplete }: OrgSetupProgressProps)
         </div>
 
         <h1 className="text-2xl font-bold mb-1">
-          {completed ? "All Set!" : "Setting Up Your Organization"}
+          {showCompleted ? "All Set!" : "Setting Up Your Organization"}
         </h1>
         <p className="text-muted-foreground mb-10 text-sm">
-          {completed
+          {showCompleted
             ? `${orgName} is ready to go`
             : `Preparing ${orgName} for you`}
         </p>
@@ -60,14 +73,15 @@ export function OrgSetupProgress({ orgName, onComplete }: OrgSetupProgressProps)
         <div className="space-y-3 text-left mb-10">
           {SETUP_STEPS.map((step, index) => {
             const StepIcon = step.icon;
-            const isActive = currentStep === index && !completed;
-            const isDone = currentStep > index || completed;
+            const isActive = currentStep === index && !showCompleted;
+            const isDone = currentStep > index || showCompleted;
+            const isWaiting = animationDone && !ready && index === SETUP_STEPS.length - 1;
 
             return (
               <div
                 key={index}
                 className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 ${
-                  isActive
+                  isActive || isWaiting
                     ? "bg-primary/5 border border-primary/20"
                     : isDone
                     ? "opacity-60"
@@ -76,16 +90,16 @@ export function OrgSetupProgress({ orgName, onComplete }: OrgSetupProgressProps)
               >
                 <div
                   className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors duration-300 ${
-                    isDone
+                    isDone && !isWaiting
                       ? "bg-primary/10 text-primary"
-                      : isActive
+                      : isActive || isWaiting
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-muted-foreground"
                   }`}
                 >
-                  {isDone ? (
+                  {isDone && !isWaiting ? (
                     <CheckCircle2 className="h-4 w-4" />
-                  ) : isActive ? (
+                  ) : isActive || isWaiting ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <StepIcon className="h-4 w-4" />
@@ -93,10 +107,8 @@ export function OrgSetupProgress({ orgName, onComplete }: OrgSetupProgressProps)
                 </div>
                 <span
                   className={`text-sm font-medium transition-colors duration-300 ${
-                    isActive
+                    isActive || isWaiting
                       ? "text-foreground"
-                      : isDone
-                      ? "text-muted-foreground"
                       : "text-muted-foreground"
                   }`}
                 >
@@ -111,9 +123,9 @@ export function OrgSetupProgress({ orgName, onComplete }: OrgSetupProgressProps)
           <div
             className="bg-primary h-full rounded-full transition-all duration-500 ease-out"
             style={{
-              width: completed
+              width: showCompleted
                 ? "100%"
-                : `${((currentStep) / SETUP_STEPS.length) * 100}%`,
+                : `${((currentStep + (animationDone ? 1 : 0)) / SETUP_STEPS.length) * 100}%`,
             }}
           />
         </div>

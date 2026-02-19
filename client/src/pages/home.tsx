@@ -463,20 +463,22 @@ export default function Home() {
       });
   }, [selectedOrg, memberships]);
 
+  const [setupReady, setSetupReady] = useState(false);
+  const setupReadyRef = useRef(false);
+
   const createMutation = useMutation({
     mutationFn: async (data: CreateOrgFormData) => {
       return apiRequest("POST", "/api/organizations", data);
     },
     onSuccess: async () => {
-      const orgName = createForm.getValues("name");
-      setShowCreateDialog(false);
-      setSetupOrgName(orgName);
-      setShowSetupProgress(true);
       setSelectedOrg(null);
       await queryClient.invalidateQueries({ queryKey: ["/api/organizations/my"] });
       createForm.reset();
+      setupReadyRef.current = true;
+      setSetupReady(true);
     },
     onError: () => {
+      setShowSetupProgress(false);
       toast({
         title: "Error",
         description: "Failed to create organization. Please try again.",
@@ -484,6 +486,15 @@ export default function Home() {
       });
     },
   });
+
+  const handleCreateOrg = (data: CreateOrgFormData) => {
+    setSetupOrgName(data.name);
+    setShowCreateDialog(false);
+    setShowSetupProgress(true);
+    setupReadyRef.current = false;
+    setSetupReady(false);
+    createMutation.mutate(data);
+  };
 
   const updateMutation = useMutation({
     mutationFn: async (data: UpdateOrgFormData) => {
@@ -527,6 +538,7 @@ export default function Home() {
       return (
         <OrgSetupProgress
           orgName={setupOrgName}
+          ready={setupReady}
           onComplete={() => {
             setShowSetupProgress(false);
             setShowOnboarding(true);
@@ -598,7 +610,7 @@ export default function Home() {
               </div>
             </DialogHeader>
             <Form {...createForm}>
-              <form onSubmit={createForm.handleSubmit((data) => createMutation.mutate(data))} className="space-y-5">
+              <form onSubmit={createForm.handleSubmit(handleCreateOrg)} className="space-y-5">
                 <div className="space-y-4">
                   <FormField
                     control={createForm.control}
@@ -776,6 +788,7 @@ export default function Home() {
         {showSetupProgress && (
           <OrgSetupProgress
             orgName={setupOrgName}
+            ready={setupReady}
             onComplete={() => {
               setShowSetupProgress(false);
               setShowOnboarding(true);
