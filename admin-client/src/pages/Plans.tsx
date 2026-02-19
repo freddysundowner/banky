@@ -188,6 +188,10 @@ export default function Plans() {
     onError: () => toast.error('Failed to reset features to defaults')
   })
 
+  const allCustomFeaturesPool = Array.from(new Set(
+    (allPlans || []).flatMap(p => p.features?.custom || [])
+  ))
+
   const startEditingFeatures = (plan: Plan) => {
     setEditingFeatures(plan.id)
     const currentFeatures = plan.features?.enabled || []
@@ -202,6 +206,12 @@ export default function Plans() {
       setCustomFeatures(prev => [...prev, trimmed])
       setNewCustomFeature('')
     }
+  }
+
+  const toggleCustomFeature = (feature: string) => {
+    setCustomFeatures(prev =>
+      prev.includes(feature) ? prev.filter(f => f !== feature) : [...prev, feature]
+    )
   }
 
   const removeCustomFeature = (feature: string) => {
@@ -480,37 +490,42 @@ export default function Plans() {
                 )
               })}
               <div className="border-t pt-4 mt-2">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Custom Display Features</h3>
-              <p className="text-xs text-gray-500 mb-3">Add features that appear on pricing pages (e.g., "Email Support", "Priority Support"). These are display-only and not connected to app logic.</p>
-              <div className="flex gap-2 mb-3">
+              <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Custom Display Features</h3>
+              <p className="text-xs text-gray-500 mb-3">Display-only features for pricing pages. Add once, then check/uncheck per plan.</p>
+              {allCustomFeaturesPool.length > 0 && (
+                <div className="grid grid-cols-2 gap-1 mb-3">
+                  {allCustomFeaturesPool.map(feature => (
+                    <label key={feature} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer group">
+                      <input type="checkbox" checked={customFeatures.includes(feature)} onChange={() => toggleCustomFeature(feature)} className="w-4 h-4 text-purple-600 rounded" />
+                      <span className="text-sm flex-1">{feature}</span>
+                      <button
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); removeCustomFeature(feature) }}
+                        className="invisible group-hover:visible text-gray-300 hover:text-red-500 p-0.5"
+                        title="Remove from all plans"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                      </button>
+                    </label>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
                 <input
                   type="text"
                   value={newCustomFeature}
                   onChange={(e) => setNewCustomFeature(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCustomFeature() } }}
-                  placeholder="e.g., Email Support, Dedicated Account Manager"
+                  placeholder="Add new custom feature..."
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
                 <button
                   onClick={addCustomFeature}
                   disabled={!newCustomFeature.trim()}
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 text-sm whitespace-nowrap"
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 text-sm whitespace-nowrap"
                 >
                   Add
                 </button>
               </div>
-              {customFeatures.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {customFeatures.map((feature) => (
-                    <span key={feature} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 rounded-full text-sm border border-purple-200">
-                      {feature}
-                      <button onClick={() => removeCustomFeature(feature)} className="text-purple-400 hover:text-purple-700">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
               </div>
             </div>
             <div className="p-6 border-t flex gap-3 justify-end flex-shrink-0">
