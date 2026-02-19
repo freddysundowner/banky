@@ -242,7 +242,6 @@ async def register(data: UserRegister, request: Request, response: Response, db:
         trial_days = get_trial_days(db)
         
         if default_plan_id:
-            from datetime import timedelta
             subscription = OrganizationSubscription(
                 organization_id=org.id,
                 plan_id=default_plan_id,
@@ -363,7 +362,6 @@ async def _send_welcome_email(first_name: str, email: str, org_name: str = None)
 def create_staff_session(tenant_session, staff_id: str) -> str:
     """Create a session in the tenant database for staff"""
     import secrets
-    from datetime import timedelta
     from models.tenant import StaffSession
     
     token = secrets.token_urlsafe(32)

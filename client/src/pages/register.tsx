@@ -6,7 +6,6 @@ import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -79,83 +78,77 @@ export default function Register() {
   });
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="flex flex-col items-center mb-8">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary mb-4">
-            <Landmark className="h-7 w-7 text-primary-foreground" />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-background to-blue-50/30 flex items-center justify-center p-4">
+      <div className="w-full max-w-lg">
+        <div className="flex flex-col items-center mb-6">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary mb-3">
+            <Landmark className="h-6 w-6 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl font-bold">Create your {platform_name} account</h1>
-          <p className="text-muted-foreground mt-1">Start managing your organization</p>
+          <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
+          <p className="text-muted-foreground text-sm mt-1">Get started with {platform_name} in minutes</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Organization Owner Registration</CardTitle>
-            <CardDescription>
-              Create an account to set up and manage your organization
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit((data) => registerMutation.mutate(data))} className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <FormField
-                    control={form.control}
-                    name="firstName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>First Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="John" {...field} data-testid="input-firstname" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="lastName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Last Name</FormLabel>
-                        <FormControl>
-                          <Input placeholder="Doe" {...field} data-testid="input-lastname" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
+        <div className="bg-card border border-border rounded-xl shadow-sm p-6 sm:p-8">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit((data) => registerMutation.mutate(data))} className="space-y-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
-                  name="email"
+                  name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
+                      <FormLabel>First Name</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="john@example.com" {...field} data-testid="input-email" />
+                        <Input placeholder="John" {...field} data-testid="input-firstname" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
-                  name="phone"
+                  name="lastName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone (Optional)</FormLabel>
+                      <FormLabel>Last Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="+254700000000" {...field} data-testid="input-phone" />
+                        <Input placeholder="Doe" {...field} data-testid="input-lastname" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+              </div>
 
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="you@example.com" {...field} data-testid="input-email" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Phone <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                    <FormControl>
+                      <Input placeholder="+254 700 000 000" {...field} data-testid="input-phone" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="password"
@@ -166,19 +159,19 @@ export default function Register() {
                         <div className="relative">
                           <Input
                             type={showPassword ? "text" : "password"}
-                            placeholder="Enter password"
+                            placeholder="Min. 8 characters"
+                            className="pr-10"
                             {...field}
                             data-testid="input-password"
                           />
-                          <Button
+                          <button
                             type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                            tabIndex={-1}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                             onClick={() => setShowPassword(!showPassword)}
                           >
                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
+                          </button>
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -196,94 +189,94 @@ export default function Register() {
                         <div className="relative">
                           <Input
                             type={showConfirmPassword ? "text" : "password"}
-                            placeholder="Confirm password"
+                            placeholder="Repeat password"
+                            className="pr-10"
                             {...field}
                             data-testid="input-confirm-password"
                           />
-                          <Button
+                          <button
                             type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                            tabIndex={-1}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                           >
                             {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
+                          </button>
                         </div>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+              </div>
 
-                <FormField
-                  control={form.control}
-                  name="acceptTerms"
-                  render={({ field }) => (
-                    <FormItem>
-                      <div className="flex items-start gap-3">
-                        <FormControl>
-                          <input
-                            type="checkbox"
-                            checked={field.value}
-                            onChange={field.onChange}
-                            className="mt-1 h-4 w-4 rounded border-border accent-primary cursor-pointer"
-                            data-testid="checkbox-accept-terms"
-                          />
-                        </FormControl>
-                        <FormLabel className="text-sm font-normal leading-snug cursor-pointer">
-                          I agree to the{" "}
-                          <a
-                            href="/terms"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline"
-                            data-testid="link-terms"
-                          >
-                            Terms of Service
-                          </a>{" "}
-                          and{" "}
-                          <a
-                            href="/privacy"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-primary hover:underline"
-                            data-testid="link-privacy"
-                          >
-                            Privacy Policy
-                          </a>
-                        </FormLabel>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <FormField
+                control={form.control}
+                name="acceptTerms"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center gap-2 pt-1">
+                      <FormControl>
+                        <input
+                          type="checkbox"
+                          checked={field.value}
+                          onChange={field.onChange}
+                          className="h-4 w-4 rounded border-border accent-primary cursor-pointer shrink-0"
+                          data-testid="checkbox-accept-terms"
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-normal leading-none cursor-pointer">
+                        I agree to the{" "}
+                        <a
+                          href="/terms"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline font-medium"
+                          data-testid="link-terms"
+                        >
+                          Terms of Service
+                        </a>{" "}
+                        and{" "}
+                        <a
+                          href="/privacy"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline font-medium"
+                          data-testid="link-privacy"
+                        >
+                          Privacy Policy
+                        </a>
+                      </FormLabel>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={registerMutation.isPending}
-                  data-testid="button-register"
-                >
-                  {registerMutation.isPending ? "Creating Account..." : "Create Account"}
-                </Button>
-              </form>
-            </Form>
+              <Button
+                type="submit"
+                className="w-full mt-2"
+                disabled={registerMutation.isPending}
+                data-testid="button-register"
+              >
+                {registerMutation.isPending ? "Creating Account..." : "Create Account"}
+              </Button>
+            </form>
+          </Form>
 
-            <div className="mt-6 text-center text-sm">
-              <span className="text-muted-foreground">Already have an account? </span>
-              <Link href="/login" className="text-primary hover:underline" data-testid="link-login">
-                Sign in
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+          <div className="mt-5 pt-5 border-t border-border text-center text-sm">
+            <span className="text-muted-foreground">Already have an account? </span>
+            <Link href="/login" className="text-primary hover:underline font-medium" data-testid="link-login">
+              Sign in
+            </Link>
+          </div>
+        </div>
 
-        <div className="mt-6 text-center">
-          <Link href="/" className="text-sm text-muted-foreground hover:underline">
+        <p className="mt-4 text-center">
+          <Link href="/" className="text-xs text-muted-foreground hover:underline">
             Back to home
           </Link>
-        </div>
+        </p>
       </div>
     </div>
   );
