@@ -26,7 +26,7 @@ interface LandingSettings {
 }
 
 const defaultSettings: LandingSettings = {
-  hero_title: "One Platform for Banks, Saccos & Chamas",
+  hero_title: "The Banking Software for Saccos, Chamas & Microfinance",
   hero_subtitle: "Manage members, loans, savings, fixed deposits, and dividends with a powerful, secure multi-tenant system. Available as SaaS or self-hosted.",
   hero_badge: "Trusted by 500+ organizations across East Africa",
   cta_primary_text: "Start Free Trial",
