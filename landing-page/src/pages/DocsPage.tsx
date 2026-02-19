@@ -13,11 +13,11 @@ interface DocsConfig {
   support_email: string;
 }
 
-const sections: { id: SectionId; label: string }[] = [
+const allSections: { id: SectionId; label: string; guidesOnly?: GuideType }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'requirements', label: 'Requirements' },
   { id: 'installation', label: 'Installation' },
-  { id: 'license', label: 'License Activation' },
+  { id: 'license', label: 'License Activation', guidesOnly: 'direct' },
   { id: 'nginx', label: 'Domain & Nginx' },
   { id: 'ssl', label: 'SSL Certificates' },
   { id: 'mpesa', label: 'M-Pesa Setup' },
@@ -26,6 +26,10 @@ const sections: { id: SectionId; label: string }[] = [
   { id: 'updates', label: 'Updates' },
   { id: 'troubleshooting', label: 'Troubleshooting' },
 ];
+
+function getSections(guide: GuideType) {
+  return allSections.filter(s => !s.guidesOnly || s.guidesOnly === guide);
+}
 
 const API_BASE = '';
 
@@ -58,7 +62,7 @@ function OverviewSection({ guide }: { guide: GuideType }) {
         <p className="text-gray-600 mb-6">
           {guide === 'codecanyon'
             ? 'When you purchase BANKY from CodeCanyon, you receive a complete self-hosted banking and Sacco management system. Download the package from your CodeCanyon account and follow this guide to deploy on your server.'
-            : 'When you purchase BANKY directly from our team, you receive a complete self-hosted banking and Sacco management system with dedicated support. Your license key and package are delivered to your email.'}
+            : 'When you purchase BANKY directly from our team, you receive a complete self-hosted banking and Sacco management system with dedicated support and a license key for feature activation. Your license key and package are delivered to your email.'}
         </p>
         <div className="grid md:grid-cols-2 gap-6">
           <div className="bg-white rounded-xl p-5 shadow-sm">
@@ -82,7 +86,7 @@ function OverviewSection({ guide }: { guide: GuideType }) {
             </h3>
             <ul className="space-y-2 text-sm text-gray-600">
               <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Single dedicated PostgreSQL database</li>
-              <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />License-based feature unlocking</li>
+              <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />{guide === 'codecanyon' ? 'All features included — no restrictions' : 'License-based feature unlocking'}</li>
               <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />M-Pesa integration ready</li>
               <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />SMS notifications support</li>
               <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Complete data ownership on your server</li>
@@ -94,7 +98,7 @@ function OverviewSection({ guide }: { guide: GuideType }) {
 
       {guide === 'codecanyon' && (
         <Tip type="info">
-          <strong>CodeCanyon Support:</strong> Your purchase includes 6 months of support. You can extend support through Envato. For license activation issues, contact us with your purchase code.
+          <strong>CodeCanyon Support:</strong> Your purchase includes 6 months of support and the full version with all features. You can extend support through Envato.
         </Tip>
       )}
 
@@ -280,7 +284,32 @@ nano .env`}</CodeBlock>
               <h3 className="font-semibold text-gray-900 text-lg">Environment Configuration</h3>
             </div>
             <p className="text-gray-600 mb-4">Fill in your <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">.env</code> file with these required values:</p>
-            <CodeBlock>{`# ── Required ──────────────────────────────────────────────
+            <CodeBlock>{guide === 'codecanyon'
+              ? `# ── Required ──────────────────────────────────────────────
+# Your PostgreSQL connection string
+DATABASE_URL=postgresql://banky:your_password@localhost:5432/banky
+
+# Must be "enterprise" for self-hosted installations
+DEPLOYMENT_MODE=enterprise
+
+# Random secret for session encryption (min 32 characters)
+SESSION_SECRET=generate-a-long-random-string-here
+
+# ── Optional ──────────────────────────────────────────────
+# M-Pesa (Safaricom Daraja API credentials)
+# MPESA_CONSUMER_KEY=your_consumer_key
+# MPESA_CONSUMER_SECRET=your_consumer_secret
+# MPESA_SHORTCODE=your_shortcode
+# MPESA_PASSKEY=your_passkey
+
+# SMS Gateway
+# SMS_API_KEY=your_sms_api_key
+# SMS_SENDER_ID=BANKY
+
+# Email (Brevo / SMTP)
+# BREVO_API_KEY=your_brevo_api_key
+# FROM_EMAIL=noreply@yourorganization.co.ke`
+              : `# ── Required ──────────────────────────────────────────────
 # Your PostgreSQL connection string
 DATABASE_URL=postgresql://banky:your_password@localhost:5432/banky
 
@@ -288,7 +317,7 @@ DATABASE_URL=postgresql://banky:your_password@localhost:5432/banky
 DEPLOYMENT_MODE=enterprise
 
 # Your license key (received after purchase)
-LICENSE_KEY=${guide === 'codecanyon' ? 'BANKY-STD-2026-XXXXXXXX  # From your CodeCanyon purchase email' : 'BANKY-STD-2026-XXXXXXXX'}
+LICENSE_KEY=BANKY-STD-2026-XXXXXXXX
 
 # Random secret for session encryption (min 32 characters)
 SESSION_SECRET=generate-a-long-random-string-here
@@ -354,7 +383,7 @@ pm2 logs
           </div>
 
           <Tip type="success">
-            <strong>First Login:</strong> After installation, open <code className="bg-green-100 px-1 rounded">http://your-server-ip:5000</code> in your browser. Register your organization and the system will activate using your license key automatically.
+            <strong>First Login:</strong> After installation, open <code className="bg-green-100 px-1 rounded">http://your-server-ip:5000</code> in your browser. Register your organization {guide === 'direct' ? 'and the system will activate using your license key automatically' : 'and start using the system immediately — all features are available'}.
           </Tip>
         </div>
       </div>
@@ -750,7 +779,7 @@ curl http://localhost:5000/health`}</CodeBlock>
               {guide === 'codecanyon' ? (
                 <>
                   <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Download the latest version from your CodeCanyon downloads page</li>
-                  <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Updates are available as long as your CodeCanyon support license is active</li>
+                  <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Updates are available as long as your CodeCanyon support is active</li>
                   <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Extend your support period through Envato to continue receiving updates</li>
                 </>
               ) : (
@@ -923,6 +952,14 @@ export default function DocsPage() {
 
   const showTabs = config.docs_mode === 'both';
   const effectiveGuide: GuideType = config.docs_mode === 'direct' ? 'direct' : config.docs_mode === 'codecanyon' ? 'codecanyon' : activeGuide;
+  const sections = getSections(effectiveGuide);
+
+  useEffect(() => {
+    const available = getSections(effectiveGuide);
+    if (!available.find(s => s.id === activeSection)) {
+      setActiveSection('overview');
+    }
+  }, [effectiveGuide]);
 
   if (loading) {
     return (
