@@ -10,7 +10,8 @@ import {
   Shield,
   BarChart3,
   Building2,
-  Database
+  Database,
+  Briefcase
 } from 'lucide-react';
 
 const features = [
@@ -81,6 +82,12 @@ const features = [
     color: 'amber'
   },
   {
+    icon: Briefcase,
+    title: 'HR Management',
+    description: 'Employee records, payroll processing, leave management, and statutory deductions with automatic journal entries.',
+    color: 'rose'
+  },
+  {
     icon: Database,
     title: 'Multi-Tenant Architecture',
     description: 'Database-per-tenant isolation for complete data security and privacy.',
@@ -100,6 +107,7 @@ const colorClasses: Record<string, string> = {
   cyan: 'bg-cyan-100 text-cyan-600',
   lime: 'bg-lime-100 text-lime-600',
   amber: 'bg-amber-100 text-amber-600',
+  rose: 'bg-rose-100 text-rose-600',
   violet: 'bg-violet-100 text-violet-600',
 };
 
