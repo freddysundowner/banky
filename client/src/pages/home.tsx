@@ -109,6 +109,7 @@ import { Dividends } from "@/components/dividends";
 import OpeningBalances from "@/components/opening-balances";
 import { TrialBanner } from "@/components/trial-banner";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
+import { OrgSetupProgress } from "@/components/org-setup-progress";
 import SettingsPage from "@/pages/settings";
 import UpgradePage from "@/pages/upgrade";
 import MyAccountPage from "@/pages/my-account";
@@ -282,6 +283,8 @@ export default function Home() {
   });
   const [emailBannerDismissed, setEmailBannerDismissed] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showSetupProgress, setShowSetupProgress] = useState(false);
+  const [setupOrgName, setSetupOrgName] = useState("");
   const queryClient = useQueryClient();
   const prevSectionRef = useRef(activeSection);
 
@@ -465,15 +468,13 @@ export default function Home() {
       return apiRequest("POST", "/api/organizations", data);
     },
     onSuccess: async () => {
+      const orgName = createForm.getValues("name");
+      setShowCreateDialog(false);
+      setSetupOrgName(orgName);
+      setShowSetupProgress(true);
       setSelectedOrg(null);
       await queryClient.invalidateQueries({ queryKey: ["/api/organizations/my"] });
-      setShowCreateDialog(false);
       createForm.reset();
-      setShowOnboarding(true);
-      toast({
-        title: "Organization created",
-        description: "Your organization has been set up successfully. Database provisioning may take a moment.",
-      });
     },
     onError: () => {
       toast({
@@ -522,6 +523,17 @@ export default function Home() {
   const hasOrganizations = memberships && memberships.length > 0;
 
   if (!hasOrganizations) {
+    if (showSetupProgress) {
+      return (
+        <OrgSetupProgress
+          orgName={setupOrgName}
+          onComplete={() => {
+            setShowSetupProgress(false);
+            setShowOnboarding(true);
+          }}
+        />
+      );
+    }
     return (
       <div className="min-h-screen bg-background">
         <header className="border-b bg-card">
@@ -761,7 +773,16 @@ export default function Home() {
   return (
     <SidebarProvider style={sidebarStyle as React.CSSProperties}>
       <div className="flex flex-col h-screen w-full overflow-hidden">
-        {showOnboarding && selectedOrg && (
+        {showSetupProgress && (
+          <OrgSetupProgress
+            orgName={setupOrgName}
+            onComplete={() => {
+              setShowSetupProgress(false);
+              setShowOnboarding(true);
+            }}
+          />
+        )}
+        {showOnboarding && selectedOrg && !showSetupProgress && (
           <OnboardingWizard
             organizationId={selectedOrg.id}
             organizationName={selectedOrg.name}
