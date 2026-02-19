@@ -1004,7 +1004,7 @@ async def get_public_landing_settings():
         
         defaults = {
             "hero_title": "One Platform for Banks, Saccos & Chamas",
-            "hero_subtitle": "From a 20-member chama to a licensed microfinance bank, BANKY gives you loans, savings, accounting, M-Pesa, and real-time reporting -- all in one place. Go live in minutes, not months.",
+            "hero_subtitle": "Manage members, loans, savings, fixed deposits, and dividends with a powerful, secure multi-tenant system. Available as SaaS or self-hosted.",
             "hero_badge": "Trusted by 500+ organizations across East Africa",
             "cta_primary_text": "Start Free Trial",
             "cta_primary_url": "#pricing",
