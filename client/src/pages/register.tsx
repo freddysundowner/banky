@@ -227,25 +227,21 @@ export default function Register() {
                       </FormControl>
                       <FormLabel className="text-sm font-normal leading-none cursor-pointer">
                         I agree to the{" "}
-                        <a
+                        <Link
                           href="/terms"
-                          target="_blank"
-                          rel="noopener noreferrer"
                           className="text-primary hover:underline font-medium"
                           data-testid="link-terms"
                         >
                           Terms of Service
-                        </a>{" "}
+                        </Link>{" "}
                         and{" "}
-                        <a
+                        <Link
                           href="/privacy"
-                          target="_blank"
-                          rel="noopener noreferrer"
                           className="text-primary hover:underline font-medium"
                           data-testid="link-privacy"
                         >
                           Privacy Policy
-                        </a>
+                        </Link>
                       </FormLabel>
                     </div>
                     <FormMessage />

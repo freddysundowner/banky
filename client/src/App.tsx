@@ -12,6 +12,8 @@ import ForgotPassword from "@/pages/forgot-password";
 import ResetPassword from "@/pages/reset-password";
 import Home from "@/pages/home";
 import VerifyEmail from "@/pages/verify-email";
+import TermsPage from "@/pages/terms";
+import PrivacyPage from "@/pages/privacy";
 
 function Router() {
   const { user, isLoading } = useAuth();
@@ -34,6 +36,8 @@ function Router() {
       <Switch>
         <Route path="/" component={Home} />
         <Route path="/verify-email" component={VerifyEmail} />
+        <Route path="/terms" component={TermsPage} />
+        <Route path="/privacy" component={PrivacyPage} />
         <Route component={NotFound} />
       </Switch>
     );
@@ -48,6 +52,8 @@ function Router() {
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/verify-email" component={VerifyEmail} />
+      <Route path="/terms" component={TermsPage} />
+      <Route path="/privacy" component={PrivacyPage} />
       <Route component={NotFound} />
     </Switch>
   );
