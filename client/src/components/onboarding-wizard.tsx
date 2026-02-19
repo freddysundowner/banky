@@ -25,6 +25,7 @@ interface OnboardingWizardProps {
   organizationId: string;
   organizationName: string;
   onComplete: () => void;
+  onFinalize: (needsBranch: boolean) => void;
 }
 
 const CURRENCIES = [
@@ -39,7 +40,7 @@ const CURRENCIES = [
   { value: "EUR", label: "EUR - Euro" },
 ];
 
-export function OnboardingWizard({ organizationId, organizationName, onComplete }: OnboardingWizardProps) {
+export function OnboardingWizard({ organizationId, organizationName, onComplete, onFinalize }: OnboardingWizardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
@@ -99,45 +100,13 @@ export function OnboardingWizard({ organizationId, organizationName, onComplete 
     },
   });
 
-  const createDefaultBranchMutation = useMutation({
-    mutationFn: async () => {
-      return apiRequest("POST", `/api/organizations/${organizationId}/branches`, {
-        name: "Main Branch",
-        code: "BR0001",
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "branches"] });
-      setCompletedSteps(prev => ({ ...prev, branchCreated: true }));
-      setStep(3);
-    },
-    onError: () => {
-      toast({ title: "Failed to create default branch", variant: "destructive" });
-    },
-  });
-
-  const handleDismiss = async () => {
-    if (!completedSteps.branchCreated) {
-      try {
-        await apiRequest("POST", `/api/organizations/${organizationId}/branches`, {
-          name: "Main Branch",
-          code: "BR0001",
-        });
-        queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "branches"] });
-      } catch (e) {
-      }
-    }
+  const handleExit = (needsBranch: boolean) => {
     localStorage.setItem(`onboarding_dismissed_${organizationId}`, "true");
-    onComplete();
-  };
-
-  const handleGoToDashboard = () => {
-    localStorage.setItem(`onboarding_dismissed_${organizationId}`, "true");
-    onComplete();
+    onFinalize(needsBranch);
   };
 
   return (
-    <Dialog open onOpenChange={(open) => { if (!open) handleDismiss(); }}>
+    <Dialog open onOpenChange={(open) => { if (!open) handleExit(!completedSteps.branchCreated); }}>
       <DialogContent className="sm:max-w-lg" data-testid="onboarding-wizard">
         <DialogHeader>
           <div className="flex items-center gap-3 mb-1">
@@ -222,7 +191,7 @@ export function OnboardingWizard({ organizationId, organizationName, onComplete 
             <div className="flex items-center justify-between gap-3 pt-2">
               <Button
                 variant="ghost"
-                onClick={handleDismiss}
+                onClick={() => handleExit(!completedSteps.branchCreated)}
                 data-testid="button-setup-later"
               >
                 Set up later
@@ -278,11 +247,10 @@ export function OnboardingWizard({ organizationId, organizationName, onComplete 
                 </Button>
                 <Button
                   variant="ghost"
-                  onClick={() => { createDefaultBranchMutation.mutate(); }}
-                  disabled={createDefaultBranchMutation.isPending}
+                  onClick={() => handleExit(true)}
                   data-testid="button-skip-branch"
                 >
-                  {createDefaultBranchMutation.isPending ? "Setting up..." : "Skip this step"}
+                  Skip this step
                 </Button>
               </div>
               <Button
@@ -333,7 +301,7 @@ export function OnboardingWizard({ organizationId, organizationName, onComplete 
                 <Button
                   variant="outline"
                   className="justify-start gap-2"
-                  onClick={() => { handleGoToDashboard(); }}
+                  onClick={() => handleExit(false)}
                   data-testid="link-add-staff"
                 >
                   <Users className="h-4 w-4" />
@@ -342,7 +310,7 @@ export function OnboardingWizard({ organizationId, organizationName, onComplete 
                 <Button
                   variant="outline"
                   className="justify-start gap-2"
-                  onClick={() => { handleGoToDashboard(); }}
+                  onClick={() => handleExit(false)}
                   data-testid="link-create-loan-products"
                 >
                   <CreditCard className="h-4 w-4" />
@@ -351,7 +319,7 @@ export function OnboardingWizard({ organizationId, organizationName, onComplete 
                 <Button
                   variant="outline"
                   className="justify-start gap-2"
-                  onClick={() => { handleGoToDashboard(); }}
+                  onClick={() => handleExit(false)}
                   data-testid="link-register-members"
                 >
                   <UserPlus className="h-4 w-4" />
@@ -361,7 +329,7 @@ export function OnboardingWizard({ organizationId, organizationName, onComplete 
             </div>
             <Button
               className="w-full"
-              onClick={handleGoToDashboard}
+              onClick={() => handleExit(false)}
               data-testid="button-go-to-dashboard"
             >
               Go to Dashboard

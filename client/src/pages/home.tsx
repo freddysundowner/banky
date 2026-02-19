@@ -285,6 +285,8 @@ export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showSetupProgress, setShowSetupProgress] = useState(false);
   const [setupOrgName, setSetupOrgName] = useState("");
+  const [setupMode, setSetupMode] = useState<"full" | "finalize">("full");
+  const [finalizeReady, setFinalizeReady] = useState(false);
   const queryClient = useQueryClient();
   const prevSectionRef = useRef(activeSection);
 
@@ -490,10 +492,31 @@ export default function Home() {
   const handleCreateOrg = (data: CreateOrgFormData) => {
     setSetupOrgName(data.name);
     setShowCreateDialog(false);
+    setSetupMode("full");
     setShowSetupProgress(true);
     setupReadyRef.current = false;
     setSetupReady(false);
     createMutation.mutate(data);
+  };
+
+  const handleWizardFinalize = async (needsBranch: boolean) => {
+    setShowOnboarding(false);
+    setSetupOrgName(selectedOrg?.name || "");
+    setSetupMode("finalize");
+    setFinalizeReady(false);
+    setShowSetupProgress(true);
+
+    if (needsBranch && selectedOrg) {
+      try {
+        await apiRequest("POST", `/api/organizations/${selectedOrg.id}/branches`, {
+          name: "Main Branch",
+          code: "BR0001",
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/organizations", selectedOrg.id, "branches"] });
+      } catch (e) {
+      }
+    }
+    setFinalizeReady(true);
   };
 
   const updateMutation = useMutation({
@@ -538,10 +561,13 @@ export default function Home() {
       return (
         <OrgSetupProgress
           orgName={setupOrgName}
-          ready={setupReady}
+          ready={setupMode === "full" ? setupReady : finalizeReady}
+          mode={setupMode}
           onComplete={() => {
             setShowSetupProgress(false);
-            setShowOnboarding(true);
+            if (setupMode === "full") {
+              setShowOnboarding(true);
+            }
           }}
         />
       );
@@ -788,10 +814,13 @@ export default function Home() {
         {showSetupProgress && (
           <OrgSetupProgress
             orgName={setupOrgName}
-            ready={setupReady}
+            ready={setupMode === "full" ? setupReady : finalizeReady}
+            mode={setupMode}
             onComplete={() => {
               setShowSetupProgress(false);
-              setShowOnboarding(true);
+              if (setupMode === "full") {
+                setShowOnboarding(true);
+              }
             }}
           />
         )}
@@ -800,6 +829,7 @@ export default function Home() {
             organizationId={selectedOrg.id}
             organizationName={selectedOrg.name}
             onComplete={() => setShowOnboarding(false)}
+            onFinalize={handleWizardFinalize}
           />
         )}
         <TrialBanner

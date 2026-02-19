@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Building2, Database, Shield, CheckCircle2, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Building2, Database, Shield, CheckCircle2, Loader2, Settings } from "lucide-react";
 
 interface SetupStep {
   label: string;
@@ -7,33 +7,42 @@ interface SetupStep {
   duration: number;
 }
 
-const SETUP_STEPS: SetupStep[] = [
+const FULL_SETUP_STEPS: SetupStep[] = [
   { label: "Creating your organization", icon: Building2, duration: 1200 },
   { label: "Provisioning secure database", icon: Database, duration: 2000 },
   { label: "Configuring security settings", icon: Shield, duration: 1500 },
   { label: "Finalizing setup", icon: CheckCircle2, duration: 1000 },
 ];
 
+const FINALIZE_STEPS: SetupStep[] = [
+  { label: "Saving your preferences", icon: Settings, duration: 800 },
+  { label: "Configuring workspace", icon: Database, duration: 1200 },
+  { label: "Finalizing setup", icon: CheckCircle2, duration: 800 },
+];
+
 interface OrgSetupProgressProps {
   orgName: string;
   ready?: boolean;
+  mode?: "full" | "finalize";
   onComplete: () => void;
 }
 
-export function OrgSetupProgress({ orgName, ready = false, onComplete }: OrgSetupProgressProps) {
+export function OrgSetupProgress({ orgName, ready = false, mode = "full", onComplete }: OrgSetupProgressProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [completed, setCompleted] = useState(false);
   const [animationDone, setAnimationDone] = useState(false);
   const onCompleteRef = useRef(onComplete);
   onCompleteRef.current = onComplete;
 
+  const steps = mode === "full" ? FULL_SETUP_STEPS : FINALIZE_STEPS;
+
   useEffect(() => {
     let timeout: ReturnType<typeof setTimeout>;
 
     const advanceStep = (step: number) => {
-      if (step < SETUP_STEPS.length) {
+      if (step < steps.length) {
         setCurrentStep(step);
-        timeout = setTimeout(() => advanceStep(step + 1), SETUP_STEPS[step].duration);
+        timeout = setTimeout(() => advanceStep(step + 1), steps[step].duration);
       } else {
         setAnimationDone(true);
       }
@@ -42,7 +51,7 @@ export function OrgSetupProgress({ orgName, ready = false, onComplete }: OrgSetu
     advanceStep(0);
 
     return () => clearTimeout(timeout);
-  }, []);
+  }, [steps.length]);
 
   useEffect(() => {
     if (animationDone && ready) {
@@ -52,7 +61,15 @@ export function OrgSetupProgress({ orgName, ready = false, onComplete }: OrgSetu
     }
   }, [animationDone, ready]);
 
-  const showCompleted = completed;
+  const heading = mode === "full"
+    ? (completed ? "All Set!" : "Setting Up Your Organization")
+    : (completed ? "You're All Set!" : "Finishing Up");
+
+  const subtext = completed
+    ? `${orgName} is ready to go`
+    : mode === "full"
+    ? `Preparing ${orgName} for you`
+    : "Just a moment while we finalize everything";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
@@ -61,21 +78,15 @@ export function OrgSetupProgress({ orgName, ready = false, onComplete }: OrgSetu
           <Building2 className="h-8 w-8 text-primary-foreground" />
         </div>
 
-        <h1 className="text-2xl font-bold mb-1">
-          {showCompleted ? "All Set!" : "Setting Up Your Organization"}
-        </h1>
-        <p className="text-muted-foreground mb-10 text-sm">
-          {showCompleted
-            ? `${orgName} is ready to go`
-            : `Preparing ${orgName} for you`}
-        </p>
+        <h1 className="text-2xl font-bold mb-1">{heading}</h1>
+        <p className="text-muted-foreground mb-10 text-sm">{subtext}</p>
 
         <div className="space-y-3 text-left mb-10">
-          {SETUP_STEPS.map((step, index) => {
+          {steps.map((step, index) => {
             const StepIcon = step.icon;
-            const isActive = currentStep === index && !showCompleted;
-            const isDone = currentStep > index || showCompleted;
-            const isWaiting = animationDone && !ready && index === SETUP_STEPS.length - 1;
+            const isActive = currentStep === index && !completed;
+            const isDone = currentStep > index || completed;
+            const isWaiting = animationDone && !ready && index === steps.length - 1;
 
             return (
               <div
@@ -123,9 +134,9 @@ export function OrgSetupProgress({ orgName, ready = false, onComplete }: OrgSetu
           <div
             className="bg-primary h-full rounded-full transition-all duration-500 ease-out"
             style={{
-              width: showCompleted
+              width: completed
                 ? "100%"
-                : `${((currentStep + (animationDone ? 1 : 0)) / SETUP_STEPS.length) * 100}%`,
+                : `${((currentStep + (animationDone ? 1 : 0)) / steps.length) * 100}%`,
             }}
           />
         </div>
