@@ -508,6 +508,12 @@ export default function MemberManagement({ organizationId }: MemberManagementPro
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [deleting, setDeleting] = useState<Member | null>(null);
+  const [idConflict, setIdConflict] = useState<{
+    member_name: string;
+    member_number: string;
+    status: string;
+    pendingData: any;
+  } | null>(null);
   const [activeTab, setActiveTab] = useState("personal");
   const [branchFilter, setBranchFilter] = useState<string>("all");
   const [memberSearch, setMemberSearch] = useState("");
@@ -873,56 +879,98 @@ export default function MemberManagement({ organizationId }: MemberManagementPro
     setViewMode("view");
   };
 
-  const handleSubmit = (data: MemberFormData) => {
-    // Transform string fields to proper types for backend
-    const transformedData = {
-      ...data,
-      // Convert empty strings to null for optional fields
-      email: data.email || null,
-      middle_name: data.middle_name || null,
-      phone_secondary: data.phone_secondary || null,
-      id_type: data.id_type || null,
-      id_number: data.id_number || null,
-      kra_pin: data.kra_pin || null,
-      date_of_birth: data.date_of_birth || null,
-      gender: data.gender || null,
-      marital_status: data.marital_status || null,
-      nationality: data.nationality || null,
-      address: data.address || null,
-      postal_code: data.postal_code || null,
-      city: data.city || null,
-      county: data.county || null,
-      country: data.country || null,
-      next_of_kin_name: data.next_of_kin_name || null,
-      next_of_kin_phone: data.next_of_kin_phone || null,
-      next_of_kin_relationship: data.next_of_kin_relationship || null,
-      next_of_kin_id_number: data.next_of_kin_id_number || null,
-      next_of_kin_address: data.next_of_kin_address || null,
-      next_of_kin_2_name: data.next_of_kin_2_name || null,
-      next_of_kin_2_phone: data.next_of_kin_2_phone || null,
-      next_of_kin_2_relationship: data.next_of_kin_2_relationship || null,
-      employment_status: data.employment_status || null,
-      employer_name: data.employer_name || null,
-      employer_address: data.employer_address || null,
-      employer_phone: data.employer_phone || null,
-      occupation: data.occupation || null,
-      monthly_income: data.monthly_income ? parseFloat(data.monthly_income) : null,
-      employment_date: data.employment_date || null,
-      bank_name: data.bank_name || null,
-      bank_branch: data.bank_branch || null,
-      bank_account_number: data.bank_account_number || null,
-      bank_account_name: data.bank_account_name || null,
-      branch_id: data.branch_id || null,
-      membership_type: data.membership_type || null,
-      registration_fee_paid: data.registration_fee_paid ? parseFloat(data.registration_fee_paid) : null,
-      share_capital: data.share_capital ? parseFloat(data.share_capital) : null,
-    };
-    
+  const transformFormData = (data: MemberFormData) => ({
+    ...data,
+    email: data.email || null,
+    middle_name: data.middle_name || null,
+    phone_secondary: data.phone_secondary || null,
+    id_type: data.id_type || null,
+    id_number: data.id_number || null,
+    kra_pin: data.kra_pin || null,
+    date_of_birth: data.date_of_birth || null,
+    gender: data.gender || null,
+    marital_status: data.marital_status || null,
+    nationality: data.nationality || null,
+    address: data.address || null,
+    postal_code: data.postal_code || null,
+    city: data.city || null,
+    county: data.county || null,
+    country: data.country || null,
+    next_of_kin_name: data.next_of_kin_name || null,
+    next_of_kin_phone: data.next_of_kin_phone || null,
+    next_of_kin_relationship: data.next_of_kin_relationship || null,
+    next_of_kin_id_number: data.next_of_kin_id_number || null,
+    next_of_kin_address: data.next_of_kin_address || null,
+    next_of_kin_2_name: data.next_of_kin_2_name || null,
+    next_of_kin_2_phone: data.next_of_kin_2_phone || null,
+    next_of_kin_2_relationship: data.next_of_kin_2_relationship || null,
+    employment_status: data.employment_status || null,
+    employer_name: data.employer_name || null,
+    employer_address: data.employer_address || null,
+    employer_phone: data.employer_phone || null,
+    occupation: data.occupation || null,
+    monthly_income: data.monthly_income ? parseFloat(data.monthly_income) : null,
+    employment_date: data.employment_date || null,
+    bank_name: data.bank_name || null,
+    bank_branch: data.bank_branch || null,
+    bank_account_number: data.bank_account_number || null,
+    bank_account_name: data.bank_account_name || null,
+    branch_id: data.branch_id || null,
+    membership_type: data.membership_type || null,
+    registration_fee_paid: data.registration_fee_paid ? parseFloat(data.registration_fee_paid) : null,
+    share_capital: data.share_capital ? parseFloat(data.share_capital) : null,
+  });
+
+  const submitMember = (transformedData: any) => {
     if (viewMode === "edit" && selectedMember) {
       updateMutation.mutate(transformedData);
     } else {
       createMutation.mutate(transformedData);
     }
+  };
+
+  const handleSubmit = async (data: MemberFormData) => {
+    const transformedData = transformFormData(data);
+    const idNumber = transformedData.id_number;
+    
+    if (idNumber) {
+      const isEditing = viewMode === "edit" && selectedMember;
+      const currentIdNumber = isEditing ? selectedMember?.id_number : null;
+      
+      if (idNumber !== currentIdNumber) {
+        try {
+          const excludeParam = isEditing ? `?exclude_member_id=${selectedMember!.id}` : "";
+          const res = await fetch(
+            `/api/organizations/${organizationId}/members/check-id/${encodeURIComponent(idNumber)}${excludeParam}`,
+            { credentials: "include" }
+          );
+          if (res.ok) {
+            const result = await res.json();
+            if (result.conflict) {
+              if (!result.can_proceed) {
+                toast({
+                  title: "Duplicate ID Number",
+                  description: `A member with ID number '${idNumber}' already exists (${result.member_name} - ${result.member_number}, Status: ${result.status})`,
+                  variant: "destructive",
+                });
+                return;
+              }
+              setIdConflict({
+                member_name: result.member_name,
+                member_number: result.member_number,
+                status: result.status,
+                pendingData: transformedData,
+              });
+              return;
+            }
+          }
+        } catch {
+          // If check fails, proceed - backend will still validate
+        }
+      }
+    }
+    
+    submitMember(transformedData);
   };
 
   const handleBack = () => {
@@ -1597,6 +1645,43 @@ export default function MemberManagement({ organizationId }: MemberManagementPro
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        <AlertDialog open={!!idConflict} onOpenChange={() => setIdConflict(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Duplicate ID Number Found</AlertDialogTitle>
+              <AlertDialogDescription asChild>
+                <div className="space-y-3">
+                  <p>
+                    Another member already has this ID number, but their account is currently <Badge variant="secondary" className="mx-1">{idConflict?.status}</Badge>.
+                  </p>
+                  <div className="rounded-md border p-3 space-y-1 text-sm">
+                    <p><span className="font-medium">Name:</span> {idConflict?.member_name}</p>
+                    <p><span className="font-medium">Member No:</span> {idConflict?.member_number}</p>
+                    <p><span className="font-medium">Status:</span> {idConflict?.status}</p>
+                  </div>
+                  <p>
+                    Do you want to proceed with saving this member using the same ID number?
+                  </p>
+                </div>
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel data-testid="button-cancel-id-conflict">Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                data-testid="button-confirm-id-conflict"
+                onClick={() => {
+                  if (idConflict?.pendingData) {
+                    submitMember(idConflict.pendingData);
+                  }
+                  setIdConflict(null);
+                }}
+              >
+                Proceed
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

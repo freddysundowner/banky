@@ -105,6 +105,41 @@ async def get_members(
         tenant_session.close()
         tenant_ctx.close()
 
+@router.get("/{org_id}/members/check-id/{id_number}")
+async def check_id_number(
+    org_id: str,
+    id_number: str,
+    user = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    exclude_member_id: str = None
+):
+    tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
+    require_permission(membership, "members:read", db)
+    tenant_session = tenant_ctx.create_session()
+    try:
+        inactive_statuses = ['suspended', 'dormant', 'deceased', 'closed']
+        
+        query = tenant_session.query(Member).filter(Member.id_number == id_number)
+        if exclude_member_id:
+            query = query.filter(Member.id != exclude_member_id)
+        
+        existing = query.first()
+        if not existing:
+            return {"conflict": False}
+        
+        is_inactive = existing.status in inactive_statuses
+        return {
+            "conflict": True,
+            "member_number": existing.member_number,
+            "member_name": f"{existing.first_name} {existing.last_name}",
+            "status": existing.status,
+            "is_inactive": is_inactive,
+            "can_proceed": is_inactive,
+        }
+    finally:
+        tenant_session.close()
+        tenant_ctx.close()
+
 @router.post("/{org_id}/members")
 async def create_member(
     org_id: str,
