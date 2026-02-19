@@ -235,7 +235,6 @@ export default function Pricing() {
               features.push(plan.max_members === -1 ? 'Unlimited members' : `Up to ${plan.max_members.toLocaleString()} members`);
               features.push(plan.max_staff === -1 ? 'Unlimited staff' : `${plan.max_staff} staff accounts`);
               features.push(plan.max_branches === -1 ? 'Unlimited branches' : `${plan.max_branches} branch${plan.max_branches > 1 ? 'es' : ''}`);
-              features.push(`${plan.support_years || 1} year${(plan.support_years || 1) > 1 ? 's' : ''} support & updates`);
               features.push(...extractFeatures(plan.features));
 
               return (
