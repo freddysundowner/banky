@@ -534,13 +534,13 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
   const pendingRequestCount = pendingRequests?.length || 0;
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 md:p-6 space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Float Management</h2>
-          <p className="text-muted-foreground">Manage teller floats, vault cash, and daily operations</p>
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight">Float Management</h2>
+          <p className="text-sm text-muted-foreground">Manage teller floats, vault cash, and daily operations</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <RefreshButton organizationId={organizationId} />
           {canWrite && (
             <Dialog open={vaultDepositOpen} onOpenChange={setVaultDepositOpen}>
@@ -757,17 +757,17 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="floats" className="flex items-center gap-2">
-            <Wallet className="h-4 w-4" />
-            Today's Floats
+        <TabsList className="grid w-full grid-cols-3 md:grid-cols-6">
+          <TabsTrigger value="floats" className="flex items-center gap-1 text-xs md:text-sm">
+            <Wallet className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline">Today's</span> Floats
           </TabsTrigger>
-          <TabsTrigger value="vault" className="flex items-center gap-2">
-            <Building2 className="h-4 w-4" />
+          <TabsTrigger value="vault" className="flex items-center gap-1 text-xs md:text-sm">
+            <Building2 className="h-4 w-4 shrink-0" />
             Vault
           </TabsTrigger>
-          <TabsTrigger value="pending" className="flex items-center gap-2 relative">
-            <Clock className="h-4 w-4" />
+          <TabsTrigger value="pending" className="flex items-center gap-1 text-xs md:text-sm relative">
+            <Clock className="h-4 w-4 shrink-0" />
             Pending
             {(pendingReturnCount + pendingRequestCount) > 0 && (
               <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
@@ -775,8 +775,8 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="held" className="flex items-center gap-2 relative" data-testid="tab-held-shortages">
-            <Shield className="h-4 w-4" />
+          <TabsTrigger value="held" className="flex items-center gap-1 text-xs md:text-sm relative" data-testid="tab-held-shortages">
+            <Shield className="h-4 w-4 shrink-0" />
             Held
             {(heldShortages?.shortages?.length ?? 0) > 0 && (
               <Badge variant="destructive" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
@@ -784,22 +784,22 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="handovers" className="flex items-center gap-2">
-            <ArrowRightLeft className="h-4 w-4" />
+          <TabsTrigger value="handovers" className="flex items-center gap-1 text-xs md:text-sm">
+            <ArrowRightLeft className="h-4 w-4 shrink-0" />
             Handovers
           </TabsTrigger>
-          <TabsTrigger value="report" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Daily Report
+          <TabsTrigger value="report" className="flex items-center gap-1 text-xs md:text-sm">
+            <FileText className="h-4 w-4 shrink-0" />
+            <span className="hidden sm:inline">Daily</span> Report
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="floats" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Float Allocated</CardTitle>
-            <Wallet className="h-4 w-4 text-primary" />
+            <Wallet className="h-4 w-4 text-primary shrink-0" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{symbol} {totalFloatAllocated.toLocaleString()}</div>
@@ -808,9 +808,9 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Today's Deposits</CardTitle>
-            <DollarSign className="h-4 w-4 text-green-600" />
+            <DollarSign className="h-4 w-4 text-green-600 shrink-0" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{symbol} {totalDeposits.toLocaleString()}</div>
@@ -819,9 +819,9 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Today's Withdrawals</CardTitle>
-            <ArrowUpRight className="h-4 w-4 text-red-600" />
+            <ArrowUpRight className="h-4 w-4 text-red-600 shrink-0" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{symbol} {totalWithdrawals.toLocaleString()}</div>
@@ -830,9 +830,9 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-600" />
+            <Clock className="h-4 w-4 text-yellow-600 shrink-0" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">{pendingRequests?.length || 0}</div>
@@ -851,14 +851,15 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
             <CardDescription>Approve or reject float replenishment requests from tellers</CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="overflow-x-auto -mx-4 md:mx-0">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Teller</TableHead>
                   <TableHead>Requested Amount</TableHead>
-                  <TableHead>Current Balance</TableHead>
-                  <TableHead>Reason</TableHead>
-                  <TableHead>Requested At</TableHead>
+                  <TableHead className="hidden sm:table-cell">Current Balance</TableHead>
+                  <TableHead className="hidden md:table-cell">Reason</TableHead>
+                  <TableHead className="hidden md:table-cell">Requested At</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -867,9 +868,9 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
                   <TableRow key={req.id}>
                     <TableCell className="font-medium">{req.staff_name}</TableCell>
                     <TableCell>{symbol} {req.amount.toLocaleString()}</TableCell>
-                    <TableCell>{symbol} {req.current_balance.toLocaleString()}</TableCell>
-                    <TableCell className="max-w-[200px] truncate">{req.reason}</TableCell>
-                    <TableCell>{new Date(req.created_at).toLocaleString()}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{symbol} {req.current_balance.toLocaleString()}</TableCell>
+                    <TableCell className="max-w-[200px] truncate hidden md:table-cell">{req.reason}</TableCell>
+                    <TableCell className="hidden md:table-cell">{new Date(req.created_at).toLocaleString()}</TableCell>
                     <TableCell className="text-right">
                       {canWrite && (
                         <div className="flex gap-2 justify-end">
@@ -898,6 +899,7 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
                 ))}
               </TableBody>
             </Table>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -912,6 +914,7 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
         </CardHeader>
         <CardContent>
           {floats && floats.length > 0 ? (
+            <div className="overflow-x-auto -mx-4 md:mx-0">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -920,7 +923,7 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
                   <TableHead>Opening</TableHead>
                   <TableHead>Deposits</TableHead>
                   <TableHead>Withdrawals</TableHead>
-                  <TableHead>Replenishments</TableHead>
+                  <TableHead className="hidden md:table-cell">Replenishments</TableHead>
                   <TableHead>Current Balance</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -934,7 +937,7 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
                     <TableCell>{symbol} {f.opening_balance.toLocaleString()}</TableCell>
                     <TableCell className="text-green-600">+{f.deposits_in.toLocaleString()}</TableCell>
                     <TableCell className="text-red-600">-{f.withdrawals_out.toLocaleString()}</TableCell>
-                    <TableCell className="text-blue-600">+{f.replenishments.toLocaleString()}</TableCell>
+                    <TableCell className="text-blue-600 hidden md:table-cell">+{f.replenishments.toLocaleString()}</TableCell>
                     <TableCell className="font-semibold">{symbol} {f.current_balance.toLocaleString()}</TableCell>
                     <TableCell>
                       <Badge variant={
@@ -1024,6 +1027,7 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
                 ))}
               </TableBody>
             </Table>
+            </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <Wallet className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -1036,12 +1040,12 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
         </TabsContent>
 
         <TabsContent value="vault" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
             {vaultsData?.vaults?.map((vault) => (
               <Card key={vault.id}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">{vault.branch_name}</CardTitle>
-                  <Building2 className="h-4 w-4 text-primary" />
+                  <Building2 className="h-4 w-4 text-primary shrink-0" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-green-600">
@@ -1076,13 +1080,14 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
                 <CardDescription>Tellers waiting for vault return approval</CardDescription>
               </CardHeader>
               <CardContent>
+                <div className="overflow-x-auto -mx-4 md:mx-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Teller</TableHead>
                       <TableHead>Branch</TableHead>
                       <TableHead>Amount</TableHead>
-                      <TableHead>Requested</TableHead>
+                      <TableHead className="hidden sm:table-cell">Requested</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -1092,7 +1097,7 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
                         <TableCell className="font-medium">{ret.staff_name}</TableCell>
                         <TableCell>{ret.branch_name}</TableCell>
                         <TableCell className="font-semibold">{symbol} {ret.amount.toLocaleString()}</TableCell>
-                        <TableCell>{new Date(ret.created_at).toLocaleString()}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{new Date(ret.created_at).toLocaleString()}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             {canWrite && (
@@ -1123,6 +1128,7 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -1137,13 +1143,14 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
                 <CardDescription>Tellers requesting additional cash</CardDescription>
               </CardHeader>
               <CardContent>
+                <div className="overflow-x-auto -mx-4 md:mx-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Teller</TableHead>
-                      <TableHead>Current Balance</TableHead>
+                      <TableHead className="hidden sm:table-cell">Current Balance</TableHead>
                       <TableHead>Requested</TableHead>
-                      <TableHead>Reason</TableHead>
+                      <TableHead className="hidden md:table-cell">Reason</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -1151,9 +1158,9 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
                     {pendingRequests?.map((req) => (
                       <TableRow key={req.id}>
                         <TableCell className="font-medium">{req.staff_name}</TableCell>
-                        <TableCell>{symbol} {req.current_balance.toLocaleString()}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{symbol} {req.current_balance.toLocaleString()}</TableCell>
                         <TableCell className="font-semibold">{symbol} {req.amount.toLocaleString()}</TableCell>
-                        <TableCell>{req.reason}</TableCell>
+                        <TableCell className="hidden md:table-cell">{req.reason}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
                             {canWrite && (
@@ -1184,6 +1191,7 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -1227,14 +1235,15 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
                       </AlertDescription>
                     </Alert>
                   )}
+                  <div className="overflow-x-auto -mx-4 md:mx-0">
                   <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Date</TableHead>
                         <TableHead>Teller</TableHead>
-                        <TableHead>Branch</TableHead>
+                        <TableHead className="hidden sm:table-cell">Branch</TableHead>
                         <TableHead>Amount</TableHead>
-                        <TableHead>Notes</TableHead>
+                        <TableHead className="hidden md:table-cell">Notes</TableHead>
                         <TableHead>Action</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1243,9 +1252,9 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
                         <TableRow key={s.id} data-testid={`row-held-shortage-${s.id}`}>
                           <TableCell>{new Date(s.date).toLocaleDateString()}</TableCell>
                           <TableCell className="font-medium">{s.staff_name}</TableCell>
-                          <TableCell>{s.branch_name || "-"}</TableCell>
+                          <TableCell className="hidden sm:table-cell">{s.branch_name || "-"}</TableCell>
                           <TableCell className="font-bold text-destructive">{symbol} {s.shortage_amount.toLocaleString()}</TableCell>
-                          <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate">{s.notes || "-"}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm max-w-[200px] truncate hidden md:table-cell">{s.notes || "-"}</TableCell>
                           <TableCell>
                             <Dialog open={resolveShortageId === s.id} onOpenChange={(open) => { if (!open) setResolveShortageId(null); }}>
                               <DialogTrigger asChild>
@@ -1323,6 +1332,7 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
                       ))}
                     </TableBody>
                   </Table>
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
@@ -1346,15 +1356,16 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
             </CardHeader>
             <CardContent>
               {shiftHandovers?.handovers && shiftHandovers.handovers.length > 0 ? (
+                <div className="overflow-x-auto -mx-4 md:mx-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>From</TableHead>
                       <TableHead>To</TableHead>
-                      <TableHead>Branch</TableHead>
+                      <TableHead className="hidden sm:table-cell">Branch</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Date</TableHead>
+                      <TableHead className="hidden sm:table-cell">Date</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1362,18 +1373,19 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
                       <TableRow key={h.id}>
                         <TableCell>{h.from_staff_name || "Unknown"}</TableCell>
                         <TableCell>{h.to_staff_name || "Unknown"}</TableCell>
-                        <TableCell>{h.branch_name || "Unknown"}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{h.branch_name || "Unknown"}</TableCell>
                         <TableCell className="font-semibold">{symbol} {h.amount.toLocaleString()}</TableCell>
                         <TableCell>
                           <Badge variant={h.status === "accepted" ? "default" : h.status === "rejected" ? "destructive" : "secondary"}>
                             {h.status}
                           </Badge>
                         </TableCell>
-                        <TableCell>{new Date(h.created_at).toLocaleString()}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{new Date(h.created_at).toLocaleString()}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <ArrowRightLeft className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -1388,10 +1400,10 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
         <TabsContent value="report" className="space-y-4">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
+                    <FileText className="h-5 w-5 shrink-0" />
                     Daily Cash Position Report
                   </CardTitle>
                   <CardDescription>
@@ -1406,7 +1418,7 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
             </CardHeader>
             <CardContent>
               {dailyCashPosition?.totals && (
-                <div className="grid gap-4 md:grid-cols-5 mb-6">
+                <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-5 mb-6">
                   <Card className="bg-blue-50 dark:bg-blue-900/20">
                     <CardContent className="pt-4">
                       <div className="text-sm text-muted-foreground">Total Vault</div>
@@ -1441,16 +1453,17 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
               )}
 
               {dailyCashPosition?.branches && dailyCashPosition.branches.length > 0 ? (
+                <div className="overflow-x-auto -mx-4 md:mx-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Branch</TableHead>
                       <TableHead>Vault</TableHead>
-                      <TableHead>Float</TableHead>
+                      <TableHead className="hidden sm:table-cell">Float</TableHead>
                       <TableHead>Deposits</TableHead>
                       <TableHead>Withdrawals</TableHead>
                       <TableHead>Total Cash</TableHead>
-                      <TableHead>Tellers</TableHead>
+                      <TableHead className="hidden sm:table-cell">Tellers</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1458,15 +1471,16 @@ export default function FloatManagement({ organizationId }: FloatManagementProps
                       <TableRow key={b.branch_id}>
                         <TableCell className="font-medium">{b.branch_name}</TableCell>
                         <TableCell>{symbol} {b.vault_balance.toLocaleString()}</TableCell>
-                        <TableCell>{symbol} {b.float_allocated.toLocaleString()}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{symbol} {b.float_allocated.toLocaleString()}</TableCell>
                         <TableCell className="text-green-600">+{symbol} {b.deposits_received.toLocaleString()}</TableCell>
                         <TableCell className="text-red-600">-{symbol} {b.withdrawals_paid.toLocaleString()}</TableCell>
                         <TableCell className="font-bold">{symbol} {b.total_cash_in_hand.toLocaleString()}</TableCell>
-                        <TableCell>{b.teller_count}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{b.teller_count}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
