@@ -178,9 +178,9 @@ export default function Login() {
         </Card>
 
         <div className="mt-6 text-center">
-          <Link href="/" className="text-sm text-muted-foreground hover:underline">
-            Back to home
-          </Link>
+          <a href="/" className="text-sm text-muted-foreground hover:underline">
+            View Guide
+          </a>
         </div>
       </div>
     </div>

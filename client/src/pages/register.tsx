@@ -273,9 +273,9 @@ export default function Register() {
         </div>
 
         <p className="mt-4 text-center">
-          <Link href="/" className="text-xs text-muted-foreground hover:underline">
-            Back to home
-          </Link>
+          <a href="/" className="text-xs text-muted-foreground hover:underline">
+            View Guide
+          </a>
         </p>
       </div>
     </div>
