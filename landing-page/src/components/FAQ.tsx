@@ -1,27 +1,39 @@
 const faqs = [
   {
+    question: 'Is BANKY right for my chama or small group?',
+    answer: 'Absolutely. Whether you have 15 members or 15,000, BANKY scales with you. Chamas love the loan tracking, savings accounts, M-Pesa integration, and automated dividend sharing -- no more WhatsApp spreadsheets.',
+  },
+  {
+    question: 'How is BANKY different from a spreadsheet?',
+    answer: 'Spreadsheets break when you grow. BANKY gives you real-time dashboards, automatic interest calculations, M-Pesa integration, SMS notifications, audit trails, and proper double-entry accounting -- all without manual data entry.',
+  },
+  {
     question: 'What is the difference between SaaS and Enterprise?',
-    answer: 'SaaS is hosted by us with monthly billing. Enterprise is a one-time purchase where you host it on your own servers with full control.',
+    answer: 'SaaS is hosted by us -- you log in and start using it immediately with monthly billing. Enterprise is a one-time purchase where you install BANKY on your own servers for full control. Both have the same powerful features.',
+  },
+  {
+    question: 'Does BANKY work with M-Pesa?',
+    answer: 'Yes. Members can deposit, repay loans, and receive disbursements directly via M-Pesa STK Push. Transactions reconcile automatically -- no manual entry needed.',
+  },
+  {
+    question: 'Is my data safe and private?',
+    answer: 'Every organization gets its own isolated database -- your data is never shared or mixed with anyone else\'s. We use bank-grade encryption, role-based access control, and maintain detailed audit logs of every action.',
   },
   {
     question: 'Can I switch from SaaS to Enterprise later?',
-    answer: 'Yes! We can help you migrate your data from our SaaS platform to your own self-hosted Enterprise installation.',
+    answer: 'Yes. We can migrate your entire database and member records from our cloud platform to your own self-hosted Enterprise installation whenever you are ready.',
   },
   {
-    question: 'Is my data secure?',
-    answer: 'Absolutely. Each organization gets its own isolated database. We use encryption at rest and in transit, with regular backups.',
+    question: 'Do you offer training and support?',
+    answer: 'All plans include online training and email support. Growth and Professional plans get priority support. Enterprise customers can request on-site training and a dedicated account manager.',
   },
   {
-    question: 'Do you offer training?',
-    answer: 'Yes, we provide online training for all plans and on-site training for Enterprise customers.',
+    question: 'What reports can I generate for regulators?',
+    answer: 'BANKY generates Trial Balance, Income Statement, Balance Sheet, loan portfolio reports, member statements, and transaction summaries -- all exportable to CSV or PDF with a single click.',
   },
   {
-    question: 'What payment methods are supported?',
-    answer: 'M-Pesa, bank transfers, and card payments. Enterprise customers can pay via invoice.',
-  },
-  {
-    question: 'Can I customize the system?',
-    answer: 'Enterprise customers get full source code access. We also offer custom development services.',
+    question: 'How quickly can we go live?',
+    answer: 'Most organizations sign up and process their first transaction within an hour. Larger Saccos migrating historical data typically go live within a week with our support team\'s help.',
   },
 ];
 
@@ -33,9 +45,12 @@ export default function FAQ() {
           <span className="inline-block px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-4">
             FAQ
           </span>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-            Frequently Asked Questions
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Got Questions? We Have Answers.
           </h2>
+          <p className="text-xl text-gray-600">
+            Everything you need to know before getting started
+          </p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6">

@@ -6,42 +6,49 @@ const testimonials = [
     name: 'James Mwangi',
     role: 'Chairman',
     organization: 'Ukulima Sacco',
-    quote: 'BANKY transformed how we manage our 5,000+ members. Loan processing that used to take days now takes minutes. The M-Pesa integration alone saved us countless hours.',
+    quote: 'We moved 5,000 members from paper ledgers to BANKY in a single weekend. Loan processing that took three days now takes three minutes. The M-Pesa integration alone saved our staff countless hours every month.',
     rating: 5,
   },
   {
     name: 'Grace Achieng',
     role: 'General Manager',
     organization: 'Boresha Sacco',
-    quote: 'We switched from spreadsheets to BANKY and the difference is night and day. The accounting module with automatic journal entries has eliminated human errors completely.',
+    quote: 'Our accountant used to spend the first two weeks of every month reconciling spreadsheets. With BANKY\'s automatic journal entries and trial balance, she now closes the books in a single day.',
     rating: 5,
   },
   {
     name: 'Peter Kamau',
     role: 'IT Manager',
     organization: 'Wekeza Investment Sacco',
-    quote: 'The multi-tenant architecture gives us peace of mind knowing our data is completely isolated. Setup was straightforward and the support team is excellent.',
+    quote: 'Data security was our biggest concern. Knowing that our member data sits in a completely isolated database -- not shared with anyone -- gave our board the confidence to go digital.',
     rating: 5,
   },
   {
-    name: 'Faith Njeri',
-    role: 'Operations Director',
-    organization: 'Fanaka Savings Sacco',
-    quote: 'The teller station and float management features are exactly what we needed. Our tellers can now process transactions quickly with full accountability.',
-    rating: 4,
+    name: 'Amina Hassan',
+    role: 'Treasurer',
+    organization: 'Maisha Chama Group',
+    quote: 'Our chama had 30 members and a WhatsApp group for records. BANKY gave us a proper system with loan tracking, savings accounts, and dividend calculations. We feel like a real institution now.',
+    rating: 5,
   },
   {
     name: 'David Ochieng',
     role: 'CEO',
     organization: 'Pamoja Microfinance',
-    quote: 'We evaluated several systems before choosing BANKY. The dividend calculation and fixed deposit modules set it apart. It handles everything we need under one roof.',
+    quote: 'We evaluated six different systems before choosing BANKY. The dividend calculation, fixed deposit module, and teller station put it miles ahead. It handles everything under one roof -- no add-ons needed.',
     rating: 5,
   },
   {
     name: 'Sarah Wambui',
     role: 'Finance Manager',
     organization: 'Umoja Community Sacco',
-    quote: 'The analytics dashboard gives our board real-time visibility into performance. Generating reports for regulators is now a one-click process instead of a week-long exercise.',
+    quote: 'Our board now has real-time visibility into portfolio performance. Generating regulator reports used to take a week of manual work. Now it\'s literally one click.',
+    rating: 5,
+  },
+  {
+    name: 'Faith Njeri',
+    role: 'Operations Director',
+    organization: 'Fanaka Savings Sacco',
+    quote: 'The teller station transformed our branch operations. Each teller has their own float, every transaction is accountable, and end-of-day reconciliation went from 2 hours to 10 minutes.',
     rating: 5,
   },
 ];
@@ -57,6 +64,7 @@ const bgColors = [
   'bg-orange-600',
   'bg-teal-600',
   'bg-indigo-600',
+  'bg-rose-600',
 ];
 
 export default function Testimonials() {
@@ -85,10 +93,10 @@ export default function Testimonials() {
             Testimonials
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Trusted by Saccos Across East Africa
+            Loved by Banks, Saccos & Chamas Across East Africa
           </h2>
           <p className="text-xl text-gray-600">
-            See what our customers have to say about their experience
+            Hear from organizations that replaced spreadsheets and legacy systems with BANKY
           </p>
         </div>
 

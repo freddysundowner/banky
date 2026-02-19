@@ -1,11 +1,8 @@
 import { TrendingUp, Users, CreditCard, Clock } from 'lucide-react';
-import { useBranding } from '../context/BrandingContext';
 
 export default function Stats() {
-  const { platform_name } = useBranding();
-
   const stats = [
-    { value: '500+', label: `Saccos Using ${platform_name}`, icon: Users, color: 'blue' },
+    { value: '500+', label: 'Banks, Saccos & Chamas', icon: Users, color: 'blue' },
     { value: 'KES 2B+', label: 'Transactions Processed', icon: CreditCard, color: 'green' },
     { value: '1M+', label: 'Members Managed', icon: TrendingUp, color: 'purple' },
     { value: '99.9%', label: 'Uptime Guarantee', icon: Clock, color: 'orange' },

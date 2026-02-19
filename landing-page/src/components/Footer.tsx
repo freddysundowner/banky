@@ -19,7 +19,7 @@ export default function Footer() {
               <span className="text-xl font-bold text-white">{platform_name}</span>
             </div>
             <p className="text-sm text-gray-500 leading-relaxed">
-              The complete banking and Sacco management platform for modern financial institutions in East Africa.
+              The all-in-one platform for banks, Saccos, microfinance institutions, and chamas across Africa. Loans, savings, accounting, M-Pesa -- all in one place.
             </p>
           </div>
 

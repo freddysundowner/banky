@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowRight, Play, Shield, Zap, Users, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, Play, Shield, ChevronLeft, ChevronRight, Landmark, HandCoins, UsersRound } from 'lucide-react';
 import { useBranding } from '../context/BrandingContext';
 
 const screenshots = [
@@ -26,9 +26,9 @@ interface LandingSettings {
 }
 
 const defaultSettings: LandingSettings = {
-  hero_title: "The Complete Banking Platform for Saccos",
-  hero_subtitle: "Manage members, loans, savings, fixed deposits, and dividends with a powerful, secure multi-tenant system. Available as SaaS or self-hosted.",
-  hero_badge: "Trusted by 500+ Saccos in East Africa",
+  hero_title: "One Platform for Banks, Saccos & Chamas",
+  hero_subtitle: "From a 20-member chama to a licensed microfinance bank, BANKY gives you loans, savings, accounting, M-Pesa, and real-time reporting -- all in one place. Go live in minutes, not months.",
+  hero_badge: "Trusted by 500+ organizations across East Africa",
   cta_primary_text: "Start Free Trial",
   cta_primary_url: "#pricing",
   cta_secondary_text: "Watch Demo",
@@ -142,16 +142,20 @@ export default function Hero() {
 
               <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 text-sm text-blue-100">
                 <div className="flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-green-400" />
+                  <Landmark className="w-5 h-5 text-cyan-300" />
+                  Banks & MFIs
+                </div>
+                <div className="flex items-center gap-2">
+                  <HandCoins className="w-5 h-5 text-green-400" />
+                  Saccos
+                </div>
+                <div className="flex items-center gap-2">
+                  <UsersRound className="w-5 h-5 text-yellow-300" />
+                  Chamas & Groups
+                </div>
+                <div className="flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-purple-300" />
                   Bank-grade Security
-                </div>
-                <div className="flex items-center gap-2">
-                  <Zap className="w-5 h-5 text-yellow-400" />
-                  Real-time Analytics
-                </div>
-                <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-cyan-400" />
-                  Multi-tenant Ready
                 </div>
               </div>
             </div>

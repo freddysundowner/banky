@@ -4,22 +4,22 @@ const steps = [
   {
     icon: UserPlus,
     step: '1',
-    title: 'Sign Up & Create Organization',
-    description: 'Register your account and set up your Sacco or microfinance organization in under 2 minutes. Start with a free trial - no credit card required.',
+    title: 'Sign Up in 2 Minutes',
+    description: 'Create your account and set up your bank, Sacco, or chama. No credit card needed. Your dedicated database is provisioned instantly.',
     color: 'blue',
   },
   {
     icon: Settings,
     step: '2',
-    title: 'Configure Your Setup',
-    description: 'Add your branches, create staff accounts, configure loan products, set up M-Pesa integration, and customize your Chart of Accounts.',
+    title: 'Configure Your Way',
+    description: 'Add branches, invite staff, set up loan products, connect M-Pesa, and customize your chart of accounts. The system adapts to how you operate.',
     color: 'green',
   },
   {
     icon: Rocket,
     step: '3',
-    title: 'Start Managing',
-    description: 'Register members, process loans, handle deposits and withdrawals through the teller station, and track everything with real-time dashboards.',
+    title: 'Go Live & Grow',
+    description: 'Register members, disburse loans, collect deposits, and track everything on real-time dashboards. Your members get SMS updates automatically.',
     color: 'purple',
   },
 ];
@@ -39,10 +39,10 @@ export default function HowItWorks() {
             How It Works
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Get Started in Minutes
+            From Signup to First Loan in Under an Hour
           </h2>
           <p className="text-xl text-gray-600">
-            Three simple steps to modernize your Sacco operations
+            No consultants. No lengthy onboarding. Three simple steps to digitize your operations.
           </p>
         </div>
 

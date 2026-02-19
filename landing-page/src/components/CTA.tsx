@@ -13,11 +13,11 @@ export default function CTA() {
       
       <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-          Ready to Transform Your Sacco?
+          Stop Managing Finances on Spreadsheets
         </h2>
         <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-          Join 500+ Saccos already using {platform_name} to manage their operations efficiently. 
-          Start your free trial today.
+          500+ banks, Saccos, and chamas have already switched to {platform_name}. 
+          Start your free trial today and see why they never looked back.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <a 
@@ -31,7 +31,7 @@ export default function CTA() {
             className="inline-flex items-center justify-center gap-2 px-8 py-4 border-2 border-white/30 text-white rounded-xl text-lg font-semibold hover:bg-white/10 transition"
           >
             <Calendar className="w-5 h-5" />
-            Schedule Demo
+            Schedule a Demo
           </button>
         </div>
       </div>

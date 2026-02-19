@@ -11,86 +11,93 @@ import {
   BarChart3,
   Building2,
   Database,
-  Briefcase
+  Briefcase,
+  Smartphone
 } from 'lucide-react';
 
 const features = [
   {
     icon: Users,
     title: 'Member Management',
-    description: 'Complete member lifecycle management with KYC, documents, next-of-kin, and account status tracking.',
+    description: 'Register members in seconds. Track KYC documents, next-of-kin, shares, and account status -- whether you have 20 members or 200,000.',
     color: 'blue'
   },
   {
     icon: DollarSign,
     title: 'Loan Management',
-    description: 'Configurable loan products, applications, guarantors, disbursement via M-Pesa/Bank/Cash, and repayment tracking.',
+    description: 'Create unlimited loan products with custom interest rates, terms, and repayment schedules. Disburse via M-Pesa, bank, or cash -- and track every shilling.',
     color: 'green'
   },
   {
     icon: CreditCard,
     title: 'Savings & Shares',
-    description: 'Multiple account types with deposits, withdrawals, transfers, and interest calculation.',
+    description: 'Multiple account types for savings, shares, and special deposits. Automatic interest calculations and seamless member withdrawals.',
     color: 'purple'
   },
   {
     icon: Wallet,
     title: 'Fixed Deposits',
-    description: 'Fixed deposit products with maturity tracking, interest calculation, and auto-rollover options.',
+    description: 'Offer competitive fixed deposit products with automatic maturity tracking, interest accrual, and flexible rollover options.',
     color: 'orange'
   },
   {
     icon: UserPlus,
-    title: 'Dividends',
-    description: 'Dividend declaration, automatic calculation based on share balance, approval workflow, and distribution.',
+    title: 'Dividends & Profit Sharing',
+    description: 'Declare dividends, calculate payouts based on share balances, and distribute to members -- perfect for Saccos and chama profit-sharing.',
     color: 'pink'
   },
   {
     icon: BookOpen,
-    title: 'Accounting',
-    description: 'Double-entry bookkeeping, Chart of Accounts, journal entries, Trial Balance, Income Statement, Balance Sheet.',
+    title: 'Full Accounting Suite',
+    description: 'Double-entry bookkeeping that runs itself. Chart of Accounts, journal entries, Trial Balance, Income Statement, and Balance Sheet -- all automated.',
     color: 'teal'
   },
   {
     icon: LayoutGrid,
     title: 'Teller Station',
-    description: 'Dedicated teller interface for deposits, withdrawals, loan repayments with cash float tracking.',
+    description: 'A dedicated counter interface for daily operations. Process deposits, withdrawals, and repayments with real-time cash float tracking.',
     color: 'indigo'
   },
   {
+    icon: Smartphone,
+    title: 'M-Pesa Integration',
+    description: 'Accept deposits, disburse loans, and collect repayments via M-Pesa STK Push. Your members transact from their phones, you reconcile automatically.',
+    color: 'green'
+  },
+  {
     icon: Bell,
-    title: 'SMS Notifications',
-    description: 'Automated SMS alerts for transactions, loan reminders, and custom notifications.',
+    title: 'SMS & Notifications',
+    description: 'Keep members informed with automated SMS alerts for every transaction, loan approval, due date reminder, and dividend payout.',
     color: 'red'
   },
   {
     icon: Shield,
-    title: 'Audit Logs',
-    description: 'Complete traceability of all actions with user, timestamp, and change details.',
+    title: 'Audit & Compliance',
+    description: 'Every action is logged. Full audit trails with user, timestamp, and change details for regulatory compliance and internal governance.',
     color: 'cyan'
   },
   {
     icon: BarChart3,
-    title: 'Analytics Dashboard',
-    description: 'Real-time insights on portfolio performance, member growth, and financial health.',
+    title: 'Real-time Analytics',
+    description: 'Live dashboards showing portfolio performance, loan arrears, member growth, and financial health. Generate regulator reports in one click.',
     color: 'lime'
   },
   {
     icon: Building2,
-    title: 'Staff & Branch Management',
-    description: 'Multi-branch support with role-based access control and staff performance tracking.',
+    title: 'Multi-Branch Operations',
+    description: 'Manage headquarters, branches, and satellite offices from one platform. Role-based access ensures staff see only what they need.',
     color: 'amber'
   },
   {
     icon: Briefcase,
-    title: 'HR Management',
-    description: 'Employee records, payroll processing, leave management, and statutory deductions with automatic journal entries.',
+    title: 'HR & Payroll',
+    description: 'Manage employee records, process payroll, track leave, and handle statutory deductions -- with automatic journal entries to your books.',
     color: 'rose'
   },
   {
     icon: Database,
-    title: 'Multi-Tenant Architecture',
-    description: 'Database-per-tenant isolation for complete data security and privacy.',
+    title: 'Isolated & Secure',
+    description: 'Every organization gets its own dedicated database. Your data never mixes with anyone else\'s. Bank-grade encryption at rest and in transit.',
     color: 'violet'
   },
 ];
@@ -120,9 +127,9 @@ export default function Features() {
             Features
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Everything You Need to Run Your Sacco
+            Everything Your Financial Institution Needs
           </h2>
-          <p className="text-xl text-gray-600">Comprehensive tools for modern financial institutions</p>
+          <p className="text-xl text-gray-600">Whether you run a bank, a Sacco, or a chama -- BANKY has the tools to replace spreadsheets, reduce errors, and save you hours every day.</p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
