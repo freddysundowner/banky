@@ -469,6 +469,7 @@ export default function Home() {
       await queryClient.invalidateQueries({ queryKey: ["/api/organizations/my"] });
       setShowCreateDialog(false);
       createForm.reset();
+      setShowOnboarding(true);
       toast({
         title: "Organization created",
         description: "Your organization has been set up successfully. Database provisioning may take a moment.",
