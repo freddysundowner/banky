@@ -441,12 +441,17 @@ export default function Plans() {
 
       {editingFeatures && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden">
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-bold">Edit Features - {allPlans?.find((p) => p.id === editingFeatures)?.name}</h2>
-              <p className="text-sm text-gray-500">Select which features are included in this plan</p>
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
+            <div className="p-6 border-b flex-shrink-0 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold">Edit Features - {allPlans?.find((p) => p.id === editingFeatures)?.name}</h2>
+                <p className="text-sm text-gray-500">Select which features are included in this plan</p>
+              </div>
+              <button onClick={() => { setEditingFeatures(null); setSelectedFeatures([]); setCustomFeatures([]); setNewCustomFeature('') }} className="text-gray-400 hover:text-gray-600 p-1">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
             </div>
-            <div className="p-6 overflow-y-auto max-h-[50vh]">
+            <div className="p-6 overflow-y-auto flex-1 min-h-0">
               {FEATURE_GROUPS.map(group => {
                 const groupFeatures = ALL_FEATURES.filter(f => f.group === group)
                 if (groupFeatures.length === 0) return null
@@ -474,8 +479,7 @@ export default function Plans() {
                   </div>
                 )
               })}
-            </div>
-            <div className="px-6 pb-4 border-t pt-4">
+              <div className="border-t pt-4 mt-2">
               <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Custom Display Features</h3>
               <p className="text-xs text-gray-500 mb-3">Add features that appear on pricing pages (e.g., "Email Support", "Priority Support"). These are display-only and not connected to app logic.</p>
               <div className="flex gap-2 mb-3">
@@ -507,8 +511,9 @@ export default function Plans() {
                   ))}
                 </div>
               )}
+              </div>
             </div>
-            <div className="p-6 border-t flex gap-3 justify-end">
+            <div className="p-6 border-t flex gap-3 justify-end flex-shrink-0">
               <button onClick={() => { setEditingFeatures(null); setSelectedFeatures([]); setCustomFeatures([]); setNewCustomFeature('') }} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancel</button>
               <button onClick={() => updatePlanFeatures.mutate(editingFeatures)} className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700" disabled={updatePlanFeatures.isPending}>{updatePlanFeatures.isPending ? 'Saving...' : 'Save Features'}</button>
             </div>
