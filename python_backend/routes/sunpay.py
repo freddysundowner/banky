@@ -76,8 +76,8 @@ def try_send_deposit_sms(tenant_session, member, amount, new_balance):
 @router.post("/webhooks/sunpay/{org_id}")
 async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(get_db)):
     try:
-        data = await request.json()
-        print(f"[SunPay Webhook] Received for org {org_id}: {data}")
+        raw_data = await request.json()
+        print(f"[SunPay Webhook] Received for org {org_id}: {raw_data}")
 
         org = db.query(Organization).filter(Organization.id == org_id).first()
         if not org or not org.connection_string:
@@ -88,6 +88,7 @@ async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(ge
         tenant_session = tenant_ctx.create_session()
 
         try:
+            data = raw_data.get("data", raw_data) if isinstance(raw_data.get("data"), dict) else raw_data
             transaction_id = data.get("transactionId", "")
             status = data.get("status", "")
             mpesa_ref = data.get("mpesaRef", "")
@@ -263,7 +264,7 @@ async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(ge
             mpesa_enabled = get_org_setting(tenant_session, "mpesa_enabled", False)
 
             mpesa_payment = MpesaPayment(
-                trans_id=mpesa_ref or transaction_id,
+                trans_id=mpesa_ref or transaction_id or f"sunpay_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{org_id[:8]}",
                 trans_time=datetime.utcnow().strftime("%Y%m%d%H%M%S"),
                 amount=amount,
                 phone_number=phone,
@@ -273,7 +274,7 @@ async def sunpay_webhook(org_id: str, request: Request, db: Session = Depends(ge
                 transaction_type=f"sunpay_{payment_type}",
                 member_id=member.id if member else None,
                 status="pending",
-                raw_payload=data
+                raw_payload=raw_data
             )
             tenant_session.add(mpesa_payment)
 
