@@ -1657,6 +1657,7 @@ def process_payroll_loan_repayment(tenant_session, member_id: str, amount: Decim
             continue
         
         repayment = LoanRepayment(
+            repayment_number=generate_txn_code(),
             loan_id=str(loan.id),
             amount=actual_paid,
             principal_amount=total_principal,
@@ -1671,9 +1672,9 @@ def process_payroll_loan_repayment(tenant_session, member_id: str, amount: Decim
         balance_before = loan.outstanding_balance or Decimal("0")
         loan.outstanding_balance = max(Decimal("0"), balance_before - total_principal)
         
-        loan.amount_paid = (loan.amount_paid or Decimal("0")) + actual_paid
-        total_repayable = loan.total_amount or loan.amount
-        if loan.amount_paid >= total_repayable:
+        loan.amount_repaid = (loan.amount_repaid or Decimal("0")) + actual_paid
+        total_repayable = loan.total_repayment or loan.amount
+        if loan.amount_repaid >= total_repayable:
             loan.status = "fully_paid"
         
         tx = Transaction(
