@@ -35,45 +35,76 @@ def _get_org_timezone(org_id: str, db: Session) -> str:
     except Exception:
         return "Africa/Nairobi"
 
-def check_working_hours(organization, role: str, timezone_str: str = None) -> dict:
+def check_working_hours(org_id: str, role: str, db: Session) -> dict:
     """Check if current time is within organization's working hours.
+    Reads all settings from the tenant database (single source of truth).
     Returns dict with 'allowed' bool and 'message' string."""
     if role in ["owner", "admin"]:
-        return {"allowed": True, "message": "", "debug": f"Admin/owner exempt, role={role}"}
-    
-    if not organization or not organization.enforce_working_hours:
-        return {"allowed": True, "message": "", "debug": f"Working hours not enforced, enforce={getattr(organization, 'enforce_working_hours', None)}"}
+        return {"allowed": True, "message": ""}
     
     try:
-        from zoneinfo import ZoneInfo
-        tz = ZoneInfo(timezone_str) if timezone_str else None
-        now = datetime.now(tz) if tz else datetime.now()
+        from services.tenant_context import get_tenant_context_simple
+        from models.tenant import OrganizationSettings
+        tenant_ctx = get_tenant_context_simple(org_id, db)
+        if not tenant_ctx:
+            return {"allowed": True, "message": ""}
+        tenant_session = tenant_ctx.create_session()
+        try:
+            settings = {s.setting_key: s.setting_value for s in tenant_session.query(OrganizationSettings).filter(
+                OrganizationSettings.setting_key.in_([
+                    "enforce_working_hours", "working_hours_start", "working_hours_end",
+                    "allow_weekend_access", "timezone"
+                ])
+            ).all()}
+        finally:
+            tenant_session.close()
+            tenant_ctx.close()
     except Exception:
-        now = datetime.now()
-    current_time = now.time()
+        return {"allowed": True, "message": ""}
+    
+    enforce = settings.get("enforce_working_hours", "false")
+    if enforce != "true":
+        return {"allowed": True, "message": ""}
+    
+    tz_name = settings.get("timezone", "UTC")
+    try:
+        from zoneinfo import ZoneInfo
+        tz = ZoneInfo(tz_name)
+    except Exception:
+        from zoneinfo import ZoneInfo
+        tz = ZoneInfo("UTC")
+    
+    now = datetime.now(tz=tz)
+    current_time = now.time().replace(tzinfo=None)
     current_day = now.strftime("%A").lower()
     
-    working_days = organization.working_days or ["monday", "tuesday", "wednesday", "thursday", "friday"]
-    if current_day not in working_days:
+    allow_weekend = settings.get("allow_weekend_access", "true")
+    if current_day in ["saturday", "sunday"] and allow_weekend != "true":
         return {
             "allowed": False,
-            "message": f"Access is restricted. The system is only available on {', '.join(d.capitalize() for d in working_days)}.",
-            "debug": f"Day {current_day} not in working_days {working_days}"
+            "message": "Access is restricted on weekends."
         }
     
-    start_time = organization.working_hours_start or time(8, 0)
-    end_time = organization.working_hours_end or time(17, 0)
+    start_str = settings.get("working_hours_start", "08:00")
+    end_str = settings.get("working_hours_end", "17:00")
+    try:
+        parts = start_str.split(":")
+        start_time = time(int(parts[0]), int(parts[1]) if len(parts) > 1 else 0)
+    except Exception:
+        start_time = time(8, 0)
+    try:
+        parts = end_str.split(":")
+        end_time = time(int(parts[0]), int(parts[1]) if len(parts) > 1 else 0)
+    except Exception:
+        end_time = time(17, 0)
     
     if not (start_time <= current_time <= end_time):
-        start_str = start_time.strftime("%I:%M %p")
-        end_str = end_time.strftime("%I:%M %p")
         return {
             "allowed": False,
-            "message": f"Access is restricted outside working hours ({start_str} - {end_str}).",
-            "debug": f"Time {current_time} not in {start_time}-{end_time}"
+            "message": f"Access is restricted outside working hours ({start_time.strftime('%I:%M %p')} - {end_time.strftime('%I:%M %p')})."
         }
     
-    return {"allowed": True, "message": "", "debug": f"Within working hours: {current_time} in {start_time}-{end_time}"}
+    return {"allowed": True, "message": ""}
 
 SESSION_COOKIE_NAME = "session_token"
 # Always use secure=False in development to ensure cookies work
@@ -479,7 +510,7 @@ async def login(data: UserLogin, request: Request, response: Response, db: Sessi
                 continue
             
             # Check working hours
-            working_hours_check = check_working_hours(org, staff.role, _get_org_timezone(org.id, db))
+            working_hours_check = check_working_hours(org.id, staff.role, db)
             if not working_hours_check["allowed"]:
                 raise HTTPException(status_code=403, detail=working_hours_check["message"])
             
@@ -580,7 +611,7 @@ async def staff_login(data: StaffLogin, response: Response, db: Session = Depend
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
         # Check working hours
-        working_hours_check = check_working_hours(org, staff.role, _get_org_timezone(org.id, db))
+        working_hours_check = check_working_hours(org.id, staff.role, db)
         if not working_hours_check["allowed"]:
             raise HTTPException(status_code=403, detail=working_hours_check["message"])
         
@@ -1016,7 +1047,7 @@ async def get_user_permissions(org_id: str, auth = Depends(get_current_user), db
             return {"role": None, "permissions": [], "working_hours_allowed": True, "working_hours_message": ""}
         
         role_name = auth.staff.role
-        working_hours_check = check_working_hours(organization, role_name, _get_org_timezone(org_id, db)) if organization else {"allowed": True, "message": ""}
+        working_hours_check = check_working_hours(org_id, role_name, db)
         
         tenant_ctx = get_tenant_context_simple(org_id, db)
         if not tenant_ctx:
@@ -1053,7 +1084,7 @@ async def get_user_permissions(org_id: str, auth = Depends(get_current_user), db
         return {"role": None, "permissions": [], "working_hours_allowed": True, "working_hours_message": ""}
     
     role_name = membership.role
-    working_hours_check = check_working_hours(organization, role_name, _get_org_timezone(org_id, db)) if organization else {"allowed": True, "message": ""}
+    working_hours_check = check_working_hours(org_id, role_name, db)
     
     if role_name in ("owner", "admin"):
         return {
@@ -1157,7 +1188,7 @@ def _get_permissions_for_user(auth, org_id: str, organization, db: Session) -> d
             return {"role": None, "permissions": [], "working_hours_allowed": True, "working_hours_message": ""}
 
         role_name = auth.staff.role
-        working_hours_check = check_working_hours(organization, role_name, _get_org_timezone(org_id, db)) if organization else {"allowed": True, "message": ""}
+        working_hours_check = check_working_hours(org_id, role_name, db)
 
         tenant_ctx = get_tenant_context_simple(org_id, db)
         if not tenant_ctx:
@@ -1190,7 +1221,7 @@ def _get_permissions_for_user(auth, org_id: str, organization, db: Session) -> d
         return {"role": None, "permissions": [], "working_hours_allowed": True, "working_hours_message": ""}
 
     role_name = membership.role
-    working_hours_check = check_working_hours(organization, role_name, _get_org_timezone(org_id, db)) if organization else {"allowed": True, "message": ""}
+    working_hours_check = check_working_hours(org_id, role_name, db)
 
     if role_name in ("owner", "admin"):
         return {"role": role_name, "permissions": ["*"], "working_hours_allowed": True, "working_hours_message": ""}
