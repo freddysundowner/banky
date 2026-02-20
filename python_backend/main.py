@@ -769,7 +769,7 @@ async def get_public_branding():
         branding_keys = [
             "platform_name", "support_email", "sales_email",
             "theme_primary_color", "theme_secondary_color", 
-            "theme_accent_color", "theme_sidebar_color"
+            "theme_accent_color", "theme_sidebar_color", "guide_url"
         ]
         
         settings = db.query(PlatformSettings).filter(

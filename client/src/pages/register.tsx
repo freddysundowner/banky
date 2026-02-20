@@ -39,7 +39,7 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 export default function Register() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { platform_name } = useBranding();
+  const { platform_name, guide_url } = useBranding();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -269,9 +269,11 @@ export default function Register() {
         </div>
 
         <p className="mt-4 text-center">
-          <a href="/" className="text-xs text-muted-foreground hover:underline">
-            View Guide
-          </a>
+          {guide_url && (
+            <a href={guide_url} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:underline" data-testid="link-view-guide">
+              View Guide
+            </a>
+          )}
         </p>
       </div>
     </div>

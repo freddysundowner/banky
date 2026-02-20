@@ -184,6 +184,20 @@ export default function Settings() {
                     />
                     <p className="text-sm text-gray-500 mt-2">Displayed across all parts of the system</p>
                   </div>
+
+                  <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Guide URL
+                    </label>
+                    <input
+                      type="url"
+                      value={getValue('guide_url')}
+                      onChange={(e) => handleChange('guide_url', e.target.value)}
+                      placeholder="https://docs.example.com/guide"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
+                    />
+                    <p className="text-sm text-gray-500 mt-2">URL for the "View Guide" link on login and registration pages. Leave empty to hide the link.</p>
+                  </div>
                 </div>
 
                 <div className="border-t border-gray-200 pt-8">

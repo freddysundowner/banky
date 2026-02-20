@@ -946,6 +946,7 @@ DEFAULT_PLATFORM_SETTINGS = [
     {"key": "privacy_policy", "value": "", "type": "text", "description": "Privacy Policy page content (HTML)"},
     {"key": "terms_last_updated", "value": "", "type": "string", "description": "Terms of Service last updated date"},
     {"key": "privacy_last_updated", "value": "", "type": "string", "description": "Privacy Policy last updated date"},
+    {"key": "guide_url", "value": "", "type": "string", "description": "URL for the View Guide link shown on login and registration pages"},
 ]
 
 def initialize_platform_settings(db: Session):

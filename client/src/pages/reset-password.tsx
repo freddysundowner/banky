@@ -32,7 +32,7 @@ type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
 export default function ResetPassword() {
   const { toast } = useToast();
-  const { platform_name } = useBranding();
+  const { platform_name, guide_url } = useBranding();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [tokenValid, setTokenValid] = useState<boolean | null>(null);
@@ -205,9 +205,11 @@ export default function ResetPassword() {
         </Card>
 
         <div className="mt-6 text-center">
-          <a href="/" className="text-sm text-muted-foreground hover:underline">
-            View Guide
-          </a>
+          {guide_url && (
+            <a href={guide_url} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:underline" data-testid="link-view-guide">
+              View Guide
+            </a>
+          )}
         </div>
       </div>
     </div>
