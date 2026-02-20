@@ -479,7 +479,7 @@ async def login(data: UserLogin, request: Request, response: Response, db: Sessi
                 continue
             
             # Check working hours
-            working_hours_check = check_working_hours(org, staff.role)
+            working_hours_check = check_working_hours(org, staff.role, _get_org_timezone(org.id, db))
             if not working_hours_check["allowed"]:
                 raise HTTPException(status_code=403, detail=working_hours_check["message"])
             
@@ -580,7 +580,7 @@ async def staff_login(data: StaffLogin, response: Response, db: Session = Depend
             raise HTTPException(status_code=401, detail="Invalid email or password")
         
         # Check working hours
-        working_hours_check = check_working_hours(org, staff.role)
+        working_hours_check = check_working_hours(org, staff.role, _get_org_timezone(org.id, db))
         if not working_hours_check["allowed"]:
             raise HTTPException(status_code=403, detail=working_hours_check["message"])
         
@@ -1016,7 +1016,7 @@ async def get_user_permissions(org_id: str, auth = Depends(get_current_user), db
             return {"role": None, "permissions": [], "working_hours_allowed": True, "working_hours_message": ""}
         
         role_name = auth.staff.role
-        working_hours_check = check_working_hours(organization, role_name) if organization else {"allowed": True, "message": ""}
+        working_hours_check = check_working_hours(organization, role_name, _get_org_timezone(org_id, db)) if organization else {"allowed": True, "message": ""}
         
         tenant_ctx = get_tenant_context_simple(org_id, db)
         if not tenant_ctx:
@@ -1053,7 +1053,7 @@ async def get_user_permissions(org_id: str, auth = Depends(get_current_user), db
         return {"role": None, "permissions": [], "working_hours_allowed": True, "working_hours_message": ""}
     
     role_name = membership.role
-    working_hours_check = check_working_hours(organization, role_name) if organization else {"allowed": True, "message": ""}
+    working_hours_check = check_working_hours(organization, role_name, _get_org_timezone(org_id, db)) if organization else {"allowed": True, "message": ""}
     
     if role_name in ("owner", "admin"):
         return {
@@ -1190,7 +1190,7 @@ def _get_permissions_for_user(auth, org_id: str, organization, db: Session) -> d
         return {"role": None, "permissions": [], "working_hours_allowed": True, "working_hours_message": ""}
 
     role_name = membership.role
-    working_hours_check = check_working_hours(organization, role_name) if organization else {"allowed": True, "message": ""}
+    working_hours_check = check_working_hours(organization, role_name, _get_org_timezone(org_id, db)) if organization else {"allowed": True, "message": ""}
 
     if role_name in ("owner", "admin"):
         return {"role": role_name, "permissions": ["*"], "working_hours_allowed": True, "working_hours_message": ""}
