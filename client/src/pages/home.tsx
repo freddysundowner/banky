@@ -983,7 +983,19 @@ export default function Home() {
           </header>
 
           <main className="flex-1 overflow-auto p-4 sm:p-6">
-            {attendanceStatus?.require_clock_in && !attendanceStatus?.clocked_in && selectedOrg && !isAdmin ? (
+            {!isAdmin && !workingHoursAllowed && selectedOrg ? (
+              <div className="flex flex-col items-center justify-center h-full gap-6">
+                <div className="rounded-full bg-orange-100 p-6">
+                  <Clock className="h-12 w-12 text-orange-600" />
+                </div>
+                <div className="text-center space-y-2">
+                  <h2 className="text-2xl font-semibold">Outside Working Hours</h2>
+                  <p className="text-muted-foreground max-w-md">
+                    {workingHoursMessage || "The system is only accessible during working hours. Please try again during your scheduled work hours."}
+                  </p>
+                </div>
+              </div>
+            ) : attendanceStatus?.require_clock_in && !attendanceStatus?.clocked_in && selectedOrg && !isAdmin ? (
               <div className="flex flex-col items-center justify-center h-full gap-6">
                 <div className="rounded-full bg-primary/10 p-6">
                   <Clock className="h-12 w-12 text-primary" />
@@ -999,6 +1011,7 @@ export default function Home() {
                   className="gap-2"
                   onClick={() => clockInMutation.mutate()}
                   disabled={clockInMutation.isPending}
+                  data-testid="button-clock-in-required"
                 >
                   <Clock className="h-5 w-5" />
                   {clockInMutation.isPending ? "Clocking in..." : "Clock In Now"}
