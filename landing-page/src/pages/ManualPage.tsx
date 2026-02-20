@@ -3,23 +3,38 @@ import {
   BookOpen, Users, Building2, Banknote, CreditCard, FileText, Wallet,
   Receipt, PiggyBank, BarChart3, MessageSquare, Shield, Settings,
   ChevronRight, Search, UserCog, ScrollText, Calendar, AlertTriangle,
-  Clock, ArrowRight, CheckCircle, HardDrive, Landmark, Layers
+  Clock, CheckCircle, HardDrive, Landmark, Layers,
+  Bell, LogIn, UserPlus, KeyRound, Mail, Star, Download, Printer,
+  Handshake, RefreshCw, DollarSign, ClipboardList, MonitorSmartphone,
+  Trash2
 } from 'lucide-react';
 
 type SectionId =
   | 'getting-started'
+  | 'registration'
+  | 'login'
+  | 'password-reset'
+  | 'email-verification'
+  | 'org-creation'
+  | 'onboarding-wizard'
   | 'dashboard'
   | 'branches'
   | 'staff'
   | 'roles'
   | 'members'
+  | 'member-statements'
   | 'loan-products'
   | 'loan-applications'
+  | 'guarantors'
+  | 'loan-restructuring'
   | 'repayments'
+  | 'defaults-collections'
   | 'transactions'
   | 'teller-station'
+  | 'teller-services'
   | 'float-management'
-  | 'queue-system'
+  | 'queue-kiosk'
+  | 'queue-display'
   | 'fixed-deposits'
   | 'dividends'
   | 'chart-of-accounts'
@@ -27,15 +42,28 @@ type SectionId =
   | 'opening-balances'
   | 'reports'
   | 'analytics'
+  | 'csv-export'
   | 'sms'
-  | 'defaults-collections'
+  | 'notifications'
   | 'hr'
+  | 'attendance'
+  | 'payroll'
   | 'leave'
   | 'expenses'
   | 'audit-logs'
   | 'mpesa'
-  | 'settings'
-  | 'my-account';
+  | 'settings-general'
+  | 'settings-loans'
+  | 'settings-sms'
+  | 'settings-email'
+  | 'settings-mpesa'
+  | 'settings-hours'
+  | 'settings-roles'
+  | 'settings-usage'
+  | 'settings-danger'
+  | 'my-account'
+  | 'subscriptions'
+  | 'trial-system';
 
 interface NavGroup {
   label: string;
@@ -44,19 +72,37 @@ interface NavGroup {
 
 const navGroups: NavGroup[] = [
   {
-    label: 'Getting Started',
+    label: 'Account & Setup',
     items: [
-      { id: 'getting-started', label: 'First Steps', icon: BookOpen },
+      { id: 'getting-started', label: 'Quick Start Guide', icon: BookOpen },
+      { id: 'registration', label: 'Registration', icon: UserPlus },
+      { id: 'login', label: 'Logging In', icon: LogIn },
+      { id: 'password-reset', label: 'Password Reset', icon: KeyRound },
+      { id: 'email-verification', label: 'Email Verification', icon: Mail },
+      { id: 'org-creation', label: 'Organization Setup', icon: Building2 },
+      { id: 'onboarding-wizard', label: 'Onboarding Wizard', icon: Star },
+    ],
+  },
+  {
+    label: 'Dashboard & Overview',
+    items: [
       { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+      { id: 'notifications', label: 'Notification Center', icon: Bell },
     ],
   },
   {
     label: 'Organization',
     items: [
       { id: 'branches', label: 'Branches', icon: Building2 },
-      { id: 'staff', label: 'Staff', icon: UserCog },
+      { id: 'staff', label: 'Staff Management', icon: UserCog },
       { id: 'roles', label: 'Roles & Permissions', icon: Shield },
-      { id: 'members', label: 'Members', icon: Users },
+    ],
+  },
+  {
+    label: 'Members',
+    items: [
+      { id: 'members', label: 'Member Management', icon: Users },
+      { id: 'member-statements', label: 'Member Statements', icon: FileText },
     ],
   },
   {
@@ -64,6 +110,8 @@ const navGroups: NavGroup[] = [
     items: [
       { id: 'loan-products', label: 'Loan Products', icon: CreditCard },
       { id: 'loan-applications', label: 'Loan Applications', icon: FileText },
+      { id: 'guarantors', label: 'Guarantor System', icon: Handshake },
+      { id: 'loan-restructuring', label: 'Loan Restructuring', icon: RefreshCw },
       { id: 'repayments', label: 'Repayments', icon: Receipt },
       { id: 'defaults-collections', label: 'Defaults & Collections', icon: AlertTriangle },
     ],
@@ -71,17 +119,19 @@ const navGroups: NavGroup[] = [
   {
     label: 'Transactions & Teller',
     items: [
-      { id: 'transactions', label: 'Transactions', icon: Wallet },
+      { id: 'transactions', label: 'Quick Transactions', icon: Wallet },
       { id: 'teller-station', label: 'Teller Station', icon: Banknote },
+      { id: 'teller-services', label: 'Teller Services', icon: ClipboardList },
       { id: 'float-management', label: 'Float Management', icon: HardDrive },
-      { id: 'queue-system', label: 'Queue System', icon: Clock },
+      { id: 'queue-kiosk', label: 'Ticketing Kiosk', icon: Printer },
+      { id: 'queue-display', label: 'Queue Display Board', icon: MonitorSmartphone },
     ],
   },
   {
     label: 'Savings & Investments',
     items: [
       { id: 'fixed-deposits', label: 'Fixed Deposits', icon: PiggyBank },
-      { id: 'dividends', label: 'Dividends', icon: Wallet },
+      { id: 'dividends', label: 'Dividends', icon: DollarSign },
     ],
   },
   {
@@ -93,10 +143,11 @@ const navGroups: NavGroup[] = [
     ],
   },
   {
-    label: 'Reports & Analytics',
+    label: 'Reports & Data',
     items: [
-      { id: 'reports', label: 'Reports', icon: FileText },
+      { id: 'reports', label: 'Financial Reports', icon: FileText },
       { id: 'analytics', label: 'Analytics Dashboard', icon: BarChart3 },
+      { id: 'csv-export', label: 'CSV & Data Export', icon: Download },
     ],
   },
   {
@@ -109,17 +160,39 @@ const navGroups: NavGroup[] = [
     label: 'HR & Operations',
     items: [
       { id: 'hr', label: 'HR Management', icon: Users },
+      { id: 'attendance', label: 'Attendance Tracking', icon: Clock },
+      { id: 'payroll', label: 'Payroll Processing', icon: DollarSign },
       { id: 'leave', label: 'Leave Management', icon: Calendar },
       { id: 'expenses', label: 'Expenses', icon: Receipt },
       { id: 'audit-logs', label: 'Audit Logs', icon: ScrollText },
     ],
   },
   {
-    label: 'Configuration',
+    label: 'Payments & M-Pesa',
     items: [
-      { id: 'mpesa', label: 'M-Pesa Setup', icon: Banknote },
-      { id: 'settings', label: 'Organization Settings', icon: Settings },
+      { id: 'mpesa', label: 'M-Pesa Integration', icon: Banknote },
+    ],
+  },
+  {
+    label: 'Settings',
+    items: [
+      { id: 'settings-general', label: 'General Settings', icon: Settings },
+      { id: 'settings-loans', label: 'Loan Settings', icon: CreditCard },
+      { id: 'settings-sms', label: 'SMS Settings', icon: MessageSquare },
+      { id: 'settings-email', label: 'Email Settings', icon: Mail },
+      { id: 'settings-mpesa', label: 'M-Pesa Settings', icon: Banknote },
+      { id: 'settings-hours', label: 'Business Hours', icon: Clock },
+      { id: 'settings-roles', label: 'Role Management', icon: Shield },
+      { id: 'settings-usage', label: 'Usage & Limits', icon: BarChart3 },
+      { id: 'settings-danger', label: 'Danger Zone', icon: Trash2 },
+    ],
+  },
+  {
+    label: 'Account & Billing',
+    items: [
       { id: 'my-account', label: 'My Account', icon: UserCog },
+      { id: 'subscriptions', label: 'Subscriptions & Upgrade', icon: Star },
+      { id: 'trial-system', label: 'Trial Period', icon: Clock },
     ],
   },
 ];
@@ -127,7 +200,7 @@ const navGroups: NavGroup[] = [
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-4">
-      <div className="flex-shrink-0 w-8 h-8 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center font-bold text-sm">{n}</div>
+      <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center font-bold text-sm">{n}</div>
       <div className="flex-1 min-w-0">
         <h4 className="font-semibold text-gray-900 mb-1">{title}</h4>
         <div className="text-gray-600 text-sm leading-relaxed">{children}</div>
@@ -137,7 +210,11 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
 }
 
 function Tip({ children }: { children: React.ReactNode }) {
-  return <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 text-sm">{children}</div>;
+  return <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-4 text-sm leading-relaxed">{children}</div>;
+}
+
+function Warning({ children }: { children: React.ReactNode }) {
+  return <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-4 text-sm leading-relaxed">{children}</div>;
 }
 
 function FeatureList({ items }: { items: string[] }) {
@@ -146,19 +223,28 @@ function FeatureList({ items }: { items: string[] }) {
       {items.map((item, i) => (
         <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
           <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-          {item}
+          <span>{item}</span>
         </li>
       ))}
     </ul>
   );
 }
 
+function InfoCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-gray-50 rounded-lg p-4">
+      <h4 className="font-medium text-gray-900 mb-2">{title}</h4>
+      <div className="text-sm text-gray-600">{children}</div>
+    </div>
+  );
+}
+
 function SectionWrapper({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl p-8 border border-gray-200">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-          <Icon className="w-7 h-7 text-purple-600" />
+      <div className="bg-white rounded-2xl p-6 sm:p-8 border border-gray-200">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3" data-testid={`text-section-title-${title.toLowerCase().replace(/\s+/g, '-')}`}>
+          <Icon className="w-7 h-7 text-blue-600" />
           {title}
         </h2>
         <div className="space-y-6">{children}</div>
@@ -169,31 +255,195 @@ function SectionWrapper({ title, icon: Icon, children }: { title: string; icon: 
 
 function GettingStartedSection() {
   return (
-    <SectionWrapper title="Getting Started" icon={BookOpen}>
-      <p className="text-gray-600">After logging in for the first time, you'll be guided through setting up your organization. Here's the recommended order to get everything running.</p>
+    <SectionWrapper title="Quick Start Guide" icon={BookOpen}>
+      <p className="text-gray-600">Welcome to the system! This guide walks you through every step from creating your account to processing your first transaction. Follow these steps in order for the smoothest setup.</p>
       <div className="space-y-6">
-        <Step n={1} title="Create Your Organization">
-          <p>After registration, you'll be prompted to create your organization. Enter your organization name, choose your currency, and set your country. This creates your isolated workspace where all your data will live.</p>
+        <Step n={1} title="Create Your Account">
+          <p>Visit the registration page. Enter your first name, last name, email, phone number (optional), and password. You must accept the Terms of Service and Privacy Policy to proceed. After registering, you will receive a welcome email.</p>
         </Step>
-        <Step n={2} title="Set Up Your First Branch">
-          <p>The onboarding wizard will ask you to create your first branch. Enter the branch name, location, and contact details. Every member, transaction, and staff member is associated with a branch.</p>
+        <Step n={2} title="Verify Your Email (Optional)">
+          <p>A verification email is sent automatically. Click the link to verify. This step is optional -- you can skip it and verify later from the dashboard banner.</p>
         </Step>
-        <Step n={3} title="Add Staff Members">
-          <p>Go to <strong>Staff</strong> in the sidebar and add your team. Assign each person a role (Owner, Admin, Manager, Teller, Loan Officer, or a custom role) that determines what they can see and do in the system.</p>
+        <Step n={3} title="Create Your Organization">
+          <p>After your first login, the onboarding wizard appears. Enter your organization name, select your currency (KES, USD, UGX, TZS, NGN, GHS, ZAR, GBP, EUR), and provide your organization email and phone.</p>
         </Step>
-        <Step n={4} title="Configure Loan Products">
-          <p>Go to <strong>Loan Products</strong> and create the loan types your organization offers. Set interest rates, repayment frequencies, fees, and eligibility rules. These products are templates used when members apply for loans.</p>
+        <Step n={4} title="Set Up Your First Branch">
+          <p>The wizard walks you through creating your first branch. Enter the branch name (e.g., "Head Office") -- the branch code is generated automatically. Add the location and contact details.</p>
         </Step>
-        <Step n={5} title="Register Members">
-          <p>Go to <strong>Members</strong> and start adding your members. Enter their personal details, ID numbers, contact information, and next of kin. Members can then apply for loans, make deposits, and access all services.</p>
+        <Step n={5} title="Add Staff Members">
+          <p>Go to <strong>Staff</strong> in the sidebar. Add your team members with their name, email, phone, branch, and role. Each staff member gets their own login credentials.</p>
         </Step>
-        <Step n={6} title="Configure Settings">
-          <p>Go to <strong>Settings</strong> to set up SMS notifications, M-Pesa integration, email settings, business hours, and other organization-wide preferences.</p>
+        <Step n={6} title="Create Loan Products">
+          <p>Go to <strong>Loan Products</strong> and define the loan types you offer. Set interest rates, fees, terms, and eligibility rules. These are templates used when members apply for loans.</p>
+        </Step>
+        <Step n={7} title="Register Members">
+          <p>Go to <strong>Members</strong> and start adding your members with their personal details, ID numbers, and contact information.</p>
+        </Step>
+        <Step n={8} title="Configure Integrations">
+          <p>Go to <strong>Settings</strong> to configure M-Pesa payments, SMS notifications, email settings, and business hours.</p>
         </Step>
       </div>
       <Tip>
-        <strong>Quick start:</strong> At minimum, you need one branch, one staff member (yourself as owner), and at least one member to start processing transactions and loans.
+        <strong>Minimum to start:</strong> You need at least one branch, one staff member (yourself as owner), and one member to begin processing transactions and loans.
       </Tip>
+    </SectionWrapper>
+  );
+}
+
+function RegistrationSection() {
+  return (
+    <SectionWrapper title="Registration" icon={UserPlus}>
+      <p className="text-gray-600">Create a new account to get started with the platform.</p>
+      <h3 className="font-semibold text-gray-900">Registration Form Fields</h3>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {[
+          { field: 'First Name', req: 'Required' },
+          { field: 'Last Name', req: 'Required' },
+          { field: 'Email Address', req: 'Required -- used for login' },
+          { field: 'Phone Number', req: 'Optional' },
+          { field: 'Password', req: 'Required -- minimum 8 characters' },
+          { field: 'Confirm Password', req: 'Required -- must match password' },
+        ].map(f => (
+          <div key={f.field} className="bg-gray-50 rounded-lg p-3">
+            <span className="font-medium text-gray-900">{f.field}</span>
+            <p className="text-xs text-gray-500 mt-0.5">{f.req}</p>
+          </div>
+        ))}
+      </div>
+      <h3 className="font-semibold text-gray-900 mt-4">Required Agreements</h3>
+      <p className="text-gray-600 text-sm">You must check the box agreeing to the Terms of Service and Privacy Policy before you can register. These documents are accessible via links on the registration form.</p>
+      <h3 className="font-semibold text-gray-900 mt-4">After Registration</h3>
+      <FeatureList items={[
+        'A welcome email is sent to your address automatically',
+        'A verification email is sent with a link valid for 24 hours',
+        'You are logged in and redirected to the onboarding wizard',
+        'If you already have an account, click "Sign in" at the bottom of the form',
+      ]} />
+    </SectionWrapper>
+  );
+}
+
+function LoginSection() {
+  return (
+    <SectionWrapper title="Logging In" icon={LogIn}>
+      <p className="text-gray-600">Access your account by entering your email and password.</p>
+      <h3 className="font-semibold text-gray-900">Login Process</h3>
+      <div className="space-y-4">
+        <Step n={1} title="Enter Credentials">
+          <p>Enter your email address and password. Use the eye icon to toggle password visibility.</p>
+        </Step>
+        <Step n={2} title="Loading Sequence">
+          <p>After clicking Sign In, you'll see a progress indicator as the system loads your organization data, permissions, and preferences. This takes just a few seconds.</p>
+        </Step>
+        <Step n={3} title="Dashboard">
+          <p>Once loaded, you land on the Dashboard showing your organization overview.</p>
+        </Step>
+      </div>
+      <h3 className="font-semibold text-gray-900 mt-4">Troubleshooting</h3>
+      <FeatureList items={[
+        'Forgot your password? Click "Forgot your password?" below the login form',
+        'Don\'t have an account? Click "Create one" to register',
+        'Login is rate-limited to 10 attempts per 15 minutes for security',
+      ]} />
+    </SectionWrapper>
+  );
+}
+
+function PasswordResetSection() {
+  return (
+    <SectionWrapper title="Password Reset" icon={KeyRound}>
+      <p className="text-gray-600">Reset your password if you've forgotten it or need to change it for security reasons.</p>
+      <div className="space-y-4">
+        <Step n={1} title="Request Reset Link">
+          <p>On the login page, click <strong>"Forgot your password?"</strong>. Enter your email address and click Send Reset Link. If an account exists with that email, a reset link is sent.</p>
+        </Step>
+        <Step n={2} title="Check Your Email">
+          <p>Open the email and click the reset link. The link is valid for <strong>1 hour</strong>. If expired, request a new one.</p>
+        </Step>
+        <Step n={3} title="Set New Password">
+          <p>Enter your new password (minimum 8 characters) and confirm it. Click Reset Password to save.</p>
+        </Step>
+        <Step n={4} title="Log In">
+          <p>After resetting, you're redirected to the login page. Sign in with your new password.</p>
+        </Step>
+      </div>
+      <Warning><strong>Rate limit:</strong> You can request up to 5 password reset emails every 15 minutes.</Warning>
+    </SectionWrapper>
+  );
+}
+
+function EmailVerificationSection() {
+  return (
+    <SectionWrapper title="Email Verification" icon={Mail}>
+      <p className="text-gray-600">Verify your email address to confirm your identity. This step is optional but recommended.</p>
+      <h3 className="font-semibold text-gray-900">How Verification Works</h3>
+      <div className="space-y-4">
+        <Step n={1} title="Automatic Email">
+          <p>After registration, a verification email is sent automatically. The link inside is valid for <strong>24 hours</strong>.</p>
+        </Step>
+        <Step n={2} title="Click the Link">
+          <p>Open the email and click the verification link. You'll see a success message confirming your email is verified.</p>
+        </Step>
+      </div>
+      <h3 className="font-semibold text-gray-900 mt-4">Dashboard Banner</h3>
+      <p className="text-gray-600 text-sm">If you haven't verified your email, an amber banner appears on your dashboard with two options:</p>
+      <FeatureList items={[
+        '"Verify Now" -- resends the verification email',
+        '"Set up later" -- dismisses the banner and skips verification',
+      ]} />
+      <Tip><strong>Non-blocking:</strong> Email verification does not prevent you from using any features. You can use the full system without verifying.</Tip>
+    </SectionWrapper>
+  );
+}
+
+function OrgCreationSection() {
+  return (
+    <SectionWrapper title="Organization Setup" icon={Building2}>
+      <p className="text-gray-600">Your organization is your isolated workspace. All members, staff, transactions, loans, and settings live within your organization.</p>
+      <h3 className="font-semibold text-gray-900">Creating an Organization</h3>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {[
+          { field: 'Organization Name', desc: 'The name of your bank, Sacco, chama, or MFI' },
+          { field: 'Staff Email Domain', desc: 'Domain for staff emails (e.g., mysacco.co.ke)' },
+          { field: 'Currency', desc: 'KES, USD, UGX, TZS, NGN, GHS, ZAR, GBP, EUR' },
+          { field: 'Email', desc: 'Organization contact email' },
+          { field: 'Phone', desc: 'Organization contact phone' },
+          { field: 'Address', desc: 'Physical address (optional)' },
+        ].map(f => (
+          <div key={f.field} className="bg-gray-50 rounded-lg p-3">
+            <span className="font-medium text-gray-900">{f.field}</span>
+            <p className="text-xs text-gray-500 mt-0.5">{f.desc}</p>
+          </div>
+        ))}
+      </div>
+      <h3 className="font-semibold text-gray-900 mt-4">Database Provisioning</h3>
+      <p className="text-gray-600 text-sm">When you create your organization, the system provisions a dedicated database and configures security. You'll see a progress indicator showing: "Provisioning database...", "Setting up security...", and "Configuring your environment..." This takes about 10-30 seconds.</p>
+      <Tip><strong>Data isolation:</strong> Each organization has its own completely separate database. No data is shared between organizations.</Tip>
+    </SectionWrapper>
+  );
+}
+
+function OnboardingWizardSection() {
+  return (
+    <SectionWrapper title="Onboarding Wizard" icon={Star}>
+      <p className="text-gray-600">The onboarding wizard appears automatically for new organizations that don't have any branches yet. It walks you through the essential first-time setup in three steps.</p>
+      <div className="space-y-4">
+        <Step n={1} title="Organization Details">
+          <p>Confirm your organization name, select your currency from the dropdown, and enter your contact email and phone number.</p>
+        </Step>
+        <Step n={2} title="Create Your First Branch">
+          <p>Enter the branch name (defaults to "Head Office"). The branch code is auto-generated from the name (uppercase letters and numbers, max 10 characters). Add the branch location and phone number.</p>
+        </Step>
+        <Step n={3} title="You're All Set!">
+          <p>The wizard shows a checklist of what was completed and provides quick-start links to:</p>
+          <FeatureList items={[
+            'Add Staff Members',
+            'Create Loan Products',
+            'Register Members',
+          ]} />
+        </Step>
+      </div>
+      <Tip><strong>Skippable:</strong> You can skip the wizard at any time and set things up later. The wizard won't appear again once you have at least one branch.</Tip>
     </SectionWrapper>
   );
 }
@@ -201,27 +451,54 @@ function GettingStartedSection() {
 function DashboardSection() {
   return (
     <SectionWrapper title="Dashboard" icon={BarChart3}>
-      <p className="text-gray-600">The dashboard is your overview of the entire organization at a glance. It loads automatically when you log in.</p>
-      <h3 className="font-semibold text-gray-900">What You'll See</h3>
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="font-medium text-gray-900 mb-2">Membership</h4>
+      <p className="text-gray-600">The dashboard is your operational overview. It loads automatically when you log in and shows key metrics at a glance.</p>
+      <h3 className="font-semibold text-gray-900">Stats Cards</h3>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <InfoCard title="Membership">
           <FeatureList items={['Total members', 'Total staff', 'Number of branches']} />
-        </div>
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="font-medium text-gray-900 mb-2">Loans Overview</h4>
+        </InfoCard>
+        <InfoCard title="Loans Overview">
           <FeatureList items={['Total loans by status (pending, approved, disbursed)', 'Total amount disbursed', 'Outstanding balance', 'Default count']} />
-        </div>
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="font-medium text-gray-900 mb-2">Savings</h4>
-          <FeatureList items={['Total savings balance across all members', 'Total shares value']} />
-        </div>
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="font-medium text-gray-900 mb-2">Performance</h4>
-          <FeatureList items={['Collection rate percentage', 'Total repaid amount']} />
-        </div>
+        </InfoCard>
+        <InfoCard title="Savings & Shares">
+          <FeatureList items={['Total savings balance across all members', 'Total shares value', 'Savings-to-loans ratio']} />
+        </InfoCard>
+        <InfoCard title="Collection Performance">
+          <FeatureList items={['Collection rate percentage', 'Total repaid amount', 'Due vs overdue comparison']} />
+        </InfoCard>
       </div>
-      <Tip><strong>Refresh:</strong> Click the refresh button at the top right of the dashboard to load the latest figures.</Tip>
+      <h3 className="font-semibold text-gray-900 mt-4">Dashboard Features</h3>
+      <FeatureList items={[
+        'Refresh button to reload latest figures',
+        'Email verification banner (if unverified) with verify/dismiss options',
+        'Trial expiration banner with days remaining',
+        'Setup progress indicator for new organizations',
+      ]} />
+    </SectionWrapper>
+  );
+}
+
+function NotificationsSection() {
+  return (
+    <SectionWrapper title="Notification Center" icon={Bell}>
+      <p className="text-gray-600">The notification center keeps you informed of important events across the system, all accessible from the bell icon in the top navigation bar.</p>
+      <h3 className="font-semibold text-gray-900">How It Works</h3>
+      <FeatureList items={[
+        'Bell icon in the header shows a red badge with unread count',
+        'Click the bell to open the notification popover',
+        'Each notification shows a title, description, and timestamp',
+        'Click any notification to view details or navigate to the related item',
+        'Mark individual notifications as read or "Mark all as read"',
+      ]} />
+      <h3 className="font-semibold text-gray-900 mt-4">Notification Types</h3>
+      <FeatureList items={[
+        'New loan applications requiring approval',
+        'Loan disbursement confirmations',
+        'Member registration alerts',
+        'System alerts and announcements',
+        'Overdue loan reminders',
+        'Subscription and trial expiry warnings',
+      ]} />
     </SectionWrapper>
   );
 }
@@ -229,20 +506,27 @@ function DashboardSection() {
 function BranchesSection() {
   return (
     <SectionWrapper title="Branch Management" icon={Building2}>
-      <p className="text-gray-600">Branches represent physical locations or operational units within your organization. All members, staff, and transactions are linked to a specific branch.</p>
-      <h3 className="font-semibold text-gray-900">How to Manage Branches</h3>
+      <p className="text-gray-600">Branches represent physical locations or operational units. Every member, staff member, and transaction is linked to a branch.</p>
+      <h3 className="font-semibold text-gray-900">Creating a Branch</h3>
       <div className="space-y-4">
-        <Step n={1} title="Create a Branch">
-          <p>Click <strong>Add Branch</strong>, enter the branch name, location/address, phone number, and email. The branch code is generated automatically.</p>
+        <Step n={1} title="Click Add Branch">
+          <p>From the Branches page in the sidebar, click the <strong>Add Branch</strong> button.</p>
         </Step>
-        <Step n={2} title="Edit a Branch">
-          <p>Click on any branch in the list to edit its details. You can update the name, location, and contact information at any time.</p>
+        <Step n={2} title="Fill in Details">
+          <p>Enter the branch name, location/address, phone number, and email. The branch code is generated automatically from the name.</p>
         </Step>
-        <Step n={3} title="Delete a Branch">
-          <p>Branches can only be deleted if they have no members or staff assigned to them. Reassign members and staff to another branch before deleting.</p>
+        <Step n={3} title="Save">
+          <p>The branch appears in the list immediately and can be assigned to staff and members.</p>
         </Step>
       </div>
-      <Tip><strong>Plan limits:</strong> The number of branches you can create depends on your subscription plan or license edition.</Tip>
+      <h3 className="font-semibold text-gray-900 mt-4">Managing Branches</h3>
+      <FeatureList items={[
+        'Edit branch details at any time',
+        'View which staff and members are assigned to each branch',
+        'Delete a branch only if no members or staff are assigned to it',
+        'Filter other pages (members, transactions, reports) by branch',
+      ]} />
+      <Warning><strong>Plan limits:</strong> The number of branches you can create depends on your subscription plan. Check Settings &gt; Usage to see your limit.</Warning>
     </SectionWrapper>
   );
 }
@@ -250,35 +534,45 @@ function BranchesSection() {
 function StaffSection() {
   return (
     <SectionWrapper title="Staff Management" icon={UserCog}>
-      <p className="text-gray-600">Staff are the people who use BANKY to manage your organization -- administrators, tellers, loan officers, and managers.</p>
-      <h3 className="font-semibold text-gray-900">Adding Staff</h3>
+      <p className="text-gray-600">Staff are the people who use the system -- administrators, managers, tellers, and loan officers. Each staff member has their own login credentials and role-based access.</p>
+      <h3 className="font-semibold text-gray-900">Adding a Staff Member</h3>
       <div className="space-y-4">
-        <Step n={1} title="Create a Staff Account">
-          <p>Click <strong>Add Staff</strong>. Enter their full name, email address, phone number, and assign them to a branch. Choose their role (which determines permissions).</p>
+        <Step n={1} title="Click Add Staff">
+          <p>Navigate to <strong>Staff</strong> in the sidebar and click <strong>Add Staff</strong>.</p>
         </Step>
-        <Step n={2} title="Set Login Credentials">
-          <p>Set a temporary password for the staff member. They can change it after their first login from <strong>My Account</strong>.</p>
+        <Step n={2} title="Personal Information">
+          <p>Enter: Full name, email address (used for login), phone number, National ID (optional), and staff number (auto-generated or custom).</p>
         </Step>
-        <Step n={3} title="Manage Staff">
-          <p>You can edit staff details, change their role or branch, suspend their account (prevents login), or delete the account entirely.</p>
+        <Step n={3} title="Assignment">
+          <p>Select the branch they work at and assign a role (Owner, Admin, Manager, Teller, Loan Officer, Viewer, or a custom role).</p>
+        </Step>
+        <Step n={4} title="Set Credentials">
+          <p>Set a temporary password. The staff member should change this after their first login via My Account.</p>
         </Step>
       </div>
       <h3 className="font-semibold text-gray-900 mt-6">Built-in Roles</h3>
-      <div className="grid md:grid-cols-2 gap-3">
+      <div className="grid sm:grid-cols-2 gap-3">
         {[
-          { role: 'Owner', desc: 'Full access to everything. Can manage subscriptions and delete the organization.' },
-          { role: 'Admin', desc: 'Full access except billing and organization deletion.' },
-          { role: 'Manager', desc: 'Can manage members, staff, loans, and transactions within their branch.' },
-          { role: 'Teller', desc: 'Can process transactions, deposits, withdrawals, and serve queue tickets.' },
-          { role: 'Loan Officer', desc: 'Can manage loan applications, approvals, and repayments.' },
-          { role: 'Viewer', desc: 'Read-only access to dashboards and reports.' },
+          { role: 'Owner', desc: 'Full system access. Manages billing, subscriptions, and can delete the organization.' },
+          { role: 'Admin', desc: 'Full access to all features except billing and organization deletion.' },
+          { role: 'Manager', desc: 'Manages members, staff, loans, and transactions within their branch. Can approve loans and float variances.' },
+          { role: 'Teller', desc: 'Processes deposits, withdrawals, and serves queue tickets at the counter.' },
+          { role: 'Loan Officer', desc: 'Manages loan applications, approvals, disbursements, and repayments.' },
+          { role: 'Viewer', desc: 'Read-only access to dashboards and reports. Cannot create or modify anything.' },
         ].map(r => (
           <div key={r.role} className="bg-gray-50 rounded-lg p-3">
-            <span className="font-medium text-gray-900">{r.role}:</span>{' '}
-            <span className="text-sm text-gray-600">{r.desc}</span>
+            <span className="font-medium text-gray-900">{r.role}</span>
+            <p className="text-xs text-gray-500 mt-0.5">{r.desc}</p>
           </div>
         ))}
       </div>
+      <h3 className="font-semibold text-gray-900 mt-4">Staff Actions</h3>
+      <FeatureList items={[
+        'Edit personal details, role, or branch assignment',
+        'Suspend a staff account (prevents login while preserving data)',
+        'Reactivate a suspended staff account',
+        'Delete a staff account permanently',
+      ]} />
     </SectionWrapper>
   );
 }
@@ -286,31 +580,51 @@ function StaffSection() {
 function RolesSection() {
   return (
     <SectionWrapper title="Roles & Permissions" icon={Shield}>
-      <p className="text-gray-600">Roles control what each staff member can see and do. Beyond the built-in roles, you can create custom roles with specific permissions.</p>
-      <h3 className="font-semibold text-gray-900">How Permissions Work</h3>
-      <p className="text-gray-600 text-sm">Each feature in the system has permission levels: <strong>Read</strong> (view data), <strong>Write</strong> (create and edit), and sometimes <strong>Approve</strong> (for sensitive actions like loan approval). A role is a set of these permission combinations.</p>
+      <p className="text-gray-600">Roles control exactly what each staff member can see and do. Beyond the 6 built-in roles, you can create custom roles with granular permissions.</p>
+      <h3 className="font-semibold text-gray-900">Permission Levels</h3>
+      <div className="grid sm:grid-cols-3 gap-3">
+        <InfoCard title="Read">
+          <p>View data (e.g., see member list, view loan details). No ability to change anything.</p>
+        </InfoCard>
+        <InfoCard title="Write">
+          <p>Create and edit data (e.g., register members, create loans, process transactions).</p>
+        </InfoCard>
+        <InfoCard title="Approve">
+          <p>Authorize sensitive actions (e.g., approve loan applications, approve float shortages).</p>
+        </InfoCard>
+      </div>
       <h3 className="font-semibold text-gray-900 mt-4">Creating a Custom Role</h3>
       <div className="space-y-4">
-        <Step n={1} title="Navigate to Settings > Roles">
-          <p>Open <strong>Settings</strong> from the sidebar, then click the <strong>Roles</strong> tab.</p>
+        <Step n={1} title="Go to Settings > Roles Tab">
+          <p>Open Settings from the sidebar and click the Roles tab.</p>
         </Step>
-        <Step n={2} title="Create New Role">
-          <p>Click <strong>Add Role</strong>, give it a name (e.g., "Senior Teller"), and toggle on/off permissions for each module -- Members, Loans, Transactions, Reports, etc.</p>
+        <Step n={2} title="Click Add Role">
+          <p>Enter a role name (e.g., "Senior Teller", "Branch Accountant").</p>
         </Step>
-        <Step n={3} title="Assign to Staff">
-          <p>When creating or editing a staff member, select your custom role from the role dropdown.</p>
+        <Step n={3} title="Configure Permissions">
+          <p>Toggle on/off Read, Write, and Approve for each module.</p>
+        </Step>
+        <Step n={4} title="Assign to Staff">
+          <p>When creating or editing a staff member, your custom role appears in the role dropdown.</p>
         </Step>
       </div>
       <h3 className="font-semibold text-gray-900 mt-4">Permission Categories</h3>
-      <FeatureList items={[
-        'Dashboard, Members, Branches, Staff',
-        'Loan Products, Loans, Repayments, Defaults',
-        'Transactions, Teller Station, Float Management',
-        'Fixed Deposits, Dividends',
-        'Chart of Accounts, Journal Entries',
-        'Reports, Analytics, SMS, Audit Logs',
-        'HR, Leave, Expenses, Settings',
-      ]} />
+      <div className="grid sm:grid-cols-2 gap-2">
+        {[
+          'Dashboard', 'Members', 'Branches', 'Staff',
+          'Loan Products', 'Loans', 'Repayments', 'Defaults & Collections',
+          'Transactions', 'Teller Station', 'Float Management', 'Ticketing & Queue',
+          'Fixed Deposits', 'Dividends', 'Expenses',
+          'Chart of Accounts', 'Journal Entries',
+          'Reports', 'Analytics', 'SMS Notifications', 'Audit Logs',
+          'HR Management', 'Leave Management', 'Settings',
+        ].map(cat => (
+          <div key={cat} className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded px-3 py-1.5">
+            <CheckCircle className="w-3.5 h-3.5 text-green-500 flex-shrink-0" />
+            {cat}
+          </div>
+        ))}
+      </div>
     </SectionWrapper>
   );
 }
@@ -319,32 +633,58 @@ function MembersSection() {
   return (
     <SectionWrapper title="Member Management" icon={Users}>
       <p className="text-gray-600">Members are the customers of your organization -- the people who save, borrow, and transact through your institution.</p>
-      <h3 className="font-semibold text-gray-900">Registering a Member</h3>
+      <h3 className="font-semibold text-gray-900">Registering a New Member</h3>
       <div className="space-y-4">
         <Step n={1} title="Click Add Member">
           <p>From the Members page, click <strong>Add Member</strong>.</p>
         </Step>
-        <Step n={2} title="Fill in Personal Details">
-          <p>Enter their full name, National ID number, phone number, email, date of birth, gender, occupation, and employer.</p>
+        <Step n={2} title="Personal Details">
+          <p>Enter: Full name, National ID number, phone number, email (optional), date of birth, gender, marital status, occupation, and employer.</p>
         </Step>
-        <Step n={3} title="Assign to a Branch">
-          <p>Select which branch this member belongs to.</p>
+        <Step n={3} title="Branch Assignment">
+          <p>Select which branch this member belongs to from the dropdown.</p>
         </Step>
-        <Step n={4} title="Add Next of Kin">
-          <p>Enter the name, phone number, and relationship of their next of kin (emergency contact).</p>
+        <Step n={4} title="Next of Kin">
+          <p>Enter the name, phone number, and relationship of their emergency contact / next of kin.</p>
+        </Step>
+        <Step n={5} title="Save">
+          <p>A unique member number is generated automatically (e.g., M0001). The member is now active and ready to transact.</p>
         </Step>
       </div>
-      <h3 className="font-semibold text-gray-900 mt-6">Managing Members</h3>
+      <h3 className="font-semibold text-gray-900 mt-6">Member Actions</h3>
       <FeatureList items={[
-        'Edit profile: Update any personal or contact information',
-        'Activate / Suspend: Control whether a member can transact',
-        'View statement: See a full history of deposits, withdrawals, loans, and repayments',
-        'Upload documents: Attach ID copies, photos, or other files to the member record',
-        'Export: Download the full member list as a CSV file',
-        'Delete: Remove a member record (only if no active loans or balances)',
+        'Edit profile -- update any personal or contact information',
+        'View full statement -- see complete transaction and loan history',
+        'Activate / Suspend -- control whether a member can transact',
+        'Upload documents -- attach ID copies, photos, or other files',
+        'Export full member list as CSV',
+        'Delete a member (only if no active loans or balances)',
+        'Search by name, member number, phone, or National ID',
+        'Filter members by branch or status (active/suspended)',
       ]} />
-      <h3 className="font-semibold text-gray-900 mt-6">Member Statement</h3>
-      <p className="text-gray-600 text-sm">Click on any member to view their full statement. This shows every transaction (deposits, withdrawals, fees), every loan (with status and balance), and running balances for savings and shares accounts.</p>
+    </SectionWrapper>
+  );
+}
+
+function MemberStatementsSection() {
+  return (
+    <SectionWrapper title="Member Statements" icon={FileText}>
+      <p className="text-gray-600">A member statement is a comprehensive view of all financial activity for a single member. Access it by clicking any member's name in the Members list.</p>
+      <h3 className="font-semibold text-gray-900">What the Statement Shows</h3>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <InfoCard title="Account Balances">
+          <FeatureList items={['Current savings balance', 'Current shares balance', 'Total deposits balance', 'Total loan outstanding']} />
+        </InfoCard>
+        <InfoCard title="Transaction History">
+          <FeatureList items={['All deposits with dates and amounts', 'All withdrawals', 'Transfer records', 'Fee charges', 'Running balance after each transaction']} />
+        </InfoCard>
+        <InfoCard title="Loan Summary">
+          <FeatureList items={['Active loans with status and balance', 'Repayment history', 'Instalment schedule', 'Overdue amounts highlighted']} />
+        </InfoCard>
+        <InfoCard title="Actions">
+          <FeatureList items={['Print statement', 'Download as PDF', 'Filter by date range', 'Quick deposit/withdrawal buttons']} />
+        </InfoCard>
+      </div>
     </SectionWrapper>
   );
 }
@@ -352,26 +692,31 @@ function MembersSection() {
 function LoanProductsSection() {
   return (
     <SectionWrapper title="Loan Products" icon={CreditCard}>
-      <p className="text-gray-600">Loan products are the templates that define the terms and conditions for each type of loan your organization offers. You must create at least one product before members can apply for loans.</p>
+      <p className="text-gray-600">Loan products are templates that define the rules for each type of loan. You must create at least one product before processing any loan applications.</p>
       <h3 className="font-semibold text-gray-900">Creating a Loan Product</h3>
       <div className="space-y-4">
         <Step n={1} title="Basic Information">
-          <p>Enter the product name (e.g., "Emergency Loan", "Development Loan"), description, and select the interest calculation method: <strong>Flat Rate</strong> (interest on original amount) or <strong>Reducing Balance</strong> (interest on remaining principal).</p>
+          <p>Enter product name (e.g., "Emergency Loan", "Development Loan"), and a description.</p>
         </Step>
-        <Step n={2} title="Interest & Terms">
-          <p>Set the annual interest rate, repayment frequency (daily, weekly, bi-weekly, monthly), and the minimum/maximum loan amount and term (in months).</p>
+        <Step n={2} title="Interest Configuration">
+          <p>Choose the interest method: <strong>Flat Rate</strong> (interest calculated on the original principal) or <strong>Reducing Balance</strong> (interest calculated on remaining principal -- lower total cost for the borrower). Set the annual interest rate.</p>
         </Step>
-        <Step n={3} title="Fees & Insurance">
-          <p>Configure optional processing fee (percentage of loan amount) and insurance rate (charged upfront or spread across instalments).</p>
+        <Step n={3} title="Term & Frequency">
+          <p>Set the repayment frequency: <strong>Daily</strong>, <strong>Weekly</strong>, <strong>Bi-weekly</strong>, or <strong>Monthly</strong>. Set minimum and maximum loan term in months, and minimum and maximum loan amount.</p>
         </Step>
-        <Step n={4} title="Eligibility Rules">
-          <p>Set the <strong>shares multiplier</strong> (e.g., 3x means a member can borrow up to 3 times their shares balance). Toggle whether multiple active loans of this product are allowed, and whether borrowers must be in good standing (no overdue instalments on other loans).</p>
+        <Step n={4} title="Fees & Insurance">
+          <p><strong>Processing fee:</strong> A percentage of the loan amount charged upfront. <strong>Insurance rate:</strong> Can be charged upfront or spread across instalments.</p>
         </Step>
-        <Step n={5} title="Guarantor Requirements">
+        <Step n={5} title="Eligibility Rules">
+          <p><strong>Shares multiplier:</strong> How many times their shares balance a member can borrow (e.g., 3x means a member with KES 10,000 in shares can borrow up to KES 30,000).</p>
+          <p className="mt-1"><strong>Allow multiple loans:</strong> Toggle whether members can have multiple active loans of this same product type simultaneously.</p>
+          <p className="mt-1"><strong>Require good standing:</strong> When enabled, members with overdue payments on any existing loan cannot apply for this product.</p>
+        </Step>
+        <Step n={6} title="Guarantor Requirements">
           <p>Set the minimum number of guarantors required and the maximum amount each guarantor can cover.</p>
         </Step>
       </div>
-      <Tip><strong>Preview:</strong> When creating a product, the form shows a real-time preview of what a sample loan would look like -- monthly instalment amount, total repayment, and total interest.</Tip>
+      <Tip><strong>Live preview:</strong> As you configure the product, a real-time preview shows what a sample loan would look like -- monthly instalment amount, total repayment, and total interest cost.</Tip>
     </SectionWrapper>
   );
 }
@@ -379,34 +724,131 @@ function LoanProductsSection() {
 function LoanApplicationsSection() {
   return (
     <SectionWrapper title="Loan Applications" icon={FileText}>
-      <p className="text-gray-600">This is where you process member loan requests from application through to disbursement.</p>
-      <h3 className="font-semibold text-gray-900">Loan Lifecycle</h3>
+      <p className="text-gray-600">Process loan requests from application through approval to disbursement.</p>
+      <h3 className="font-semibold text-gray-900">Loan Status Lifecycle</h3>
       <div className="flex flex-wrap gap-2 mb-4">
-        {['Pending', 'Approved', 'Disbursed', 'Fully Repaid', 'Defaulted', 'Rejected', 'Restructured'].map(status => (
-          <span key={status} className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium">{status}</span>
+        {[
+          { status: 'Pending', color: 'bg-yellow-100 text-yellow-700' },
+          { status: 'Approved', color: 'bg-blue-100 text-blue-700' },
+          { status: 'Disbursed', color: 'bg-green-100 text-green-700' },
+          { status: 'Fully Repaid', color: 'bg-emerald-100 text-emerald-700' },
+          { status: 'Defaulted', color: 'bg-red-100 text-red-700' },
+          { status: 'Rejected', color: 'bg-gray-100 text-gray-700' },
+          { status: 'Restructured', color: 'bg-purple-100 text-purple-700' },
+        ].map(s => (
+          <span key={s.status} className={`px-3 py-1 ${s.color} rounded-full text-xs font-medium`}>{s.status}</span>
         ))}
       </div>
-      <h3 className="font-semibold text-gray-900">Processing a Loan</h3>
+      <h3 className="font-semibold text-gray-900">Creating a Loan Application</h3>
       <div className="space-y-4">
-        <Step n={1} title="Create Application">
-          <p>Click <strong>New Loan</strong>. Select the member, choose a loan product, enter the amount and term (months), purpose, and repayment start date. The system validates against the product's min/max limits and the member's eligibility.</p>
+        <Step n={1} title="Click New Loan">
+          <p>From the Loan Applications page, click <strong>New Loan</strong>.</p>
         </Step>
-        <Step n={2} title="Add Guarantors (if required)">
-          <p>If the loan product requires guarantors, search for and add other members as guarantors. Each guarantor must have sufficient shares to cover their guaranteed amount.</p>
+        <Step n={2} title="Select Member & Product">
+          <p>Search and select the member. Choose the loan product. The system checks eligibility automatically (shares balance, existing loans, good standing).</p>
         </Step>
-        <Step n={3} title="Approve or Reject">
-          <p>Review the application details and instalment schedule. Click <strong>Approve</strong> to move the loan forward, or <strong>Reject</strong> with a reason.</p>
+        <Step n={3} title="Enter Loan Details">
+          <p>Enter the loan amount (must be within product min/max), term in months, purpose, and repayment start date. The system calculates instalments and total repayment automatically.</p>
         </Step>
-        <Step n={4} title="Disburse">
-          <p>After approval, click <strong>Disburse</strong> to release the funds. Choose the disbursement method (cash, bank transfer, M-Pesa, or credit to savings). The system generates the full repayment schedule with due dates.</p>
+        <Step n={4} title="Add Guarantors (if required)">
+          <p>If the product requires guarantors, search for other members and add them. Each guarantor must have sufficient shares to cover their guaranteed amount. See the <strong>Guarantor System</strong> section for details.</p>
+        </Step>
+        <Step n={5} title="Submit Application">
+          <p>The loan is saved with <strong>Pending</strong> status and waits for approval.</p>
+        </Step>
+      </div>
+      <h3 className="font-semibold text-gray-900 mt-6">Approving & Disbursing</h3>
+      <div className="space-y-4">
+        <Step n={1} title="Review">
+          <p>Open the pending application. Review the member's profile, loan details, instalment schedule, and guarantor list.</p>
+        </Step>
+        <Step n={2} title="Approve or Reject">
+          <p>Click <strong>Approve</strong> to advance the loan, or <strong>Reject</strong> with a written reason.</p>
+        </Step>
+        <Step n={3} title="Disburse">
+          <p>After approval, click <strong>Disburse</strong>. Choose the disbursement method:</p>
+          <FeatureList items={['Cash -- direct cash payout at the counter', 'Bank Transfer -- to the member\'s bank account', 'M-Pesa -- sent to the member\'s phone', 'Credit to Savings -- deposited into the member\'s savings account']} />
         </Step>
       </div>
       <h3 className="font-semibold text-gray-900 mt-6">Instalment Schedule</h3>
-      <p className="text-gray-600 text-sm">Each disbursed loan shows a detailed schedule with: instalment number, due date, principal portion, interest portion, total amount due, amount paid, balance, and status (paid/overdue/upcoming).</p>
-      <h3 className="font-semibold text-gray-900 mt-6">Loan Restructuring</h3>
-      <p className="text-gray-600 text-sm">If a borrower is struggling to repay, you can restructure the loan by modifying the interest rate, extending the term, or adjusting the outstanding balance. This creates a new repayment schedule while preserving the original loan history.</p>
-      <h3 className="font-semibold text-gray-900 mt-6">Export</h3>
-      <p className="text-gray-600 text-sm">Download the full loan list as a CSV file by clicking the <strong>Export</strong> button.</p>
+      <p className="text-gray-600 text-sm">After disbursement, a detailed schedule is generated showing each instalment: number, due date, principal portion, interest portion, total amount, amount paid, remaining balance, and status (paid / overdue / upcoming).</p>
+    </SectionWrapper>
+  );
+}
+
+function GuarantorsSection() {
+  return (
+    <SectionWrapper title="Guarantor System" icon={Handshake}>
+      <p className="text-gray-600">Guarantors are members who vouch for a borrower's loan. If the borrower defaults, guarantors share responsibility for repayment.</p>
+      <h3 className="font-semibold text-gray-900">How Guarantors Work</h3>
+      <div className="space-y-4">
+        <Step n={1} title="Eligibility Check">
+          <p>When adding a guarantor, the system automatically checks:</p>
+          <FeatureList items={[
+            'Sufficient shares balance to cover the guaranteed amount',
+            'No existing defaults on their own loans',
+            'Total exposure (how much they are already guaranteeing for other loans)',
+          ]} />
+        </Step>
+        <Step n={2} title="Add Guarantor to Loan">
+          <p>Search for the guarantor by name or member number. Select their relationship to the borrower (Spouse, Family, Colleague, Friend, etc.) and enter the guaranteed amount.</p>
+        </Step>
+        <Step n={3} title="Consent Process">
+          <p>Each guarantor has a consent status:</p>
+          <FeatureList items={[
+            'Pending -- awaiting the guarantor\'s consent',
+            'Accepted -- guarantor has agreed to guarantee the loan',
+            'Rejected -- guarantor has declined',
+          ]} />
+          <p className="mt-1">The system tracks the consent date for audit purposes.</p>
+        </Step>
+      </div>
+      <h3 className="font-semibold text-gray-900 mt-4">Guarantor Details</h3>
+      <FeatureList items={[
+        'Relationship type (Spouse, Family, Colleague, Friend, Other)',
+        'Guaranteed amount for this specific loan',
+        'Consent status and date',
+        'Total exposure across all guaranteed loans',
+        'Guarantor capacity (shares balance minus existing guarantees)',
+      ]} />
+    </SectionWrapper>
+  );
+}
+
+function LoanRestructuringSection() {
+  return (
+    <SectionWrapper title="Loan Restructuring" icon={RefreshCw}>
+      <p className="text-gray-600">When a borrower is struggling to repay, you can modify the loan terms instead of marking it as defaulted. This preserves the original loan history while creating manageable new terms.</p>
+      <h3 className="font-semibold text-gray-900">Restructuring Types</h3>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {[
+          { type: 'Extend Term', desc: 'Add more months to the repayment period, lowering each instalment amount' },
+          { type: 'Reduce Instalment', desc: 'Lower the monthly payment amount and adjust the term accordingly' },
+          { type: 'Adjust Interest Rate', desc: 'Change the interest rate on the remaining balance' },
+          { type: 'Waive Penalty', desc: 'Remove accumulated late payment penalties' },
+          { type: 'Grant Grace Period', desc: 'Pause repayment for a specified number of months' },
+        ].map(t => (
+          <div key={t.type} className="bg-gray-50 rounded-lg p-3">
+            <span className="font-medium text-gray-900">{t.type}</span>
+            <p className="text-xs text-gray-500 mt-0.5">{t.desc}</p>
+          </div>
+        ))}
+      </div>
+      <h3 className="font-semibold text-gray-900 mt-4">Restructuring Process</h3>
+      <div className="space-y-4">
+        <Step n={1} title="Select the Loan">
+          <p>Open the disbursed loan that needs restructuring.</p>
+        </Step>
+        <Step n={2} title="Choose Restructuring Type">
+          <p>Select the type of modification and enter the new terms.</p>
+        </Step>
+        <Step n={3} title="Preview Comparison">
+          <p>The system shows a side-by-side comparison of <strong>Current vs. Proposed</strong> terms, including the monthly savings for the borrower.</p>
+        </Step>
+        <Step n={4} title="Apply">
+          <p>Confirm the restructuring. A new repayment schedule is generated. The loan status changes to <strong>Restructured</strong> and the original schedule is preserved for audit.</p>
+        </Step>
+      </div>
     </SectionWrapper>
   );
 }
@@ -414,21 +856,26 @@ function LoanApplicationsSection() {
 function RepaymentsSection() {
   return (
     <SectionWrapper title="Repayments" icon={Receipt}>
-      <p className="text-gray-600">Track and record loan repayments from members. Repayments are allocated to the oldest overdue instalments first.</p>
+      <p className="text-gray-600">Record loan repayments from members. Payments are automatically allocated to the oldest overdue instalments first (principal, then interest, then penalties).</p>
       <h3 className="font-semibold text-gray-900">Recording a Repayment</h3>
       <div className="space-y-4">
-        <Step n={1} title="Select the Loan">
-          <p>From the Repayments page, find the loan by member name or loan number.</p>
+        <Step n={1} title="Find the Loan">
+          <p>Search by member name, member number, or loan number.</p>
         </Step>
-        <Step n={2} title="Enter Payment Details">
-          <p>Enter the amount, payment method (cash, M-Pesa, bank transfer), and reference number. The system shows how the payment will be allocated across instalments.</p>
+        <Step n={2} title="Enter Payment">
+          <p>Enter the amount received, select the payment method (Cash, M-Pesa, Bank Transfer, Cheque), and enter a reference number if applicable.</p>
         </Step>
-        <Step n={3} title="Submit">
-          <p>The repayment is recorded and the instalment schedule is updated. If the full loan is paid off, its status changes to <strong>Fully Repaid</strong>.</p>
+        <Step n={3} title="Review Allocation">
+          <p>The system shows how the payment will be applied across instalments before you submit.</p>
+        </Step>
+        <Step n={4} title="Submit">
+          <p>The repayment is recorded, balances updated, and if the full loan is paid off, the status changes to <strong>Fully Repaid</strong>.</p>
         </Step>
       </div>
       <h3 className="font-semibold text-gray-900 mt-6">Auto-Deduction</h3>
-      <p className="text-gray-600 text-sm">Enable automatic loan deductions from member savings. When configured, the system automatically deducts the instalment amount from the member's savings account on the due date. This can be triggered manually from Settings or runs automatically via the scheduled cron job.</p>
+      <p className="text-gray-600 text-sm">When enabled in Settings &gt; Loans, the system can automatically deduct instalment amounts from member savings accounts on due dates. This runs via a scheduled background job and can also be triggered manually.</p>
+      <h3 className="font-semibold text-gray-900 mt-4">M-Pesa Repayments</h3>
+      <p className="text-gray-600 text-sm">Members can repay via M-Pesa. The payment is received, matched to the member's loan, and allocated automatically.</p>
     </SectionWrapper>
   );
 }
@@ -436,21 +883,32 @@ function RepaymentsSection() {
 function DefaultsSection() {
   return (
     <SectionWrapper title="Defaults & Collections" icon={AlertTriangle}>
-      <p className="text-gray-600">Monitor overdue loans and manage collection activities. This module helps you track which loans are in arrears and take action.</p>
-      <h3 className="font-semibold text-gray-900">What You'll See</h3>
+      <p className="text-gray-600">Track overdue loans and manage recovery efforts. This module gives you a complete view of all loans with missed payments.</p>
+      <h3 className="font-semibold text-gray-900">Dashboard View</h3>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <InfoCard title="Due Today">
+          <p>Instalments due on the current date that haven't been paid yet.</p>
+        </InfoCard>
+        <InfoCard title="Overdue">
+          <p>All instalments past their due date. Shows days overdue and total arrears amount.</p>
+        </InfoCard>
+      </div>
+      <h3 className="font-semibold text-gray-900 mt-4">Aging Categories</h3>
+      <p className="text-gray-600 text-sm">Defaults are categorized by how long they've been overdue:</p>
+      <div className="flex flex-wrap gap-2 mt-2">
+        {['1-30 days', '31-60 days', '61-90 days', '91-180 days', '180+ days'].map(age => (
+          <span key={age} className="px-3 py-1 bg-red-50 text-red-700 rounded-full text-xs font-medium">{age}</span>
+        ))}
+      </div>
+      <h3 className="font-semibold text-gray-900 mt-4">Collection Actions</h3>
       <FeatureList items={[
-        'List of all loans with overdue instalments',
-        'Days past due for each loan',
-        'Total arrears amount',
-        'Member contact information for follow-up',
-        'Loan status indicators (overdue, defaulted)',
-      ]} />
-      <h3 className="font-semibold text-gray-900 mt-4">Actions</h3>
-      <FeatureList items={[
-        'Contact the member via SMS directly from the list',
-        'Mark a loan as defaulted if recovery is unlikely',
-        'Restructure the loan to create manageable new terms',
+        'Assign a staff member to manage a specific default case',
+        'Record collection notes and follow-up actions',
+        'Set a "Next Action Date" for follow-up reminders',
+        'Send SMS reminder to the member directly',
         'Record partial repayments',
+        'Mark the loan as defaulted if recovery is not possible',
+        'Restructure the loan to create new manageable terms',
       ]} />
     </SectionWrapper>
   );
@@ -458,39 +916,40 @@ function DefaultsSection() {
 
 function TransactionsSection() {
   return (
-    <SectionWrapper title="Transactions" icon={Wallet}>
-      <p className="text-gray-600">Record all financial movements -- deposits, withdrawals, transfers, and fees -- for member accounts.</p>
+    <SectionWrapper title="Quick Transactions" icon={Wallet}>
+      <p className="text-gray-600">Record financial transactions -- deposits, withdrawals, transfers, and fees -- for any member. This is the basic transaction interface for recording individual transactions.</p>
       <h3 className="font-semibold text-gray-900">Transaction Types</h3>
-      <div className="grid md:grid-cols-2 gap-3">
+      <div className="grid sm:grid-cols-2 gap-3">
         {[
-          { type: 'Deposit', desc: 'Add funds to a member\'s savings or shares account' },
-          { type: 'Withdrawal', desc: 'Member withdraws from their savings account' },
-          { type: 'Transfer', desc: 'Move funds between a member\'s accounts (savings to shares, etc.)' },
-          { type: 'Fee', desc: 'Charge a service fee to a member\'s account' },
+          { type: 'Deposit', desc: 'Add funds to a member\'s savings or shares account', icon: '+ ' },
+          { type: 'Withdrawal', desc: 'Member withdraws from their savings account', icon: '- ' },
+          { type: 'Transfer', desc: 'Move funds between a member\'s accounts (savings to shares, etc.)', icon: '  ' },
+          { type: 'Fee', desc: 'Charge a service or processing fee to a member\'s account', icon: '  ' },
         ].map(t => (
           <div key={t.type} className="bg-gray-50 rounded-lg p-3">
-            <span className="font-medium text-gray-900">{t.type}:</span>{' '}
-            <span className="text-sm text-gray-600">{t.desc}</span>
+            <span className="font-medium text-gray-900">{t.type}</span>
+            <p className="text-xs text-gray-500 mt-0.5">{t.desc}</p>
           </div>
         ))}
       </div>
       <h3 className="font-semibold text-gray-900 mt-6">Processing a Transaction</h3>
       <div className="space-y-4">
-        <Step n={1} title="Select the Member">
+        <Step n={1} title="Search Member">
           <p>Search by name, member number, or phone number.</p>
         </Step>
-        <Step n={2} title="Choose Transaction Type">
-          <p>Select deposit, withdrawal, transfer, or fee. Choose the account (savings or shares).</p>
+        <Step n={2} title="Choose Type & Account">
+          <p>Select deposit/withdrawal/transfer/fee and choose the account (Savings or Shares).</p>
         </Step>
         <Step n={3} title="Enter Details">
-          <p>Enter the amount, payment method (cash, M-Pesa, cheque, bank transfer), and an optional reference number or note.</p>
+          <p>Enter the amount, payment method (Cash, M-Pesa, Cheque, Bank Transfer), and optional reference number or note.</p>
         </Step>
         <Step n={4} title="Submit">
-          <p>The transaction is recorded and the member's balance is updated immediately.</p>
+          <p>The transaction is recorded instantly and the member's balance is updated. A confirmation receipt can be printed.</p>
         </Step>
       </div>
-      <h3 className="font-semibold text-gray-900 mt-6">Export</h3>
-      <p className="text-gray-600 text-sm">Download all transactions as a CSV file using the <strong>Export</strong> button. Filter by date range, member, or transaction type before exporting.</p>
+      <h3 className="font-semibold text-gray-900 mt-6">Payment Methods</h3>
+      <FeatureList items={['Cash', 'M-Pesa (mobile money)', 'Cheque', 'Bank Transfer']} />
+      <Tip><strong>For tellers serving customers at the counter:</strong> Use the <strong>Teller Station</strong> instead -- it's optimized for fast, back-to-back transactions with integrated queue management.</Tip>
     </SectionWrapper>
   );
 }
@@ -498,28 +957,53 @@ function TransactionsSection() {
 function TellerStationSection() {
   return (
     <SectionWrapper title="Teller Station" icon={Banknote}>
-      <p className="text-gray-600">The Teller Station is the front-desk interface designed for tellers serving members at the counter. It combines transaction processing with queue management for fast, efficient service.</p>
-      <h3 className="font-semibold text-gray-900">How It Works</h3>
+      <p className="text-gray-600">The Teller Station is the primary counter interface for tellers. It combines transaction processing with queue management for fast, efficient member service.</p>
+      <h3 className="font-semibold text-gray-900">Workflow</h3>
       <div className="space-y-4">
-        <Step n={1} title="Call Next Customer">
-          <p>When a member arrives, click <strong>Call Next</strong> to pull the next ticket from the queue. The member's details and account summary load automatically.</p>
+        <Step n={1} title="Open Your Station">
+          <p>Log in and navigate to Teller Station. Your counter number is assigned automatically based on your profile.</p>
         </Step>
-        <Step n={2} title="Process Services">
-          <p>From the teller interface, you can process deposits, withdrawals, loan repayments, cheque deposits, and bank transfers -- all without leaving the page.</p>
+        <Step n={2} title="Call Next Customer">
+          <p>Click <strong>Call Next</strong> to pull the next ticket from the queue. The member's full profile, account balances, and recent transactions load automatically.</p>
         </Step>
-        <Step n={3} title="Complete or Redirect">
-          <p>When done, click <strong>Complete</strong> to close the ticket and move to the next customer. If the member needs a different service (e.g., loans), redirect them to the appropriate counter.</p>
+        <Step n={3} title="Process Services">
+          <p>From the single interface, you can perform any combination of:</p>
+          <FeatureList items={[
+            'Deposits to savings or shares',
+            'Withdrawals from savings',
+            'Loan repayments',
+            'Cheque deposits',
+            'Bank transfers',
+            'Member information lookup',
+          ]} />
+        </Step>
+        <Step n={4} title="Complete Service">
+          <p>Click <strong>Complete</strong> to close the ticket and move to the next member. If the member needs a service at a different counter (e.g., loans), click <strong>Redirect</strong> to send them there.</p>
         </Step>
       </div>
-      <h3 className="font-semibold text-gray-900 mt-6">Teller Services</h3>
-      <FeatureList items={[
-        'Quick deposits and withdrawals',
-        'Loan repayment processing',
-        'Cheque deposit recording',
-        'Bank transfer processing',
-        'Member search and account lookup',
-        'Real-time balance display',
-      ]} />
+      <Tip><strong>Difference from Quick Transactions:</strong> The Teller Station integrates queue management, shows member summaries automatically, and is designed for high-volume counter operations. Use Quick Transactions for one-off back-office recordings.</Tip>
+    </SectionWrapper>
+  );
+}
+
+function TellerServicesSection() {
+  return (
+    <SectionWrapper title="Teller Services" icon={ClipboardList}>
+      <p className="text-gray-600">Advanced teller features for managing cheques, M-Pesa reconciliation, and specialized counter operations.</p>
+      <h3 className="font-semibold text-gray-900">Cheque Management</h3>
+      <div className="space-y-4">
+        <Step n={1} title="Record a Cheque">
+          <p>When a member deposits a cheque, record: cheque number, bank name, drawer name (who wrote the cheque), amount, and expected clearance date.</p>
+        </Step>
+        <Step n={2} title="Track Status">
+          <p>Cheques move through statuses: <strong>Pending</strong> (waiting for clearance), <strong>Cleared</strong> (funds available), <strong>Bounced</strong> (rejected by the bank), or <strong>Cancelled</strong>.</p>
+        </Step>
+        <Step n={3} title="Process Clearance">
+          <p>On the expected clearance date, clear the cheque to credit the member's account, or mark it as bounced if it was returned.</p>
+        </Step>
+      </div>
+      <h3 className="font-semibold text-gray-900 mt-6">M-Pesa Payment Reconciliation</h3>
+      <p className="text-gray-600 text-sm">View unmatched M-Pesa payments that have come in but haven't been linked to a member account. Match them by entering the member's ID for each M-Pesa transaction code.</p>
     </SectionWrapper>
   );
 }
@@ -527,49 +1011,90 @@ function TellerStationSection() {
 function FloatManagementSection() {
   return (
     <SectionWrapper title="Float Management" icon={HardDrive}>
-      <p className="text-gray-600">Float management tracks the physical cash that each teller holds during their shift. It ensures accountability and reconciliation at the end of every business day.</p>
+      <p className="text-gray-600">Float tracks the physical cash each teller holds during their shift. It ensures accountability and accurate reconciliation at the end of every business day.</p>
       <h3 className="font-semibold text-gray-900">Daily Float Workflow</h3>
       <div className="space-y-4">
         <Step n={1} title="Open Float">
-          <p>At the start of the day, the teller records their opening cash balance -- the amount received from the vault or carried over from the previous day.</p>
+          <p>At the start of the shift, record your opening cash balance -- the amount received from the vault or carried over from the previous day.</p>
         </Step>
         <Step n={2} title="Process Transactions">
-          <p>Throughout the day, deposits increase the float and withdrawals decrease it. The system tracks all movements automatically.</p>
+          <p>As you work, deposits increase your float (cash in) and withdrawals decrease it (cash out). The system tracks all movements automatically.</p>
         </Step>
         <Step n={3} title="Replenish or Return">
-          <p>If the teller runs low on cash, they can request a <strong>replenishment</strong> from the vault. If they have excess cash, they <strong>return</strong> it to the vault.</p>
+          <p>Running low? Request a <strong>replenishment</strong> from the vault. Have excess? <strong>Return cash</strong> to the vault. Both are recorded with amounts and timestamps.</p>
         </Step>
         <Step n={4} title="Physical Cash Count">
-          <p>At the end of the day, the teller performs a physical cash count. Enter the actual amount in the till.</p>
+          <p>At end of day, count the actual cash in your till and enter the physical count amount.</p>
         </Step>
         <Step n={5} title="Close Float">
-          <p>The system compares the expected balance (opening + deposits - withdrawals) with the physical count. Any variance (shortage or excess) is recorded and may require manager approval.</p>
+          <p>The system compares: <strong>Expected balance</strong> (opening + deposits - withdrawals +/- vault movements) vs. <strong>Physical count</strong>. Any variance is recorded.</p>
         </Step>
       </div>
-      <Tip><strong>Approval PIN:</strong> Sensitive float operations like approving shortages require a manager's approval PIN for security.</Tip>
+      <h3 className="font-semibold text-gray-900 mt-4">Float Reconciliation</h3>
+      <div className="grid sm:grid-cols-2 gap-3">
+        <InfoCard title="Shortage">
+          <p>If the physical count is LESS than expected. Requires a manager to approve the variance using their Approval PIN.</p>
+        </InfoCard>
+        <InfoCard title="Excess">
+          <p>If the physical count is MORE than expected. Also recorded for investigation.</p>
+        </InfoCard>
+      </div>
+      <Warning><strong>Approval PIN:</strong> Manager approval is required for float shortages. Managers set their Approval PIN (4-6 digits) in My Account &gt; Security.</Warning>
     </SectionWrapper>
   );
 }
 
-function QueueSystemSection() {
+function QueueKioskSection() {
   return (
-    <SectionWrapper title="Queue System" icon={Clock}>
-      <p className="text-gray-600">The queue system manages customer flow in your branch. It includes a self-service kiosk for members and a display board for calling ticket numbers.</p>
-      <h3 className="font-semibold text-gray-900">Components</h3>
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="font-medium text-gray-900 mb-2">Ticketing Kiosk</h4>
-          <p className="text-sm text-gray-600 mb-2">A self-service screen where members select the service they need:</p>
-          <FeatureList items={['Transactions (deposits, withdrawals)', 'Loan inquiries', 'Account opening', 'General inquiries']} />
-          <p className="text-sm text-gray-600 mt-2">After selecting, a numbered ticket is generated (e.g., T-001, L-002).</p>
-        </div>
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="font-medium text-gray-900 mb-2">Queue Display Board</h4>
-          <p className="text-sm text-gray-600 mb-2">A screen visible in the banking hall showing:</p>
-          <FeatureList items={['Currently serving ticket numbers', 'Which counter is serving which ticket', 'Audio announcements when tickets are called', 'Waiting count per service type']} />
-        </div>
+    <SectionWrapper title="Ticketing Kiosk" icon={Printer}>
+      <p className="text-gray-600">The Ticketing Kiosk is a self-service screen where members select the service they need and receive a numbered ticket. It's designed to run on a tablet or touchscreen at the branch entrance.</p>
+      <h3 className="font-semibold text-gray-900">Service Categories</h3>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {[
+          { cat: 'Transactions (T)', desc: 'Deposits, withdrawals, balance inquiries', prefix: 'T-001, T-002...' },
+          { cat: 'Loans (L)', desc: 'Loan applications, inquiries, repayments', prefix: 'L-001, L-002...' },
+          { cat: 'Account Opening (A)', desc: 'New member registration', prefix: 'A-001, A-002...' },
+          { cat: 'Inquiries (I)', desc: 'General questions, statements, other', prefix: 'I-001, I-002...' },
+        ].map(c => (
+          <div key={c.cat} className="bg-gray-50 rounded-lg p-3">
+            <span className="font-medium text-gray-900">{c.cat}</span>
+            <p className="text-xs text-gray-500">{c.desc}</p>
+            <p className="text-xs text-blue-600 mt-1">Ticket format: {c.prefix}</p>
+          </div>
+        ))}
       </div>
-      <Tip><strong>Setup:</strong> Open the Ticketing Kiosk on a tablet at the entrance and the Queue Display Board on a TV screen in the waiting area. Tellers call tickets from their Teller Station.</Tip>
+      <h3 className="font-semibold text-gray-900 mt-4">How It Works</h3>
+      <div className="space-y-4">
+        <Step n={1} title="Member Selects Service">
+          <p>The member taps the service category they need on the touchscreen.</p>
+        </Step>
+        <Step n={2} title="Ticket Generated">
+          <p>A numbered ticket is generated instantly (e.g., T-005) and a print window opens automatically for the member to collect their ticket.</p>
+        </Step>
+        <Step n={3} title="Wait for Call">
+          <p>The member waits in the hall until their number is called on the Queue Display Board and announced over speakers.</p>
+        </Step>
+      </div>
+      <Tip><strong>Setup:</strong> Open the Ticketing Kiosk URL on a dedicated tablet at the branch entrance. Set the browser to full-screen/kiosk mode for the best experience.</Tip>
+    </SectionWrapper>
+  );
+}
+
+function QueueDisplaySection() {
+  return (
+    <SectionWrapper title="Queue Display Board" icon={MonitorSmartphone}>
+      <p className="text-gray-600">The Queue Display Board shows which ticket numbers are being served at which counters. It's designed to run on a large TV screen visible in the banking hall.</p>
+      <h3 className="font-semibold text-gray-900">What It Shows</h3>
+      <FeatureList items={[
+        'Currently serving ticket number at each counter',
+        'Which teller is at which counter',
+        'Color-coded service categories (Transactions, Loans, Account Opening, Inquiries)',
+        'Total waiting count per service type',
+        'Auto-refreshing -- updates in real-time as tellers call tickets',
+      ]} />
+      <h3 className="font-semibold text-gray-900 mt-4">Voice Announcements</h3>
+      <p className="text-gray-600 text-sm">When a teller calls the next ticket, the display board uses text-to-speech to announce: <em>"Ticket T-0-0-5, please proceed to Counter 2."</em> The ticket number is spelled out digit by digit for clarity, and the announcement is repeated twice.</p>
+      <Tip><strong>Setup:</strong> Open the Queue Display Board URL on a TV or large monitor connected to speakers. Set the browser to full-screen mode. Make sure the volume is audible in the banking hall.</Tip>
     </SectionWrapper>
   );
 }
@@ -577,38 +1102,39 @@ function QueueSystemSection() {
 function FixedDepositsSection() {
   return (
     <SectionWrapper title="Fixed Deposits" icon={PiggyBank}>
-      <p className="text-gray-600">Fixed deposits are investment products where members lock in a sum of money for a set period at a guaranteed interest rate.</p>
+      <p className="text-gray-600">Fixed deposits allow members to lock in a sum of money for a set period at a guaranteed interest rate. The longer the term, the higher the interest.</p>
       <h3 className="font-semibold text-gray-900">Setting Up Fixed Deposit Products</h3>
       <div className="space-y-4">
         <Step n={1} title="Create a Product">
-          <p>Go to <strong>Fixed Deposits</strong> and create a product. Set the name, term (in months), annual interest rate, minimum deposit amount, and early withdrawal penalty percentage.</p>
+          <p>Define the product name, term length (in months), annual interest rate, minimum deposit amount, and early withdrawal penalty percentage.</p>
         </Step>
-        <Step n={2} title="Open a Member Deposit">
-          <p>Select a member and the product. Enter the deposit amount. The system calculates the maturity date and expected interest automatically.</p>
+        <Step n={2} title="Open a Deposit for a Member">
+          <p>Select a member and the product. Enter the deposit amount. The system calculates the maturity date and expected interest payout automatically.</p>
         </Step>
-        <Step n={3} title="At Maturity">
-          <p>When the deposit matures, the system processes the payout -- the principal plus earned interest. Matured deposits can be processed automatically via the scheduled cron job or manually.</p>
+        <Step n={3} title="Maturity Processing">
+          <p>When the deposit reaches its maturity date, the full payout (principal + interest) is processed. This can happen automatically via the scheduled cron job or be triggered manually.</p>
         </Step>
       </div>
-      <Tip><strong>Early withdrawal:</strong> If a member needs their money before the maturity date, the early withdrawal penalty (set on the product) is deducted from the interest earned.</Tip>
+      <h3 className="font-semibold text-gray-900 mt-4">Early Withdrawal</h3>
+      <p className="text-gray-600 text-sm">If a member needs their funds before maturity, the early withdrawal penalty (set on the product) is deducted from the earned interest. The remaining balance is returned to their savings account.</p>
     </SectionWrapper>
   );
 }
 
 function DividendsSection() {
   return (
-    <SectionWrapper title="Dividends" icon={Wallet}>
-      <p className="text-gray-600">Distribute profits to members based on their shareholding. Dividends are typically declared annually at the end of the fiscal year.</p>
-      <h3 className="font-semibold text-gray-900">Declaring Dividends</h3>
+    <SectionWrapper title="Dividends" icon={DollarSign}>
+      <p className="text-gray-600">Distribute profits to members based on their shareholding. Dividends are typically declared once per year at the end of the fiscal period.</p>
+      <h3 className="font-semibold text-gray-900">Declaring & Distributing Dividends</h3>
       <div className="space-y-4">
-        <Step n={1} title="Create a Dividend Declaration">
-          <p>Specify the fiscal year, the dividend rate (percentage), and the total amount available for distribution.</p>
+        <Step n={1} title="Create Declaration">
+          <p>Specify the fiscal year, the dividend rate (as a percentage), and the total amount available for distribution.</p>
         </Step>
         <Step n={2} title="Preview Distribution">
-          <p>The system calculates each member's share based on their shares balance and the declared rate. Review the distribution before processing.</p>
+          <p>The system calculates each member's share based on their shares balance multiplied by the dividend rate. Review the distribution list before processing.</p>
         </Step>
         <Step n={3} title="Process Distribution">
-          <p>Confirm the distribution. Each member's dividend is credited to their savings account (or other account as configured).</p>
+          <p>Confirm the distribution. Each member's dividend is credited to their savings account. The system creates corresponding journal entries automatically.</p>
         </Step>
       </div>
     </SectionWrapper>
@@ -618,28 +1144,29 @@ function DividendsSection() {
 function ChartOfAccountsSection() {
   return (
     <SectionWrapper title="Chart of Accounts" icon={Layers}>
-      <p className="text-gray-600">The Chart of Accounts is the foundation of the accounting system. It lists every financial account used to categorize your organization's income, expenses, assets, liabilities, and equity.</p>
+      <p className="text-gray-600">The Chart of Accounts is the foundation of your double-entry bookkeeping system. It categorizes every financial account in your organization.</p>
       <h3 className="font-semibold text-gray-900">Account Types</h3>
-      <div className="grid md:grid-cols-2 gap-3">
+      <div className="grid sm:grid-cols-2 gap-3">
         {[
-          { type: 'Assets', desc: 'Cash, bank accounts, loans receivable, equipment' },
-          { type: 'Liabilities', desc: 'Member savings, deposits payable, loans payable' },
-          { type: 'Equity', desc: 'Share capital, retained earnings, reserves' },
-          { type: 'Income', desc: 'Interest income, fees, commissions' },
-          { type: 'Expenses', desc: 'Salaries, rent, utilities, stationery' },
+          { type: 'Assets', desc: 'Cash on hand, bank accounts, loans receivable, equipment, property', color: 'text-blue-700' },
+          { type: 'Liabilities', desc: 'Member savings, deposits payable, loans payable, accrued expenses', color: 'text-red-700' },
+          { type: 'Equity', desc: 'Share capital, retained earnings, reserves, surplus', color: 'text-purple-700' },
+          { type: 'Income', desc: 'Interest income, processing fees, commissions, penalty charges', color: 'text-green-700' },
+          { type: 'Expenses', desc: 'Staff salaries, rent, utilities, stationery, depreciation', color: 'text-amber-700' },
         ].map(t => (
           <div key={t.type} className="bg-gray-50 rounded-lg p-3">
-            <span className="font-medium text-gray-900">{t.type}:</span>{' '}
-            <span className="text-sm text-gray-600">{t.desc}</span>
+            <span className={`font-medium ${t.color}`}>{t.type}</span>
+            <p className="text-xs text-gray-500 mt-0.5">{t.desc}</p>
           </div>
         ))}
       </div>
-      <h3 className="font-semibold text-gray-900 mt-6">Managing Accounts</h3>
+      <h3 className="font-semibold text-gray-900 mt-4">Managing Accounts</h3>
       <FeatureList items={[
-        'Create accounts with a unique code, name, and type',
-        'Organize accounts in a hierarchical structure (parent/child)',
+        'Create accounts with a unique code (e.g., 1001), name, and type',
+        'Organize in a hierarchical structure with parent/child accounts',
         'View the current balance of any account',
-        'Accounts used by the system (member savings, loans, etc.) are created automatically',
+        'System accounts (member savings, loans receivable, etc.) are created automatically',
+        'Mark accounts as active or inactive',
       ]} />
     </SectionWrapper>
   );
@@ -648,23 +1175,36 @@ function ChartOfAccountsSection() {
 function JournalEntriesSection() {
   return (
     <SectionWrapper title="Journal Entries" icon={ScrollText}>
-      <p className="text-gray-600">Journal entries record financial transactions in the double-entry bookkeeping system. Every entry must have equal debits and credits.</p>
-      <h3 className="font-semibold text-gray-900">Creating a Journal Entry</h3>
+      <p className="text-gray-600">Journal entries record transactions in the double-entry system. Every entry must have equal debits and credits -- this is the fundamental rule of accounting.</p>
+      <h3 className="font-semibold text-gray-900">Creating a Manual Journal Entry</h3>
       <div className="space-y-4">
-        <Step n={1} title="Start a New Entry">
-          <p>Click <strong>New Journal Entry</strong>. Enter the date, a reference number, and a description of the transaction.</p>
+        <Step n={1} title="New Entry">
+          <p>Click <strong>New Journal Entry</strong>. Enter the date, a reference number (or let the system auto-generate), and a description of the transaction.</p>
         </Step>
-        <Step n={2} title="Add Debit and Credit Lines">
-          <p>For each line, select an account from the Chart of Accounts and enter either a debit or credit amount. The total debits must equal total credits.</p>
+        <Step n={2} title="Add Lines">
+          <p>For each line, select an account from the Chart of Accounts and enter either a debit or credit amount. Add as many lines as needed.</p>
         </Step>
-        <Step n={3} title="Save as Draft or Post">
-          <p><strong>Draft:</strong> Save for review later. <strong>Post:</strong> Finalize the entry and update account balances. Posted entries cannot be edited -- they can only be reversed.</p>
+        <Step n={3} title="Balance Check">
+          <p>The system shows the total debits and credits. They must be equal before you can save.</p>
+        </Step>
+        <Step n={4} title="Save or Post">
+          <p><strong>Save as Draft:</strong> Save for review later -- can still be edited. <strong>Post:</strong> Finalize the entry and update account balances. Posted entries are permanent and cannot be edited.</p>
         </Step>
       </div>
       <h3 className="font-semibold text-gray-900 mt-6">Automatic Journal Entries</h3>
-      <p className="text-gray-600 text-sm">The system automatically creates journal entries for: loan disbursements, repayments, member deposits/withdrawals, fee charges, payroll processing, and fixed deposit transactions. You don't need to manually record these.</p>
-      <h3 className="font-semibold text-gray-900 mt-6">Reversals</h3>
-      <p className="text-gray-600 text-sm">If a posted entry contains an error, click <strong>Reverse</strong> to create a new entry that cancels it out (debits become credits and vice versa).</p>
+      <p className="text-gray-600 text-sm mb-2">The system automatically creates journal entries for these operations -- you don't need to record them manually:</p>
+      <FeatureList items={[
+        'Loan disbursements (debit Loans Receivable, credit Cash/Bank)',
+        'Loan repayments (debit Cash, credit Loans Receivable + Interest Income)',
+        'Member deposits (debit Cash, credit Member Savings)',
+        'Member withdrawals (debit Member Savings, credit Cash)',
+        'Fee charges (debit Member Account, credit Fee Income)',
+        'Payroll processing (debit Salary Expense, credit Cash + Statutory accounts)',
+        'Fixed deposit maturity (debit Fixed Deposits + Interest Expense, credit Cash)',
+        'Dividend distribution',
+      ]} />
+      <h3 className="font-semibold text-gray-900 mt-4">Reversals</h3>
+      <p className="text-gray-600 text-sm">If a posted entry has an error, click <strong>Reverse</strong>. This creates a new entry that mirrors the original but with debits and credits swapped, effectively cancelling the original. The reversal is linked to the original for audit.</p>
     </SectionWrapper>
   );
 }
@@ -672,44 +1212,52 @@ function JournalEntriesSection() {
 function OpeningBalancesSection() {
   return (
     <SectionWrapper title="Opening Balances" icon={Landmark}>
-      <p className="text-gray-600">When migrating from another system or starting fresh, use opening balances to set the initial values of your accounts so your books match reality.</p>
-      <h3 className="font-semibold text-gray-900">How to Set Opening Balances</h3>
+      <p className="text-gray-600">When migrating from another system or starting a new financial period, use opening balances to set the initial values of your accounts so your books match reality.</p>
       <div className="space-y-4">
         <Step n={1} title="Review Suggested Balances">
-          <p>The system compares account balances from the General Ledger with sub-ledger totals (e.g., total member savings vs. the savings liability account). It suggests adjustments where there are discrepancies.</p>
+          <p>The system compares General Ledger account balances with sub-ledger totals (e.g., total of all member savings vs. the savings liability account). It suggests adjustments where discrepancies exist.</p>
         </Step>
         <Step n={2} title="Enter or Adjust">
-          <p>Enter the correct opening balance for each account. The system creates the necessary journal entries to bring the accounts to the correct values.</p>
+          <p>Enter the correct balance for each account. The system creates the necessary journal entries to bring accounts to the correct values.</p>
         </Step>
         <Step n={3} title="Post">
-          <p>Once all balances are correct, post the opening balance entries. This should typically be done only once, at the very beginning.</p>
+          <p>Post the opening balance entries. This should typically be done only once, during initial setup.</p>
         </Step>
       </div>
+      <Warning><strong>One-time operation:</strong> Opening balances should only be posted once during initial system setup. Contact support if you need to adjust them later.</Warning>
     </SectionWrapper>
   );
 }
 
 function ReportsSection() {
   return (
-    <SectionWrapper title="Reports" icon={FileText}>
+    <SectionWrapper title="Financial Reports" icon={FileText}>
       <p className="text-gray-600">Generate comprehensive financial and operational reports for your organization.</p>
       <h3 className="font-semibold text-gray-900">Available Reports</h3>
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid sm:grid-cols-2 gap-4">
         {[
-          { name: 'Trial Balance', desc: 'Lists all accounts with their debit and credit balances. Should always balance to zero.' },
-          { name: 'Income Statement (P&L)', desc: 'Shows income minus expenses for a selected period. Tells you whether you are profitable.' },
-          { name: 'Balance Sheet', desc: 'Snapshot of assets, liabilities, and equity at a specific date.' },
-          { name: 'General Ledger', desc: 'Detailed transaction history for any account in the Chart of Accounts.' },
-          { name: 'Loan Aging Report', desc: 'Breaks down outstanding loans by how many days past due (30, 60, 90, 180+ days).' },
-          { name: 'Member Summary', desc: 'Overview of savings, shares, and loan balances per member.' },
+          { name: 'Summary Report', desc: 'High-level overview of total savings, loans, collections, and key ratios.' },
+          { name: 'Trial Balance', desc: 'All accounts listed with their debit and credit balances. Total debits must equal total credits.' },
+          { name: 'Income Statement (P&L)', desc: 'Revenue minus expenses for a selected period. Shows whether you are making a profit or loss.' },
+          { name: 'Balance Sheet', desc: 'Snapshot of assets, liabilities, and equity at a specific date. Assets must equal Liabilities + Equity.' },
+          { name: 'General Ledger', desc: 'Complete transaction history for any account. Shows every debit and credit with running balance.' },
+          { name: 'Loan Report', desc: 'All loans with status, disbursed amount, outstanding balance, and repayment progress.' },
+          { name: 'Member Report', desc: 'Individual and aggregate savings, shares, and loan balances per member.' },
+          { name: 'Aging Report', desc: 'Outstanding loans categorized by days overdue: 1-30, 31-60, 61-90, 91-180, 180+ days.' },
+          { name: 'Statement Report', desc: 'Detailed member account statements with all transactions and running balances.' },
         ].map(r => (
-          <div key={r.name} className="bg-gray-50 rounded-lg p-4">
-            <h4 className="font-medium text-gray-900 mb-1">{r.name}</h4>
-            <p className="text-sm text-gray-600">{r.desc}</p>
-          </div>
+          <InfoCard key={r.name} title={r.name}>
+            <p>{r.desc}</p>
+          </InfoCard>
         ))}
       </div>
-      <Tip><strong>Date range:</strong> Most reports can be filtered by date range and branch. Select your dates before generating.</Tip>
+      <h3 className="font-semibold text-gray-900 mt-4">Report Filters</h3>
+      <FeatureList items={[
+        'Date range (start and end date)',
+        'Branch filter (specific branch or all branches)',
+        'Export any report to CSV',
+        'Print-friendly formatting',
+      ]} />
     </SectionWrapper>
   );
 }
@@ -717,18 +1265,61 @@ function ReportsSection() {
 function AnalyticsSection() {
   return (
     <SectionWrapper title="Analytics Dashboard" icon={BarChart3}>
-      <p className="text-gray-600">Visual charts and trends that help you understand how your organization is performing over time.</p>
-      <h3 className="font-semibold text-gray-900">Charts & Metrics</h3>
+      <p className="text-gray-600">Visual charts and trend analysis to help you understand your organization's performance over time.</p>
+      <h3 className="font-semibold text-gray-900">Available Charts & Metrics</h3>
       <FeatureList items={[
-        'Loan disbursement trends (monthly chart)',
-        'Savings growth over time',
-        'Repayment collection rates',
-        'Default rate trends',
+        'Loan disbursement trends (monthly bar chart)',
+        'Savings growth trajectory',
+        'Repayment collection rate over time',
+        'Default rate trends and patterns',
         'Member growth (new registrations per month)',
-        'Transaction volume by type',
+        'Transaction volume by type (deposits, withdrawals, transfers)',
         'Branch-level performance comparisons',
-        'Institution health score (composite metric based on savings, loan quality, and collections)',
+        'Institution health score -- a composite metric based on:',
       ]} />
+      <div className="ml-6 mt-2">
+        <FeatureList items={[
+          'Member savings and deposit ratios',
+          'Loan portfolio quality (performing vs. non-performing)',
+          'Collection efficiency percentage',
+          'Capital adequacy',
+        ]} />
+      </div>
+    </SectionWrapper>
+  );
+}
+
+function CSVExportSection() {
+  return (
+    <SectionWrapper title="CSV & Data Export" icon={Download}>
+      <p className="text-gray-600">Export your data as CSV files for analysis in spreadsheets, reporting tools, or regulatory submissions.</p>
+      <h3 className="font-semibold text-gray-900">What You Can Export</h3>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {[
+          { what: 'Members List', where: 'Members page > Export button' },
+          { what: 'Transaction History', where: 'Transactions page > Export button' },
+          { what: 'Loan List', where: 'Loan Applications page > Export button' },
+          { what: 'Financial Reports', where: 'Reports page > Export per report' },
+          { what: 'Member Statements', where: 'Member detail > Download/Print' },
+        ].map(e => (
+          <div key={e.what} className="bg-gray-50 rounded-lg p-3">
+            <span className="font-medium text-gray-900">{e.what}</span>
+            <p className="text-xs text-gray-500 mt-0.5">{e.where}</p>
+          </div>
+        ))}
+      </div>
+      <h3 className="font-semibold text-gray-900 mt-4">How to Export</h3>
+      <div className="space-y-4">
+        <Step n={1} title="Apply Filters">
+          <p>Before exporting, apply any date range, branch, or status filters. The export includes only the filtered data.</p>
+        </Step>
+        <Step n={2} title="Click Export">
+          <p>Click the <strong>Export</strong> or <strong>Download</strong> button. The CSV file downloads to your computer immediately.</p>
+        </Step>
+        <Step n={3} title="Open in Spreadsheet">
+          <p>Open the CSV file in Excel, Google Sheets, or any spreadsheet application for analysis.</p>
+        </Step>
+      </div>
     </SectionWrapper>
   );
 }
@@ -736,24 +1327,35 @@ function AnalyticsSection() {
 function SMSSection() {
   return (
     <SectionWrapper title="SMS Notifications" icon={MessageSquare}>
-      <p className="text-gray-600">Send SMS messages to members for transaction confirmations, loan updates, reminders, and custom communications.</p>
+      <p className="text-gray-600">Send SMS messages to members for transaction confirmations, reminders, and custom communications.</p>
       <h3 className="font-semibold text-gray-900">Sending SMS</h3>
       <div className="space-y-4">
         <Step n={1} title="Single SMS">
-          <p>Select a member and type your message. Click <strong>Send</strong> to deliver immediately.</p>
+          <p>Select a member and type your message. Click <strong>Send</strong> for immediate delivery.</p>
         </Step>
         <Step n={2} title="Bulk SMS">
-          <p>Send the same message to multiple members at once. Select recipients by branch or choose specific members.</p>
-        </Step>
-        <Step n={3} title="SMS Templates">
-          <p>Create reusable templates for common messages (e.g., payment reminders, welcome messages). Templates can include placeholders for member name, amount, and date.</p>
+          <p>Send the same message to multiple members at once. Filter recipients by branch or select specific members.</p>
         </Step>
       </div>
+      <h3 className="font-semibold text-gray-900 mt-6">SMS Templates</h3>
+      <p className="text-gray-600 text-sm mb-2">Create reusable templates with dynamic placeholders that auto-fill with member data:</p>
+      <div className="bg-gray-50 rounded-lg p-4 text-sm font-mono text-gray-700">
+        <p>Dear {'{{name}}'}, your deposit of {'{{amount}}'} has been received. New balance: {'{{balance}}'}. Thank you!</p>
+      </div>
+      <p className="text-gray-500 text-xs mt-2">Available placeholders: {'{{name}}'}, {'{{amount}}'}, {'{{balance}}'}, {'{{due_date}}'}, {'{{loan_number}}'}</p>
       <h3 className="font-semibold text-gray-900 mt-6">Automatic SMS</h3>
-      <p className="text-gray-600 text-sm">When enabled, the system automatically sends SMS for: deposits, withdrawals, loan disbursements, loan approvals, payment reminders (due and overdue), and repayment confirmations.</p>
-      <h3 className="font-semibold text-gray-900 mt-6">Delivery Logs</h3>
-      <p className="text-gray-600 text-sm">View the status of every SMS sent (delivered, pending, failed) along with the timestamp and recipient.</p>
-      <Tip><strong>Setup:</strong> Configure your SMS gateway credentials (API key and sender ID) in <strong>Settings &gt; SMS</strong> before you can send messages.</Tip>
+      <p className="text-gray-600 text-sm mb-2">When enabled in Settings, the system auto-sends SMS for:</p>
+      <FeatureList items={[
+        'Deposit confirmations with new balance',
+        'Withdrawal confirmations',
+        'Loan approval notifications',
+        'Loan disbursement confirmations',
+        'Payment due reminders (sent before due date)',
+        'Overdue payment alerts',
+        'Repayment confirmations',
+      ]} />
+      <h3 className="font-semibold text-gray-900 mt-4">Delivery Logs</h3>
+      <p className="text-gray-600 text-sm">View the status of every SMS: Sent, Pending, or Failed. Each log shows the recipient, message content, timestamp, and delivery status.</p>
     </SectionWrapper>
   );
 }
@@ -761,36 +1363,92 @@ function SMSSection() {
 function HRSection() {
   return (
     <SectionWrapper title="HR Management" icon={Users}>
-      <p className="text-gray-600">Manage your staff beyond just system access -- track attendance, process payroll, and maintain employee records.</p>
-      <h3 className="font-semibold text-gray-900">Features</h3>
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="font-medium text-gray-900 mb-2">Attendance</h4>
-          <FeatureList items={[
-            'Staff clock in and clock out from their dashboard',
-            'Automatic calculation of hours worked',
-            'Late arrival tracking',
-            'Overtime calculation',
-          ]} />
-        </div>
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="font-medium text-gray-900 mb-2">Payroll</h4>
-          <FeatureList items={[
-            'Process monthly payroll for all staff',
-            'Calculate gross pay, deductions, and net pay',
-            'Statutory deductions (PAYE, NHIF, NSSF)',
-            'Automatic journal entries for payroll',
-          ]} />
-        </div>
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="font-medium text-gray-900 mb-2">Training</h4>
-          <FeatureList items={['Record training courses and certifications', 'Track completion and expiry dates']} />
-        </div>
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="font-medium text-gray-900 mb-2">Disciplinary</h4>
-          <FeatureList items={['Log incidents and disciplinary actions', 'Track resolution and follow-up']} />
-        </div>
+      <p className="text-gray-600">Manage your internal staff beyond system access -- maintain employee records, track training, and handle disciplinary matters.</p>
+      <h3 className="font-semibold text-gray-900">Employee Records</h3>
+      <FeatureList items={[
+        'Personal details: name, ID, contact, address',
+        'Employment details: hire date, department, position, salary',
+        'Contract type and status',
+        'Emergency contacts',
+        'Document uploads (contracts, certificates, IDs)',
+      ]} />
+      <h3 className="font-semibold text-gray-900 mt-4">Training Management</h3>
+      <FeatureList items={[
+        'Record training courses and certifications',
+        'Track completion dates and expiry dates',
+        'Training history per staff member',
+      ]} />
+      <h3 className="font-semibold text-gray-900 mt-4">Disciplinary Records</h3>
+      <FeatureList items={[
+        'Log incidents with descriptions and dates',
+        'Record disciplinary actions taken',
+        'Track resolution and follow-up status',
+        'Maintain audit trail of all disciplinary proceedings',
+      ]} />
+    </SectionWrapper>
+  );
+}
+
+function AttendanceSection() {
+  return (
+    <SectionWrapper title="Attendance Tracking" icon={Clock}>
+      <p className="text-gray-600">Track staff attendance with digital clock-in and clock-out. The system calculates hours worked, late arrivals, and overtime automatically.</p>
+      <h3 className="font-semibold text-gray-900">How It Works</h3>
+      <div className="space-y-4">
+        <Step n={1} title="Clock In">
+          <p>Staff click <strong>Clock In</strong> when they arrive. The system records the exact timestamp.</p>
+        </Step>
+        <Step n={2} title="Clock Out">
+          <p>At the end of their shift, staff click <strong>Clock Out</strong>. Total hours worked are calculated automatically.</p>
+        </Step>
       </div>
+      <h3 className="font-semibold text-gray-900 mt-4">Automatic Calculations</h3>
+      <FeatureList items={[
+        'Late minutes: Calculated based on business hours start time in Settings',
+        'Overtime: Hours worked beyond the standard workday',
+        'Total hours per day, week, and month',
+        'Attendance records visible to managers for their branch',
+      ]} />
+    </SectionWrapper>
+  );
+}
+
+function PayrollSection() {
+  return (
+    <SectionWrapper title="Payroll Processing" icon={DollarSign}>
+      <p className="text-gray-600">Process monthly payroll for all staff members including salary, allowances, and statutory deductions.</p>
+      <h3 className="font-semibold text-gray-900">Salary Components</h3>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <InfoCard title="Earnings">
+          <FeatureList items={[
+            'Basic Salary',
+            'House Allowance',
+            'Transport Allowance',
+            'Other Allowances',
+          ]} />
+        </InfoCard>
+        <InfoCard title="Deductions">
+          <FeatureList items={[
+            'PAYE (Pay As You Earn tax)',
+            'NHIF (National Hospital Insurance Fund)',
+            'NSSF (National Social Security Fund)',
+            'Other Deductions (loans, advances, etc.)',
+          ]} />
+        </InfoCard>
+      </div>
+      <h3 className="font-semibold text-gray-900 mt-4">Processing Payroll</h3>
+      <div className="space-y-4">
+        <Step n={1} title="Review Staff Salary Details">
+          <p>Ensure all staff have their salary components entered correctly in their HR profile.</p>
+        </Step>
+        <Step n={2} title="Run Payroll">
+          <p>Select the month and run the payroll. The system calculates gross pay, applies all deductions, and shows net pay for each staff member.</p>
+        </Step>
+        <Step n={3} title="Approve & Disburse">
+          <p>Review the payroll summary. Approve and choose the disbursement method. Payroll can be disbursed directly to staff savings accounts within the system.</p>
+        </Step>
+      </div>
+      <Tip><strong>Automatic accounting:</strong> When payroll is processed, the system automatically creates journal entries -- debiting salary expense accounts and crediting cash and statutory deduction accounts.</Tip>
     </SectionWrapper>
   );
 }
@@ -799,20 +1457,26 @@ function LeaveSection() {
   return (
     <SectionWrapper title="Leave Management" icon={Calendar}>
       <p className="text-gray-600">Manage staff leave requests, approvals, and balance tracking.</p>
-      <h3 className="font-semibold text-gray-900">Leave Workflow</h3>
+      <h3 className="font-semibold text-gray-900">Leave Types</h3>
+      <div className="grid sm:grid-cols-3 gap-2">
+        {['Annual Leave', 'Sick Leave', 'Maternity Leave', 'Paternity Leave', 'Compassionate Leave', 'Study Leave'].map(type => (
+          <div key={type} className="bg-gray-50 rounded-lg p-2 text-sm text-gray-700 text-center">{type}</div>
+        ))}
+      </div>
+      <h3 className="font-semibold text-gray-900 mt-4">Leave Workflow</h3>
       <div className="space-y-4">
         <Step n={1} title="Staff Submits Request">
-          <p>The staff member selects the leave type (annual, sick, maternity, etc.), start date, end date, and adds any notes.</p>
+          <p>Select the leave type, start date, end date, and add any notes or reason. The system shows available leave balance.</p>
         </Step>
         <Step n={2} title="Manager Reviews">
-          <p>The request appears in the manager's leave queue. They can approve or reject with a reason.</p>
+          <p>The request appears in the manager's leave approval queue. They can <strong>Approve</strong> or <strong>Reject</strong> with a reason.</p>
         </Step>
-        <Step n={3} title="Leave Balance Updated">
+        <Step n={3} title="Balance Updated">
           <p>On approval, the leave days are deducted from the staff member's available balance for that leave type.</p>
         </Step>
       </div>
-      <h3 className="font-semibold text-gray-900 mt-4">Leave Types</h3>
-      <FeatureList items={['Annual leave', 'Sick leave', 'Maternity / Paternity leave', 'Compassionate leave', 'Study leave', 'Custom leave types']} />
+      <h3 className="font-semibold text-gray-900 mt-4">Leave Balances</h3>
+      <p className="text-gray-600 text-sm">Each leave type tracks: allocated days per year, days used, and remaining balance. Paid and unpaid leave are tracked separately.</p>
     </SectionWrapper>
   );
 }
@@ -820,17 +1484,16 @@ function LeaveSection() {
 function ExpensesSection() {
   return (
     <SectionWrapper title="Expenses" icon={Receipt}>
-      <p className="text-gray-600">Track and manage organizational expenses -- office supplies, utilities, travel, and other operational costs.</p>
-      <h3 className="font-semibold text-gray-900">Recording an Expense</h3>
+      <p className="text-gray-600">Track organizational expenses -- office supplies, utilities, travel, and other operational costs.</p>
       <div className="space-y-4">
         <Step n={1} title="Create Expense">
-          <p>Click <strong>Add Expense</strong>. Enter the description, category, amount, date, and payment method. Attach a receipt image if available.</p>
+          <p>Click <strong>Add Expense</strong>. Enter: description, category, amount, date, and payment method. Attach a receipt image if available.</p>
         </Step>
-        <Step n={2} title="Approval (Optional)">
-          <p>Depending on your organization's workflow, expenses above a certain threshold may require manager approval.</p>
+        <Step n={2} title="Approval (if configured)">
+          <p>Expenses above certain thresholds may require manager approval depending on your organization's policy.</p>
         </Step>
-        <Step n={3} title="Accounting">
-          <p>Approved expenses automatically create corresponding journal entries, debiting the expense account and crediting cash or bank.</p>
+        <Step n={3} title="Automatic Accounting">
+          <p>Approved expenses create journal entries automatically -- debiting the expense account and crediting cash or bank.</p>
         </Step>
       </div>
     </SectionWrapper>
@@ -840,90 +1503,218 @@ function ExpensesSection() {
 function AuditLogsSection() {
   return (
     <SectionWrapper title="Audit Logs" icon={ScrollText}>
-      <p className="text-gray-600">Every sensitive action in the system is recorded in the audit log. This creates a complete trail of who did what and when.</p>
+      <p className="text-gray-600">An immutable record of every important action in the system. Audit logs cannot be edited or deleted -- they provide a complete trail for compliance and accountability.</p>
       <h3 className="font-semibold text-gray-900">What Gets Logged</h3>
       <FeatureList items={[
-        'Member creation, editing, and status changes',
-        'Loan applications, approvals, rejections, and disbursements',
-        'Transactions (deposits, withdrawals, transfers)',
-        'Staff account changes and role assignments',
+        'Member creation, editing, activation, suspension, and deletion',
+        'Loan applications, approvals, rejections, disbursements, and restructuring',
+        'All transactions (deposits, withdrawals, transfers, fees)',
+        'Staff account creation, role changes, suspension, and deletion',
         'Settings modifications',
-        'Float operations and reconciliations',
+        'Float operations (open, close, replenish, return, variances)',
         'Login and logout events',
+        'Permission and role changes',
+        'Payroll processing',
       ]} />
-      <h3 className="font-semibold text-gray-900 mt-4">Log Details</h3>
-      <p className="text-gray-600 text-sm">Each log entry records: the action performed, who performed it, the timestamp, the affected entity (member, loan, etc.), and a comparison of old vs. new values where applicable.</p>
-      <Tip><strong>Read-only:</strong> Audit logs cannot be edited or deleted. They provide an immutable record for compliance and accountability.</Tip>
+      <h3 className="font-semibold text-gray-900 mt-4">Log Entry Details</h3>
+      <FeatureList items={[
+        'Action performed (e.g., "Member Created", "Loan Approved")',
+        'Who performed it (staff name and role)',
+        'Exact timestamp',
+        'Affected entity (member name, loan number, etc.)',
+        'Old vs. New values comparison (for edits)',
+        'IP address and session information',
+      ]} />
+      <Tip><strong>Read-only:</strong> Audit logs are permanent and cannot be modified or deleted by anyone, including administrators.</Tip>
     </SectionWrapper>
   );
 }
 
 function MpesaSection() {
   return (
-    <SectionWrapper title="M-Pesa Setup" icon={Banknote}>
-      <p className="text-gray-600">Integrate M-Pesa mobile money to allow members to make deposits, loan repayments, and other payments directly from their phone.</p>
+    <SectionWrapper title="M-Pesa Integration" icon={Banknote}>
+      <p className="text-gray-600">Accept and send mobile money payments through M-Pesa. Two integration methods are available.</p>
       <h3 className="font-semibold text-gray-900">Integration Options</h3>
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid sm:grid-cols-2 gap-4">
         <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
           <h4 className="font-medium text-gray-900 mb-2">Direct Safaricom Daraja API</h4>
-          <p className="text-sm text-gray-600">Connect directly to Safaricom. You'll need to register at developer.safaricom.co.ke, create an app, and get your consumer key, secret, shortcode, and passkey.</p>
+          <p className="text-sm text-gray-600 mb-2">Connect directly to Safaricom's payment platform.</p>
+          <p className="text-sm text-gray-600"><strong>You'll need:</strong> Consumer Key, Consumer Secret, Shortcode, Passkey, and a registered M-Pesa app at developer.safaricom.co.ke</p>
         </div>
         <div className="bg-green-50 rounded-lg p-4 border border-green-200">
           <h4 className="font-medium text-gray-900 mb-2">SunPay Managed Gateway</h4>
-          <p className="text-sm text-gray-600">Simplified setup through SunPay. They handle the Safaricom compliance. You just need a single API key from SunPay.</p>
+          <p className="text-sm text-gray-600 mb-2">Simplified setup. SunPay handles Safaricom compliance.</p>
+          <p className="text-sm text-gray-600"><strong>You'll need:</strong> Just a single API key from SunPay.</p>
         </div>
       </div>
-      <h3 className="font-semibold text-gray-900 mt-6">Configuration</h3>
+      <h3 className="font-semibold text-gray-900 mt-6">M-Pesa Features</h3>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {[
+          { feature: 'STK Push', desc: 'Send a payment prompt to a member\'s phone. They enter their PIN to confirm.' },
+          { feature: 'C2B (Customer to Business)', desc: 'Receive payments when members pay to your paybill or till number.' },
+          { feature: 'B2C (Business to Customer)', desc: 'Send money to members for loan disbursements, refunds, or dividends.' },
+          { feature: 'Loan Repayment', desc: 'Members repay loans via M-Pesa with automatic allocation to instalments.' },
+          { feature: 'Member Deposits', desc: 'Secure STK Push deposits with dual confirmation (callback + query) for fraud prevention.' },
+          { feature: 'Reversals', desc: 'Reverse erroneous M-Pesa transactions.' },
+        ].map(f => (
+          <div key={f.feature} className="bg-gray-50 rounded-lg p-3">
+            <span className="font-medium text-gray-900">{f.feature}</span>
+            <p className="text-xs text-gray-500 mt-0.5">{f.desc}</p>
+          </div>
+        ))}
+      </div>
+      <h3 className="font-semibold text-gray-900 mt-6">Configuration Steps</h3>
       <div className="space-y-4">
         <Step n={1} title="Go to Settings > M-Pesa">
-          <p>Open <strong>Settings</strong> from the sidebar and click the <strong>M-Pesa</strong> tab.</p>
+          <p>Open Settings and click the M-Pesa tab.</p>
         </Step>
-        <Step n={2} title="Enter Credentials">
-          <p>For Daraja: enter your consumer key, consumer secret, shortcode, passkey, and environment (sandbox or production). For SunPay: enter your API key.</p>
+        <Step n={2} title="Choose Gateway & Enter Credentials">
+          <p>Select Daraja or SunPay. Enter the required API credentials.</p>
         </Step>
         <Step n={3} title="Set Callback URL">
-          <p>The callback URL is where Safaricom sends payment confirmations. It must be a publicly accessible HTTPS URL (e.g., https://yourdomain.com/api/mpesa/callback).</p>
+          <p>Enter your publicly accessible HTTPS callback URL (e.g., https://yourdomain.com/api/mpesa/callback). Safaricom sends payment confirmations here.</p>
+        </Step>
+        <Step n={4} title="Select Environment">
+          <p>Choose Sandbox for testing or Production for live transactions.</p>
         </Step>
       </div>
-      <h3 className="font-semibold text-gray-900 mt-6">M-Pesa Features</h3>
-      <FeatureList items={[
-        'STK Push: Send a payment prompt to a member\'s phone',
-        'C2B: Receive payments when members pay to your paybill/till',
-        'B2C: Send money to members (loan disbursement, refunds)',
-        'Loan repayments via M-Pesa with automatic allocation',
-        'Deposit via STK Push with dual confirmation for security',
-      ]} />
-      <Tip><strong>SSL Required:</strong> M-Pesa callbacks require HTTPS. Make sure your domain has a valid SSL certificate before setting up M-Pesa.</Tip>
+      <Warning><strong>HTTPS required:</strong> M-Pesa callbacks require a valid SSL certificate. Your server must be accessible over HTTPS.</Warning>
     </SectionWrapper>
   );
 }
 
-function SettingsSection() {
+function SettingsGeneralSection() {
   return (
-    <SectionWrapper title="Organization Settings" icon={Settings}>
-      <p className="text-gray-600">Configure your organization's preferences, integrations, and operational parameters.</p>
-      <h3 className="font-semibold text-gray-900">Settings Tabs</h3>
-      <div className="space-y-3">
+    <SectionWrapper title="General Settings" icon={Settings}>
+      <p className="text-gray-600">Core organization configuration accessible from the Settings page in the sidebar.</p>
+      <h3 className="font-semibold text-gray-900">What You Can Configure</h3>
+      <FeatureList items={[
+        'Organization name and contact details (email, phone)',
+        'Staff email domain -- restricts staff email registration to your domain (e.g., only @mysacco.co.ke)',
+        'Currency selection',
+        'Financial year start month',
+        'Branding and display preferences',
+      ]} />
+    </SectionWrapper>
+  );
+}
+
+function SettingsLoansSection() {
+  return (
+    <SectionWrapper title="Loan Settings" icon={CreditCard}>
+      <p className="text-gray-600">Global loan configuration that applies across all loan products.</p>
+      <h3 className="font-semibold text-gray-900">Options</h3>
+      <FeatureList items={[
+        'Auto-deduction toggle -- enable/disable automatic loan deductions from member savings',
+        'Grace period configuration -- number of days after due date before a loan is considered overdue',
+        'Default interest rate for new products',
+        'Penalty configuration for late payments',
+      ]} />
+    </SectionWrapper>
+  );
+}
+
+function SettingsSMSSection() {
+  return (
+    <SectionWrapper title="SMS Settings" icon={MessageSquare}>
+      <p className="text-gray-600">Configure your SMS gateway to send notifications to members.</p>
+      <h3 className="font-semibold text-gray-900">Configuration</h3>
+      <FeatureList items={[
+        'SMS provider selection',
+        'API key and authentication credentials',
+        'Sender ID (the name that appears on the SMS)',
+        'Auto-notification preferences (which events trigger automatic SMS)',
+        'SMS template management with placeholders',
+      ]} />
+    </SectionWrapper>
+  );
+}
+
+function SettingsEmailSection() {
+  return (
+    <SectionWrapper title="Email Settings" icon={Mail}>
+      <p className="text-gray-600">Configure the email service used for password resets, welcome emails, and notifications.</p>
+      <h3 className="font-semibold text-gray-900">Configuration</h3>
+      <FeatureList items={[
+        'Email provider credentials (currently supports Brevo/Sendinblue)',
+        'Sender email address and name',
+        'Welcome email toggle and customization',
+        'Password reset email configuration',
+      ]} />
+    </SectionWrapper>
+  );
+}
+
+function SettingsMpesaSection() {
+  return (
+    <SectionWrapper title="M-Pesa Settings" icon={Banknote}>
+      <p className="text-gray-600">Configure M-Pesa payment integration. See the <strong>M-Pesa Integration</strong> section above for a full guide.</p>
+      <h3 className="font-semibold text-gray-900">Fields</h3>
+      <FeatureList items={[
+        'Gateway type: Daraja (direct Safaricom) or SunPay (managed)',
+        'Consumer Key and Consumer Secret (Daraja)',
+        'Shortcode and Passkey (Daraja)',
+        'SunPay API Key (SunPay)',
+        'Callback URL',
+        'Environment: Sandbox or Production',
+      ]} />
+    </SectionWrapper>
+  );
+}
+
+function SettingsHoursSection() {
+  return (
+    <SectionWrapper title="Business Hours" icon={Clock}>
+      <p className="text-gray-600">Define your organization's operating hours for each day of the week.</p>
+      <h3 className="font-semibold text-gray-900">Configuration</h3>
+      <FeatureList items={[
+        'Set working days (Monday through Sunday -- toggle each day)',
+        'Set start and end time for each working day',
+        'Enforce working hours toggle -- when enabled, staff can only log in during business hours',
+        'Auto-logout timer -- automatically log out inactive sessions after a set number of minutes',
+      ]} />
+    </SectionWrapper>
+  );
+}
+
+function SettingsRolesSection() {
+  return (
+    <SectionWrapper title="Role Management" icon={Shield}>
+      <p className="text-gray-600">Create and manage custom roles from the Roles tab in Settings. See the <strong>Roles & Permissions</strong> section above for a complete guide on creating custom roles.</p>
+    </SectionWrapper>
+  );
+}
+
+function SettingsUsageSection() {
+  return (
+    <SectionWrapper title="Usage & Limits" icon={BarChart3}>
+      <p className="text-gray-600">See how much of your plan's capacity you're using.</p>
+      <h3 className="font-semibold text-gray-900">Tracked Metrics</h3>
+      <div className="grid sm:grid-cols-2 gap-3">
         {[
-          { tab: 'General', desc: 'Organization name, currency, country, financial year start, and branding.' },
-          { tab: 'Loans', desc: 'Default loan settings, auto-deduction toggle, and grace period configuration.' },
-          { tab: 'Members', desc: 'Member number format, required fields, and registration defaults.' },
-          { tab: 'SMS', desc: 'SMS gateway API key, sender ID, and auto-notification preferences.' },
-          { tab: 'Email', desc: 'Email provider credentials (Brevo), sender address, and email templates.' },
-          { tab: 'M-Pesa', desc: 'Daraja API credentials or SunPay API key, callback URLs, and environment.' },
-          { tab: 'Business Hours', desc: 'Operating days and hours for each day of the week.' },
-          { tab: 'Roles', desc: 'Create and manage custom roles and permissions.' },
-          { tab: 'Usage', desc: 'View current plan limits vs. usage (members, staff, branches, SMS sent).' },
-        ].map(s => (
-          <div key={s.tab} className="flex gap-3 bg-gray-50 rounded-lg p-3">
-            <ArrowRight className="w-4 h-4 text-purple-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <span className="font-medium text-gray-900">{s.tab}:</span>{' '}
-              <span className="text-sm text-gray-600">{s.desc}</span>
-            </div>
+          { metric: 'Members', desc: 'Current count vs. plan maximum' },
+          { metric: 'Staff', desc: 'Current count vs. plan maximum' },
+          { metric: 'Branches', desc: 'Current count vs. plan maximum' },
+          { metric: 'SMS Sent', desc: 'Messages sent this month vs. monthly allowance' },
+        ].map(m => (
+          <div key={m.metric} className="bg-gray-50 rounded-lg p-3">
+            <span className="font-medium text-gray-900">{m.metric}</span>
+            <p className="text-xs text-gray-500 mt-0.5">{m.desc}</p>
           </div>
         ))}
       </div>
+      <p className="text-gray-600 text-sm mt-3">Each metric shows a visual progress bar. When you're close to a limit, you'll see a warning to upgrade your plan.</p>
+    </SectionWrapper>
+  );
+}
+
+function SettingsDangerSection() {
+  return (
+    <SectionWrapper title="Danger Zone" icon={Trash2}>
+      <p className="text-gray-600">Irreversible actions that permanently affect your organization.</p>
+      <Warning>
+        <strong>Delete Organization:</strong> Permanently deletes the organization and ALL its data -- members, loans, transactions, settings, everything. This cannot be undone. To confirm, you must type the exact organization name. Only the Owner can perform this action.
+      </Warning>
     </SectionWrapper>
   );
 }
@@ -931,62 +1722,157 @@ function SettingsSection() {
 function MyAccountSection() {
   return (
     <SectionWrapper title="My Account" icon={UserCog}>
-      <p className="text-gray-600">Manage your personal profile and security settings.</p>
-      <h3 className="font-semibold text-gray-900">What You Can Do</h3>
+      <p className="text-gray-600">Manage your personal profile and security settings. Access it from the bottom of the sidebar.</p>
+      <h3 className="font-semibold text-gray-900">Profile</h3>
       <FeatureList items={[
-        'Update your name and email address',
-        'Change your password',
-        'Set or update your approval PIN (used for sensitive operations like float approval)',
+        'Update your first name and last name',
+        'Update your phone number',
+        'View your email (read-only after registration)',
+        'View your role and staff number',
+      ]} />
+      <h3 className="font-semibold text-gray-900 mt-4">Security</h3>
+      <div className="space-y-3">
+        <InfoCard title="Change Password">
+          <p>Enter your current password and set a new one (minimum 8 characters).</p>
+        </InfoCard>
+        <InfoCard title="Approval PIN">
+          <p>Set or update a 4-6 digit PIN used for approving sensitive operations like float shortage approval, loan overrides, and certain financial actions. This PIN is separate from your password.</p>
+        </InfoCard>
+      </div>
+      <h3 className="font-semibold text-gray-900 mt-4">Other</h3>
+      <FeatureList items={[
         'View which organizations you belong to',
-        'Verify your email address',
+        'Email verification status',
       ]} />
     </SectionWrapper>
   );
 }
 
+function SubscriptionsSection() {
+  return (
+    <SectionWrapper title="Subscriptions & Upgrade" icon={Star}>
+      <p className="text-gray-600">Manage your subscription plan and billing. Upgrade to unlock more features and higher limits.</p>
+      <h3 className="font-semibold text-gray-900">Available Plans</h3>
+      <p className="text-gray-600 text-sm mb-3">Plans differ in the number of members, staff, and branches allowed, as well as which features are available:</p>
+      <FeatureList items={[
+        'Starter -- Basic core banking for small groups',
+        'Growth -- More capacity and advanced features like teller station and fixed deposits',
+        'Professional -- Full feature set including analytics, audit logs, and HR',
+        'Enterprise -- Unlimited capacity with dedicated support',
+      ]} />
+      <h3 className="font-semibold text-gray-900 mt-6">Payment Methods</h3>
+      <div className="grid sm:grid-cols-3 gap-3">
+        <InfoCard title="M-Pesa">
+          <p>Enter your phone number. An STK Push is sent to your phone. Enter your M-Pesa PIN to confirm payment.</p>
+        </InfoCard>
+        <InfoCard title="Stripe">
+          <p>Pay by credit/debit card. You'll be redirected to a secure Stripe checkout page to complete payment.</p>
+        </InfoCard>
+        <InfoCard title="Paystack">
+          <p>Supports card payments and mobile money (M-Pesa, MTN, Airtel) through a secure popup.</p>
+        </InfoCard>
+      </div>
+      <h3 className="font-semibold text-gray-900 mt-4">Billing Cycle</h3>
+      <FeatureList items={[
+        'Monthly or annual billing (annual pricing includes a discount)',
+        'Subscription auto-renews at the end of each period',
+        'Renewal reminders sent 7 days before expiry',
+        'Past-due notifications for failed payments',
+      ]} />
+    </SectionWrapper>
+  );
+}
+
+function TrialSystemSection() {
+  return (
+    <SectionWrapper title="Trial Period" icon={Clock}>
+      <p className="text-gray-600">New organizations start with a free trial period that gives access to all features.</p>
+      <h3 className="font-semibold text-gray-900">How the Trial Works</h3>
+      <FeatureList items={[
+        'Full access to all features during the trial period',
+        'Dashboard banner shows days remaining',
+        'Warning banner appears when 7 days or fewer remain (blue)',
+        'Urgent banner appears when 3 days or fewer remain (amber)',
+        'Expired banner appears after trial ends (red) with upgrade prompt',
+      ]} />
+      <h3 className="font-semibold text-gray-900 mt-4">After Trial Expires</h3>
+      <p className="text-gray-600 text-sm">When the trial expires, access to premium features is restricted. You can still log in and view your data, but you'll need to upgrade to a paid plan to continue using advanced features.</p>
+      <Tip><strong>To upgrade:</strong> Click the "Upgrade" banner on your dashboard or navigate to the Upgrade page from the sidebar.</Tip>
+    </SectionWrapper>
+  );
+}
+
 function SectionContent({ sectionId }: { sectionId: SectionId }) {
-  switch (sectionId) {
-    case 'getting-started': return <GettingStartedSection />;
-    case 'dashboard': return <DashboardSection />;
-    case 'branches': return <BranchesSection />;
-    case 'staff': return <StaffSection />;
-    case 'roles': return <RolesSection />;
-    case 'members': return <MembersSection />;
-    case 'loan-products': return <LoanProductsSection />;
-    case 'loan-applications': return <LoanApplicationsSection />;
-    case 'repayments': return <RepaymentsSection />;
-    case 'defaults-collections': return <DefaultsSection />;
-    case 'transactions': return <TransactionsSection />;
-    case 'teller-station': return <TellerStationSection />;
-    case 'float-management': return <FloatManagementSection />;
-    case 'queue-system': return <QueueSystemSection />;
-    case 'fixed-deposits': return <FixedDepositsSection />;
-    case 'dividends': return <DividendsSection />;
-    case 'chart-of-accounts': return <ChartOfAccountsSection />;
-    case 'journal-entries': return <JournalEntriesSection />;
-    case 'opening-balances': return <OpeningBalancesSection />;
-    case 'reports': return <ReportsSection />;
-    case 'analytics': return <AnalyticsSection />;
-    case 'sms': return <SMSSection />;
-    case 'hr': return <HRSection />;
-    case 'leave': return <LeaveSection />;
-    case 'expenses': return <ExpensesSection />;
-    case 'audit-logs': return <AuditLogsSection />;
-    case 'mpesa': return <MpesaSection />;
-    case 'settings': return <SettingsSection />;
-    case 'my-account': return <MyAccountSection />;
-    default: return null;
-  }
+  const sections: Record<SectionId, () => JSX.Element> = {
+    'getting-started': GettingStartedSection,
+    'registration': RegistrationSection,
+    'login': LoginSection,
+    'password-reset': PasswordResetSection,
+    'email-verification': EmailVerificationSection,
+    'org-creation': OrgCreationSection,
+    'onboarding-wizard': OnboardingWizardSection,
+    'dashboard': DashboardSection,
+    'notifications': NotificationsSection,
+    'branches': BranchesSection,
+    'staff': StaffSection,
+    'roles': RolesSection,
+    'members': MembersSection,
+    'member-statements': MemberStatementsSection,
+    'loan-products': LoanProductsSection,
+    'loan-applications': LoanApplicationsSection,
+    'guarantors': GuarantorsSection,
+    'loan-restructuring': LoanRestructuringSection,
+    'repayments': RepaymentsSection,
+    'defaults-collections': DefaultsSection,
+    'transactions': TransactionsSection,
+    'teller-station': TellerStationSection,
+    'teller-services': TellerServicesSection,
+    'float-management': FloatManagementSection,
+    'queue-kiosk': QueueKioskSection,
+    'queue-display': QueueDisplaySection,
+    'fixed-deposits': FixedDepositsSection,
+    'dividends': DividendsSection,
+    'chart-of-accounts': ChartOfAccountsSection,
+    'journal-entries': JournalEntriesSection,
+    'opening-balances': OpeningBalancesSection,
+    'reports': ReportsSection,
+    'analytics': AnalyticsSection,
+    'csv-export': CSVExportSection,
+    'sms': SMSSection,
+    'hr': HRSection,
+    'attendance': AttendanceSection,
+    'payroll': PayrollSection,
+    'leave': LeaveSection,
+    'expenses': ExpensesSection,
+    'audit-logs': AuditLogsSection,
+    'mpesa': MpesaSection,
+    'settings-general': SettingsGeneralSection,
+    'settings-loans': SettingsLoansSection,
+    'settings-sms': SettingsSMSSection,
+    'settings-email': SettingsEmailSection,
+    'settings-mpesa': SettingsMpesaSection,
+    'settings-hours': SettingsHoursSection,
+    'settings-roles': SettingsRolesSection,
+    'settings-usage': SettingsUsageSection,
+    'settings-danger': SettingsDangerSection,
+    'my-account': MyAccountSection,
+    'subscriptions': SubscriptionsSection,
+    'trial-system': TrialSystemSection,
+  };
+  const Component = sections[sectionId];
+  return Component ? <Component /> : null;
 }
 
 export default function ManualPage() {
   const [activeSection, setActiveSection] = useState<SectionId>('getting-started');
   const [searchQuery, setSearchQuery] = useState('');
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   const handleSectionChange = (sectionId: SectionId) => {
     setActiveSection(sectionId);
     setSearchQuery('');
+    setMobileNavOpen(false);
     if (contentRef.current) {
       contentRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
@@ -1005,39 +1891,45 @@ export default function ManualPage() {
         .filter(group => group.items.length > 0)
     : navGroups;
 
+  const allItems = navGroups.flatMap(g => g.items);
+  const currentIndex = allItems.findIndex(i => i.id === activeSection);
+  const prev = currentIndex > 0 ? allItems[currentIndex - 1] : null;
+  const next = currentIndex < allItems.length - 1 ? allItems[currentIndex + 1] : null;
+  const totalSections = allItems.length;
+
   return (
     <div className="min-h-screen bg-gray-50 pt-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium mb-4">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium mb-4">
             <BookOpen className="w-4 h-4" />
-            User Manual
+            Complete User Manual
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            System Manual
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3" data-testid="text-manual-title">
+            System User Manual
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Step-by-step guide to every feature in the system.
+          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            Step-by-step guide to every feature. {totalSections} topics covering everything from registration to advanced accounting.
           </p>
         </div>
 
         <div className="flex gap-8">
-          <nav className="hidden lg:block w-64 flex-shrink-0">
-            <div className="sticky top-24 space-y-1 max-h-[calc(100vh-120px)] overflow-y-auto pr-2">
+          <nav className="hidden lg:block w-64 flex-shrink-0" data-testid="nav-manual-sidebar">
+            <div className="sticky top-24 space-y-1 max-h-[calc(100vh-120px)] overflow-y-auto pr-2 pb-8">
               <div className="relative mb-4">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Search sections..."
+                  placeholder="Search topics..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   data-testid="input-manual-search"
-                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
               {filteredGroups.map(group => (
                 <div key={group.label} className="mb-3">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1 px-3">{group.label}</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 px-3">{group.label}</p>
                   {group.items.map(item => (
                     <button
                       key={item.id}
@@ -1045,12 +1937,12 @@ export default function ManualPage() {
                       data-testid={`button-nav-${item.id}`}
                       className={`w-full text-left px-3 py-1.5 rounded-lg text-sm transition flex items-center gap-2 ${
                         activeSection === item.id
-                          ? 'bg-purple-100 text-purple-700 font-medium'
+                          ? 'bg-blue-100 text-blue-700 font-medium'
                           : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                       }`}
                     >
                       <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
-                      {item.label}
+                      <span className="truncate">{item.label}</span>
                     </button>
                   ))}
                 </div>
@@ -1059,50 +1951,78 @@ export default function ManualPage() {
           </nav>
 
           <div className="flex-1 min-w-0" ref={contentRef} style={{ scrollMarginTop: '100px' }}>
-            <div className="lg:hidden mb-6">
-              <select
-                value={activeSection}
-                onChange={e => handleSectionChange(e.target.value as SectionId)}
-                data-testid="select-manual-section"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm font-medium bg-white"
+            <div className="lg:hidden mb-6 space-y-3">
+              <button
+                onClick={() => setMobileNavOpen(!mobileNavOpen)}
+                data-testid="button-mobile-nav-toggle"
+                className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg text-sm font-medium bg-white"
               >
-                {navGroups.flatMap(g => g.items).map(item => (
-                  <option key={item.id} value={item.id}>{item.label}</option>
-                ))}
-              </select>
+                <span className="flex items-center gap-2">
+                  {(() => { const item = allItems.find(i => i.id === activeSection); return item ? <><item.icon className="w-4 h-4" />{item.label}</> : null; })()}
+                </span>
+                <ChevronRight className={`w-4 h-4 transition ${mobileNavOpen ? 'rotate-90' : ''}`} />
+              </button>
+              {mobileNavOpen && (
+                <div className="border border-gray-200 rounded-lg bg-white p-3 max-h-80 overflow-y-auto">
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search topics..."
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      data-testid="input-mobile-manual-search"
+                      className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  {filteredGroups.map(group => (
+                    <div key={group.label} className="mb-2">
+                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1 px-2">{group.label}</p>
+                      {group.items.map(item => (
+                        <button
+                          key={item.id}
+                          onClick={() => handleSectionChange(item.id)}
+                          className={`w-full text-left px-2 py-1.5 rounded text-sm flex items-center gap-2 ${
+                            activeSection === item.id ? 'bg-blue-100 text-blue-700 font-medium' : 'text-gray-600'
+                          }`}
+                        >
+                          <item.icon className="w-3.5 h-3.5 flex-shrink-0" />
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <SectionContent sectionId={activeSection} />
 
-            <div className="flex justify-between mt-8">
-              {(() => {
-                const allItems = navGroups.flatMap(g => g.items);
-                const currentIndex = allItems.findIndex(i => i.id === activeSection);
-                const prev = currentIndex > 0 ? allItems[currentIndex - 1] : null;
-                const next = currentIndex < allItems.length - 1 ? allItems[currentIndex + 1] : null;
-                return (
-                  <>
-                    {prev ? (
-                      <button
-                        onClick={() => handleSectionChange(prev.id)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition"
-                      >
-                        <ChevronRight className="w-4 h-4 rotate-180" />
-                        {prev.label}
-                      </button>
-                    ) : <div />}
-                    {next ? (
-                      <button
-                        onClick={() => handleSectionChange(next.id)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition"
-                      >
-                        {next.label}
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    ) : <div />}
-                  </>
-                );
-              })()}
+            <div className="flex justify-between mt-8 gap-4">
+              {prev ? (
+                <button
+                  onClick={() => handleSectionChange(prev.id)}
+                  data-testid="button-prev-section"
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition min-w-0"
+                >
+                  <ChevronRight className="w-4 h-4 rotate-180 flex-shrink-0" />
+                  <span className="truncate">{prev.label}</span>
+                </button>
+              ) : <div />}
+              {next ? (
+                <button
+                  onClick={() => handleSectionChange(next.id)}
+                  data-testid="button-next-section"
+                  className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:text-gray-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition min-w-0"
+                >
+                  <span className="truncate">{next.label}</span>
+                  <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                </button>
+              ) : <div />}
+            </div>
+
+            <div className="mt-6 text-center text-xs text-gray-400">
+              Section {currentIndex + 1} of {totalSections}
             </div>
           </div>
         </div>
