@@ -1542,8 +1542,8 @@ function MpesaSection() {
         </div>
         <div className="bg-green-50 rounded-lg p-4 border border-green-200">
           <h4 className="font-medium text-gray-900 mb-2">SunPay Managed Gateway</h4>
-          <p className="text-sm text-gray-600 mb-2">Simplified setup. SunPay handles Safaricom compliance.</p>
-          <p className="text-sm text-gray-600"><strong>You'll need:</strong> Just a single API key from SunPay.</p>
+          <p className="text-sm text-gray-600 mb-2">Simplified setup. SunPay handles Safaricom compliance. Create a free account at <a href="https://sunpay.co.ke" target="_blank" rel="noopener noreferrer" className="underline font-medium text-green-700">sunpay.co.ke</a>.</p>
+          <p className="text-sm text-gray-600"><strong>You'll need:</strong> Just a single API key from your <a href="https://sunpay.co.ke/dashboard" target="_blank" rel="noopener noreferrer" className="underline font-medium text-green-700">SunPay Dashboard</a>.</p>
         </div>
       </div>
       <h3 className="font-semibold text-gray-900 mt-6">M-Pesa Features</h3>
