@@ -112,12 +112,28 @@ async def list_settings(org_id: str, user=Depends(get_current_user), db: Session
                 "working_hours_end": ("time", lambda v: v.strftime("%H:%M") if v else None),
                 "enforce_working_hours": ("boolean", lambda v: str(v).lower() if v is not None else "false"),
                 "require_clock_in": ("boolean", lambda v: str(v).lower() if v is not None else "false"),
+                "allow_weekend_access": ("boolean", lambda v: str(v).lower() if v is not None else "true"),
+                "timezone": ("string", lambda v: str(v) if v else "Africa/Nairobi"),
+                "working_days": ("string", lambda v: ",".join(v) if isinstance(v, list) else (str(v) if v else "")),
+                "auto_logout_minutes": ("string", lambda v: str(v) if v else None),
+                "require_two_factor_auth": ("boolean", lambda v: str(v).lower() if v is not None else "false"),
+                "currency": ("string", lambda v: str(v) if v else "KES"),
+                "financial_year_start": ("string", lambda v: str(v) if v else None),
             }
             for field_key, (field_type, formatter) in org_field_map.items():
-                if field_key not in existing_keys:
-                    raw_val = getattr(org, field_key, None)
-                    formatted = formatter(raw_val)
-                    if formatted is not None:
+                raw_val = getattr(org, field_key, None)
+                formatted = formatter(raw_val)
+                if formatted is not None:
+                    if field_key in existing_keys:
+                        for r in result:
+                            rkey = r.setting_key if hasattr(r, 'setting_key') else r.get('setting_key')
+                            if rkey == field_key:
+                                if hasattr(r, 'setting_value'):
+                                    r.setting_value = formatted
+                                else:
+                                    r['setting_value'] = formatted
+                                break
+                    else:
                         result.append({"setting_key": field_key, "setting_value": formatted, "setting_type": field_type})
         
         return result
@@ -136,50 +152,24 @@ async def update_settings_bulk(org_id: str, updates: dict, user=Depends(get_curr
         if not org:
             raise HTTPException(status_code=404, detail="Organization not found")
         
-        org_fields = ["working_hours_start", "working_hours_end", "working_days", "enforce_working_hours", 
-                      "auto_logout_minutes", "require_two_factor_auth", "currency", "financial_year_start"]
-        
-        tenant_sync_fields = {
-            "enforce_working_hours": "boolean",
-            "working_hours_start": "time",
-            "working_hours_end": "time",
-            "require_clock_in": "boolean",
-            "allow_weekend_access": "boolean",
-            "timezone": "string",
-            "working_days": "string",
+        org_fields = {
+            "enforce_working_hours", "working_hours_start", "working_hours_end",
+            "working_days", "require_clock_in", "allow_weekend_access", "timezone",
+            "auto_logout_minutes", "require_two_factor_auth", "currency", "financial_year_start"
         }
-        
-        def _sync_to_tenant(setting_key, setting_value, setting_type="string"):
-            existing = tenant_session.query(OrganizationSettings).filter(
-                OrganizationSettings.setting_key == setting_key
-            ).first()
-            if existing:
-                existing.setting_value = str(setting_value)
-                existing.updated_at = datetime.utcnow()
-            else:
-                tenant_session.add(OrganizationSettings(
-                    setting_key=setting_key,
-                    setting_value=str(setting_value),
-                    setting_type=setting_type
-                ))
         
         for key, value in updates.items():
             snake_key = key.replace("-", "_")
             
-            if snake_key in tenant_sync_fields:
-                if snake_key in ("enforce_working_hours", "require_clock_in", "allow_weekend_access", "require_two_factor_auth"):
-                    tenant_val = str(value).lower() if isinstance(value, str) else str(value).lower()
-                else:
-                    tenant_val = str(value) if value is not None else ""
-                _sync_to_tenant(snake_key, tenant_val, tenant_sync_fields[snake_key])
-            
             if snake_key in org_fields:
-                if snake_key == "enforce_working_hours" or snake_key == "require_two_factor_auth":
-                    setattr(org, snake_key, value.lower() == "true" if isinstance(value, str) else value)
-                elif snake_key == "working_hours_start" or snake_key == "working_hours_end":
+                if snake_key in ("enforce_working_hours", "require_two_factor_auth", "require_clock_in"):
+                    setattr(org, snake_key, value.lower() == "true" if isinstance(value, str) else bool(value))
+                elif snake_key == "allow_weekend_access":
+                    setattr(org, snake_key, value.lower() == "true" if isinstance(value, str) else bool(value))
+                elif snake_key in ("working_hours_start", "working_hours_end"):
                     if value:
                         from datetime import time as dt_time
-                        parts = value.split(":")
+                        parts = str(value).split(":")
                         setattr(org, snake_key, dt_time(int(parts[0]), int(parts[1]) if len(parts) > 1 else 0))
                     else:
                         setattr(org, snake_key, None)
@@ -190,25 +180,19 @@ async def update_settings_bulk(org_id: str, updates: dict, user=Depends(get_curr
                         setattr(org, snake_key, value)
                 else:
                     setattr(org, snake_key, value)
-                    if snake_key == "currency":
-                        for skey in ["currency", "currency_symbol"]:
-                            sval = value if skey == "currency" else updates.get("currency_symbol", value)
-                            _sync_to_tenant(skey, sval, "string")
-            elif snake_key not in tenant_sync_fields:
+            else:
                 setting = tenant_session.query(OrganizationSettings).filter(
-                    OrganizationSettings.setting_key == key
+                    OrganizationSettings.setting_key == snake_key
                 ).first()
-                
                 if setting:
                     setting.setting_value = str(value)
                     setting.updated_at = datetime.utcnow()
                 else:
-                    setting = OrganizationSettings(
-                        setting_key=key,
+                    tenant_session.add(OrganizationSettings(
+                        setting_key=snake_key,
                         setting_value=str(value),
                         setting_type="string"
-                    )
-                    tenant_session.add(setting)
+                    ))
         
         db.commit()
         tenant_session.commit()

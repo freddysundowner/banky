@@ -37,53 +37,23 @@ def _get_org_timezone(org_id: str, db: Session) -> str:
 
 def check_working_hours(org_id: str, role: str, db: Session) -> dict:
     """Check if current time is within organization's working hours.
-    Reads settings from tenant DB first, falls back to master Organization model.
+    Reads directly from the master Organization model (single source of truth).
     Returns dict with 'allowed' bool and 'message' string."""
     if role in ["owner", "admin"]:
         return {"allowed": True, "message": ""}
     
-    settings = {}
     try:
-        from services.tenant_context import get_tenant_context_simple
-        from models.tenant import OrganizationSettings as TenantOrgSettings
-        tenant_ctx = get_tenant_context_simple(org_id, db)
-        if not tenant_ctx:
+        from models.master import Organization
+        org = db.query(Organization).filter(Organization.id == org_id).first()
+        if not org:
             return {"allowed": True, "message": ""}
-        tenant_session = tenant_ctx.create_session()
-        try:
-            settings = {s.setting_key: s.setting_value for s in tenant_session.query(TenantOrgSettings).filter(
-                TenantOrgSettings.setting_key.in_([
-                    "enforce_working_hours", "working_hours_start", "working_hours_end",
-                    "allow_weekend_access", "timezone"
-                ])
-            ).all()}
-        finally:
-            tenant_session.close()
-            tenant_ctx.close()
     except Exception:
-        pass
-    
-    if "enforce_working_hours" not in settings:
-        try:
-            from models.master import Organization
-            org = db.query(Organization).filter(Organization.id == org_id).first()
-            if org:
-                if hasattr(org, 'enforce_working_hours') and org.enforce_working_hours is not None:
-                    settings["enforce_working_hours"] = str(org.enforce_working_hours).lower()
-                if hasattr(org, 'working_hours_start') and org.working_hours_start is not None:
-                    settings.setdefault("working_hours_start", org.working_hours_start.strftime("%H:%M") if hasattr(org.working_hours_start, 'strftime') else str(org.working_hours_start))
-                if hasattr(org, 'working_hours_end') and org.working_hours_end is not None:
-                    settings.setdefault("working_hours_end", org.working_hours_end.strftime("%H:%M") if hasattr(org.working_hours_end, 'strftime') else str(org.working_hours_end))
-                if hasattr(org, 'timezone') and org.timezone:
-                    settings.setdefault("timezone", org.timezone)
-        except Exception:
-            pass
-    
-    enforce = settings.get("enforce_working_hours", "false")
-    if enforce != "true":
         return {"allowed": True, "message": ""}
     
-    tz_name = settings.get("timezone", "UTC")
+    if not org.enforce_working_hours:
+        return {"allowed": True, "message": ""}
+    
+    tz_name = getattr(org, 'timezone', None) or "Africa/Nairobi"
     try:
         from zoneinfo import ZoneInfo
         tz = ZoneInfo(tz_name)
@@ -95,25 +65,22 @@ def check_working_hours(org_id: str, role: str, db: Session) -> dict:
     current_time = now.time().replace(tzinfo=None)
     current_day = now.strftime("%A").lower()
     
-    allow_weekend = settings.get("allow_weekend_access", "true")
-    if current_day in ["saturday", "sunday"] and allow_weekend != "true":
+    allow_weekend = getattr(org, 'allow_weekend_access', True)
+    if allow_weekend is None:
+        allow_weekend = True
+    if current_day in ["saturday", "sunday"] and not allow_weekend:
         return {
             "allowed": False,
             "message": "Access is restricted on weekends."
         }
     
-    start_str = settings.get("working_hours_start", "08:00")
-    end_str = settings.get("working_hours_end", "17:00")
-    try:
-        parts = start_str.split(":")
-        start_time = time(int(parts[0]), int(parts[1]) if len(parts) > 1 else 0)
-    except Exception:
-        start_time = time(8, 0)
-    try:
-        parts = end_str.split(":")
-        end_time = time(int(parts[0]), int(parts[1]) if len(parts) > 1 else 0)
-    except Exception:
-        end_time = time(17, 0)
+    start_time = org.working_hours_start or time(8, 0)
+    end_time = org.working_hours_end or time(17, 0)
+    
+    if hasattr(start_time, 'hour'):
+        start_time = time(start_time.hour, start_time.minute)
+    if hasattr(end_time, 'hour'):
+        end_time = time(end_time.hour, end_time.minute)
     
     if not (start_time <= current_time <= end_time):
         return {
