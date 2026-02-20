@@ -1157,7 +1157,7 @@ def _get_permissions_for_user(auth, org_id: str, organization, db: Session) -> d
             return {"role": None, "permissions": [], "working_hours_allowed": True, "working_hours_message": ""}
 
         role_name = auth.staff.role
-        working_hours_check = check_working_hours(organization, role_name) if organization else {"allowed": True, "message": ""}
+        working_hours_check = check_working_hours(organization, role_name, _get_org_timezone(org_id, db)) if organization else {"allowed": True, "message": ""}
 
         tenant_ctx = get_tenant_context_simple(org_id, db)
         if not tenant_ctx:
