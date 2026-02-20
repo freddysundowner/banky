@@ -560,6 +560,7 @@ async def create_member_account_for_staff(
         member_number = generate_account_number(tenant_session, branch_code)
 
         from datetime import date as date_type
+        from sqlalchemy.exc import IntegrityError
         dob = None
         if data.date_of_birth:
             try:
@@ -567,45 +568,52 @@ async def create_member_account_for_staff(
             except ValueError:
                 pass
 
-        member = Member(
-            member_number=member_number,
-            first_name=staff.first_name,
-            last_name=staff.last_name,
-            email=staff.email,
-            phone=staff.phone,
-            branch_id=staff.branch_id,
-            id_type=data.id_type,
-            id_number=data.id_number,
-            date_of_birth=dob,
-            gender=data.gender,
-            marital_status=data.marital_status,
-            address=data.address,
-            city=data.city,
-            county=data.county,
-            next_of_kin_name=data.next_of_kin_name,
-            next_of_kin_phone=data.next_of_kin_phone,
-            next_of_kin_relationship=data.next_of_kin_relationship,
-            employment_status="employed",
-            status="active",
-            is_active=True,
-            membership_type="staff"
-        )
-        tenant_session.add(member)
-        tenant_session.flush()
+        try:
+            member = Member(
+                member_number=member_number,
+                first_name=staff.first_name,
+                last_name=staff.last_name,
+                email=staff.email,
+                phone=staff.phone,
+                branch_id=staff.branch_id,
+                id_type=data.id_type,
+                id_number=data.id_number,
+                date_of_birth=dob,
+                gender=data.gender,
+                marital_status=data.marital_status,
+                address=data.address,
+                city=data.city,
+                county=data.county,
+                next_of_kin_name=data.next_of_kin_name,
+                next_of_kin_phone=data.next_of_kin_phone,
+                next_of_kin_relationship=data.next_of_kin_relationship,
+                employment_status="employed",
+                status="active",
+                is_active=True,
+                membership_type="staff"
+            )
+            tenant_session.add(member)
+            tenant_session.flush()
 
-        staff.linked_member_id = member.id
-        tenant_session.commit()
-        tenant_session.refresh(member)
+            staff.linked_member_id = member.id
+            tenant_session.commit()
+            tenant_session.refresh(member)
 
-        return {
-            "message": f"Member account {member_number} created and linked to staff",
-            "member": {
-                "id": member.id,
-                "member_number": member.member_number,
-                "first_name": member.first_name,
-                "last_name": member.last_name,
+            return {
+                "message": f"Member account {member_number} created and linked to staff",
+                "member": {
+                    "id": member.id,
+                    "member_number": member.member_number,
+                    "first_name": member.first_name,
+                    "last_name": member.last_name,
+                }
             }
-        }
+        except IntegrityError:
+            tenant_session.rollback()
+            raise HTTPException(
+                status_code=400,
+                detail="Could not create member account. A member with this email or ID may already exist."
+            )
     finally:
         tenant_session.close()
         tenant_ctx.close()
