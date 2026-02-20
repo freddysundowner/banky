@@ -21,6 +21,7 @@ interface LandingSettings {
   landing_docs_direct_title: string
   landing_docs_direct_subtitle: string
   landing_docs_support_email: string
+  landing_show_subscription_content: string
 }
 
 interface FeatureItem {
@@ -158,6 +159,7 @@ export default function LandingPageSettings() {
     landing_docs_direct_title: 'Enterprise License',
     landing_docs_direct_subtitle: 'Installation guide for organizations who purchased BANKY directly from our sales team.',
     landing_docs_support_email: 'support@banky.co.ke',
+    landing_show_subscription_content: 'true',
   })
   const [saved, setSaved] = useState(false)
 
@@ -386,6 +388,21 @@ export default function LandingPageSettings() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Main App URL</label>
                   <input type="text" value={formData.landing_app_url} onChange={e => handleChange('landing_app_url', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g. https://app.banky.co.ke" />
                   <p className="text-xs text-gray-500 mt-1">URL shown in the browser mockup on the hero section</p>
+                </div>
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Show Subscription & Billing Content</label>
+                      <p className="text-xs text-gray-500 mt-0.5">When disabled, hides subscription plans, trial period, and billing sections from the user manual and landing page. Disable this for CodeCanyon / self-hosted deployments that don't use subscriptions.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleChange('landing_show_subscription_content', formData.landing_show_subscription_content === 'true' ? 'false' : 'true')}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.landing_show_subscription_content === 'true' ? 'bg-primary-600' : 'bg-gray-300'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.landing_show_subscription_content === 'true' ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

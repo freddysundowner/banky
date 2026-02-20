@@ -1015,7 +1015,8 @@ async def get_public_landing_settings():
             "stats_saccos": "500+",
             "stats_transactions": "KES 2B+",
             "stats_members": "1M+",
-            "stats_uptime": "99.9%"
+            "stats_uptime": "99.9%",
+            "show_subscription_content": "true"
         }
         
         for s in settings:

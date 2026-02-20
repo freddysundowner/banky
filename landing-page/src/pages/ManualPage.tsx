@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   BookOpen, Users, Building2, Banknote, CreditCard, FileText, Wallet,
   Receipt, PiggyBank, BarChart3, MessageSquare, Shield, Settings,
@@ -1863,11 +1863,25 @@ function SectionContent({ sectionId }: { sectionId: SectionId }) {
   return Component ? <Component /> : null;
 }
 
+const subscriptionSectionIds: SectionId[] = ['subscriptions', 'trial-system', 'settings-usage'];
+
 export default function ManualPage() {
   const [activeSection, setActiveSection] = useState<SectionId>('getting-started');
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [showSubscriptionContent, setShowSubscriptionContent] = useState(true);
   const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch('/api/public/landing-settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.show_subscription_content === 'false') {
+          setShowSubscriptionContent(false);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSectionChange = (sectionId: SectionId) => {
     setActiveSection(sectionId);
@@ -1880,8 +1894,17 @@ export default function ManualPage() {
     }
   };
 
+  const visibleGroups = navGroups
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item =>
+        showSubscriptionContent || !subscriptionSectionIds.includes(item.id)
+      ),
+    }))
+    .filter(group => group.items.length > 0);
+
   const filteredGroups = searchQuery.trim()
-    ? navGroups
+    ? visibleGroups
         .map(group => ({
           ...group,
           items: group.items.filter(item =>
@@ -1889,9 +1912,16 @@ export default function ManualPage() {
           ),
         }))
         .filter(group => group.items.length > 0)
-    : navGroups;
+    : visibleGroups;
 
-  const allItems = navGroups.flatMap(g => g.items);
+  const allItems = visibleGroups.flatMap(g => g.items);
+
+  useEffect(() => {
+    if (!showSubscriptionContent && subscriptionSectionIds.includes(activeSection)) {
+      setActiveSection('getting-started');
+    }
+  }, [showSubscriptionContent, activeSection]);
+
   const currentIndex = allItems.findIndex(i => i.id === activeSection);
   const prev = currentIndex > 0 ? allItems[currentIndex - 1] : null;
   const next = currentIndex < allItems.length - 1 ? allItems[currentIndex + 1] : null;
