@@ -100,6 +100,7 @@ function EditStaffPage({ organizationId, staffData, onBack }: EditStaffPageProps
   const [approvalPin, setApprovalPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [showMemberDialog, setShowMemberDialog] = useState(false);
+  const [linkedMemberInfo, setLinkedMemberInfo] = useState<{id: string; member_number: string; name: string} | null>(null);
   const [memberFormData, setMemberFormData] = useState({
     id_type: "national_id",
     id_number: "",
@@ -193,6 +194,13 @@ function EditStaffPage({ organizationId, staffData, onBack }: EditStaffPageProps
       const data = typeof res.json === 'function' ? await res.json() : res;
       queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "staff"] });
       queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "members"] });
+      if (data.member) {
+        setLinkedMemberInfo({
+          id: data.member.id,
+          member_number: data.member.member_number,
+          name: `${data.member.first_name} ${data.member.last_name}`,
+        });
+      }
       setShowMemberDialog(false);
       toast({ title: data.message || "Member account created and linked" });
     },
@@ -219,7 +227,7 @@ function EditStaffPage({ organizationId, staffData, onBack }: EditStaffPageProps
 
   const selectedRole = form.watch("role");
   const showPinSection = ["manager", "admin", "supervisor", "owner"].includes(selectedRole || "");
-  const hasLinkedMember = !!(staffData as any).linked_member_id;
+  const hasLinkedMember = !!(staffData as any).linked_member_id || !!linkedMemberInfo;
 
   return (
     <div className="space-y-6">
@@ -528,9 +536,11 @@ function EditStaffPage({ organizationId, staffData, onBack }: EditStaffPageProps
               <div>
                 <p className="font-medium text-green-800 dark:text-green-200">Member Account Linked</p>
                 <p className="text-sm text-green-600 dark:text-green-400">
-                  {(staffData as any).linked_member_number
-                    ? `Account: ${(staffData as any).linked_member_number} - ${(staffData as any).linked_member_name || ""}`
-                    : "This staff member has a linked member account"}
+                  {linkedMemberInfo
+                    ? `Account: ${linkedMemberInfo.member_number} - ${linkedMemberInfo.name}`
+                    : (staffData as any).linked_member_number
+                      ? `Account: ${(staffData as any).linked_member_number} - ${(staffData as any).linked_member_name || ""}`
+                      : "This staff member has a linked member account"}
                 </p>
               </div>
             </div>
