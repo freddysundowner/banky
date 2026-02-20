@@ -1535,7 +1535,7 @@ function ExpensesSection() {
           <p>Click <strong>Add Expense</strong>. Enter: description, category, amount, date, and payment method. Attach a receipt image if available.</p>
         </Step>
         <Step n={2} title="Approval (if configured)">
-          <p>Expenses above certain thresholds may require manager approval depending on your organization's policy.</p>
+          <p>Staff members with the expense approval permission can approve or reject submitted expenses before they are posted to the ledger.</p>
         </Step>
         <Step n={3} title="Automatic Accounting">
           <p>Approved expenses create journal entries automatically -- debiting the expense account and crediting cash or bank.</p>
