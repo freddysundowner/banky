@@ -927,13 +927,14 @@ export default function Home() {
           <header className="flex h-12 items-center justify-between border-b bg-card px-4">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
             <div className="flex items-center gap-2">
-              {selectedOrg && attendanceStatus?.require_clock_in && !attendanceStatus.clocked_in && (
+              {selectedOrg && attendanceStatus && !attendanceStatus.clocked_in && (
                 <Button
                   variant="outline"
                   size="sm"
                   className="h-7 gap-1.5 text-xs border-green-200 text-green-700 hover:bg-green-50 hover:text-green-800"
                   onClick={() => clockInMutation.mutate()}
                   disabled={clockInMutation.isPending}
+                  data-testid="button-header-clock-in"
                 >
                   <Clock className="h-3 w-3" />
                   <span className="hidden sm:inline">{clockInMutation.isPending ? "Clocking in..." : "Clock In"}</span>
@@ -961,16 +962,18 @@ export default function Home() {
                   {(user as any)?.firstName || (user as any)?.first_name} {(user as any)?.lastName || (user as any)?.last_name}
                 </span>
               </div>
-              {selectedOrg && attendanceStatus?.require_clock_in && attendanceStatus.clocked_in && !attendanceStatus.clocked_out && (
+              {selectedOrg && attendanceStatus && attendanceStatus.clocked_in && !attendanceStatus.clocked_out && (
                 <Button
-                  variant="ghost"
+                  variant="outline"
                   size="sm"
-                  className="h-7 w-7 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                  className="h-7 gap-1.5 text-xs border-orange-200 text-orange-600 hover:bg-orange-50 hover:text-orange-700"
                   onClick={() => clockOutMutation.mutate()}
                   disabled={clockOutMutation.isPending}
-                  title="Clock Out"
+                  data-testid="button-header-clock-out"
                 >
-                  <Clock className="h-4 w-4" />
+                  <Clock className="h-3 w-3" />
+                  <span className="hidden sm:inline">{clockOutMutation.isPending ? "Clocking out..." : "Clock Out"}</span>
+                  <span className="sm:hidden">Out</span>
                 </Button>
               )}
               <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => logout()} data-testid="button-logout">
