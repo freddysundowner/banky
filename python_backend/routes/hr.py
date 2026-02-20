@@ -8,7 +8,8 @@ from pydantic import BaseModel
 from models.database import get_db
 from accounting.service import AccountingService, post_payroll_disbursement
 from models.tenant import (
-    Staff, PerformanceReview, LoanApplication, Branch, Member, Transaction,
+    Staff, PerformanceReview, LoanApplication, LoanInstalment, LoanRepayment,
+    Branch, Member, Transaction,
     LeaveType, LeaveBalance, LeaveRequest, Attendance,
     PayrollConfig, Payslip, EmployeeDocument, StaffProfile,
     DisciplinaryRecord, TrainingRecord, PayPeriod, PayrollRun, SalaryAdvance,
@@ -1541,6 +1542,135 @@ async def get_pay_period(org_id: str, period_id: str, user=Depends(get_current_u
 
 # ==================== PAYROLL PROCESSING ====================
 
+def calculate_staff_loan_deduction(tenant_session, member_id: str) -> Decimal:
+    """Calculate total due loan instalment amount for a member linked to staff.
+    Returns the sum of all due/overdue instalment remaining amounts across active loans.
+    Uses deterministic ordering: earliest due date first across all loans."""
+    from datetime import date as date_type
+    today = date_type.today()
+    
+    due_instalments = tenant_session.query(LoanInstalment).join(
+        LoanApplication, LoanInstalment.loan_id == LoanApplication.id
+    ).filter(
+        LoanApplication.member_id == member_id,
+        LoanApplication.status.in_(["disbursed", "defaulted"]),
+        LoanInstalment.status.in_(["pending", "partial", "overdue"]),
+        LoanInstalment.due_date <= today
+    ).order_by(LoanInstalment.due_date, LoanInstalment.instalment_number).all()
+    
+    total_due = Decimal("0")
+    for inst in due_instalments:
+        remaining = (
+            (Decimal(str(inst.expected_principal or 0)) - Decimal(str(inst.paid_principal or 0))) +
+            (Decimal(str(inst.expected_interest or 0)) - Decimal(str(inst.paid_interest or 0))) +
+            (Decimal(str(inst.expected_penalty or 0)) - Decimal(str(inst.paid_penalty or 0))) +
+            (Decimal(str(getattr(inst, 'expected_insurance', None) or 0)) - Decimal(str(getattr(inst, 'paid_insurance', None) or 0)))
+        )
+        if remaining > 0:
+            total_due += remaining
+    
+    return total_due
+
+
+def process_payroll_loan_repayment(tenant_session, member_id: str, amount: Decimal, period_name: str):
+    """Process actual loan repayment during payroll disbursement.
+    Allocates payment across active loans for the linked member using
+    deterministic ordering (earliest due date first) to match run_payroll calculation."""
+    import logging
+    logger = logging.getLogger(__name__)
+    from services.code_generator import generate_txn_code
+    from services.instalment_service import allocate_payment_to_instalments
+    from datetime import date as date_type
+    
+    active_loans = tenant_session.query(LoanApplication).filter(
+        LoanApplication.member_id == member_id,
+        LoanApplication.status.in_(["disbursed", "defaulted"])
+    ).order_by(LoanApplication.applied_at).all()
+    
+    remaining_amount = amount
+    today = date_type.today()
+    total_actually_paid = Decimal("0")
+    member = tenant_session.query(Member).filter(Member.id == member_id).first()
+    
+    for loan in active_loans:
+        if remaining_amount <= 0:
+            break
+        
+        due_instalments = tenant_session.query(LoanInstalment).filter(
+            LoanInstalment.loan_id == str(loan.id),
+            LoanInstalment.status.in_(["pending", "partial", "overdue"]),
+            LoanInstalment.due_date <= today
+        ).order_by(LoanInstalment.due_date, LoanInstalment.instalment_number).all()
+        
+        loan_due = Decimal("0")
+        for inst in due_instalments:
+            r = (
+                (Decimal(str(inst.expected_principal or 0)) - Decimal(str(inst.paid_principal or 0))) +
+                (Decimal(str(inst.expected_interest or 0)) - Decimal(str(inst.paid_interest or 0))) +
+                (Decimal(str(inst.expected_penalty or 0)) - Decimal(str(inst.paid_penalty or 0))) +
+                (Decimal(str(getattr(inst, 'expected_insurance', None) or 0)) - Decimal(str(getattr(inst, 'paid_insurance', None) or 0)))
+            )
+            loan_due += max(r, Decimal("0"))
+        
+        if loan_due <= 0:
+            continue
+        
+        pay_this_loan = min(remaining_amount, loan_due)
+        
+        total_principal, total_interest, total_penalty, total_insurance, leftover = allocate_payment_to_instalments(
+            tenant_session, loan, pay_this_loan
+        )
+        
+        actual_paid = pay_this_loan - leftover
+        if actual_paid <= 0:
+            continue
+        
+        repayment = LoanRepayment(
+            loan_id=str(loan.id),
+            amount=actual_paid,
+            principal_amount=total_principal,
+            interest_amount=total_interest,
+            penalty_amount=total_penalty,
+            payment_method="payroll_deduction",
+            payment_date=datetime.utcnow(),
+            notes=f"Auto-deducted from payroll: {period_name}"
+        )
+        tenant_session.add(repayment)
+        
+        if member:
+            balance_before = member.loan_balance or Decimal("0")
+            member.loan_balance = max(Decimal("0"), balance_before - total_principal)
+        
+        loan.amount_paid = (loan.amount_paid or Decimal("0")) + actual_paid
+        total_repayable = loan.total_amount or loan.amount
+        if loan.amount_paid >= total_repayable:
+            loan.status = "fully_paid"
+        
+        tx = Transaction(
+            transaction_number=generate_txn_code(),
+            member_id=member_id,
+            transaction_type="loan_repayment",
+            account_type="loan",
+            amount=actual_paid,
+            balance_before=balance_before if member else Decimal("0"),
+            balance_after=member.loan_balance if member else Decimal("0"),
+            payment_method="payroll_deduction",
+            reference=f"PAYROLL-LOAN-{period_name}",
+            description=f"Loan repayment deducted from payroll: {period_name}"
+        )
+        tenant_session.add(tx)
+        
+        remaining_amount -= actual_paid
+        total_actually_paid += actual_paid
+    
+    if total_actually_paid < amount:
+        logger.warning(
+            f"Payroll loan deduction mismatch for member {member_id}: "
+            f"expected={amount}, actual={total_actually_paid}, "
+            f"unallocated={amount - total_actually_paid}, period={period_name}"
+        )
+
+
 @router.post("/{org_id}/hr/pay-periods/{period_id}/run-payroll")
 async def run_payroll(org_id: str, period_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     """Process payroll for all active staff with payroll configs"""
@@ -1590,6 +1720,10 @@ async def run_payroll(org_id: str, period_id: str, user=Depends(get_current_user
                 deduct = min(monthly_recovery, remaining)
                 advance_deduction += deduct
             
+            loan_deduction = Decimal("0")
+            if staff_member.linked_member_id:
+                loan_deduction = calculate_staff_loan_deduction(tenant_session, staff_member.linked_member_id)
+            
             pending_shortage_deds = tenant_session.query(SalaryDeduction).filter(
                 SalaryDeduction.staff_id == config.staff_id,
                 SalaryDeduction.status == "pending",
@@ -1608,7 +1742,7 @@ async def run_payroll(org_id: str, period_id: str, user=Depends(get_current_user
             paye = config.paye_tax or Decimal("0")
             other_ded = config.other_deductions or Decimal("0")
             base_deductions = nhif + nssf + paye + other_ded
-            deductions = base_deductions + advance_deduction + shortage_deduction
+            deductions = base_deductions + advance_deduction + loan_deduction + shortage_deduction
             net = gross - deductions
             
             payslip = Payslip(
@@ -1623,7 +1757,8 @@ async def run_payroll(org_id: str, period_id: str, user=Depends(get_current_user
                 nhif_deduction=config.nhif_deduction or Decimal("0"),
                 nssf_deduction=config.nssf_deduction or Decimal("0"),
                 paye_tax=config.paye_tax or Decimal("0"),
-                loan_deductions=advance_deduction,
+                loan_deductions=loan_deduction,
+                advance_deductions=advance_deduction,
                 shortage_deductions=shortage_deduction,
                 other_deductions=config.other_deductions or Decimal("0"),
                 total_deductions=deductions,
@@ -1779,6 +1914,14 @@ async def disburse_payroll(org_id: str, period_id: str, data: DisbursementReques
                 adv.amount_recovered = (adv.amount_recovered or Decimal("0")) + deduct
                 if adv.amount_recovered >= adv.amount:
                     adv.is_fully_recovered = True
+            
+            loan_ded_amount = ps.loan_deductions or Decimal("0")
+            if loan_ded_amount > 0:
+                staff_for_loan = tenant_session.query(Staff).filter(Staff.id == ps.staff_id).first()
+                if staff_for_loan and staff_for_loan.linked_member_id:
+                    process_payroll_loan_repayment(
+                        tenant_session, staff_for_loan.linked_member_id, loan_ded_amount, period.name or pay_period_str
+                    )
         
         period.status = "paid"
         period.paid_at = datetime.utcnow()
@@ -1863,6 +2006,7 @@ async def list_payslips(org_id: str, pay_period: str = None, staff_id: str = Non
                 "nssf_deduction": float(ps.nssf_deduction or 0),
                 "paye_tax": float(ps.paye_tax or 0),
                 "loan_deductions": float(ps.loan_deductions or 0),
+                "advance_deductions": float(ps.advance_deductions or 0),
                 "other_deductions": float(ps.other_deductions or 0),
                 "total_deductions": float(ps.total_deductions or 0),
                 "net_salary": float(ps.net_salary or 0),
@@ -1904,6 +2048,7 @@ async def get_payslip_detail(org_id: str, payslip_id: str, user=Depends(get_curr
             "nssf_deduction": float(ps.nssf_deduction or 0),
             "paye_tax": float(ps.paye_tax or 0),
             "loan_deductions": float(ps.loan_deductions or 0),
+            "advance_deductions": float(ps.advance_deductions or 0),
             "shortage_deductions": float(ps.shortage_deductions or 0),
             "other_deductions": float(ps.other_deductions or 0),
             "total_deductions": float(ps.total_deductions or 0),
@@ -1959,6 +2104,7 @@ async def email_payslip(org_id: str, payslip_id: str, user=Depends(get_current_u
             "nssf_deduction": float(ps.nssf_deduction or 0),
             "paye_tax": float(ps.paye_tax or 0),
             "loan_deductions": float(ps.loan_deductions or 0),
+            "advance_deductions": float(ps.advance_deductions or 0),
             "other_deductions": float(ps.other_deductions or 0),
             "total_deductions": float(ps.total_deductions or 0),
             "net_salary": float(ps.net_salary or 0)

@@ -1089,6 +1089,7 @@ class Payslip(TenantBase):
     nssf_deduction = Column(Numeric(15, 2), default=0)
     paye_tax = Column(Numeric(15, 2), default=0)
     loan_deductions = Column(Numeric(15, 2), default=0)
+    advance_deductions = Column(Numeric(15, 2), default=0)
     shortage_deductions = Column(Numeric(15, 2), default=0)
     other_deductions = Column(Numeric(15, 2), default=0)
     total_deductions = Column(Numeric(15, 2), default=0)

@@ -4,7 +4,7 @@ from models.master import Organization, OrganizationMember
 from models.tenant import TenantBase
 
 _migrated_tenants = set()
-_migration_version = 22  # Increment to force re-migration
+_migration_version = 23  # Increment to force re-migration
 
 def _get_db_migration_version(engine):
     """Check the migration version stored in the tenant database"""
@@ -831,6 +831,7 @@ def run_tenant_schema_migration(engine):
         
         # Add emailed_at column to payslips if missing
         add_column_if_not_exists(conn, "payslips", "emailed_at", "TIMESTAMP")
+        add_column_if_not_exists(conn, "payslips", "advance_deductions", "NUMERIC(15,2) DEFAULT 0")
         
         # Make issued_by_id nullable in disciplinary_records (for owners without staff record)
         if table_exists(conn, "disciplinary_records"):
