@@ -7,6 +7,7 @@ import DocsPage from './pages/DocsPage';
 import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import ContactPage from './pages/ContactPage';
+import ManualPage from './pages/ManualPage';
 
 export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -20,6 +21,9 @@ export default function App() {
       <Switch>
         <Route path="/docs">
           <DocsPage />
+        </Route>
+        <Route path="/manual">
+          <ManualPage />
         </Route>
         <Route path="/terms">
           <TermsPage />

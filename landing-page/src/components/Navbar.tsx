@@ -29,6 +29,7 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
               <a href="/#features" className="text-gray-600 hover:text-gray-900 transition">Features</a>
               <a href="/#pricing" className="text-gray-600 hover:text-gray-900 transition">Pricing</a>
               <Link href="/docs" className="text-gray-600 hover:text-gray-900 transition">Docs</Link>
+              <Link href="/manual" className="text-gray-600 hover:text-gray-900 transition">Manual</Link>
               <Link href="/contact" className="text-gray-600 hover:text-gray-900 transition">Contact</Link>
             </div>
             
@@ -59,6 +60,7 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
             <a href="/#features" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>Features</a>
             <a href="/#pricing" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
             <Link href="/docs" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>Docs</Link>
+            <Link href="/manual" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>Manual</Link>
             <Link href="/contact" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
             <a href="/#faq" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
             <hr className="my-2" />
