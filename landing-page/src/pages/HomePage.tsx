@@ -6,8 +6,12 @@ import Testimonials from '../components/Testimonials';
 import Pricing from '../components/Pricing';
 import FAQ from '../components/FAQ';
 import CTA from '../components/CTA';
+import { useBranding } from '../context/BrandingContext';
 
 export default function HomePage() {
+  const branding = useBranding();
+  const isSaaS = branding.deployment_mode !== 'enterprise';
+
   return (
     <>
       <Hero />
@@ -15,7 +19,7 @@ export default function HomePage() {
       <Features />
       <HowItWorks />
       <Testimonials />
-      <Pricing />
+      {isSaaS && <Pricing />}
       <FAQ />
       <CTA />
     </>

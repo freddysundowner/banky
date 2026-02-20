@@ -8,6 +8,7 @@ interface Branding {
   theme_secondary_color: string;
   theme_accent_color: string;
   theme_sidebar_color: string;
+  deployment_mode: string;
 }
 
 const defaultBranding: Branding = {
@@ -17,6 +18,7 @@ const defaultBranding: Branding = {
   theme_secondary_color: '#64748b',
   theme_accent_color: '#10b981',
   theme_sidebar_color: '#1e293b',
+  deployment_mode: 'saas',
 };
 
 const BrandingContext = createContext<Branding>(defaultBranding);
