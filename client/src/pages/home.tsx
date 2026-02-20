@@ -927,7 +927,7 @@ export default function Home() {
           <header className="flex h-12 items-center justify-between border-b bg-card px-4">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
             <div className="flex items-center gap-2">
-              {selectedOrg && attendanceStatus && !attendanceStatus.clocked_in && (
+              {selectedOrg && attendanceStatus?.require_clock_in && !attendanceStatus.clocked_in && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -962,7 +962,7 @@ export default function Home() {
                   {(user as any)?.firstName || (user as any)?.first_name} {(user as any)?.lastName || (user as any)?.last_name}
                 </span>
               </div>
-              {selectedOrg && attendanceStatus && attendanceStatus.clocked_in && !attendanceStatus.clocked_out && (
+              {selectedOrg && attendanceStatus?.require_clock_in && attendanceStatus.clocked_in && !attendanceStatus.clocked_out && (
                 <Button
                   variant="outline"
                   size="sm"
