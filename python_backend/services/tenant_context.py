@@ -118,6 +118,7 @@ def run_tenant_schema_migration(engine):
             ("is_active", "BOOLEAN DEFAULT TRUE"),
             ("is_locked", "BOOLEAN DEFAULT FALSE"),
             ("approval_pin", "VARCHAR(255)"),
+            ("linked_member_id", "VARCHAR(255)"),
             ("last_login", "TIMESTAMP"),
             ("created_at", "TIMESTAMP DEFAULT NOW()"),
         ]

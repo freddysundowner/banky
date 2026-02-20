@@ -45,7 +45,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { getErrorMessage } from "@/lib/error-utils";
-import { Users, Plus, Pencil, Trash2, Mail, Phone, Lock, Unlock, KeyRound, UserX, UserCheck, MoreHorizontal, ArrowLeft, Building2, User, IdCard, Search, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Users, Plus, Pencil, Trash2, Mail, Phone, Lock, Unlock, KeyRound, UserX, UserCheck, MoreHorizontal, ArrowLeft, Building2, User, IdCard, Search, ChevronLeft, ChevronRight, Loader2, UserPlus, LinkIcon, CheckCircle2 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
@@ -99,6 +99,20 @@ function EditStaffPage({ organizationId, staffData, onBack }: EditStaffPageProps
   const { user } = useAuth();
   const [approvalPin, setApprovalPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
+  const [showMemberDialog, setShowMemberDialog] = useState(false);
+  const [memberFormData, setMemberFormData] = useState({
+    id_type: "national_id",
+    id_number: "",
+    date_of_birth: "",
+    gender: "",
+    marital_status: "",
+    address: "",
+    city: "",
+    county: "",
+    next_of_kin_name: "",
+    next_of_kin_phone: "",
+    next_of_kin_relationship: "",
+  });
 
   const userBranchId = (user as any)?.branchId;
   const userRole = (user as any)?.role;
@@ -171,6 +185,22 @@ function EditStaffPage({ organizationId, staffData, onBack }: EditStaffPageProps
     },
   });
 
+  const createMemberMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", `/api/organizations/${organizationId}/staff/${staffData.id}/create-member-account`, memberFormData);
+    },
+    onSuccess: async (res: any) => {
+      const data = typeof res.json === 'function' ? await res.json() : res;
+      queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "staff"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "members"] });
+      setShowMemberDialog(false);
+      toast({ title: data.message || "Member account created and linked" });
+    },
+    onError: (error: unknown) => {
+      toast({ title: "Failed to create member account", description: getErrorMessage(error), variant: "destructive" });
+    },
+  });
+
   const handleSetPin = () => {
     if (approvalPin.length < 4 || approvalPin.length > 6 || !/^\d+$/.test(approvalPin)) {
       toast({ title: "PIN must be 4-6 digits", variant: "destructive" });
@@ -189,6 +219,7 @@ function EditStaffPage({ organizationId, staffData, onBack }: EditStaffPageProps
 
   const selectedRole = form.watch("role");
   const showPinSection = ["manager", "admin", "supervisor", "owner"].includes(selectedRole || "");
+  const hasLinkedMember = !!(staffData as any).linked_member_id;
 
   return (
     <div className="space-y-6">
@@ -479,6 +510,218 @@ function EditStaffPage({ organizationId, staffData, onBack }: EditStaffPageProps
           </CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <LinkIcon className="h-5 w-5 text-primary" />
+            <CardTitle>Member Account</CardTitle>
+          </div>
+          <CardDescription>
+            Link this staff member to a member account so they can receive loans and access member services.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {hasLinkedMember ? (
+            <div className="flex items-center gap-3 p-4 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg">
+              <CheckCircle2 className="h-5 w-5 text-green-600" />
+              <div>
+                <p className="font-medium text-green-800 dark:text-green-200">Member Account Linked</p>
+                <p className="text-sm text-green-600 dark:text-green-400">
+                  {(staffData as any).linked_member_number
+                    ? `Account: ${(staffData as any).linked_member_number} - ${(staffData as any).linked_member_name || ""}`
+                    : "This staff member has a linked member account"}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                This staff member does not have a member account yet. Create one to enable them to apply for loans and use member services.
+              </p>
+              <Button
+                type="button"
+                onClick={() => {
+                  const p = staffWithProfile.profile;
+                  setMemberFormData(prev => ({
+                    ...prev,
+                    id_number: p?.national_id || "",
+                    date_of_birth: p?.date_of_birth || "",
+                    gender: p?.gender || "",
+                    next_of_kin_name: p?.next_of_kin_name || "",
+                    next_of_kin_phone: p?.next_of_kin_phone || "",
+                    next_of_kin_relationship: p?.next_of_kin_relationship || "",
+                  }));
+                  setShowMemberDialog(true);
+                }}
+                data-testid="button-create-member-account"
+              >
+                <UserPlus className="mr-2 h-4 w-4" />
+                Create Member Account
+              </Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={showMemberDialog} onOpenChange={setShowMemberDialog}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create Member Account</DialogTitle>
+            <DialogDescription>
+              Create a member account for {staffData.first_name} {staffData.last_name}. The name, email, phone, and branch will be copied from the staff record. Please fill in any additional details below.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Name</Label>
+                <Input value={`${staffData.first_name} ${staffData.last_name}`} disabled className="bg-muted" />
+              </div>
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input value={staffData.email || ""} disabled className="bg-muted" />
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Phone</Label>
+                <Input value={staffData.phone || ""} disabled className="bg-muted" />
+              </div>
+              <div className="space-y-2">
+                <Label>ID Number</Label>
+                <Input
+                  placeholder="National ID number"
+                  value={memberFormData.id_number}
+                  onChange={(e) => setMemberFormData(prev => ({ ...prev, id_number: e.target.value }))}
+                  data-testid="input-member-id-number"
+                />
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Date of Birth</Label>
+                <Input
+                  type="date"
+                  value={memberFormData.date_of_birth}
+                  onChange={(e) => setMemberFormData(prev => ({ ...prev, date_of_birth: e.target.value }))}
+                  data-testid="input-member-dob"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Gender</Label>
+                <Select
+                  value={memberFormData.gender}
+                  onValueChange={(val) => setMemberFormData(prev => ({ ...prev, gender: val }))}
+                >
+                  <SelectTrigger data-testid="select-member-gender">
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Marital Status</Label>
+                <Select
+                  value={memberFormData.marital_status}
+                  onValueChange={(val) => setMemberFormData(prev => ({ ...prev, marital_status: val }))}
+                >
+                  <SelectTrigger data-testid="select-member-marital-status">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="single">Single</SelectItem>
+                    <SelectItem value="married">Married</SelectItem>
+                    <SelectItem value="divorced">Divorced</SelectItem>
+                    <SelectItem value="widowed">Widowed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>County</Label>
+                <Input
+                  placeholder="County"
+                  value={memberFormData.county}
+                  onChange={(e) => setMemberFormData(prev => ({ ...prev, county: e.target.value }))}
+                  data-testid="input-member-county"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Address</Label>
+              <Input
+                placeholder="Physical address"
+                value={memberFormData.address}
+                onChange={(e) => setMemberFormData(prev => ({ ...prev, address: e.target.value }))}
+                data-testid="input-member-address"
+              />
+            </div>
+            <div className="border-t pt-4">
+              <p className="text-sm font-medium mb-3">Next of Kin</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Full Name</Label>
+                  <Input
+                    placeholder="Next of kin name"
+                    value={memberFormData.next_of_kin_name}
+                    onChange={(e) => setMemberFormData(prev => ({ ...prev, next_of_kin_name: e.target.value }))}
+                    data-testid="input-member-nok-name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Phone</Label>
+                  <Input
+                    placeholder="Next of kin phone"
+                    value={memberFormData.next_of_kin_phone}
+                    onChange={(e) => setMemberFormData(prev => ({ ...prev, next_of_kin_phone: e.target.value }))}
+                    data-testid="input-member-nok-phone"
+                  />
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 mt-3">
+                <div className="space-y-2">
+                  <Label>Relationship</Label>
+                  <Select
+                    value={memberFormData.next_of_kin_relationship}
+                    onValueChange={(val) => setMemberFormData(prev => ({ ...prev, next_of_kin_relationship: val }))}
+                  >
+                    <SelectTrigger data-testid="select-member-nok-relationship">
+                      <SelectValue placeholder="Select relationship" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="spouse">Spouse</SelectItem>
+                      <SelectItem value="parent">Parent</SelectItem>
+                      <SelectItem value="sibling">Sibling</SelectItem>
+                      <SelectItem value="child">Child</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setShowMemberDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => createMemberMutation.mutate()}
+              disabled={createMemberMutation.isPending}
+              data-testid="button-confirm-create-member"
+            >
+              {createMemberMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
+              Create & Link Account
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

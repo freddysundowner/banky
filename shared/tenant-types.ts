@@ -34,6 +34,7 @@ export const staffSchema = z.object({
   role: z.enum(staffRoles).default("staff"),
   branch_id: z.string().uuid().optional().nullable(),
   is_active: z.boolean().default(true),
+  linked_member_id: z.string().optional().nullable(),
   created_at: z.date().optional(),
 });
 

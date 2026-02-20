@@ -39,9 +39,11 @@ class Staff(TenantBase):
     is_active = Column(Boolean, default=True)
     is_locked = Column(Boolean, default=False)
     approval_pin = Column(String(255))  # Hashed PIN for shortage approvals
+    linked_member_id = Column(String, ForeignKey("members.id"))
     last_login = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow)
     
+    linked_member = relationship("Member", foreign_keys=[linked_member_id])
     branch = relationship("Branch", back_populates="staff")
     loan_applications = relationship("LoanApplication", foreign_keys="LoanApplication.created_by_id", back_populates="created_by")
     reviewed_loans = relationship("LoanApplication", foreign_keys="LoanApplication.reviewed_by_id", back_populates="reviewed_by")

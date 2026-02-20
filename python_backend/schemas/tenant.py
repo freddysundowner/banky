@@ -76,6 +76,7 @@ class StaffResponse(BaseModel):
     branch_id: Optional[str] = None
     is_active: bool
     is_locked: bool = False
+    linked_member_id: Optional[str] = None
     last_login: Optional[datetime] = None
     created_at: datetime
     

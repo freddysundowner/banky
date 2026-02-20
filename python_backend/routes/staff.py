@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
+from pydantic import BaseModel
+from typing import Optional
 from models.database import get_db
 from models.tenant import Staff, Branch, Member
 from schemas.tenant import StaffCreate, StaffUpdate, StaffResponse
@@ -85,11 +87,21 @@ async def get_staff(
         profiles = tenant_session.query(StaffProfile).filter(StaffProfile.staff_id.in_(staff_ids)).all()
         profile_map = {p.staff_id: p for p in profiles}
         
+        member_ids = [s.linked_member_id for s in staff_list if s.linked_member_id]
+        linked_members = {}
+        if member_ids:
+            members = tenant_session.query(Member).filter(Member.id.in_(member_ids)).all()
+            linked_members = {m.id: m for m in members}
+
         result = []
         for s in staff_list:
             staff_dict = StaffResponse.model_validate(s).model_dump()
             staff_dict['branch_name'] = s.branch.name if s.branch else None
             
+            lm = linked_members.get(s.linked_member_id) if s.linked_member_id else None
+            staff_dict['linked_member_number'] = lm.member_number if lm else None
+            staff_dict['linked_member_name'] = f"{lm.first_name} {lm.last_name}" if lm else None
+
             profile = profile_map.get(s.id)
             if profile:
                 staff_dict['profile'] = {
@@ -486,6 +498,114 @@ async def delete_staff(
                 status_code=400, 
                 detail="Cannot delete staff with related records. Please deactivate instead."
             )
+    finally:
+        tenant_session.close()
+        tenant_ctx.close()
+
+
+class CreateMemberAccountData(BaseModel):
+    id_type: Optional[str] = "national_id"
+    id_number: Optional[str] = None
+    date_of_birth: Optional[str] = None
+    gender: Optional[str] = None
+    marital_status: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    county: Optional[str] = None
+    next_of_kin_name: Optional[str] = None
+    next_of_kin_phone: Optional[str] = None
+    next_of_kin_relationship: Optional[str] = None
+
+
+@router.post("/{org_id}/staff/{staff_id}/create-member-account")
+async def create_member_account_for_staff(
+    org_id: str,
+    staff_id: str,
+    data: CreateMemberAccountData,
+    user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
+    require_role(membership, ["owner", "admin"])
+    tenant_session = tenant_ctx.create_session()
+    try:
+        staff = tenant_session.query(Staff).filter(Staff.id == staff_id).first()
+        if not staff:
+            raise HTTPException(status_code=404, detail="Staff not found")
+
+        if staff.linked_member_id:
+            existing_member = tenant_session.query(Member).filter(Member.id == staff.linked_member_id).first()
+            if existing_member:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Staff already has a linked member account ({existing_member.member_number})"
+                )
+
+        existing_by_email = tenant_session.query(Member).filter(Member.email == staff.email).first()
+        if existing_by_email:
+            staff.linked_member_id = existing_by_email.id
+            tenant_session.commit()
+            return {
+                "message": f"Staff linked to existing member account {existing_by_email.member_number}",
+                "member": {
+                    "id": existing_by_email.id,
+                    "member_number": existing_by_email.member_number,
+                    "first_name": existing_by_email.first_name,
+                    "last_name": existing_by_email.last_name,
+                }
+            }
+
+        branch = tenant_session.query(Branch).filter(Branch.id == staff.branch_id).first()
+        branch_code = branch.code if branch else "BR01"
+        member_number = generate_account_number(tenant_session, branch_code)
+
+        from datetime import date as date_type
+        dob = None
+        if data.date_of_birth:
+            try:
+                dob = date_type.fromisoformat(data.date_of_birth)
+            except ValueError:
+                pass
+
+        member = Member(
+            member_number=member_number,
+            first_name=staff.first_name,
+            last_name=staff.last_name,
+            email=staff.email,
+            phone=staff.phone,
+            branch_id=staff.branch_id,
+            id_type=data.id_type,
+            id_number=data.id_number,
+            date_of_birth=dob,
+            gender=data.gender,
+            marital_status=data.marital_status,
+            address=data.address,
+            city=data.city,
+            county=data.county,
+            next_of_kin_name=data.next_of_kin_name,
+            next_of_kin_phone=data.next_of_kin_phone,
+            next_of_kin_relationship=data.next_of_kin_relationship,
+            employment_status="employed",
+            status="active",
+            is_active=True,
+            membership_type="staff"
+        )
+        tenant_session.add(member)
+        tenant_session.flush()
+
+        staff.linked_member_id = member.id
+        tenant_session.commit()
+        tenant_session.refresh(member)
+
+        return {
+            "message": f"Member account {member_number} created and linked to staff",
+            "member": {
+                "id": member.id,
+                "member_number": member.member_number,
+                "first_name": member.first_name,
+                "last_name": member.last_name,
+            }
+        }
     finally:
         tenant_session.close()
         tenant_ctx.close()
