@@ -1543,31 +1543,52 @@ async def get_pay_period(org_id: str, period_id: str, user=Depends(get_current_u
 # ==================== PAYROLL PROCESSING ====================
 
 def calculate_staff_loan_deduction(tenant_session, member_id: str) -> Decimal:
-    """Calculate total due loan instalment amount for a member linked to staff.
-    Returns the sum of all due/overdue instalment remaining amounts across active loans.
-    Uses deterministic ordering: earliest due date first across all loans."""
+    """Calculate loan deduction amount for a member linked to staff.
+    Includes all due/overdue instalments PLUS the next upcoming instalment
+    for each active loan, so every payroll cycle covers loan repayment
+    regardless of whether the instalment is technically due yet."""
     from datetime import date as date_type
     today = date_type.today()
     
-    due_instalments = tenant_session.query(LoanInstalment).join(
-        LoanApplication, LoanInstalment.loan_id == LoanApplication.id
-    ).filter(
+    active_loans = tenant_session.query(LoanApplication).filter(
         LoanApplication.member_id == member_id,
-        LoanApplication.status.in_(["disbursed", "defaulted"]),
-        LoanInstalment.status.in_(["pending", "partial", "overdue"]),
-        LoanInstalment.due_date <= today
-    ).order_by(LoanInstalment.due_date, LoanInstalment.instalment_number).all()
+        LoanApplication.status.in_(["disbursed", "defaulted"])
+    ).order_by(LoanApplication.applied_at).all()
     
     total_due = Decimal("0")
-    for inst in due_instalments:
-        remaining = (
-            (Decimal(str(inst.expected_principal or 0)) - Decimal(str(inst.paid_principal or 0))) +
-            (Decimal(str(inst.expected_interest or 0)) - Decimal(str(inst.paid_interest or 0))) +
-            (Decimal(str(inst.expected_penalty or 0)) - Decimal(str(inst.paid_penalty or 0))) +
-            (Decimal(str(getattr(inst, 'expected_insurance', None) or 0)) - Decimal(str(getattr(inst, 'paid_insurance', None) or 0)))
-        )
-        if remaining > 0:
-            total_due += remaining
+    
+    for loan in active_loans:
+        due_instalments = tenant_session.query(LoanInstalment).filter(
+            LoanInstalment.loan_id == str(loan.id),
+            LoanInstalment.status.in_(["pending", "partial", "overdue"]),
+            LoanInstalment.due_date <= today
+        ).order_by(LoanInstalment.due_date, LoanInstalment.instalment_number).all()
+        
+        for inst in due_instalments:
+            remaining = (
+                (Decimal(str(inst.expected_principal or 0)) - Decimal(str(inst.paid_principal or 0))) +
+                (Decimal(str(inst.expected_interest or 0)) - Decimal(str(inst.paid_interest or 0))) +
+                (Decimal(str(inst.expected_penalty or 0)) - Decimal(str(inst.paid_penalty or 0))) +
+                (Decimal(str(getattr(inst, 'expected_insurance', None) or 0)) - Decimal(str(getattr(inst, 'paid_insurance', None) or 0)))
+            )
+            if remaining > 0:
+                total_due += remaining
+        
+        next_instalment = tenant_session.query(LoanInstalment).filter(
+            LoanInstalment.loan_id == str(loan.id),
+            LoanInstalment.status.in_(["pending", "partial"]),
+            LoanInstalment.due_date > today
+        ).order_by(LoanInstalment.due_date, LoanInstalment.instalment_number).first()
+        
+        if next_instalment:
+            remaining = (
+                (Decimal(str(next_instalment.expected_principal or 0)) - Decimal(str(next_instalment.paid_principal or 0))) +
+                (Decimal(str(next_instalment.expected_interest or 0)) - Decimal(str(next_instalment.paid_interest or 0))) +
+                (Decimal(str(next_instalment.expected_penalty or 0)) - Decimal(str(next_instalment.paid_penalty or 0))) +
+                (Decimal(str(getattr(next_instalment, 'expected_insurance', None) or 0)) - Decimal(str(getattr(next_instalment, 'paid_insurance', None) or 0)))
+            )
+            if remaining > 0:
+                total_due += remaining
     
     return total_due
 
@@ -1596,14 +1617,24 @@ def process_payroll_loan_repayment(tenant_session, member_id: str, amount: Decim
         if remaining_amount <= 0:
             break
         
-        due_instalments = tenant_session.query(LoanInstalment).filter(
+        target_instalments = tenant_session.query(LoanInstalment).filter(
             LoanInstalment.loan_id == str(loan.id),
             LoanInstalment.status.in_(["pending", "partial", "overdue"]),
             LoanInstalment.due_date <= today
         ).order_by(LoanInstalment.due_date, LoanInstalment.instalment_number).all()
         
+        next_inst = tenant_session.query(LoanInstalment).filter(
+            LoanInstalment.loan_id == str(loan.id),
+            LoanInstalment.status.in_(["pending", "partial"]),
+            LoanInstalment.due_date > today
+        ).order_by(LoanInstalment.due_date, LoanInstalment.instalment_number).first()
+        
+        all_to_pay = list(target_instalments)
+        if next_inst and next_inst not in all_to_pay:
+            all_to_pay.append(next_inst)
+        
         loan_due = Decimal("0")
-        for inst in due_instalments:
+        for inst in all_to_pay:
             r = (
                 (Decimal(str(inst.expected_principal or 0)) - Decimal(str(inst.paid_principal or 0))) +
                 (Decimal(str(inst.expected_interest or 0)) - Decimal(str(inst.paid_interest or 0))) +
