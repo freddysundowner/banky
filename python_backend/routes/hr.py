@@ -1668,9 +1668,8 @@ def process_payroll_loan_repayment(tenant_session, member_id: str, amount: Decim
         )
         tenant_session.add(repayment)
         
-        if member:
-            balance_before = member.loan_balance or Decimal("0")
-            member.loan_balance = max(Decimal("0"), balance_before - total_principal)
+        balance_before = loan.outstanding_balance or Decimal("0")
+        loan.outstanding_balance = max(Decimal("0"), balance_before - total_principal)
         
         loan.amount_paid = (loan.amount_paid or Decimal("0")) + actual_paid
         total_repayable = loan.total_amount or loan.amount
@@ -1683,8 +1682,8 @@ def process_payroll_loan_repayment(tenant_session, member_id: str, amount: Decim
             transaction_type="loan_repayment",
             account_type="loan",
             amount=actual_paid,
-            balance_before=balance_before if member else Decimal("0"),
-            balance_after=member.loan_balance if member else Decimal("0"),
+            balance_before=balance_before,
+            balance_after=loan.outstanding_balance or Decimal("0"),
             payment_method="payroll_deduction",
             reference=f"PAYROLL-LOAN-{period_name}",
             description=f"Loan repayment deducted from payroll: {period_name}"
