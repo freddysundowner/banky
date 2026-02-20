@@ -565,6 +565,14 @@ function StaffSection() {
           </div>
         ))}
       </div>
+      <h3 className="font-semibold text-gray-900 mt-4">Staff-Member Linking</h3>
+      <p className="text-gray-600 text-sm">Staff members can be linked to a member account, allowing them to access financial services like loans, savings, and shares just like any other member.</p>
+      <FeatureList items={[
+        'Link a staff member to an existing member account or create a new one during staff setup',
+        'Linked staff appear as "Staff" membership type in the member register',
+        'Staff with linked accounts can apply for and receive loans through the lending module',
+        'Active loans are automatically deducted from payroll during disbursement (see Payroll Processing)',
+      ]} />
       <h3 className="font-semibold text-gray-900 mt-4">Staff Actions</h3>
       <FeatureList items={[
         'Edit personal details, role, or branch assignment',
@@ -1428,7 +1436,7 @@ function AttendanceSection() {
 function PayrollSection() {
   return (
     <SectionWrapper title="Payroll Processing" icon={DollarSign}>
-      <p className="text-gray-600">Process monthly payroll for all staff members including salary, allowances, and statutory deductions.</p>
+      <p className="text-gray-600">Process monthly payroll for all staff members including salary, allowances, statutory deductions, and automatic loan repayments.</p>
       <h3 className="font-semibold text-gray-900">Salary Components</h3>
       <div className="grid sm:grid-cols-2 gap-4">
         <InfoCard title="Earnings">
@@ -1439,12 +1447,27 @@ function PayrollSection() {
             'Other Allowances',
           ]} />
         </InfoCard>
-        <InfoCard title="Deductions">
+        <InfoCard title="Statutory Deductions">
           <FeatureList items={[
             'PAYE (Pay As You Earn tax)',
             'NHIF (National Hospital Insurance Fund)',
             'NSSF (National Social Security Fund)',
-            'Other Deductions (loans, advances, etc.)',
+          ]} />
+        </InfoCard>
+        <InfoCard title="Loan Deductions">
+          <FeatureList items={[
+            'Automatic loan repayment deducted from net pay',
+            'Covers all overdue and currently due loan instalments',
+            'Proactively includes the next upcoming instalment even if not yet due',
+            'Supports multiple active loans per staff member',
+            'Shown as a separate line item on each payslip',
+          ]} />
+        </InfoCard>
+        <InfoCard title="Advance Deductions">
+          <FeatureList items={[
+            'Recovery of salary advances previously issued to staff',
+            'Tracked separately from loan deductions on payslips',
+            'Deducted after statutory deductions but before final net pay',
           ]} />
         </InfoCard>
       </div>
@@ -1454,13 +1477,23 @@ function PayrollSection() {
           <p>Ensure all staff have their salary components entered correctly in their HR profile.</p>
         </Step>
         <Step n={2} title="Run Payroll">
-          <p>Select the month and run the payroll. The system calculates gross pay, applies all deductions, and shows net pay for each staff member.</p>
+          <p>Select the month and run the payroll. The system calculates gross pay, applies all statutory deductions, calculates loan and advance deductions for linked staff members, and shows net pay for each staff member.</p>
         </Step>
         <Step n={3} title="Approve & Disburse">
-          <p>Review the payroll summary. Approve and choose the disbursement method. Payroll can be disbursed directly to staff savings accounts within the system.</p>
+          <p>Review the payroll summary including loan deductions. Approve and choose the disbursement method. When disbursed, loan repayments are automatically processed -- updating loan balances, marking paid instalments, recording repayment transactions, and updating the loan outstanding balance.</p>
         </Step>
       </div>
-      <Tip><strong>Automatic accounting:</strong> When payroll is processed, the system automatically creates journal entries -- debiting salary expense accounts and crediting cash and statutory deduction accounts.</Tip>
+      <h3 className="font-semibold text-gray-900 mt-4">Automatic Loan Deduction from Payroll</h3>
+      <p className="text-gray-600 text-sm">For staff members with linked member accounts and active loans, the system automatically calculates and deducts loan repayments during payroll:</p>
+      <FeatureList items={[
+        'Staff must have a linked member account with an active (disbursed) loan',
+        'All overdue and due instalments are collected first, then the next upcoming instalment is included proactively',
+        'Repayment is allocated in order: penalties, then interest, then insurance, then principal',
+        'If net pay is insufficient to cover the full loan amount, a partial deduction is made and logged',
+        'Each loan repayment creates a transaction record and updates the loan outstanding balance',
+        'Loans are marked as "fully paid" automatically when the total repaid reaches the total repayable amount',
+      ]} />
+      <Tip><strong>Automatic accounting:</strong> When payroll is processed, the system automatically creates journal entries -- debiting salary expense accounts and crediting cash, statutory deduction, and loan repayment accounts.</Tip>
     </SectionWrapper>
   );
 }
