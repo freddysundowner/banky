@@ -727,20 +727,33 @@ function BackupSection() {
         <div className="space-y-8">
           <div>
             <h3 className="font-semibold text-gray-900 mb-3">Manual Database Backup</h3>
-            <CodeBlock>{`# Create a backup
+            <CodeBlock>{`# Create a compressed backup
 pg_dump -h localhost -U banky -d banky -F c -f backup_$(date +%Y%m%d).dump
 
-# Or using the included backup script
-./scripts/backup.sh`}</CodeBlock>
+# Or using your DATABASE_URL from .env
+pg_dump "$DATABASE_URL" -F c -f backup_$(date +%Y%m%d).dump`}</CodeBlock>
           </div>
 
           <div>
             <h3 className="font-semibold text-gray-900 mb-3">Automated Daily Backups</h3>
-            <CodeBlock>{`# Add a daily backup cron job (runs at 2 AM)
-crontab -e
+            <CodeBlock>{`# Create a backup script
+cat > /opt/banky/backup.sh << 'SCRIPT'
+#!/bin/bash
+set -e
+BACKUP_DIR="/opt/banky/backups"
+mkdir -p "$BACKUP_DIR"
+export $(grep -v '^#' /opt/banky/banky/.env | grep -v '^\\s*$' | xargs)
+BACKUP_FILE="$BACKUP_DIR/banky_backup_$(date +%Y%m%d_%H%M%S).dump"
+pg_dump "$DATABASE_URL" -F c -f "$BACKUP_FILE"
+ls -t "$BACKUP_DIR"/banky_backup_*.dump | tail -n +31 | xargs rm -f 2>/dev/null || true
+echo "[$(date)] Backup: $BACKUP_FILE ($(du -sh "$BACKUP_FILE" | cut -f1))"
+SCRIPT
+chmod +x /opt/banky/backup.sh
 
+# Schedule daily backup at 2 AM
+crontab -e
 # Add this line:
-0 2 * * * /opt/banky/scripts/backup.sh >> /var/log/banky-backup.log 2>&1`}</CodeBlock>
+0 2 * * * /opt/banky/backup.sh >> /var/log/banky-backup.log 2>&1`}</CodeBlock>
           </div>
 
           <div>
@@ -776,7 +789,7 @@ function UpdatesSection({ guide, supportEmail }: { guide: GuideType; supportEmai
 
         <div className="space-y-6">
           <CodeBlock>{`# 1. Backup your database first (always!)
-./scripts/backup.sh
+pg_dump "$DATABASE_URL" -F c -f backup_$(date +%Y%m%d).dump
 
 # 2. Stop the application
 pm2 stop all

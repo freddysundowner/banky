@@ -273,9 +273,60 @@ pm2 status            # Check process status
 pm2 monit             # Real-time monitoring
 ```
 
+## Backup & Restore
+
+### Automated Daily Backups
+
+Create a backup script on your server:
+
+```bash
+#!/bin/bash
+# Save as /opt/banky/backup.sh
+
+set -e
+BACKUP_DIR="/opt/banky/backups"
+mkdir -p "$BACKUP_DIR"
+TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="$BACKUP_DIR/banky_backup_${TIMESTAMP}.dump"
+
+# Load DATABASE_URL from .env
+export $(grep -v '^#' /var/www/banky/saas/.env | grep -v '^\s*$' | xargs)
+
+# Create compressed backup
+pg_dump "$DATABASE_URL" -F c -f "$BACKUP_FILE"
+
+# Keep only the last 30 backups
+ls -t "$BACKUP_DIR"/banky_backup_*.dump | tail -n +31 | xargs rm -f 2>/dev/null || true
+
+echo "[$(date)] Backup complete: $BACKUP_FILE ($(du -sh "$BACKUP_FILE" | cut -f1))"
+```
+
+Schedule it with cron (daily at 2 AM):
+```bash
+chmod +x /opt/banky/backup.sh
+crontab -e
+# Add this line:
+0 2 * * * /opt/banky/backup.sh >> /var/log/banky-backup.log 2>&1
+```
+
+### Restoring from Backup
+
+```bash
+# Stop the application first
+pm2 stop all
+
+# Restore from a specific backup file
+pg_restore "$DATABASE_URL" -c --if-exists backups/banky_backup_XXXXXXXX_XXXXXX.dump
+
+# Restart the application
+pm2 restart all
+```
+
+**Important:** Restoring replaces ALL data in the database. Always confirm you're restoring the correct backup file.
+
 ## Updating
 
-1. Back up your master database: `pg_dump banky_master > backup.sql`
+1. Back up your master database using the backup script above
 2. Replace `backend/`, `frontend/`, and `admin/` with the new version
 3. Install updated dependencies: `cd backend && pip install -r requirements.txt`
 4. Restart: `pm2 restart all`
