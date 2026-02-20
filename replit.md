@@ -46,6 +46,18 @@ The frontend uses React 18 and TypeScript with Shadcn UI components and Tailwind
 
 ## Recent Changes
 
+### 2026-02-20: Settings Page UI Redesign
+- **Change**: Redesigned Organization Settings from cramped horizontal tabs to a modern vertical sidebar navigation layout.
+- **Layout**: Desktop shows a persistent left sidebar with nav items; mobile uses a dropdown selector. Content area is capped at `max-w-3xl` for readability.
+- **Components**: Extracted reusable layout helpers (`SectionHeader`, `SettingGroup`, `SettingRow`, `ToggleRow`) and individual section components (`GeneralSection`, `LoansSection`, `MembersSection`, etc.).
+- **Styling**: Clean card-based grouping with dividers, no nested cards. Floating save button only appears when there are unsaved changes.
+- **Functionality**: All original settings, fields, and data-testid attributes preserved. No backend changes.
+
+### 2026-02-20: Subscription Content Visibility Setting
+- **Change**: Added `landing_show_subscription_content` admin setting to hide subscription/trial/billing sections from landing page and user manual.
+- **Admin UI**: Toggle in Landing Page > URLs tab. Defaults to enabled (show).
+- **Manual**: Hides Subscriptions, Trial System, and Usage sections when disabled. Intended for CodeCanyon/self-hosted deployments.
+
 ### 2026-02-19: Enterprise Single-Database Support
 - **Change**: Enterprise/CodeCanyon deployments now work with a single PostgreSQL database (no Neon API required).
 - **Organization Creation**: When `DEPLOYMENT_MODE=enterprise`, `routes/organization.py` skips Neon API call and sets `org.connection_string = DATABASE_URL`. Tenant tables (57) are created in the same database as master tables (13) — no name collisions.
