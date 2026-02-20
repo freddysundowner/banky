@@ -265,9 +265,6 @@ SESSION_SECRET=generate-a-long-random-string-here
 
 # Application port (default: 5000)
 PORT=5000`}</CodeBlock>
-            <Tip type="info">
-              <strong>That's it!</strong> M-Pesa, SMS, Email, and other integrations are configured by the organization owner from the Settings page inside the app after setup.
-            </Tip>
           </div>
 
           <div className="border-l-4 border-purple-500 pl-6">
