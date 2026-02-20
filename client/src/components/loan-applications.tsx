@@ -341,7 +341,6 @@ function LoanPaymentHistory({ organizationId, loanId, loanData }: { organization
     const methods: Record<string, string> = {
       cash: "Cash",
       mpesa: "M-Pesa",
-      bank_transfer: "Bank Transfer",
       cheque: "Cheque",
     };
     return methods[method || ""] || method || "-";
@@ -534,15 +533,6 @@ const applicationSchema = z.object({
       });
     }
   }
-  if (data.disbursement_method === "bank_transfer") {
-    if (!data.disbursement_account || data.disbursement_account.trim() === "") {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Bank account number is required",
-        path: ["disbursement_account"],
-      });
-    }
-  }
 });
 
 type ApplicationFormData = z.infer<typeof applicationSchema>;
@@ -562,7 +552,6 @@ const loanPurposes = [
 
 const disbursementMethods = [
   { value: "mpesa", label: "M-Pesa" },
-  { value: "bank_transfer", label: "Bank Transfer" },
   { value: "cash", label: "Cash at Branch" },
   { value: "cheque", label: "Cheque" },
 ];
@@ -614,7 +603,6 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
   const canDisburse = hasPermission("loans:process");
   const { hasFeature } = useFeatures(organizationId);
   const hasMpesa = hasFeature("mpesa_integration");
-  const hasBankIntegration = hasFeature("bank_integration");
   const [selectedLoan, setSelectedLoan] = useState<LoanApplication | null>(null);
   const [editingLoan, setEditingLoan] = useState<LoanApplication | null>(null);
   const [memberSearchOpen, setMemberSearchOpen] = useState(false);
@@ -997,7 +985,6 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
     const getDisbursementMethodLabel = (method: string | null | undefined) => {
       const methods: Record<string, string> = {
         mpesa: "M-Pesa",
-        bank_transfer: "Bank Transfer",
         cash: "Cash at Branch",
         cheque: "Cheque",
       };
@@ -1306,12 +1293,6 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                   <div>
                     <div className="text-sm text-muted-foreground">M-Pesa Number</div>
                     <div className="font-medium">{loan.disbursement_phone}</div>
-                  </div>
-                )}
-                {loan.disbursement_method === "bank_transfer" && loan.disbursement_account && (
-                  <div>
-                    <div className="text-sm text-muted-foreground">Bank Account</div>
-                    <div className="font-medium">{loan.disbursement_account}</div>
                   </div>
                 )}
               </div>
@@ -1633,7 +1614,6 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                 </SelectTrigger>
                 <SelectContent>
                   {hasMpesa && <SelectItem value="mpesa">M-Pesa</SelectItem>}
-                  {hasBankIntegration && <SelectItem value="bank_transfer">Bank Transfer</SelectItem>}
                   <SelectItem value="cash">Cash</SelectItem>
                   <SelectItem value="cheque">Cheque</SelectItem>
                 </SelectContent>
@@ -1647,17 +1627,6 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                   onChange={(e) => setDisbursePhone(e.target.value)}
                   placeholder="e.g. 0712345678"
                   data-testid="input-disburse-phone-detail"
-                />
-              </div>
-            )}
-            {hasBankIntegration && disburseMethod === "bank_transfer" && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Bank Account</label>
-                <Input
-                  value={disburseAccount}
-                  onChange={(e) => setDisburseAccount(e.target.value)}
-                  placeholder="Account number"
-                  data-testid="input-disburse-account-detail"
                 />
               </div>
             )}
@@ -2046,15 +2015,6 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                     <FormItem>
                       <FormLabel>M-Pesa Phone Number <span className="text-destructive">*</span></FormLabel>
                       <FormControl><Input {...field} placeholder="e.g. 254712345678" data-testid="input-disbursement-phone" /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                )}
-                {disbMethod === "bank_transfer" && (
-                  <FormField control={formInstance.control} name="disbursement_account" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Bank Account Number <span className="text-destructive">*</span></FormLabel>
-                      <FormControl><Input {...field} placeholder="Enter bank account number" data-testid="input-disbursement-account" /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -2854,7 +2814,6 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                       </SelectTrigger>
                       <SelectContent>
                         {hasMpesa && <SelectItem value="mpesa">M-Pesa</SelectItem>}
-                        {hasBankIntegration && <SelectItem value="bank_transfer">Bank Transfer</SelectItem>}
                         <SelectItem value="cash">Cash</SelectItem>
                         <SelectItem value="cheque">Cheque</SelectItem>
                       </SelectContent>
@@ -2869,18 +2828,6 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                         onChange={(e) => setDisbursePhone(e.target.value)}
                         placeholder="e.g., 0712345678"
                         data-testid="input-disburse-phone"
-                      />
-                    </div>
-                  )}
-
-                  {hasBankIntegration && disburseMethod === "bank_transfer" && (
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Bank Account Details <span className="text-destructive">*</span></label>
-                      <Input
-                        value={disburseAccount}
-                        onChange={(e) => setDisburseAccount(e.target.value)}
-                        placeholder="Account number and bank name"
-                        data-testid="input-disburse-account"
                       />
                     </div>
                   )}
@@ -2923,7 +2870,6 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                 !disburseMethod || 
                 !disburseConfirmed || 
                 (disburseMethod === "mpesa" && !disbursePhone) ||
-                (disburseMethod === "bank_transfer" && !disburseAccount) ||
                 disburseMutation.isPending
               }
               data-testid="button-confirm-disburse"

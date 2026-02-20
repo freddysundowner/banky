@@ -300,7 +300,7 @@ const PERMISSION_DOCS: Record<string, { label: string; description: string; icon
   "loan_products:write": { label: "Loan Products: Manage", description: "Create and configure loan products", icon: FileText },
   "loans:read": { label: "Loans: View", description: "View loan applications and their status", icon: Banknote },
   "loans:write": { label: "Loans: Create/Edit", description: "Create new loan applications and edit existing ones", icon: Banknote },
-  "loans:process": { label: "Loans: Disburse", description: "Disburse approved loans via M-Pesa, bank transfer, or cash", icon: Banknote },
+  "loans:process": { label: "Loans: Disburse", description: "Disburse approved loans via M-Pesa, cash, or cheque", icon: Banknote },
   "loans:approve": { label: "Loans: Approve", description: "Approve pending loan applications", icon: CheckCircle },
   "loans:reject": { label: "Loans: Reject", description: "Reject pending loan applications with a reason", icon: XCircle },
   "repayments:read": { label: "Repayments: View", description: "View loan repayment records and schedules", icon: HandCoins },
