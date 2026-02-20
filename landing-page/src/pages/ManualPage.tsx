@@ -766,7 +766,7 @@ function LoanApplicationsSection() {
         </Step>
         <Step n={3} title="Disburse">
           <p>After approval, click <strong>Disburse</strong>. Choose the disbursement method:</p>
-          <FeatureList items={['Cash -- direct cash payout at the counter', 'Bank Transfer -- to the member\'s bank account', 'M-Pesa -- sent to the member\'s phone', 'Credit to Savings -- deposited into the member\'s savings account']} />
+          <FeatureList items={['Cash -- direct cash payout at the counter', 'M-Pesa -- sent to the member\'s phone', 'Credit to Savings -- deposited into the member\'s savings account']} />
         </Step>
       </div>
       <h3 className="font-semibold text-gray-900 mt-6">Instalment Schedule</h3>
