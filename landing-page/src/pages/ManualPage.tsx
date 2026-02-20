@@ -367,7 +367,6 @@ function PasswordResetSection() {
           <p>After resetting, you're redirected to the login page. Sign in with your new password.</p>
         </Step>
       </div>
-      <Warning><strong>Rate limit:</strong> You can request up to 5 password reset emails every 15 minutes.</Warning>
     </SectionWrapper>
   );
 }
