@@ -80,6 +80,7 @@ import {
   UserCircle,
   Calendar,
   ChevronRight,
+  RefreshCw,
 } from "lucide-react";
 import Dashboard from "./dashboard";
 import BranchManagement from "@/components/branch-management";
@@ -766,11 +767,23 @@ export default function Home() {
               {workingHoursMessage || "You cannot access the system at this time."}
             </CardDescription>
           </CardHeader>
-          <CardContent className="text-center space-y-4">
+          <CardContent className="text-center space-y-3">
             <p className="text-sm text-muted-foreground">
               Please contact your administrator if you need access outside of working hours.
             </p>
-            <Button onClick={() => logout()} variant="outline" className="w-full">
+            <Button
+              onClick={() => {
+                queryClient.invalidateQueries({ queryKey: ["/api/auth/session", selectedOrg?.id] });
+                queryClient.invalidateQueries({ queryKey: ["/api/auth/permissions", selectedOrg?.id] });
+              }}
+              variant="default"
+              className="w-full"
+              data-testid="button-refresh-access"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Check Again
+            </Button>
+            <Button onClick={() => logout()} variant="outline" className="w-full" data-testid="button-logout">
               <LogOut className="mr-2 h-4 w-4" />
               Log Out
             </Button>
