@@ -95,12 +95,31 @@ def initialize_working_hours(tenant_session):
 
 @router.get("/{org_id}/settings")
 async def list_settings(org_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
+    from models.master import Organization
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
     tenant_session = tenant_ctx.create_session()
     try:
         initialize_settings(tenant_session)
         settings = tenant_session.query(OrganizationSettings).all()
-        return [OrganizationSettingResponse.model_validate(s) for s in settings]
+        result = [OrganizationSettingResponse.model_validate(s) for s in settings]
+        
+        org = db.query(Organization).filter(Organization.id == org_id).first()
+        if org:
+            existing_keys = {s.setting_key for s in settings}
+            org_field_map = {
+                "working_hours_start": ("time", lambda v: v.strftime("%H:%M") if v else None),
+                "working_hours_end": ("time", lambda v: v.strftime("%H:%M") if v else None),
+                "enforce_working_hours": ("boolean", lambda v: str(v).lower() if v is not None else "false"),
+                "require_clock_in": ("boolean", lambda v: str(v).lower() if v is not None else "false"),
+            }
+            for field_key, (field_type, formatter) in org_field_map.items():
+                if field_key not in existing_keys:
+                    raw_val = getattr(org, field_key, None)
+                    formatted = formatter(raw_val)
+                    if formatted is not None:
+                        result.append({"setting_key": field_key, "setting_value": formatted, "setting_type": field_type})
+        
+        return result
     finally:
         tenant_session.close()
         tenant_ctx.close()

@@ -688,12 +688,12 @@ function HoursSection({ getBoolValue, updateSetting, getValue }: any) {
         <SettingRow>
           <div className="grid gap-4 sm:grid-cols-2 max-w-md">
             <div className="space-y-1.5">
-              <Label htmlFor="working_start_time">Start Time</Label>
-              <Input id="working_start_time" type="time" value={getValue("working_start_time") || "08:00"} onChange={(e) => updateSetting("working_start_time", e.target.value)} data-testid="input-start-time" />
+              <Label htmlFor="working_hours_start">Start Time</Label>
+              <Input id="working_hours_start" type="time" value={getValue("working_hours_start") || "08:00"} onChange={(e) => updateSetting("working_hours_start", e.target.value)} data-testid="input-start-time" />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="working_end_time">End Time</Label>
-              <Input id="working_end_time" type="time" value={getValue("working_end_time") || "17:00"} onChange={(e) => updateSetting("working_end_time", e.target.value)} data-testid="input-end-time" />
+              <Label htmlFor="working_hours_end">End Time</Label>
+              <Input id="working_hours_end" type="time" value={getValue("working_hours_end") || "17:00"} onChange={(e) => updateSetting("working_hours_end", e.target.value)} data-testid="input-end-time" />
             </div>
           </div>
         </SettingRow>
