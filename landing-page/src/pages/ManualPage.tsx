@@ -1391,23 +1391,36 @@ function HRSection() {
 function AttendanceSection() {
   return (
     <SectionWrapper title="Attendance Tracking" icon={Clock}>
-      <p className="text-gray-600">Track staff attendance with digital clock-in and clock-out. The system calculates hours worked, late arrivals, and overtime automatically.</p>
-      <h3 className="font-semibold text-gray-900">How It Works</h3>
+      <p className="text-gray-600">Track staff attendance with digital clock-in and clock-out. The system records exact timestamps and automatically calculates hours worked and overtime.</p>
+
+      <h3 className="font-semibold text-gray-900">How Clock In &amp; Clock Out Works</h3>
       <div className="space-y-4">
         <Step n={1} title="Clock In">
-          <p>Staff click <strong>Clock In</strong> when they arrive. The system records the exact timestamp.</p>
+          <p>When a staff member arrives, they click the <strong>Clock In</strong> button in the top header bar. The system records the exact date and time of clock-in. Each staff member can only clock in once per day — attempting to clock in again returns an error.</p>
         </Step>
-        <Step n={2} title="Clock Out">
-          <p>At the end of their shift, staff click <strong>Clock Out</strong>. Total hours worked are calculated automatically.</p>
+        <Step n={2} title="Work the Day">
+          <p>The header shows the staff member's clocked-in time throughout the day. Managers can see who has clocked in across their branch from the Attendance page.</p>
+        </Step>
+        <Step n={3} title="Clock Out">
+          <p>At the end of the shift, the staff member clicks <strong>Clock Out</strong>. The system records the exact time and automatically calculates total minutes worked. Each staff member can only clock out once per day — and must have clocked in first.</p>
         </Step>
       </div>
+
       <h3 className="font-semibold text-gray-900 mt-4">Automatic Calculations</h3>
       <FeatureList items={[
-        'Late minutes: Calculated based on business hours start time in Settings',
-        'Overtime: Hours worked beyond the standard workday',
-        'Total hours per day, week, and month',
-        'Attendance records visible to managers for their branch',
+        'Total minutes worked = Clock Out time minus Clock In time',
+        'Overtime: Any work beyond 8 hours (480 minutes) is recorded as overtime minutes automatically',
+        'Attendance status is set to "present" when a staff member clocks in',
+        'Attendance records are tied to each staff member\'s branch',
       ]} />
+
+      <h3 className="font-semibold text-gray-900 mt-4">Require Clock In (Access Control)</h3>
+      <p className="text-gray-600 text-sm">When the <strong>Require Clock In</strong> setting is enabled (in Settings → Business Hours), staff cannot access any part of the system until they have clocked in for the day. Instead of the normal dashboard, they see a full-screen prompt with a single <strong>Clock In</strong> button. Once clocked in, they gain full access. Admin users are not blocked by this restriction.</p>
+
+      <h3 className="font-semibold text-gray-900 mt-4">Manual Attendance Records</h3>
+      <p className="text-gray-600 text-sm">Managers with HR permissions can also create or edit attendance records manually from the Attendance page — useful for correcting missed clock-ins or adding records for field staff.</p>
+
+      <Tip><strong>Header buttons:</strong> The Clock In and Clock Out buttons only appear in the top bar when <strong>Require Clock In</strong> is enabled. If this setting is off, attendance is still tracked but not enforced.</Tip>
     </SectionWrapper>
   );
 }
@@ -1665,14 +1678,52 @@ function SettingsMpesaSection() {
 function SettingsHoursSection() {
   return (
     <SectionWrapper title="Business Hours" icon={Clock}>
-      <p className="text-gray-600">Define your organization's operating hours for each day of the week.</p>
-      <h3 className="font-semibold text-gray-900">Configuration</h3>
+      <p className="text-gray-600">Configure your organization's working schedule and control how staff access the system based on time and attendance.</p>
+
+      <h3 className="font-semibold text-gray-900">Working Hours Schedule</h3>
+      <p className="text-gray-600 text-sm">Set your working schedule for each day of the week. For each day you can:</p>
       <FeatureList items={[
-        'Set working days (Monday through Sunday -- toggle each day)',
-        'Set start and end time for each working day',
-        'Enforce working hours toggle -- when enabled, staff can only log in during business hours',
-        'Auto-logout timer -- automatically log out inactive sessions after a set number of minutes',
+        'Toggle each day as a working day or non-working day (Monday through Sunday)',
+        'Set a specific start time and end time for each working day',
+        'Days marked as non-working are treated as off-days for enforcement purposes',
       ]} />
+
+      <h3 className="font-semibold text-gray-900 mt-4">Enforce Working Hours</h3>
+      <div className="bg-gray-50 rounded-lg p-4 border border-gray-100 space-y-2">
+        <p className="text-sm font-medium text-gray-900">What it does</p>
+        <p className="text-sm text-gray-600">When this toggle is <strong>ON</strong>, the system checks the current time against your configured schedule every time a staff member tries to access the system. If they attempt to log in or navigate outside of working hours — or on a non-working day — access is blocked with a message showing the allowed hours.</p>
+        <p className="text-sm text-gray-600">When this toggle is <strong>OFF</strong>, the working hours schedule is saved but not enforced — staff can access the system at any time.</p>
+      </div>
+      <Warning><strong>Important:</strong> Enforce Working Hours checks happen at the session level. If a staff member is already logged in when working hours end, they will not be automatically kicked out — they only get blocked on the next login attempt or page refresh that triggers the check.</Warning>
+
+      <h3 className="font-semibold text-gray-900 mt-4">Require Clock In</h3>
+      <div className="bg-gray-50 rounded-lg p-4 border border-gray-100 space-y-2">
+        <p className="text-sm font-medium text-gray-900">What it does</p>
+        <p className="text-sm text-gray-600">When this toggle is <strong>ON</strong>, staff members must clock in before they can access any part of the system. Instead of the normal interface, they see a full-screen prompt with only a <strong>Clock In</strong> button. Once they clock in, they have full access for the rest of the day.</p>
+        <p className="text-sm text-gray-600">When this toggle is <strong>OFF</strong>, the Clock In and Clock Out buttons are hidden from the header and attendance tracking is not enforced (though records can still be created manually).</p>
+        <p className="text-sm text-gray-600"><strong>Admin users are exempt</strong> — they are never blocked, even when this setting is enabled.</p>
+      </div>
+
+      <h3 className="font-semibold text-gray-900 mt-4">Auto-Logout Timer</h3>
+      <p className="text-gray-600 text-sm">Set the number of minutes of inactivity before a staff session is automatically logged out. This applies across all staff members in the organization.</p>
+
+      <div className="grid sm:grid-cols-2 gap-4 mt-2">
+        <InfoCard title="Enforce Working Hours vs. Require Clock In">
+          <p>These are two independent controls:</p>
+          <ul className="mt-2 space-y-1 text-xs text-gray-600">
+            <li><strong>Enforce Working Hours</strong> — blocks access based on time of day/day of week</li>
+            <li><strong>Require Clock In</strong> — blocks access until the staff member manually clocks in</li>
+          </ul>
+          <p className="mt-2 text-xs text-gray-600">You can enable either, both, or neither depending on your needs.</p>
+        </InfoCard>
+        <InfoCard title="Recommended Setup">
+          <ul className="space-y-1 text-xs text-gray-600">
+            <li>Enable <strong>Require Clock In</strong> to ensure attendance is recorded every day</li>
+            <li>Enable <strong>Enforce Working Hours</strong> to prevent after-hours access</li>
+            <li>Set the auto-logout timer to 30–60 minutes for shared workstations</li>
+          </ul>
+        </InfoCard>
+      </div>
     </SectionWrapper>
   );
 }
