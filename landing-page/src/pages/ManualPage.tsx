@@ -977,7 +977,7 @@ function TellerStationSection() {
           ]} />
         </Step>
         <Step n={4} title="Complete Service">
-          <p>Click <strong>Complete</strong> to close the ticket and move to the next member. If the member needs a service at a different counter (e.g., loans), click <strong>Redirect</strong> to send them there.</p>
+          <p>Click <strong>Complete</strong> to close the ticket and move to the next member.</p>
         </Step>
       </div>
       <Tip><strong>Difference from Quick Transactions:</strong> The Teller Station integrates queue management, shows member summaries automatically, and is designed for high-volume counter operations. Use Quick Transactions for one-off back-office recordings.</Tip>
