@@ -89,21 +89,18 @@ The frontend uses React 18 and TypeScript with Shadcn UI components and Tailwind
 ### 2026-02-19: Landing Page CMS Content Management
 - **CMS API**: Admin endpoints `GET/PUT /api/admin/landing-content/{section}` for features, testimonials, faq, how_it_works, cta_section. Public endpoint `GET /api/public/landing-content/{section}`.
 - **Storage**: JSON content stored in `platform_settings` table with keys like `landing_content_features`, `landing_content_testimonials`, etc.
-- **Admin UI**: 10 tabs in Landing Page settings (Hero, Buttons, Stats, URLs, Features, Testimonials, FAQ, How It Works, CTA Section, Docs Page) with full CRUD, reordering, and inline editing.
-- **Docs Page Configuration**: Admin controls which documentation guides to show (`codecanyon`, `direct`, or `both`). When both are shown, tabs appear. When only one is shown, no tabs. Configurable tab titles, subtitles, and support email. Public endpoint: `GET /api/public/docs-config`. Settings stored as `landing_docs_*` keys in platform_settings.
+- **Admin UI**: 9 tabs in Landing Page settings (Hero, Buttons, Stats, URLs, Features, Testimonials, FAQ, How It Works, CTA Section) with full CRUD, reordering, and inline editing.
+- **Docs Page**: Single unified self-hosted installation guide. Support email configurable via `landing_docs_support_email` in platform_settings. Public endpoint: `GET /api/public/docs-config`.
 - **Landing Page Components**: Features, Testimonials, FAQ, HowItWorks, and CTA components fetch from API with hardcoded defaults as fallback.
 - **Validation**: Server-side payload validation ensures correct data shapes per section type.
 - **Icon/Color Options**: 24 Lucide icons and 13 color schemes available for features and steps.
 
 ### 2026-02-19: Unified License Key System
-- **Change**: Both CodeCanyon and Direct/Enterprise distributions now use license keys (previously CodeCanyon had no key).
-- **CodeCanyon**: Build script auto-generates a perpetual lifetime key (`BANKY-ENT-PERP-XXXXXXXX`) and pre-fills it in `.env.example`. All features unlocked, no limits, never expires.
-- **Direct/Enterprise**: `.env` has `LICENSE_KEY=` left blank. Admin generates keys per customer via admin panel based on purchased edition.
-- **Perpetual keys**: Format `BANKY-{EDITION}-PERP-{UNIQUE}`. Validated in `feature_flags.py` to always grant ALL_FEATURES and UNLIMITED_LIMITS regardless of DB state.
+- **Change**: All self-hosted distributions use license keys.
+- **Perpetual keys**: Format `BANKY-{EDITION}-PERP-{UNIQUE}`. Build script auto-generates one for bundled packages and pre-fills in `.env.example`. Validated in `feature_flags.py` to always grant ALL_FEATURES and UNLIMITED_LIMITS regardless of DB state.
 - **Non-perpetual keys**: Format `BANKY-{EDITION}-{YEAR}-{UNIQUE}`. Features/limits resolved from DB or edition defaults.
 - **Fallback**: No license key = BASELINE_FEATURES only (core banking basics). Warning logged to help diagnose.
 - **Admin panel**: License generation supports `perpetual: true` flag. License list shows perpetual status.
-- **Docs page**: License Activation section now visible for both CodeCanyon and Direct guides with tailored content.
 
 ### 2026-02-18: Loan Eligibility Rules
 - **No Duplicate Product Loans**: `allow_multiple_loans` flag on LoanProduct (default: true). When disabled, a member cannot have two active loans (pending/approved/disbursed/defaulted/restructured) of the same product type.
