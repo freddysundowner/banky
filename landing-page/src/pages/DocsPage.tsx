@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Server, Key, Terminal, CheckCircle, ArrowRight, Shield, Settings, Globe, HardDrive, RefreshCw, Mail, AlertTriangle, FileText } from 'lucide-react';
+import { Server, Key, Terminal, CheckCircle, ArrowRight, Shield, Globe, HardDrive, RefreshCw, Mail, AlertTriangle, FileText, Settings } from 'lucide-react';
 
-type SectionId = 'overview' | 'requirements' | 'installation' | 'license' | 'nginx' | 'ssl' | 'mpesa' | 'sms' | 'backup' | 'updates' | 'troubleshooting';
+type SectionId = 'overview' | 'requirements' | 'installation' | 'license' | 'nginx' | 'ssl' | 'backup' | 'updates' | 'troubleshooting';
 
 interface DocsConfig {
   support_email: string;
@@ -14,8 +14,6 @@ const allSections: { id: SectionId; label: string }[] = [
   { id: 'license', label: 'License Activation' },
   { id: 'nginx', label: 'Domain & Nginx' },
   { id: 'ssl', label: 'SSL Certificates' },
-  { id: 'mpesa', label: 'M-Pesa Setup' },
-  { id: 'sms', label: 'SMS Gateway' },
   { id: 'backup', label: 'Backup & Restore' },
   { id: 'updates', label: 'Updates' },
   { id: 'troubleshooting', label: 'Troubleshooting' },
@@ -252,8 +250,7 @@ nano .env`}</CodeBlock>
               <h3 className="font-semibold text-gray-900 text-lg">Environment Configuration</h3>
             </div>
             <p className="text-gray-600 mb-4">Fill in your <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">.env</code> file with these required values:</p>
-            <CodeBlock>{`# ── Required ──────────────────────────────────────────────
-# Your PostgreSQL connection string
+            <CodeBlock>{`# Your PostgreSQL connection string
 DATABASE_URL=postgresql://banky:your_password@localhost:5432/banky
 
 # Must be "enterprise" for self-hosted installations
@@ -263,22 +260,14 @@ DEPLOYMENT_MODE=enterprise
 LICENSE_KEY=BANKY-XXX-XXXX-XXXXXXXX
 
 # Random secret for session encryption (min 32 characters)
+# Generate with: openssl rand -hex 32
 SESSION_SECRET=generate-a-long-random-string-here
 
-# ── Optional ──────────────────────────────────────────────
-# M-Pesa (Safaricom Daraja API credentials)
-# MPESA_CONSUMER_KEY=your_consumer_key
-# MPESA_CONSUMER_SECRET=your_consumer_secret
-# MPESA_SHORTCODE=your_shortcode
-# MPESA_PASSKEY=your_passkey
-
-# SMS Gateway
-# SMS_API_KEY=your_sms_api_key
-# SMS_SENDER_ID=BANKY
-
-# Email (Brevo / SMTP)
-# BREVO_API_KEY=your_brevo_api_key
-# FROM_EMAIL=noreply@yourorganization.co.ke`}</CodeBlock>
+# Application port (default: 5000)
+PORT=5000`}</CodeBlock>
+            <Tip type="info">
+              <strong>That's it!</strong> M-Pesa, SMS, Email, and other integrations are configured by the organization owner from the Settings page inside the app after setup.
+            </Tip>
           </div>
 
           <div className="border-l-4 border-purple-500 pl-6">
@@ -509,113 +498,6 @@ sudo ufw status`}</CodeBlock>
   );
 }
 
-function MpesaSection() {
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl p-8 border border-gray-200">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-          <Settings className="w-7 h-7 text-purple-600" />
-          M-Pesa Setup
-        </h2>
-
-        <div className="space-y-6">
-          <p className="text-gray-600">BANKY supports two M-Pesa integration methods. Choose the one that best fits your organization:</p>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-              <h3 className="font-semibold text-gray-900 mb-3">Option A: Direct Safaricom Daraja API</h3>
-              <p className="text-sm text-gray-600 mb-3">Connect directly to Safaricom's API. Best for organizations that want full control.</p>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex items-start gap-2"><ArrowRight className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />Register at developer.safaricom.co.ke</li>
-                <li className="flex items-start gap-2"><ArrowRight className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />Create an app and get credentials</li>
-                <li className="flex items-start gap-2"><ArrowRight className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />Requires SSL for callbacks</li>
-              </ul>
-            </div>
-            <div className="bg-green-50 rounded-xl p-6 border border-green-200">
-              <h3 className="font-semibold text-gray-900 mb-3">Option B: SunPay Managed Gateway</h3>
-              <p className="text-sm text-gray-600 mb-3">Simplified integration through SunPay. Best for quick setup.</p>
-              <ul className="space-y-2 text-sm text-gray-600">
-                <li className="flex items-start gap-2"><ArrowRight className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Single API key setup</li>
-                <li className="flex items-start gap-2"><ArrowRight className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />SunPay handles Safaricom compliance</li>
-                <li className="flex items-start gap-2"><ArrowRight className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Faster integration process</li>
-              </ul>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-3">Daraja API Configuration</h3>
-            <CodeBlock>{`# Add to your .env file:
-MPESA_CONSUMER_KEY=your_consumer_key
-MPESA_CONSUMER_SECRET=your_consumer_secret
-MPESA_SHORTCODE=your_shortcode
-MPESA_PASSKEY=your_passkey
-MPESA_ENVIRONMENT=production  # or sandbox for testing
-
-# Callback URL (must be HTTPS):
-MPESA_CALLBACK_URL=https://yourdomain.com/api/mpesa/callback`}</CodeBlock>
-          </div>
-
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-3">SunPay Configuration</h3>
-            <CodeBlock>{`# Add to your .env file:
-SUNPAY_API_KEY=your_sunpay_api_key`}</CodeBlock>
-          </div>
-
-          <Tip type="warning">
-            <strong>SSL Required:</strong> M-Pesa callbacks require a valid HTTPS URL. Make sure you've completed the SSL setup before configuring M-Pesa.
-          </Tip>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SmsSection() {
-  return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl p-8 border border-gray-200">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-          <Mail className="w-7 h-7 text-purple-600" />
-          SMS Gateway Setup
-        </h2>
-
-        <div className="space-y-6">
-          <p className="text-gray-600">BANKY can send SMS notifications for transactions, loan updates, and reminders. Configure your SMS gateway credentials in the Settings page after logging in, or via environment variables.</p>
-
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-3">Environment Variables</h3>
-            <CodeBlock>{`# Add to your .env file:
-SMS_API_KEY=your_sms_api_key
-SMS_SENDER_ID=BANKY`}</CodeBlock>
-          </div>
-
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-3">In-App Configuration</h3>
-            <p className="text-gray-600">You can also configure SMS settings from within the app:</p>
-            <ol className="space-y-2 text-gray-600 mt-3">
-              <li className="flex items-start gap-3">
-                <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">1</span>
-                <span>Log in as an admin or owner</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">2</span>
-                <span>Go to Settings &gt; SMS Configuration</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">3</span>
-                <span>Enter your API key and sender ID</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="w-6 h-6 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0">4</span>
-                <span>Send a test SMS to verify</span>
-              </li>
-            </ol>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function BackupSection() {
   return (
@@ -829,8 +711,6 @@ function GuideContent({ activeSection, supportEmail }: { activeSection: SectionI
     case 'license': return <LicenseSection supportEmail={supportEmail} />;
     case 'nginx': return <NginxSection />;
     case 'ssl': return <SslSection />;
-    case 'mpesa': return <MpesaSection />;
-    case 'sms': return <SmsSection />;
     case 'backup': return <BackupSection />;
     case 'updates': return <UpdatesSection supportEmail={supportEmail} />;
     case 'troubleshooting': return <TroubleshootingSection supportEmail={supportEmail} />;
