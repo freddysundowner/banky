@@ -5,7 +5,7 @@ import {
   ChevronRight, Search, UserCog, ScrollText, Calendar, AlertTriangle,
   Clock, CheckCircle, HardDrive, Landmark, Layers,
   Bell, LogIn, UserPlus, KeyRound, Mail, Star, Download, Printer,
-  Handshake, RefreshCw, DollarSign, ClipboardList, MonitorSmartphone,
+  HeartHandshake, RefreshCw, DollarSign, ClipboardList, MonitorSmartphone,
   Trash2
 } from 'lucide-react';
 
@@ -110,7 +110,7 @@ const navGroups: NavGroup[] = [
     items: [
       { id: 'loan-products', label: 'Loan Products', icon: CreditCard },
       { id: 'loan-applications', label: 'Loan Applications', icon: FileText },
-      { id: 'guarantors', label: 'Guarantor System', icon: Handshake },
+      { id: 'guarantors', label: 'Guarantor System', icon: HeartHandshake },
       { id: 'loan-restructuring', label: 'Loan Restructuring', icon: RefreshCw },
       { id: 'repayments', label: 'Repayments', icon: Receipt },
       { id: 'defaults-collections', label: 'Defaults & Collections', icon: AlertTriangle },
@@ -785,7 +785,7 @@ function LoanApplicationsSection() {
 
 function GuarantorsSection() {
   return (
-    <SectionWrapper title="Guarantor System" icon={Handshake}>
+    <SectionWrapper title="Guarantor System" icon={HeartHandshake}>
       <p className="text-gray-600">Guarantors are members who vouch for a borrower's loan. If the borrower defaults, guarantors share responsibility for repayment.</p>
       <h3 className="font-semibold text-gray-900">How Guarantors Work</h3>
       <div className="space-y-4">
