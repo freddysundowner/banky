@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowRight, Play, Shield, ChevronLeft, ChevronRight, Landmark, HandCoins, UsersRound } from 'lucide-react';
+import { ArrowRight, Play, Shield, ChevronLeft, ChevronRight, Landmark, Coins, UsersRound } from 'lucide-react';
 import { useBranding } from '../context/BrandingContext';
 
 const screenshots = [
@@ -147,7 +147,7 @@ export default function Hero() {
                   Banks & MFIs
                 </div>
                 <div className="flex items-center gap-2">
-                  <HandCoins className="w-5 h-5 text-green-400" />
+                  <Coins className="w-5 h-5 text-green-400" />
                   Saccos
                 </div>
                 <div className="flex items-center gap-2">
