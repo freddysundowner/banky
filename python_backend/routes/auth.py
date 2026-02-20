@@ -15,7 +15,27 @@ from services.auth import (
 
 router = APIRouter()
 
-def check_working_hours(organization, role: str) -> dict:
+def _get_org_timezone(org_id: str, db: Session) -> str:
+    """Get the timezone setting for an organization from tenant settings."""
+    try:
+        from services.tenant_context import get_tenant_context_simple
+        from models.tenant import OrganizationSettings
+        tenant_ctx = get_tenant_context_simple(org_id, db)
+        if not tenant_ctx:
+            return "Africa/Nairobi"
+        tenant_session = tenant_ctx.create_session()
+        try:
+            tz_setting = tenant_session.query(OrganizationSettings).filter(
+                OrganizationSettings.setting_key == "timezone"
+            ).first()
+            return tz_setting.setting_value if tz_setting and tz_setting.setting_value else "Africa/Nairobi"
+        finally:
+            tenant_session.close()
+            tenant_ctx.close()
+    except Exception:
+        return "Africa/Nairobi"
+
+def check_working_hours(organization, role: str, timezone_str: str = None) -> dict:
     """Check if current time is within organization's working hours.
     Returns dict with 'allowed' bool and 'message' string."""
     if role in ["owner", "admin"]:
@@ -24,7 +44,12 @@ def check_working_hours(organization, role: str) -> dict:
     if not organization or not organization.enforce_working_hours:
         return {"allowed": True, "message": "", "debug": f"Working hours not enforced, enforce={getattr(organization, 'enforce_working_hours', None)}"}
     
-    now = datetime.now()
+    try:
+        from zoneinfo import ZoneInfo
+        tz = ZoneInfo(timezone_str) if timezone_str else None
+        now = datetime.now(tz) if tz else datetime.now()
+    except Exception:
+        now = datetime.now()
     current_time = now.time()
     current_day = now.strftime("%A").lower()
     
