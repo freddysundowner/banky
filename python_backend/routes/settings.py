@@ -139,8 +139,39 @@ async def update_settings_bulk(org_id: str, updates: dict, user=Depends(get_curr
         org_fields = ["working_hours_start", "working_hours_end", "working_days", "enforce_working_hours", 
                       "auto_logout_minutes", "require_two_factor_auth", "currency", "financial_year_start"]
         
+        tenant_sync_fields = {
+            "enforce_working_hours": "boolean",
+            "working_hours_start": "time",
+            "working_hours_end": "time",
+            "require_clock_in": "boolean",
+            "allow_weekend_access": "boolean",
+            "timezone": "string",
+            "working_days": "string",
+        }
+        
+        def _sync_to_tenant(setting_key, setting_value, setting_type="string"):
+            existing = tenant_session.query(OrganizationSettings).filter(
+                OrganizationSettings.setting_key == setting_key
+            ).first()
+            if existing:
+                existing.setting_value = str(setting_value)
+                existing.updated_at = datetime.utcnow()
+            else:
+                tenant_session.add(OrganizationSettings(
+                    setting_key=setting_key,
+                    setting_value=str(setting_value),
+                    setting_type=setting_type
+                ))
+        
         for key, value in updates.items():
             snake_key = key.replace("-", "_")
+            
+            if snake_key in tenant_sync_fields:
+                if snake_key in ("enforce_working_hours", "require_clock_in", "allow_weekend_access", "require_two_factor_auth"):
+                    tenant_val = str(value).lower() if isinstance(value, str) else str(value).lower()
+                else:
+                    tenant_val = str(value) if value is not None else ""
+                _sync_to_tenant(snake_key, tenant_val, tenant_sync_fields[snake_key])
             
             if snake_key in org_fields:
                 if snake_key == "enforce_working_hours" or snake_key == "require_two_factor_auth":
@@ -162,19 +193,8 @@ async def update_settings_bulk(org_id: str, updates: dict, user=Depends(get_curr
                     if snake_key == "currency":
                         for skey in ["currency", "currency_symbol"]:
                             sval = value if skey == "currency" else updates.get("currency_symbol", value)
-                            existing = tenant_session.query(OrganizationSettings).filter(
-                                OrganizationSettings.setting_key == skey
-                            ).first()
-                            if existing:
-                                existing.setting_value = str(sval)
-                                existing.updated_at = datetime.utcnow()
-                            else:
-                                tenant_session.add(OrganizationSettings(
-                                    setting_key=skey,
-                                    setting_value=str(sval),
-                                    setting_type="string"
-                                ))
-            else:
+                            _sync_to_tenant(skey, sval, "string")
+            elif snake_key not in tenant_sync_fields:
                 setting = tenant_session.query(OrganizationSettings).filter(
                     OrganizationSettings.setting_key == key
                 ).first()

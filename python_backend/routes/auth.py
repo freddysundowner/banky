@@ -37,21 +37,22 @@ def _get_org_timezone(org_id: str, db: Session) -> str:
 
 def check_working_hours(org_id: str, role: str, db: Session) -> dict:
     """Check if current time is within organization's working hours.
-    Reads all settings from the tenant database (single source of truth).
+    Reads settings from tenant DB first, falls back to master Organization model.
     Returns dict with 'allowed' bool and 'message' string."""
     if role in ["owner", "admin"]:
         return {"allowed": True, "message": ""}
     
+    settings = {}
     try:
         from services.tenant_context import get_tenant_context_simple
-        from models.tenant import OrganizationSettings
+        from models.tenant import OrganizationSettings as TenantOrgSettings
         tenant_ctx = get_tenant_context_simple(org_id, db)
         if not tenant_ctx:
             return {"allowed": True, "message": ""}
         tenant_session = tenant_ctx.create_session()
         try:
-            settings = {s.setting_key: s.setting_value for s in tenant_session.query(OrganizationSettings).filter(
-                OrganizationSettings.setting_key.in_([
+            settings = {s.setting_key: s.setting_value for s in tenant_session.query(TenantOrgSettings).filter(
+                TenantOrgSettings.setting_key.in_([
                     "enforce_working_hours", "working_hours_start", "working_hours_end",
                     "allow_weekend_access", "timezone"
                 ])
@@ -60,7 +61,23 @@ def check_working_hours(org_id: str, role: str, db: Session) -> dict:
             tenant_session.close()
             tenant_ctx.close()
     except Exception:
-        return {"allowed": True, "message": ""}
+        pass
+    
+    if "enforce_working_hours" not in settings:
+        try:
+            from models.master import Organization
+            org = db.query(Organization).filter(Organization.id == org_id).first()
+            if org:
+                if hasattr(org, 'enforce_working_hours') and org.enforce_working_hours is not None:
+                    settings["enforce_working_hours"] = str(org.enforce_working_hours).lower()
+                if hasattr(org, 'working_hours_start') and org.working_hours_start is not None:
+                    settings.setdefault("working_hours_start", org.working_hours_start.strftime("%H:%M") if hasattr(org.working_hours_start, 'strftime') else str(org.working_hours_start))
+                if hasattr(org, 'working_hours_end') and org.working_hours_end is not None:
+                    settings.setdefault("working_hours_end", org.working_hours_end.strftime("%H:%M") if hasattr(org.working_hours_end, 'strftime') else str(org.working_hours_end))
+                if hasattr(org, 'timezone') and org.timezone:
+                    settings.setdefault("timezone", org.timezone)
+        except Exception:
+            pass
     
     enforce = settings.get("enforce_working_hours", "false")
     if enforce != "true":
