@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime, time
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from models.database import get_db
 from models.tenant import OrganizationSettings, WorkingHours
 from schemas.tenant import OrganizationSettingCreate, OrganizationSettingResponse, WorkingHoursCreate, WorkingHoursResponse
@@ -321,9 +322,18 @@ async def check_working_hours(org_id: str, user=Depends(get_current_user), db: S
         if not enforce_setting or enforce_setting.setting_value != "true":
             return {"is_working_time": True, "message": "Working hours not enforced"}
         
-        now = datetime.now()
+        tz_setting = tenant_session.query(OrganizationSettings).filter(
+            OrganizationSettings.setting_key == "timezone"
+        ).first()
+        tz_name = tz_setting.setting_value if tz_setting and tz_setting.setting_value else "UTC"
+        try:
+            tz = ZoneInfo(tz_name)
+        except ZoneInfoNotFoundError:
+            tz = ZoneInfo("UTC")
+        
+        now = datetime.now(tz=tz)
         current_day = now.weekday()
-        current_time = now.time()
+        current_time = now.time().replace(tzinfo=None)
         
         wh = tenant_session.query(WorkingHours).filter(WorkingHours.day_of_week == current_day).first()
         
