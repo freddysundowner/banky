@@ -20,6 +20,9 @@ show_menu() {
 
 build_frontend() {
     echo ""
+    echo ">>> Installing frontend dependencies..."
+    npm install --silent 2>/dev/null || npm install
+    echo ""
     echo ">>> Building Frontend..."
     npx vite build
     echo ">>> Frontend built to dist/public/"
@@ -169,11 +172,15 @@ build_compiled() {
 # Database connection
 DATABASE_URL=postgresql://user:password@host:5432/banky
 
-# Deployment mode
+# Deployment mode (do not change)
 DEPLOYMENT_MODE=enterprise
 
-# License Key (provided after purchase - REQUIRED)
-LICENSE_KEY=
+# Random secret for session encryption (minimum 32 characters)
+# Generate with: openssl rand -hex 32
+SESSION_SECRET=change-this-to-a-random-string-at-least-32-characters
+
+# Application port (default: 5000)
+PORT=5000
 EOF
 
     # Create install script
@@ -204,9 +211,7 @@ echo "Step 3/3: Setting up environment..."
 if [ ! -f .env ]; then
     cp .env.example .env
     echo "Created .env file from .env.example"
-    echo ""
-    echo "IMPORTANT: You must add your LICENSE_KEY to .env"
-    echo "           Get your key from the admin who sold you this license."
+    echo "All features are unlocked by default."
 else
     echo ".env already exists"
 fi
@@ -217,7 +222,7 @@ echo "  Installation Complete!"
 echo "========================================"
 echo ""
 echo "Next steps:"
-echo "  1. Edit .env with your database URL and LICENSE_KEY"
+echo "  1. Edit .env with your database URL and session secret"
 echo "  2. For development: ./start.sh"
 echo "  3. For production:  See README.md for PM2/Nginx setup"
 echo ""
@@ -353,19 +358,19 @@ build_codecanyon() {
     rm -f packages/codecanyon/banky/drizzle.config.ts 2>/dev/null || true
     rm -f packages/codecanyon/banky/components.json 2>/dev/null || true
     
-    # Generate perpetual lifetime license key for CodeCanyon
-    CODECANYON_KEY="BANKY-ENT-PERP-$(cat /dev/urandom | tr -dc 'A-Z0-9' | fold -w 8 | head -n 1)"
-    echo ">>> Generated CodeCanyon lifetime key: $CODECANYON_KEY"
-
-    cat > packages/codecanyon/banky/.env.example << EOF
+    cat > packages/codecanyon/banky/.env.example << 'EOF'
 # Database connection
 DATABASE_URL=postgresql://user:password@host:5432/banky
 
-# Deployment mode
+# Deployment mode (do not change)
 DEPLOYMENT_MODE=enterprise
 
-# License Key (lifetime key - all features unlocked forever)
-LICENSE_KEY=${CODECANYON_KEY}
+# Random secret for session encryption (minimum 32 characters)
+# Generate with: openssl rand -hex 32
+SESSION_SECRET=change-this-to-a-random-string-at-least-32-characters
+
+# Application port (default: 5000)
+PORT=5000
 EOF
 
     # Create install script
@@ -396,7 +401,7 @@ echo "Step 3/3: Setting up environment..."
 if [ ! -f .env ]; then
     cp .env.example .env
     echo "Created .env file from .env.example"
-    echo "Your lifetime license key is already included."
+    echo "All features are unlocked by default."
 else
     echo ".env already exists"
 fi
@@ -407,7 +412,7 @@ echo "  Installation Complete!"
 echo "========================================"
 echo ""
 echo "Next steps:"
-echo "  1. Edit .env with your database URL"
+echo "  1. Edit .env with your database URL and session secret"
 echo "  2. For development: ./start.sh"
 echo "  3. For production:  See README.md for PM2/Nginx setup"
 echo ""
