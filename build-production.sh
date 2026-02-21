@@ -411,11 +411,13 @@ if [ "$(id -u)" -ne 0 ]; then
 fi
 
 # ── Detect OS ──
+OS_NAME="unknown"
+OS_VERSION=""
 if [ -f /etc/os-release ]; then
     . /etc/os-release
-    OS_NAME=$ID
-    OS_VERSION=$VERSION_ID
-    echo "  Detected OS: ${PRETTY_NAME}"
+    OS_NAME="${ID:-unknown}"
+    OS_VERSION="${VERSION_ID:-}"
+    echo "  Detected OS: ${PRETTY_NAME:-$OS_NAME}"
 else
     print_warn "Could not detect OS. This script is designed for Ubuntu/Debian."
 fi
@@ -497,18 +499,12 @@ check_installed() {
     fi
 }
 
-check_installed "Node.js" "node"
-HAS_NODE=$?
-check_installed "Python" "python3"
-HAS_PYTHON=$?
-check_installed "PostgreSQL" "psql"
-HAS_POSTGRES=$?
-check_installed "Nginx" "nginx"
-HAS_NGINX=$?
-check_installed "PM2" "pm2"
-HAS_PM2=$?
-check_installed "Certbot" "certbot"
-HAS_CERTBOT=$?
+check_installed "Node.js" "node" && HAS_NODE=0 || HAS_NODE=1
+check_installed "Python" "python3" && HAS_PYTHON=0 || HAS_PYTHON=1
+check_installed "PostgreSQL" "psql" && HAS_POSTGRES=0 || HAS_POSTGRES=1
+check_installed "Nginx" "nginx" && HAS_NGINX=0 || HAS_NGINX=1
+check_installed "PM2" "pm2" && HAS_PM2=0 || HAS_PM2=1
+check_installed "Certbot" "certbot" && HAS_CERTBOT=0 || HAS_CERTBOT=1
 
 echo ""
 if [ -z "$INSTALL_NEEDED" ]; then
@@ -529,7 +525,7 @@ fi
 
 # Install basic build tools if missing
 for pkg in curl wget git build-essential software-properties-common; do
-    dpkg -s "$pkg" >/dev/null 2>&1 || apt install -y "$pkg" 2>/dev/null
+    dpkg -s "$pkg" >/dev/null 2>&1 || apt install -y "$pkg" 2>/dev/null || true
 done
 
 # Node.js 20
@@ -548,10 +544,10 @@ if [ $HAS_PYTHON -ne 0 ]; then
 else
     # Ensure sub-packages are present without upgrading Python itself
     for pkg in python3-venv python3-pip python3-dev; do
-        dpkg -s "$pkg" >/dev/null 2>&1 || {
-            apt install -y "$pkg" 2>/dev/null
+        if ! dpkg -s "$pkg" >/dev/null 2>&1; then
+            apt install -y "$pkg" 2>/dev/null || true
             print_new "Installed missing package: $pkg"
-        }
+        fi
     done
 fi
 
@@ -672,7 +668,7 @@ print_ok "Upload directory ready"
 # ══════════════════════════════════════════════════════════════
 print_step "Step 5/9: Installing frontend dependencies..."
 
-npm install --production=false 2>&1 | tail -1
+npm install 2>&1 | tail -3
 print_ok "Node.js dependencies installed"
 
 # ══════════════════════════════════════════════════════════════
@@ -750,16 +746,22 @@ else
 fi
 
 # Test nginx config before reloading
-if nginx -t 2>/dev/null; then
+NGINX_TEST=$(nginx -t 2>&1) && NGINX_OK=true || NGINX_OK=false
+if [ "$NGINX_OK" = true ]; then
     systemctl reload nginx
     print_ok "Nginx configured and reloaded for ${USER_DOMAIN}"
 else
-    print_err "Nginx config test failed! Check: sudo nginx -t"
+    echo "$NGINX_TEST"
+    print_err "Nginx config test failed! See errors above."
     print_warn "Restoring backup if available..."
     LATEST_BACKUP=$(ls -t /etc/nginx/sites-available/banky.backup.* 2>/dev/null | head -1)
     if [ -n "$LATEST_BACKUP" ]; then
         cp "$LATEST_BACKUP" /etc/nginx/sites-available/banky
-        nginx -t 2>/dev/null && systemctl reload nginx
+        RESTORE_TEST=$(nginx -t 2>&1) && RESTORE_OK=true || RESTORE_OK=false
+        if [ "$RESTORE_OK" = true ]; then
+            systemctl reload nginx
+            print_ok "Previous Nginx config restored"
+        fi
     fi
 fi
 
@@ -827,11 +829,38 @@ print_ok "BANKY services started with PM2"
 
 # Verify services are running
 sleep 3
-BANKY_API_STATUS=$(pm2 jlist 2>/dev/null | python3 -c "import sys,json; apps=json.load(sys.stdin); print(next((a['pm2_env']['status'] for a in apps if a['name']=='banky-api'), 'unknown'))" 2>/dev/null || echo "unknown")
+BANKY_API_STATUS=$(pm2 jlist 2>/dev/null | python3 -c "
+import sys, json
+try:
+    apps = json.load(sys.stdin)
+    status = next((a['pm2_env']['status'] for a in apps if a['name']=='banky-api'), 'unknown')
+    print(status)
+except:
+    print('unknown')
+" 2>/dev/null) || BANKY_API_STATUS="unknown"
+
 if [ "$BANKY_API_STATUS" = "online" ]; then
     print_ok "banky-api is running"
 else
-    print_warn "banky-api status: ${BANKY_API_STATUS} (check: pm2 logs banky-api)"
+    print_warn "banky-api status: ${BANKY_API_STATUS}"
+    print_warn "Check logs with: pm2 logs banky-api"
+fi
+
+BANKY_SCHED_STATUS=$(pm2 jlist 2>/dev/null | python3 -c "
+import sys, json
+try:
+    apps = json.load(sys.stdin)
+    status = next((a['pm2_env']['status'] for a in apps if a['name']=='banky-scheduler'), 'unknown')
+    print(status)
+except:
+    print('unknown')
+" 2>/dev/null) || BANKY_SCHED_STATUS="unknown"
+
+if [ "$BANKY_SCHED_STATUS" = "online" ]; then
+    print_ok "banky-scheduler is running"
+else
+    print_warn "banky-scheduler status: ${BANKY_SCHED_STATUS}"
+    print_warn "Check logs with: pm2 logs banky-scheduler"
 fi
 
 # ══════════════════════════════════════════════════════════════
@@ -842,19 +871,24 @@ if command -v certbot >/dev/null 2>&1; then
     read -p "  Set up free SSL certificate with Let's Encrypt? (y/n): " SETUP_SSL
     if [ "$SETUP_SSL" = "y" ] || [ "$SETUP_SSL" = "Y" ]; then
         print_step "Setting up SSL certificate..."
-        read -p "  Enter your email for SSL certificate: " SSL_EMAIL
+        read -p "  Enter your email for SSL certificate (or press Enter to skip): " SSL_EMAIL
+        SSL_SUCCESS=false
         if [ -n "$SSL_EMAIL" ]; then
-            certbot --nginx -d "${USER_DOMAIN}" --non-interactive --agree-tos -m "${SSL_EMAIL}" || {
-                print_warn "SSL setup failed. Make sure your domain points to this server's IP."
-                echo "    You can retry later with: sudo certbot --nginx -d ${USER_DOMAIN}"
-            }
+            certbot --nginx -d "${USER_DOMAIN}" --non-interactive --agree-tos -m "${SSL_EMAIL}" && SSL_SUCCESS=true || true
         else
-            certbot --nginx -d "${USER_DOMAIN}" --non-interactive --agree-tos --register-unsafely-without-email || {
-                print_warn "SSL setup failed. You can run it manually later:"
-                echo "    sudo certbot --nginx -d ${USER_DOMAIN}"
-            }
+            certbot --nginx -d "${USER_DOMAIN}" --non-interactive --agree-tos --register-unsafely-without-email && SSL_SUCCESS=true || true
+        fi
+        if [ "$SSL_SUCCESS" = true ]; then
+            print_ok "SSL certificate installed successfully!"
+        else
+            print_warn "SSL setup failed. Make sure:"
+            echo "    1. Your domain ${USER_DOMAIN} points to this server's IP"
+            echo "    2. Port 80 is open in your firewall"
+            echo "    Retry later with: sudo certbot --nginx -d ${USER_DOMAIN}"
         fi
     fi
+else
+    print_warn "Certbot not available. Install SSL manually later if needed."
 fi
 
 # ══════════════════════════════════════════════════════════════
