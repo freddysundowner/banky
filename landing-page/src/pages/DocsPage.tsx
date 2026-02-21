@@ -256,15 +256,15 @@ DATABASE_URL=postgresql://banky:your_password@localhost:5432/banky
 # Must be "enterprise" for self-hosted installations
 DEPLOYMENT_MODE=enterprise
 
-# Your license key (provided after purchase, or pre-included for lifetime keys)
-LICENSE_KEY=BANKY-XXX-XXXX-XXXXXXXX
-
 # Random secret for session encryption (min 32 characters)
 # Generate with: openssl rand -hex 32
 SESSION_SECRET=generate-a-long-random-string-here
 
 # Application port (default: 5000)
 PORT=5000`}</CodeBlock>
+            <Tip type="success">
+              <strong>All features unlocked:</strong> In enterprise mode, all features and limits are automatically unlocked. No license key is required.
+            </Tip>
           </div>
 
           <div className="border-l-4 border-purple-500 pl-6">
@@ -326,7 +326,11 @@ function LicenseSection({ supportEmail }: { supportEmail: string }) {
         </h2>
 
         <div className="space-y-6">
-          <p className="text-gray-600">Your license key determines which features and limits are available in your installation. It should be set in your <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">.env</code> file.</p>
+          <Tip type="success">
+            <strong>No license key required!</strong> All features and limits are automatically unlocked in enterprise mode. License keys are optional and only needed if you want to restrict features to a specific edition.
+          </Tip>
+
+          <p className="text-gray-600 mt-4">If you do choose to use a license key to control edition limits, set it in your <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">.env</code> file.</p>
 
           <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
             <h3 className="font-semibold text-gray-900 mb-3">License Key Format</h3>

@@ -174,14 +174,13 @@ def get_feature_access_for_enterprise(license_key: Optional[str] = None, db=None
             )
         else:
             logger.warning(f"Invalid license key format: {license_key[:10]}...")
-    else:
-        logger.warning("No LICENSE_KEY configured. Running with basic features only. Set a valid LICENSE_KEY in .env to unlock features.")
     
+    logger.info("Enterprise mode: all features unlocked (no license key required)")
     return FeatureAccess(
-        enabled_features=BASELINE_FEATURES,
-        limits=EDITION_LIMITS.get("basic", EDITION_LIMITS["basic"]),
+        enabled_features=ALL_FEATURES,
+        limits=UNLIMITED_LIMITS,
         mode="enterprise",
-        plan_or_edition="basic"
+        plan_or_edition="enterprise"
     )
 
 def get_feature_access(organization_subscription: Optional[Dict] = None, db=None) -> FeatureAccess:
