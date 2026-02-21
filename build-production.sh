@@ -424,88 +424,120 @@ APP_DIR=$(pwd)
 # ══════════════════════════════════════════════════════════════
 print_step "Step 1/8: Installing system packages..."
 
-apt update && apt upgrade -y
+apt update -y
+# Install basic tools only if missing (no system upgrade to protect existing services)
 apt install -y curl wget git build-essential software-properties-common
 
 # Node.js 20
-if ! command -v node >/dev/null 2>&1; then
+if command -v node >/dev/null 2>&1; then
+    NODE_VER=$(node -v)
+    print_ok "Node.js ${NODE_VER} already installed (skipping)"
+else
+    print_warn "Node.js not found, installing..."
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
     apt install -y nodejs
     print_ok "Node.js $(node -v) installed"
-else
-    print_ok "Node.js $(node -v) already installed"
 fi
 
-# Python 3.11+
-if ! command -v python3 >/dev/null 2>&1; then
-    apt install -y python3 python3-venv python3-pip python3-dev
-    print_ok "Python installed"
+# Python 3
+if command -v python3 >/dev/null 2>&1; then
+    print_ok "Python $(python3 --version) already installed (skipping)"
+    # Only install missing sub-packages without upgrading existing ones
+    for pkg in python3-venv python3-pip python3-dev; do
+        dpkg -s "$pkg" >/dev/null 2>&1 || apt install -y "$pkg"
+    done
 else
-    print_ok "Python $(python3 --version) already installed"
+    print_warn "Python not found, installing..."
+    apt install -y python3 python3-venv python3-pip python3-dev
+    print_ok "Python $(python3 --version) installed"
 fi
-apt install -y python3-venv python3-pip python3-dev 2>/dev/null || true
 
 # PostgreSQL
-if ! command -v psql >/dev/null 2>&1; then
+if command -v psql >/dev/null 2>&1; then
+    print_ok "PostgreSQL already installed (skipping - your data is safe)"
+else
+    print_warn "PostgreSQL not found, installing..."
     apt install -y postgresql postgresql-contrib
     systemctl enable postgresql
     systemctl start postgresql
     print_ok "PostgreSQL installed and started"
-else
-    print_ok "PostgreSQL already installed"
 fi
+# Make sure PostgreSQL is running regardless
+systemctl is-active --quiet postgresql || systemctl start postgresql
 
 # Nginx
-if ! command -v nginx >/dev/null 2>&1; then
+if command -v nginx >/dev/null 2>&1; then
+    print_ok "Nginx already installed (skipping - existing configs preserved)"
+else
+    print_warn "Nginx not found, installing..."
     apt install -y nginx
     systemctl enable nginx
     print_ok "Nginx installed"
-else
-    print_ok "Nginx already installed"
 fi
 
 # PM2
-if ! command -v pm2 >/dev/null 2>&1; then
+if command -v pm2 >/dev/null 2>&1; then
+    print_ok "PM2 already installed (skipping)"
+else
+    print_warn "PM2 not found, installing..."
     npm install -g pm2
     print_ok "PM2 installed"
-else
-    print_ok "PM2 already installed"
 fi
 
-# Certbot for SSL
-apt install -y certbot python3-certbot-nginx 2>/dev/null || true
-print_ok "Certbot installed"
+# Certbot
+if command -v certbot >/dev/null 2>&1; then
+    print_ok "Certbot already installed (skipping)"
+else
+    print_warn "Certbot not found, installing..."
+    apt install -y certbot python3-certbot-nginx 2>/dev/null || true
+    print_ok "Certbot installed"
+fi
 
 # ══════════════════════════════════════════════════════════════
 #  STEP 2: Create PostgreSQL database
 # ══════════════════════════════════════════════════════════════
 print_step "Step 2/8: Setting up PostgreSQL database..."
 
-sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname='banky'" | grep -q 1 || {
+if sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname='banky'" | grep -q 1; then
+    print_ok "Database user 'banky' already exists (skipping - password unchanged)"
+    # Use existing password if .env already exists
+    if [ -f .env ]; then
+        EXISTING_DB_URL=$(grep "^DATABASE_URL=" .env | cut -d= -f2-)
+        if [ -n "$EXISTING_DB_URL" ]; then
+            DB_PASSWORD="EXISTING"
+        fi
+    fi
+else
     sudo -u postgres psql -c "CREATE USER banky WITH PASSWORD '${DB_PASSWORD}';"
     print_ok "Database user 'banky' created"
-}
+fi
 
-sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname='banky'" | grep -q 1 || {
+if sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname='banky'" | grep -q 1; then
+    print_ok "Database 'banky' already exists (skipping - your data is safe)"
+else
     sudo -u postgres psql -c "CREATE DATABASE banky OWNER banky;"
     sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE banky TO banky;"
     print_ok "Database 'banky' created"
-}
+fi
 
 # ══════════════════════════════════════════════════════════════
 #  STEP 3: Configure environment
 # ══════════════════════════════════════════════════════════════
 print_step "Step 3/8: Configuring environment..."
 
-cat > .env << ENVEOF
+if [ -f .env ]; then
+    print_ok ".env already exists (skipping - your settings are preserved)"
+    print_warn "If you need to reconfigure, edit .env manually"
+else
+    cat > .env << ENVEOF
 DATABASE_URL=postgresql://banky:${DB_PASSWORD}@localhost:5432/banky
 DEPLOYMENT_MODE=enterprise
 SESSION_SECRET=${SESSION_SECRET}
 DOMAIN=${USER_DOMAIN}
 PORT=5000
 ENVEOF
-
-print_ok ".env file created with secure credentials"
+    print_ok ".env file created with secure credentials"
+fi
 
 # ══════════════════════════════════════════════════════════════
 #  STEP 4: Install Node.js dependencies
@@ -563,7 +595,15 @@ server {
 NGINXEOF
 
 ln -sf /etc/nginx/sites-available/banky /etc/nginx/sites-enabled/banky
-rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+
+# Only remove default site if no other sites are configured
+OTHER_SITES=$(ls /etc/nginx/sites-enabled/ 2>/dev/null | grep -v banky | grep -v default | wc -l)
+if [ "$OTHER_SITES" -eq 0 ]; then
+    rm -f /etc/nginx/sites-enabled/default 2>/dev/null || true
+    print_ok "Removed default Nginx site (no other sites found)"
+else
+    print_ok "Kept default Nginx site (other sites detected)"
+fi
 
 nginx -t && systemctl reload nginx
 print_ok "Nginx configured for ${USER_DOMAIN}"
@@ -620,7 +660,9 @@ module.exports = {
 };
 PMEOF
 
-pm2 delete all 2>/dev/null || true
+# Only stop BANKY processes, not other apps on the server
+pm2 delete banky-api 2>/dev/null || true
+pm2 delete banky-scheduler 2>/dev/null || true
 pm2 start ecosystem.config.cjs
 pm2 save
 pm2 startup systemd -u root --hp /root 2>/dev/null || pm2 startup 2>/dev/null || true
