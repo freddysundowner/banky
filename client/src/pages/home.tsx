@@ -272,7 +272,8 @@ function SidebarUpgradeFooter({ plan, isTrial, trialDaysRemaining, onUpgrade }: 
 export default function Home() {
   const { user, logout, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
-  const { platform_name: platformName } = useBranding();
+  const { platform_name: platformName, deployment_mode } = useBranding();
+  const isSaasMode = deployment_mode === 'saas';
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [selectedOrg, setSelectedOrg] = useState<OrganizationMembership["organization"] | null>(null);
   const [activeSection, setActiveSection] = useState<NavSection>(() => {
@@ -897,22 +898,26 @@ export default function Home() {
 
           </SidebarContent>
           
-          <SidebarUpgradeFooter
-            plan={plan}
-            isTrial={isTrial}
-            trialDaysRemaining={trialDaysRemaining}
-            onUpgrade={() => setActiveSection("upgrade")}
-          />
+          {isSaasMode && (
+            <SidebarUpgradeFooter
+              plan={plan}
+              isTrial={isTrial}
+              trialDaysRemaining={trialDaysRemaining}
+              onUpgrade={() => setActiveSection("upgrade")}
+            />
+          )}
         </Sidebar>
 
         <div className="flex flex-col flex-1 overflow-hidden">
-          <TrialBanner
-            isExpired={isExpired}
-            isTrial={isTrial}
-            trialDaysRemaining={trialDaysRemaining}
-            message={trialMessage}
-            onUpgrade={() => setActiveSection("upgrade")}
-          />
+          {isSaasMode && (
+            <TrialBanner
+              isExpired={isExpired}
+              isTrial={isTrial}
+              trialDaysRemaining={trialDaysRemaining}
+              message={trialMessage}
+              onUpgrade={() => setActiveSection("upgrade")}
+            />
+          )}
           {!emailBannerDismissed && user && !(user as any)?.isStaff && (user as any)?.is_email_verified === false && (
             <div className="flex items-center justify-between gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-800" data-testid="banner-email-verification">
               <div className="flex items-center gap-2 text-sm text-amber-800 dark:text-amber-200">

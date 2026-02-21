@@ -1,6 +1,7 @@
 import { useLocation, Link } from "wouter";
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useBranding } from "@/context/BrandingContext";
 import {
   LayoutDashboard,
   Users,
@@ -162,6 +163,8 @@ export function AppSidebar() {
   const [location] = useLocation();
   const { user, isAuthenticated } = useAuth();
   const { setOpenMobile, openMobile } = useSidebar();
+  const { deployment_mode } = useBranding();
+  const isSaasMode = deployment_mode === 'saas';
 
   useEffect(() => {
     setOpenMobile(false);
@@ -306,7 +309,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="border-t border-sidebar-border p-2 space-y-1">
-        {subscriptionStatus && (
+        {isSaasMode && subscriptionStatus && (
           <Link href="/upgrade" onClick={closeMobileSidebar}>
             <div className={`rounded-md px-3 py-2 text-xs cursor-pointer transition-colors ${
               isExpired 

@@ -780,6 +780,8 @@ async def get_public_branding():
         for s in settings:
             result[s.setting_key] = s.setting_value or ""
         
+        result["deployment_mode"] = os.environ.get("DEPLOYMENT_MODE", "saas")
+        
         return result
     finally:
         db.close()
