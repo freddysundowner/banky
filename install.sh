@@ -15,6 +15,7 @@ print_warn() { echo -e "${YELLOW}    [WARN] $1${NC}"; }
 print_err()  { echo -e "${RED}    [ERROR] $1${NC}"; }
 
 APP_DIR=$(pwd)
+REQUIRED_PYTHON="3.11.9"
 
 echo ""
 echo -e "${BLUE}================================================================${NC}"
@@ -45,56 +46,80 @@ else
     print_err "Node.js not found"
 fi
 
+# ── Python: find 3.11+, or use pyenv to install it ──────────
 PYTHON_CMD=""
-# Try to find Python 3.11+ — check versioned binaries first, then fall back
+
+# First pass: check if a suitable version is already on the system
 for _candidate in python3.13 python3.12 python3.11 python3 python; do
     if command -v "$_candidate" >/dev/null 2>&1; then
-        _ver=$("$_candidate" --version 2>&1)
         _major=$("$_candidate" -c "import sys; print(sys.version_info.major)" 2>/dev/null || echo 0)
         _minor=$("$_candidate" -c "import sys; print(sys.version_info.minor)" 2>/dev/null || echo 0)
         if [ "$_major" -ge 3 ] && [ "$_minor" -ge 11 ]; then
             PYTHON_CMD="$_candidate"
-            print_ok "$_ver (using $_candidate)"
+            print_ok "$("$_candidate" --version) (using $_candidate)"
             break
         fi
     fi
 done
 
+# Second pass: use pyenv to install the required version
 if [ -z "$PYTHON_CMD" ]; then
-    # No 3.11+ found — check if any Python 3 exists and warn
-    for _candidate in python3 python; do
-        if command -v "$_candidate" >/dev/null 2>&1; then
-            _ver=$("$_candidate" --version 2>&1)
-            if echo "$_ver" | grep -q "Python 3"; then
-                PYTHON_CMD="$_candidate"
-                print_warn "$_ver detected — Python 3.11+ is recommended, will try anyway"
-                break
-            fi
+    print_warn "No Python 3.11+ found on system — using pyenv to install Python ${REQUIRED_PYTHON}"
+
+    # Load pyenv into this session if it's already installed
+    export PYENV_ROOT="${PYENV_ROOT:-$HOME/.pyenv}"
+    export PATH="$PYENV_ROOT/bin:$PATH"
+
+    if ! command -v pyenv >/dev/null 2>&1; then
+        echo "    Installing pyenv..."
+        if command -v curl >/dev/null 2>&1; then
+            curl -fsSL https://pyenv.run | bash
+        elif command -v wget >/dev/null 2>&1; then
+            wget -qO- https://pyenv.run | bash
+        else
+            print_err "Neither curl nor wget found — cannot install pyenv"
+            print_err "Please install Python 3.11+ manually and re-run this script"
+            exit 1
         fi
-    done
+        print_ok "pyenv installed"
+    else
+        print_skip "pyenv already installed ($(pyenv --version))"
+    fi
+
+    eval "$(pyenv init -)"
+
+    if pyenv versions --bare | grep -q "^${REQUIRED_PYTHON}$"; then
+        print_skip "Python ${REQUIRED_PYTHON} already installed in pyenv"
+    else
+        echo "    Installing Python ${REQUIRED_PYTHON} via pyenv (this may take a few minutes)..."
+        pyenv install "$REQUIRED_PYTHON"
+        print_ok "Python ${REQUIRED_PYTHON} installed"
+    fi
+
+    pyenv local "$REQUIRED_PYTHON"
+    PYTHON_CMD="$PYENV_ROOT/versions/${REQUIRED_PYTHON}/bin/python3"
+    print_ok "Using Python $($PYTHON_CMD --version) from pyenv"
 fi
 
 if [ -z "$PYTHON_CMD" ]; then
     MISSING="${MISSING} Python3"
-    print_err "Python 3 not found"
+    print_err "Python 3 not found and pyenv install failed"
 fi
 
 if [ -n "$MISSING" ]; then
     echo ""
-    print_err "Missing or incompatible required software:${MISSING}"
+    print_err "Missing required software:${MISSING}"
     echo ""
     if [ "$PLATFORM" = "mac" ]; then
         echo "  Install with Homebrew:"
-        echo "    brew install node python@3.11"
+        echo "    brew install node"
     elif [ "$PLATFORM" = "windows" ]; then
         echo "  Download and install:"
-        echo "    Node.js:  https://nodejs.org"
-        echo "    Python 3: https://python.org (check 'Add to PATH')"
-        echo "              Make sure to install version 3.11 or newer"
+        echo "    Node.js: https://nodejs.org"
     else
         echo "  Install on Ubuntu/Debian:"
         echo "    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -"
-        echo "    sudo apt install -y nodejs python3.11 python3.11-venv python3-pip"
+        echo "    sudo apt install -y nodejs"
     fi
     echo ""
     echo "  After installing, run this script again."
@@ -140,7 +165,7 @@ print_step "Step 4/5: Installing Python backend dependencies..."
 
 if [ ! -d "venv" ]; then
     $PYTHON_CMD -m venv venv
-    print_ok "Python virtual environment created"
+    print_ok "Python virtual environment created ($($PYTHON_CMD --version))"
 else
     print_skip "Virtual environment already exists"
 fi
@@ -158,11 +183,6 @@ if pip install -r python_backend/requirements.txt 2>&1; then
 else
     echo ""
     print_err "Failed to install Python dependencies"
-    echo ""
-    echo "  Common causes:"
-    echo "    - No internet connection"
-    echo "    - Python version incompatible (need 3.11+, found: $($PYTHON_CMD --version))"
-    echo "    - pip not available in the virtual environment"
     echo ""
     echo "  Try running manually:"
     echo "    source venv/bin/activate"
