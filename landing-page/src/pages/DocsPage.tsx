@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Server, Key, Terminal, CheckCircle, ArrowRight, Shield, Globe, HardDrive, RefreshCw, Mail, AlertTriangle, FileText, Settings } from 'lucide-react';
 
-type SectionId = 'overview' | 'requirements' | 'installation' | 'license' | 'nginx' | 'ssl' | 'backup' | 'updates' | 'troubleshooting';
+type SectionId = 'overview' | 'requirements' | 'installation' | 'license' | 'database' | 'pm2' | 'nginx' | 'ssl' | 'backup' | 'updates' | 'troubleshooting';
 
 interface DocsConfig {
   support_email: string;
@@ -12,7 +12,9 @@ const allSections: { id: SectionId; label: string }[] = [
   { id: 'requirements', label: 'Requirements' },
   { id: 'installation', label: 'Installation' },
   { id: 'license', label: 'License Activation' },
-  { id: 'nginx', label: 'Domain & Nginx' },
+  { id: 'database', label: 'Database Setup' },
+  { id: 'pm2', label: 'PM2 Process Manager' },
+  { id: 'nginx', label: 'Nginx Reverse Proxy' },
   { id: 'ssl', label: 'SSL Certificates' },
   { id: 'backup', label: 'Backup & Restore' },
   { id: 'updates', label: 'Updates' },
@@ -172,27 +174,9 @@ function RequirementsSection() {
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl p-8 border border-gray-200">
-        <h3 className="font-semibold text-gray-900 mb-4">Install Prerequisites</h3>
-        <CodeBlock>{`# Update system
-sudo apt update && sudo apt upgrade -y
-
-# Install Node.js 20 LTS
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs
-
-# Install Python 3.11
-sudo apt install -y python3.11 python3.11-venv python3-pip
-
-# Install PostgreSQL (skip if using external database)
-sudo apt install -y postgresql postgresql-contrib
-
-# Install Nginx
-sudo apt install -y nginx
-
-# Install PM2 (process manager)
-sudo npm install -g pm2`}</CodeBlock>
-      </div>
+      <Tip type="info">
+        <strong>Installation guides:</strong> See the <strong>Database Setup</strong>, <strong>PM2 Process Manager</strong>, <strong>Nginx Reverse Proxy</strong>, and <strong>SSL Certificates</strong> sections for step-by-step setup instructions for each component.
+      </Tip>
     </div>
   );
 }
@@ -203,112 +187,86 @@ function InstallationSection() {
       <div className="bg-white rounded-2xl p-8 border border-gray-200">
         <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
           <Terminal className="w-7 h-7 text-purple-600" />
-          Step-by-Step Installation
+          Application Installation
         </h2>
 
-        <div className="space-y-8">
+        <Tip type="info">
+          <strong>What does install.sh do?</strong> The install script only sets up the BANKY application itself — Node.js dependencies, Python virtual environment, and frontend build. Server infrastructure (PostgreSQL, Nginx, PM2, SSL) is set up separately. See the guides below.
+        </Tip>
+
+        <div className="space-y-8 mt-8">
           <div className="border-l-4 border-purple-500 pl-6">
             <div className="flex items-center gap-3 mb-3">
               <StepNumber n={1} />
-              <h3 className="font-semibold text-gray-900 text-lg">Create the Database</h3>
-            </div>
-            <p className="text-gray-600 mb-4">Create a PostgreSQL database for BANKY. You can use a local database or any cloud provider (AWS RDS, Neon, Supabase, etc.):</p>
-            <CodeBlock>{`# If using local PostgreSQL:
-sudo -u postgres psql << EOF
-CREATE USER banky WITH PASSWORD 'your_secure_password';
-CREATE DATABASE banky OWNER banky;
-GRANT ALL PRIVILEGES ON DATABASE banky TO banky;
-EOF
-
-# Your connection string will be:
-# postgresql://banky:your_secure_password@localhost:5432/banky
-
-# If using a cloud provider, copy the connection string they provide.`}</CodeBlock>
-          </div>
-
-          <div className="border-l-4 border-purple-500 pl-6">
-            <div className="flex items-center gap-3 mb-3">
-              <StepNumber n={2} />
-              <h3 className="font-semibold text-gray-900 text-lg">Extract & Configure</h3>
+              <h3 className="font-semibold text-gray-900 text-lg">Upload & Extract</h3>
             </div>
             <p className="text-gray-600 mb-4">Upload the BANKY package to your server and extract it:</p>
             <CodeBlock>{`# Upload the zip file to your server (using scp, rsync, or SFTP)
 # Then extract:
 unzip banky-*.zip
-cd banky
-
-# Copy the environment template
-cp .env.example .env
-
-# Edit with your settings
-nano .env`}</CodeBlock>
+cd banky`}</CodeBlock>
           </div>
 
           <div className="border-l-4 border-purple-500 pl-6">
             <div className="flex items-center gap-3 mb-3">
-              <StepNumber n={3} />
-              <h3 className="font-semibold text-gray-900 text-lg">Environment Configuration</h3>
+              <StepNumber n={2} />
+              <h3 className="font-semibold text-gray-900 text-lg">Configure Environment</h3>
             </div>
-            <p className="text-gray-600 mb-4">Fill in your <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">.env</code> file with these required values:</p>
-            <CodeBlock>{`# Your PostgreSQL connection string
+            <p className="text-gray-600 mb-4">Copy the template and fill in your settings:</p>
+            <CodeBlock>{`# Copy the environment template
+cp .env.example .env
+
+# Edit with your settings
+nano .env`}</CodeBlock>
+            <p className="text-gray-600 mt-4 mb-3">Key settings in your <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">.env</code> file:</p>
+            <CodeBlock>{`# Your PostgreSQL connection string (required)
 DATABASE_URL=postgresql://banky:your_password@localhost:5432/banky
 
 # Must be "enterprise" for self-hosted installations
 DEPLOYMENT_MODE=enterprise
 
-# Random secret for session encryption (min 32 characters)
-# Generate with: openssl rand -hex 32
-SESSION_SECRET=generate-a-long-random-string-here
+# Random secret for session encryption (auto-generated by installer)
+SESSION_SECRET=your-secret-here
 
-# Application port (default: 5000)
+# Application port
 PORT=5000`}</CodeBlock>
-            <Tip type="success">
-              <strong>All features unlocked:</strong> In enterprise mode, all features and limits are automatically unlocked. No license key is required.
-            </Tip>
+          </div>
+
+          <div className="border-l-4 border-purple-500 pl-6">
+            <div className="flex items-center gap-3 mb-3">
+              <StepNumber n={3} />
+              <h3 className="font-semibold text-gray-900 text-lg">Run the Installer</h3>
+            </div>
+            <p className="text-gray-600 mb-4">The install script checks prerequisites, installs dependencies, and builds the frontend:</p>
+            <CodeBlock>{`chmod +x install.sh
+./install.sh`}</CodeBlock>
+            <p className="text-gray-600 mt-4 mb-2">The installer will:</p>
+            <ul className="space-y-1 text-sm text-gray-600 ml-4">
+              <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Check that Node.js and Python 3 are installed</li>
+              <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Create .env from template (if not already present)</li>
+              <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Install Node.js dependencies</li>
+              <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Create Python virtual environment and install packages</li>
+              <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />Build the frontend for production</li>
+            </ul>
           </div>
 
           <div className="border-l-4 border-purple-500 pl-6">
             <div className="flex items-center gap-3 mb-3">
               <StepNumber n={4} />
-              <h3 className="font-semibold text-gray-900 text-lg">Run the Installer</h3>
+              <h3 className="font-semibold text-gray-900 text-lg">Start the Application</h3>
             </div>
-            <p className="text-gray-600 mb-4">The install script installs dependencies and sets up the application:</p>
-            <CodeBlock>{`# Make the installer executable
-chmod +x install.sh
+            <p className="text-gray-600 mb-4">For quick testing, use the start script:</p>
+            <CodeBlock>{`chmod +x start.sh
+./start.sh
 
-# Run the installer
-./install.sh
-
-# The script will:
-# 1. Install Node.js dependencies
-# 2. Install Python dependencies
-# 3. Set up the environment`}</CodeBlock>
-          </div>
-
-          <div className="border-l-4 border-purple-500 pl-6">
-            <div className="flex items-center gap-3 mb-3">
-              <StepNumber n={5} />
-              <h3 className="font-semibold text-gray-900 text-lg">Build & Start</h3>
-            </div>
-            <p className="text-gray-600 mb-4">Build the frontend and start BANKY using PM2:</p>
-            <CodeBlock>{`# Build the frontend
-npx vite build
-
-# Start all services with PM2
-pm2 start ecosystem.config.js
-
-# Save PM2 configuration (survives reboots)
-pm2 save
-
-# Set PM2 to auto-start on server boot
-pm2 startup
-
-# Check status
-pm2 status`}</CodeBlock>
+# Opens at http://localhost:5000`}</CodeBlock>
+            <Tip type="warning">
+              <strong>For production:</strong> Don't use start.sh on a live server. Instead, use PM2 for process management — see the <strong>PM2 Process Manager</strong> section below.
+            </Tip>
           </div>
 
           <Tip type="success">
-            <strong>First Login:</strong> After installation, open <code className="bg-green-100 px-1 rounded">http://your-server-ip:5000</code> in your browser. Register your account and create your organization. The system will activate using your license key automatically.
+            <strong>First Login:</strong> Open BANKY in your browser, register your account, and create your organization. All features are unlocked automatically in enterprise mode.
           </Tip>
         </div>
       </div>
@@ -383,61 +341,203 @@ function LicenseSection({ supportEmail }: { supportEmail: string }) {
   );
 }
 
+function DatabaseSection() {
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl p-8 border border-gray-200">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+          <HardDrive className="w-7 h-7 text-purple-600" />
+          Database Setup
+        </h2>
+
+        <p className="text-gray-600 mb-6">BANKY requires PostgreSQL 14 or higher. You can use a local installation, a managed cloud database (AWS RDS, Neon, Supabase), or any PostgreSQL provider.</p>
+
+        <div className="space-y-8">
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-3">Option 1: Local PostgreSQL (Ubuntu/Debian)</h3>
+            <CodeBlock>{`# Install PostgreSQL
+sudo apt update
+sudo apt install -y postgresql postgresql-contrib
+
+# Start and enable the service
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+
+# Create the database and user
+sudo -u postgres psql << EOF
+CREATE USER banky WITH PASSWORD 'your_secure_password';
+CREATE DATABASE banky OWNER banky;
+GRANT ALL PRIVILEGES ON DATABASE banky TO banky;
+EOF
+
+# Your connection string:
+# DATABASE_URL=postgresql://banky:your_secure_password@localhost:5432/banky`}</CodeBlock>
+          </div>
+
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-3">Option 2: Local PostgreSQL (macOS)</h3>
+            <CodeBlock>{`# Install with Homebrew
+brew install postgresql@16
+brew services start postgresql@16
+
+# Create the database
+createdb banky
+
+# Your connection string:
+# DATABASE_URL=postgresql://$(whoami)@localhost:5432/banky`}</CodeBlock>
+          </div>
+
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-3">Option 3: Cloud Database</h3>
+            <p className="text-gray-600 mb-3">If using a managed database service, simply copy the connection string they provide and paste it into your <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">.env</code> file as <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">DATABASE_URL</code>.</p>
+            <Tip type="info">
+              Cloud providers like <strong>Neon</strong>, <strong>Supabase</strong>, and <strong>AWS RDS</strong> all work with BANKY. Just make sure SSL is enabled if required by your provider (add <code className="bg-blue-100 px-1 rounded text-sm">?sslmode=require</code> to the connection string).
+            </Tip>
+          </div>
+
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-3">Verify Connection</h3>
+            <CodeBlock>{`# Test your connection string
+psql "postgresql://banky:your_password@localhost:5432/banky" -c "SELECT 1;"
+
+# If successful, you'll see:
+#  ?column?
+# ----------
+#         1`}</CodeBlock>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Pm2Section() {
+  return (
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl p-8 border border-gray-200">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
+          <RefreshCw className="w-7 h-7 text-purple-600" />
+          PM2 Process Manager
+        </h2>
+
+        <p className="text-gray-600 mb-6">PM2 keeps BANKY running in the background, restarts it if it crashes, and auto-starts it when your server reboots. This is the recommended way to run BANKY in production.</p>
+
+        <div className="space-y-8">
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-3">Install PM2</h3>
+            <CodeBlock>{`# Install PM2 globally
+sudo npm install -g pm2`}</CodeBlock>
+          </div>
+
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-3">Start BANKY with PM2</h3>
+            <p className="text-gray-600 mb-3">BANKY includes an <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">ecosystem.config.js</code> file pre-configured for PM2:</p>
+            <CodeBlock>{`# Navigate to your BANKY directory
+cd /opt/banky
+
+# Start all services
+pm2 start ecosystem.config.js
+
+# Save the process list (survives reboots)
+pm2 save
+
+# Set PM2 to auto-start on server boot
+pm2 startup
+# Follow the instructions PM2 prints (copy & paste the command it gives you)`}</CodeBlock>
+          </div>
+
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-3">Useful PM2 Commands</h3>
+            <CodeBlock>{`# Check running services
+pm2 status
+
+# View logs (all services)
+pm2 logs
+
+# View API logs only
+pm2 logs banky-api
+
+# Restart all services
+pm2 restart all
+
+# Restart just the API
+pm2 restart banky-api
+
+# Stop all services
+pm2 stop all
+
+# Monitor CPU/memory usage
+pm2 monit`}</CodeBlock>
+          </div>
+
+          <Tip type="info">
+            <strong>What gets started?</strong> The ecosystem config runs two processes: <code className="bg-blue-100 px-1 rounded text-sm">banky-api</code> (the main application server on port 8000) and <code className="bg-blue-100 px-1 rounded text-sm">banky-scheduler</code> (handles automated tasks like loan notifications and fixed deposit maturity).
+          </Tip>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function NginxSection() {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl p-8 border border-gray-200">
         <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
           <Globe className="w-7 h-7 text-purple-600" />
-          Domain & Nginx Configuration
+          Nginx Reverse Proxy
         </h2>
+
+        <p className="text-gray-600 mb-6">Nginx sits in front of BANKY and forwards web traffic to the application. This is standard practice for production deployments and required for SSL/HTTPS.</p>
 
         <div className="space-y-6">
           <div>
-            <h3 className="font-semibold text-gray-900 mb-3">Nginx Virtual Host</h3>
-            <p className="text-gray-600 mb-4">Create an Nginx configuration to serve your BANKY frontend and proxy API requests:</p>
-            <CodeBlock>{`# Create the Nginx configuration file
-sudo nano /etc/nginx/sites-available/banky
+            <h3 className="font-semibold text-gray-900 mb-3">1. Install Nginx</h3>
+            <CodeBlock>{`sudo apt update
+sudo apt install -y nginx
+sudo systemctl enable nginx
+sudo systemctl start nginx`}</CodeBlock>
+          </div>
 
-# Paste this configuration:
-server {
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-3">2. Create the Configuration</h3>
+            <p className="text-gray-600 mb-4">Create a new Nginx config file for BANKY:</p>
+            <CodeBlock>{`sudo nano /etc/nginx/sites-available/banky`}</CodeBlock>
+            <p className="text-gray-600 mt-3 mb-4">Paste the following (replace <code className="bg-gray-100 px-1 rounded text-sm">yourdomain.com</code> with your actual domain):</p>
+            <CodeBlock>{`server {
     listen 80;
-    server_name yourdomain.com www.yourdomain.com;
-    root /opt/banky/banky/dist/public;
+    server_name yourdomain.com;
 
-    # API proxy
-    location /api/ {
+    client_max_body_size 20M;
+
+    location / {
         proxy_pass http://127.0.0.1:8000;
         proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 86400;
     }
-
-    # Frontend (SPA)
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    # File upload limit
-    client_max_body_size 10M;
 }`}</CodeBlock>
           </div>
 
           <div>
-            <h3 className="font-semibold text-gray-900 mb-3">Enable & Activate</h3>
+            <h3 className="font-semibold text-gray-900 mb-3">3. Enable & Test</h3>
             <CodeBlock>{`# Enable the site
-sudo ln -s /etc/nginx/sites-available/banky /etc/nginx/sites-enabled/
+sudo ln -sf /etc/nginx/sites-available/banky /etc/nginx/sites-enabled/banky
 
-# Remove default site
+# Optionally remove the default site
 sudo rm -f /etc/nginx/sites-enabled/default
 
-# Test configuration
+# Test configuration for errors
 sudo nginx -t
 
-# Restart Nginx
-sudo systemctl restart nginx`}</CodeBlock>
+# Reload Nginx
+sudo systemctl reload nginx`}</CodeBlock>
           </div>
 
           <Tip type="info">
@@ -710,6 +810,8 @@ function GuideContent({ activeSection, supportEmail }: { activeSection: SectionI
     case 'requirements': return <RequirementsSection />;
     case 'installation': return <InstallationSection />;
     case 'license': return <LicenseSection supportEmail={supportEmail} />;
+    case 'database': return <DatabaseSection />;
+    case 'pm2': return <Pm2Section />;
     case 'nginx': return <NginxSection />;
     case 'ssl': return <SslSection />;
     case 'backup': return <BackupSection />;

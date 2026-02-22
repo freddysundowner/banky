@@ -376,7 +376,7 @@ DOMAIN=localhost
 PORT=5000
 EOF
 
-    # ── install.sh: Cross-platform installer ──
+    # ── install.sh: Cross-platform app-only installer ──
     cat > packages/codecanyon/banky/install.sh << 'INSTALLSCRIPT'
 #!/bin/bash
 
@@ -393,7 +393,6 @@ print_ok()   { echo -e "${GREEN}    [OK] $1${NC}"; }
 print_skip() { echo -e "${YELLOW}    [SKIP] $1${NC}"; }
 print_warn() { echo -e "${YELLOW}    [WARN] $1${NC}"; }
 print_err()  { echo -e "${RED}    [ERROR] $1${NC}"; }
-print_new()  { echo -e "${GREEN}    [NEW] $1${NC}"; }
 
 APP_DIR=$(pwd)
 
@@ -404,36 +403,21 @@ echo -e "${BLUE}  Installer${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
 
-# ── Detect OS ──
-PLATFORM="unknown"
+# ── Detect platform ──
+PLATFORM="linux"
 case "$(uname -s)" in
-    Linux*)   PLATFORM="linux" ;;
     Darwin*)  PLATFORM="mac" ;;
     MINGW*|MSYS*|CYGWIN*) PLATFORM="windows" ;;
 esac
-
-echo "  Detected platform: ${PLATFORM}"
-echo ""
-echo "  Select installation mode:"
-echo ""
-echo "    1) Local Development (run on this machine - Mac/Windows/Linux)"
-echo "    2) Production Server (Ubuntu/Debian with Nginx, PM2, SSL)"
-echo ""
-read -p "  Enter choice [1-2]: " INSTALL_MODE
-
-if [ "$INSTALL_MODE" != "1" ] && [ "$INSTALL_MODE" != "2" ]; then
-    print_err "Invalid choice"
-    exit 1
-fi
+echo "  Platform: ${PLATFORM}"
 
 # ══════════════════════════════════════════════════════════════
-#  SHARED: Check prerequisites
+#  Check prerequisites
 # ══════════════════════════════════════════════════════════════
-print_step "Checking prerequisites..."
+print_step "Step 1/5: Checking prerequisites..."
 
 MISSING=""
 
-# Check Node.js
 if command -v node >/dev/null 2>&1; then
     print_ok "Node.js $(node -v)"
 else
@@ -441,11 +425,10 @@ else
     print_err "Node.js not found"
 fi
 
-# Check Python 3
 PYTHON_CMD=""
 if command -v python3 >/dev/null 2>&1; then
     PYTHON_CMD="python3"
-    print_ok "Python $(python3 --version 2>&1)"
+    print_ok "$(python3 --version 2>&1)"
 elif command -v python >/dev/null 2>&1; then
     PY_VER=$(python --version 2>&1)
     if echo "$PY_VER" | grep -q "Python 3"; then
@@ -460,518 +443,114 @@ else
     print_err "Python 3 not found"
 fi
 
-# Check pip
-PIP_CMD=""
-if command -v pip3 >/dev/null 2>&1; then
-    PIP_CMD="pip3"
-elif command -v pip >/dev/null 2>&1; then
-    PIP_CMD="pip"
-fi
-
 if [ -n "$MISSING" ]; then
     echo ""
     print_err "Missing required software:${MISSING}"
     echo ""
     if [ "$PLATFORM" = "mac" ]; then
         echo "  Install with Homebrew:"
-        echo "    brew install node python@3.11 postgresql@16"
-        echo ""
-        echo "  Don't have Homebrew? Install it first:"
-        echo "    /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+        echo "    brew install node python@3.11"
     elif [ "$PLATFORM" = "windows" ]; then
         echo "  Download and install:"
-        echo "    Node.js:    https://nodejs.org"
-        echo "    Python 3:   https://python.org (check 'Add to PATH' during install)"
-        echo "    PostgreSQL: https://www.postgresql.org/download/windows/"
+        echo "    Node.js:  https://nodejs.org"
+        echo "    Python 3: https://python.org (check 'Add to PATH')"
     else
         echo "  Install on Ubuntu/Debian:"
-        echo "    sudo apt install -y nodejs python3 python3-venv python3-pip postgresql"
+        echo "    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -"
+        echo "    sudo apt install -y nodejs python3 python3-venv python3-pip"
     fi
     echo ""
     echo "  After installing, run this script again."
     exit 1
 fi
 
-# ══════════════════════════════════════════════════════════════════
-#  MODE 1: LOCAL DEVELOPMENT
-# ══════════════════════════════════════════════════════════════════
-if [ "$INSTALL_MODE" = "1" ]; then
-
-    # ── Re-install detection ──
-    IS_REINSTALL=false
-    if [ -f .env ]; then
-        IS_REINSTALL=true
-        print_skip "Existing .env found (your settings are preserved)"
-    fi
-
-    # ── Step 1: Environment file ──
-    print_step "Step 1/4: Setting up environment..."
-
-    if [ ! -f .env ]; then
-        SESSION_SECRET=$(openssl rand -hex 32 2>/dev/null || echo "change-me-to-a-random-string-at-least-32-chars")
-        cat > .env << ENVEOF
-DATABASE_URL=postgresql://banky:banky@localhost:5432/banky
-DEPLOYMENT_MODE=enterprise
-SESSION_SECRET=${SESSION_SECRET}
-DOMAIN=localhost
-PORT=5000
-ENVEOF
-        print_new ".env file created"
-        echo ""
-        print_warn "IMPORTANT: Edit .env and set your DATABASE_URL"
-        echo "           If using local PostgreSQL, create the database first:"
-        if [ "$PLATFORM" = "mac" ]; then
-            echo "             createdb banky"
-        else
-            echo "             sudo -u postgres createdb banky"
-        fi
-    fi
-
-    # ── Step 2: Node.js dependencies ──
-    print_step "Step 2/4: Installing frontend dependencies..."
-    npm install 2>&1 | tail -5
-    print_ok "Node.js dependencies installed"
-
-    # ── Step 3: Python dependencies ──
-    print_step "Step 3/4: Installing Python backend dependencies..."
-
-    if [ ! -d "venv" ]; then
-        $PYTHON_CMD -m venv venv
-        print_new "Python virtual environment created"
-    else
-        print_skip "Python virtual environment already exists"
-    fi
-
-    # Activate venv (cross-platform)
-    if [ -f "venv/bin/activate" ]; then
-        source venv/bin/activate
-    elif [ -f "venv/Scripts/activate" ]; then
-        source venv/Scripts/activate
-    fi
-
-    pip install --upgrade pip -q 2>/dev/null || true
-    pip install -r python_backend/requirements.txt -q 2>&1 | tail -3
-    deactivate 2>/dev/null || true
-    print_ok "Python dependencies installed"
-
-    # ── Step 4: Create directories ──
-    print_step "Step 4/4: Setting up directories..."
-    mkdir -p python_backend/uploads
-    print_ok "Upload directory ready"
-
-    # ── Done ──
-    echo ""
-    echo -e "${BLUE}================================================================${NC}"
-    echo -e "${GREEN}  Local Setup Complete!${NC}"
-    echo -e "${BLUE}================================================================${NC}"
-    echo ""
-    echo "  To start BANKY locally, run:"
-    echo ""
-    echo "    ./start.sh"
-    echo ""
-    echo "  Then open: http://localhost:5000"
-    echo ""
-    if [ "$IS_REINSTALL" = false ]; then
-        echo -e "${YELLOW}  IMPORTANT: Before starting, make sure:${NC}"
-        echo "    1. PostgreSQL is running on your machine"
-        echo "    2. Database 'banky' exists"
-        echo "    3. DATABASE_URL in .env matches your PostgreSQL setup"
-        echo ""
-    fi
-    echo "  All features are unlocked. No license key needed."
-    echo ""
-
-    exit 0
-fi
-
-# ══════════════════════════════════════════════════════════════════
-#  MODE 2: PRODUCTION SERVER (Ubuntu/Debian)
-# ══════════════════════════════════════════════════════════════════
-
-# Must be root for production
-if [ "$(id -u)" -ne 0 ]; then
-    print_err "Production mode must be run as root (use: sudo ./install.sh)"
-    exit 1
-fi
-
-# Check OS
-OS_NAME="unknown"
-if [ -f /etc/os-release ]; then
-    . /etc/os-release
-    OS_NAME="${ID:-unknown}"
-    echo "  Detected OS: ${PRETTY_NAME:-$OS_NAME}"
-fi
-
-if [ "$OS_NAME" != "ubuntu" ] && [ "$OS_NAME" != "debian" ]; then
-    print_warn "Production mode is designed for Ubuntu/Debian."
-    read -p "  Continue anyway? (y/n): " CONTINUE_ANYWAY
-    if [ "$CONTINUE_ANYWAY" != "y" ] && [ "$CONTINUE_ANYWAY" != "Y" ]; then
-        exit 0
-    fi
-fi
-
-# Ask for domain
-echo ""
-read -p "  Enter your domain (e.g. banky.example.com): " USER_DOMAIN
-if [ -z "$USER_DOMAIN" ]; then
-    print_err "Domain is required for production setup"
-    exit 1
-fi
-
-# Re-install detection
-IS_REINSTALL=false
-if [ -f .env ]; then
-    IS_REINSTALL=true
-    echo ""
-    print_warn "Existing installation detected!"
-    print_warn "Your .env, database, and other configs will NOT be overwritten."
-    read -p "  Continue with upgrade/re-install? (y/n): " CONTINUE_REINSTALL
-    if [ "$CONTINUE_REINSTALL" != "y" ] && [ "$CONTINUE_REINSTALL" != "Y" ]; then
-        exit 0
-    fi
-fi
-
-# Generate secrets (only used for fresh installs)
-DB_PASSWORD=$(openssl rand -hex 16)
-SESSION_SECRET=$(openssl rand -hex 32)
-
-echo ""
-echo "  Installation directory: ${APP_DIR}"
-echo "  Domain: ${USER_DOMAIN}"
-echo ""
-
-# ── Step 1: System packages ──
-print_step "Step 1/9: Checking system packages..."
-
-echo ""
-INSTALL_NEEDED=""
-
-check_installed() {
-    local name="$1"
-    local cmd="$2"
-    if command -v "$cmd" >/dev/null 2>&1; then
-        local ver
-        case "$cmd" in
-            node)    ver=$(node -v 2>/dev/null) ;;
-            python3) ver=$(python3 --version 2>/dev/null) ;;
-            psql)    ver=$(psql --version 2>/dev/null | head -1) ;;
-            nginx)   ver="$(nginx -v 2>&1 | cut -d/ -f2)" ;;
-            pm2)     ver=$(pm2 -v 2>/dev/null) ;;
-            certbot) ver=$(certbot --version 2>/dev/null | head -1) ;;
-            *)       ver="installed" ;;
-        esac
-        print_ok "${name}: ${ver}"
-        return 0
-    else
-        print_warn "${name}: not found (will install)"
-        INSTALL_NEEDED="${INSTALL_NEEDED} ${name}"
-        return 1
-    fi
-}
-
-check_installed "Node.js" "node" && HAS_NODE=0 || HAS_NODE=1
-check_installed "Python" "python3" && HAS_PYTHON=0 || HAS_PYTHON=1
-check_installed "PostgreSQL" "psql" && HAS_POSTGRES=0 || HAS_POSTGRES=1
-check_installed "Nginx" "nginx" && HAS_NGINX=0 || HAS_NGINX=1
-check_installed "PM2" "pm2" && HAS_PM2=0 || HAS_PM2=1
-check_installed "Certbot" "certbot" && HAS_CERTBOT=0 || HAS_CERTBOT=1
-
-if [ -n "$INSTALL_NEEDED" ]; then
-    echo ""
-    echo "  Will install:${INSTALL_NEEDED}"
-    read -p "  Proceed? (y/n): " PROCEED_INSTALL
-    if [ "$PROCEED_INSTALL" != "y" ] && [ "$PROCEED_INSTALL" != "Y" ]; then
-        exit 0
-    fi
-    apt update -y
-fi
-
-# Install basic build tools if missing
-for pkg in curl wget git build-essential software-properties-common; do
-    dpkg -s "$pkg" >/dev/null 2>&1 || apt install -y "$pkg" 2>/dev/null || true
-done
-
-if [ $HAS_NODE -ne 0 ]; then
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-    apt install -y nodejs
-    print_new "Node.js $(node -v) installed"
-fi
-
-if [ $HAS_PYTHON -ne 0 ]; then
-    apt install -y python3 python3-venv python3-pip python3-dev
-    print_new "Python $(python3 --version) installed"
-else
-    for pkg in python3-venv python3-pip python3-dev; do
-        if ! dpkg -s "$pkg" >/dev/null 2>&1; then
-            apt install -y "$pkg" 2>/dev/null || true
-        fi
-    done
-fi
-
-if [ $HAS_POSTGRES -ne 0 ]; then
-    apt install -y postgresql postgresql-contrib
-    systemctl enable postgresql
-    systemctl start postgresql
-    print_new "PostgreSQL installed and started"
-else
-    systemctl is-active --quiet postgresql || systemctl start postgresql
-fi
-
-if [ $HAS_NGINX -ne 0 ]; then
-    apt install -y nginx
-    systemctl enable nginx
-    systemctl start nginx
-    print_new "Nginx installed"
-else
-    systemctl is-active --quiet nginx || systemctl start nginx
-fi
-
-if [ $HAS_PM2 -ne 0 ]; then
-    npm install -g pm2
-    print_new "PM2 installed"
-fi
-
-if [ $HAS_CERTBOT -ne 0 ]; then
-    apt install -y certbot python3-certbot-nginx 2>/dev/null || true
-    command -v certbot >/dev/null 2>&1 && print_new "Certbot installed"
-fi
-
-# ── Step 2: Database ──
-print_step "Step 2/9: Setting up PostgreSQL database..."
-
-DB_USER_EXISTS=false
-DB_EXISTS=false
-
-if sudo -u postgres psql -tc "SELECT 1 FROM pg_roles WHERE rolname='banky'" 2>/dev/null | grep -q 1; then
-    DB_USER_EXISTS=true
-    print_skip "Database user 'banky' already exists (password unchanged)"
-fi
-
-if sudo -u postgres psql -tc "SELECT 1 FROM pg_database WHERE datname='banky'" 2>/dev/null | grep -q 1; then
-    DB_EXISTS=true
-    print_skip "Database 'banky' already exists (your data is safe)"
-fi
-
-if [ "$DB_USER_EXISTS" = false ]; then
-    sudo -u postgres psql -c "CREATE USER banky WITH PASSWORD '${DB_PASSWORD}';" 2>/dev/null
-    print_new "Database user 'banky' created"
-fi
-
-if [ "$DB_EXISTS" = false ]; then
-    sudo -u postgres psql -c "CREATE DATABASE banky OWNER banky;" 2>/dev/null
-    sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE banky TO banky;" 2>/dev/null
-    print_new "Database 'banky' created"
-fi
-
-# ── Step 3: Environment ──
-print_step "Step 3/9: Configuring environment..."
+# ══════════════════════════════════════════════════════════════
+#  Environment configuration
+# ══════════════════════════════════════════════════════════════
+print_step "Step 2/5: Setting up environment..."
 
 if [ -f .env ]; then
     print_skip ".env already exists (your settings are preserved)"
-    # Update domain if changed
-    CURRENT_DOMAIN=$(grep "^DOMAIN=" .env 2>/dev/null | cut -d= -f2-)
-    if [ -n "$CURRENT_DOMAIN" ] && [ "$CURRENT_DOMAIN" != "$USER_DOMAIN" ]; then
-        sed -i "s|^DOMAIN=.*|DOMAIN=${USER_DOMAIN}|" .env
-        print_ok "Updated DOMAIN to ${USER_DOMAIN}"
-    fi
 else
-    cat > .env << ENVEOF
-DATABASE_URL=postgresql://banky:${DB_PASSWORD}@localhost:5432/banky
-DEPLOYMENT_MODE=enterprise
-SESSION_SECRET=${SESSION_SECRET}
-DOMAIN=${USER_DOMAIN}
-PORT=5000
-ENVEOF
-    chmod 600 .env
-    print_new ".env file created with secure credentials"
+    SESSION_SECRET=$(openssl rand -hex 32 2>/dev/null || echo "change-me-to-a-random-string-at-least-32-chars")
+    cp .env.example .env
+    if [ "$PLATFORM" = "mac" ] || [ "$PLATFORM" = "windows" ]; then
+        sed -i.bak "s|SESSION_SECRET=.*|SESSION_SECRET=${SESSION_SECRET}|" .env 2>/dev/null || true
+        rm -f .env.bak
+    else
+        sed -i "s|SESSION_SECRET=.*|SESSION_SECRET=${SESSION_SECRET}|" .env
+    fi
+    print_ok ".env file created from template"
+    echo ""
+    print_warn "IMPORTANT: Edit .env and set your DATABASE_URL"
+    echo "    Open .env in a text editor and update the database connection string."
+    echo ""
+    echo "    Example: DATABASE_URL=postgresql://user:password@localhost:5432/banky"
 fi
 
-# ── Step 4: Directories ──
-print_step "Step 4/9: Setting up directories..."
-mkdir -p python_backend/uploads
-print_ok "Upload directory ready"
+# ══════════════════════════════════════════════════════════════
+#  Install Node.js dependencies
+# ══════════════════════════════════════════════════════════════
+print_step "Step 3/5: Installing frontend dependencies..."
 
-# ── Step 5: Node.js dependencies ──
-print_step "Step 5/9: Installing frontend dependencies..."
-npm install 2>&1 | tail -3
+npm install 2>&1 | tail -5
 print_ok "Node.js dependencies installed"
 
-# ── Step 6: Python dependencies ──
-print_step "Step 6/9: Installing Python backend dependencies..."
+# ══════════════════════════════════════════════════════════════
+#  Install Python dependencies
+# ══════════════════════════════════════════════════════════════
+print_step "Step 4/5: Installing Python backend dependencies..."
 
 if [ ! -d "venv" ]; then
-    python3 -m venv venv
-    print_new "Python virtual environment created"
+    $PYTHON_CMD -m venv venv
+    print_ok "Python virtual environment created"
 else
-    print_skip "Python virtual environment already exists"
+    print_skip "Virtual environment already exists"
 fi
 
-source venv/bin/activate
+if [ -f "venv/bin/activate" ]; then
+    source venv/bin/activate
+elif [ -f "venv/Scripts/activate" ]; then
+    source venv/Scripts/activate
+fi
+
 pip install --upgrade pip -q 2>/dev/null || true
 pip install -r python_backend/requirements.txt -q 2>&1 | tail -3
-deactivate
+deactivate 2>/dev/null || true
 print_ok "Python dependencies installed"
 
-# ── Step 7: Build frontend ──
-print_step "Step 7/9: Building frontend for production..."
+# ══════════════════════════════════════════════════════════════
+#  Setup directories & build
+# ══════════════════════════════════════════════════════════════
+print_step "Step 5/5: Building application..."
+
+mkdir -p python_backend/uploads
 npx vite build 2>&1 | tail -3
 print_ok "Frontend built successfully"
 
-# ── Step 8: Nginx ──
-print_step "Step 8/9: Configuring Nginx..."
-
-if [ -f /etc/nginx/sites-available/banky ]; then
-    cp /etc/nginx/sites-available/banky /etc/nginx/sites-available/banky.backup.$(date +%Y%m%d%H%M%S)
-    print_skip "Backed up existing Nginx config"
-fi
-
-cat > /etc/nginx/sites-available/banky << NGINXEOF
-server {
-    listen 80;
-    server_name ${USER_DOMAIN};
-
-    client_max_body_size 20M;
-
-    location / {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_cache_bypass \$http_upgrade;
-        proxy_read_timeout 86400;
-    }
-}
-NGINXEOF
-
-ln -sf /etc/nginx/sites-available/banky /etc/nginx/sites-enabled/banky
-
-# Only remove default if no other sites
-SITE_COUNT=$(ls /etc/nginx/sites-enabled/ 2>/dev/null | grep -cv '^banky$' 2>/dev/null || echo "0")
-if [ "$SITE_COUNT" -le 1 ] && [ -f /etc/nginx/sites-enabled/default ]; then
-    rm -f /etc/nginx/sites-enabled/default
-    print_ok "Removed default Nginx placeholder"
-else
-    print_skip "Other Nginx sites detected - default preserved"
-fi
-
-NGINX_TEST=$(nginx -t 2>&1) && NGINX_OK=true || NGINX_OK=false
-if [ "$NGINX_OK" = true ]; then
-    systemctl reload nginx
-    print_ok "Nginx configured for ${USER_DOMAIN}"
-else
-    echo "$NGINX_TEST"
-    print_err "Nginx config test failed!"
-    LATEST_BACKUP=$(ls -t /etc/nginx/sites-available/banky.backup.* 2>/dev/null | head -1)
-    if [ -n "$LATEST_BACKUP" ]; then
-        cp "$LATEST_BACKUP" /etc/nginx/sites-available/banky
-        nginx -t 2>&1 && systemctl reload nginx && print_ok "Previous config restored" || true
-    fi
-fi
-
-# ── Step 9: PM2 ──
-print_step "Step 9/9: Starting BANKY with PM2..."
-
-cat > ecosystem.config.cjs << PMEOF
-const path = require("path");
-const fs = require("fs");
-
-const rootDir = "${APP_DIR}";
-const envPath = path.join(rootDir, ".env");
-const envVars = {};
-
-if (fs.existsSync(envPath)) {
-  const lines = fs.readFileSync(envPath, "utf-8").split("\\n");
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith("#")) {
-      const eqIdx = trimmed.indexOf("=");
-      if (eqIdx > 0) {
-        envVars[trimmed.substring(0, eqIdx).trim()] = trimmed.substring(eqIdx + 1).trim();
-      }
-    }
-  }
-}
-
-module.exports = {
-  apps: [
-    {
-      name: "banky-api",
-      cwd: path.join(rootDir, "python_backend"),
-      script: "${APP_DIR}/venv/bin/uvicorn",
-      args: "main:app --host 0.0.0.0 --port 8000 --workers 2",
-      interpreter: "${APP_DIR}/venv/bin/python3",
-      env: { ...envVars, NODE_ENV: "production", VIRTUAL_ENV: "${APP_DIR}/venv", PATH: "${APP_DIR}/venv/bin:" + process.env.PATH },
-      max_memory_restart: "500M",
-      autorestart: true,
-    },
-    {
-      name: "banky-scheduler",
-      cwd: path.join(rootDir, "python_backend"),
-      script: "scheduler.py",
-      interpreter: "${APP_DIR}/venv/bin/python3",
-      env: { ...envVars, NODE_ENV: "production", VIRTUAL_ENV: "${APP_DIR}/venv", PATH: "${APP_DIR}/venv/bin:" + process.env.PATH },
-      max_memory_restart: "200M",
-      autorestart: true,
-      cron_restart: "0 */6 * * *",
-    }
-  ],
-};
-PMEOF
-
-pm2 delete banky-api 2>/dev/null || true
-pm2 delete banky-scheduler 2>/dev/null || true
-pm2 start ecosystem.config.cjs
-pm2 save
-pm2 startup systemd -u root --hp /root 2>/dev/null || pm2 startup 2>/dev/null || true
-print_ok "BANKY services started with PM2"
-
-sleep 3
-pm2 list 2>/dev/null | grep -E "banky-api|banky-scheduler" || true
-
-# ── SSL (optional) ──
-echo ""
-if command -v certbot >/dev/null 2>&1; then
-    read -p "  Set up free SSL certificate with Let's Encrypt? (y/n): " SETUP_SSL
-    if [ "$SETUP_SSL" = "y" ] || [ "$SETUP_SSL" = "Y" ]; then
-        print_step "Setting up SSL certificate..."
-        read -p "  Enter your email for SSL: " SSL_EMAIL
-        if [ -n "$SSL_EMAIL" ]; then
-            certbot --nginx -d "${USER_DOMAIN}" --non-interactive --agree-tos -m "${SSL_EMAIL}" && print_ok "SSL installed!" || {
-                print_warn "SSL failed. Make sure your domain points to this server."
-                echo "    Retry: sudo certbot --nginx -d ${USER_DOMAIN}"
-            }
-        fi
-    fi
-fi
-
-# ── Done ──
+# ══════════════════════════════════════════════════════════════
+#  Done
+# ══════════════════════════════════════════════════════════════
 echo ""
 echo -e "${BLUE}================================================================${NC}"
 echo -e "${GREEN}  Installation Complete!${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
-echo "  BANKY is running at: http://${USER_DOMAIN}"
+echo "  Before starting, make sure:"
+echo "    1. PostgreSQL is running and accessible"
+echo "    2. DATABASE_URL in .env points to your database"
 echo ""
-echo "  Commands:"
-echo "    pm2 status              Check services"
-echo "    pm2 logs banky-api      View API logs"
-echo "    pm2 restart all         Restart services"
+echo "  To start BANKY:"
 echo ""
-if [ "$IS_REINSTALL" = false ]; then
-echo "  Database:"
-echo "    User: banky | DB: banky | Host: localhost"
-echo "    Password saved in .env"
+echo "    ./start.sh"
 echo ""
-fi
-echo "  Config: ${APP_DIR}/.env"
-echo "  All features unlocked. No license key needed."
+echo "  Then open: http://localhost:5000"
 echo ""
-
-fi
+echo "  For production deployment (Nginx, PM2, SSL), see the"
+echo "  deployment guide in the documentation."
+echo ""
+echo "  All features are unlocked. No license key needed."
+echo ""
 INSTALLSCRIPT
     chmod +x packages/codecanyon/banky/install.sh
 
@@ -985,7 +564,7 @@ echo ""
 echo "  Starting BANKY..."
 echo ""
 
-# Find python command
+# Find python in venv
 PYTHON_CMD=""
 if [ -f "venv/bin/python3" ]; then
     PYTHON_CMD="venv/bin/python3"
@@ -998,7 +577,7 @@ else
 fi
 
 # Start Python backend
-echo "  Starting API server..."
+echo "  Starting API server on port 8000..."
 $PYTHON_CMD -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload --app-dir python_backend &
 BACKEND_PID=$!
 
@@ -1009,7 +588,7 @@ SCHEDULER_PID=$!
 cd "$APP_DIR"
 
 # Start frontend dev server
-echo "  Starting frontend..."
+echo "  Starting frontend on port 5000..."
 npx vite --host 0.0.0.0 --port 5000 &
 FRONTEND_PID=$!
 
@@ -1029,7 +608,7 @@ wait
 STARTSCRIPT
     chmod +x packages/codecanyon/banky/start.sh
 
-    # ── ecosystem.config.js for manual PM2 setup ──
+    # ── ecosystem.config.js for PM2 production setup ──
     cat > packages/codecanyon/banky/ecosystem.config.js << 'PMEOF'
 const path = require("path");
 const fs = require("fs");
@@ -1058,7 +637,7 @@ module.exports = {
       cwd: path.join(rootDir, "python_backend"),
       script: "uvicorn",
       args: "main:app --host 0.0.0.0 --port 8000 --workers 2",
-      interpreter: "python3",
+      interpreter: path.join(rootDir, "venv", "bin", "python3"),
       env: { ...envVars, NODE_ENV: "production" },
       max_memory_restart: "500M",
       autorestart: true,
@@ -1066,8 +645,8 @@ module.exports = {
     {
       name: "banky-scheduler",
       cwd: path.join(rootDir, "python_backend"),
-      script: "python3",
-      args: "scheduler.py",
+      script: "scheduler.py",
+      interpreter: path.join(rootDir, "venv", "bin", "python3"),
       env: { ...envVars, NODE_ENV: "production" },
       max_memory_restart: "200M",
       autorestart: true,
