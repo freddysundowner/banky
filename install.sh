@@ -163,11 +163,27 @@ print_ok "Node.js dependencies installed"
 # ══════════════════════════════════════════════════════════════
 print_step "Step 4/5: Installing Python backend dependencies..."
 
-if [ ! -d "venv" ]; then
+VENV_PYTHON=""
+if [ -f "venv/bin/python3" ]; then
+    VENV_PYTHON="venv/bin/python3"
+elif [ -f "venv/Scripts/python.exe" ]; then
+    VENV_PYTHON="venv/Scripts/python.exe"
+fi
+
+if [ -d "venv" ] && [ -n "$VENV_PYTHON" ]; then
+    _venv_major=$("$VENV_PYTHON" -c "import sys; print(sys.version_info.major)" 2>/dev/null || echo 0)
+    _venv_minor=$("$VENV_PYTHON" -c "import sys; print(sys.version_info.minor)" 2>/dev/null || echo 0)
+    if [ "$_venv_major" -ge 3 ] && [ "$_venv_minor" -ge 11 ]; then
+        print_skip "Virtual environment already exists ($("$VENV_PYTHON" --version))"
+    else
+        print_warn "Existing venv uses Python $("$VENV_PYTHON" --version 2>&1) — recreating with $($PYTHON_CMD --version)"
+        rm -rf venv
+        $PYTHON_CMD -m venv venv
+        print_ok "Virtual environment recreated ($($PYTHON_CMD --version))"
+    fi
+else
     $PYTHON_CMD -m venv venv
     print_ok "Python virtual environment created ($($PYTHON_CMD --version))"
-else
-    print_skip "Virtual environment already exists"
 fi
 
 if [ -f "venv/bin/activate" ]; then
