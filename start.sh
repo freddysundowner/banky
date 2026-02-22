@@ -76,9 +76,20 @@ else
         *)  ABS_PYTHON="$APP_DIR/$PYTHON_CMD" ;;
     esac
 
+    # Find a free port for uvicorn starting at 8000
+    find_free_port() {
+        local port=$1
+        while ! "$ABS_PYTHON" -c "import socket; s=socket.socket(); s.bind(('127.0.0.1',$port)); s.close()" 2>/dev/null; do
+            port=$((port + 1))
+        done
+        echo $port
+    }
+    API_PORT=$(find_free_port 8000)
+    export API_PORT
+
     # Backend
-    echo "  Starting API server on port 8000..."
-    cd python_backend && "$ABS_PYTHON" -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload &
+    echo "  Starting API server on port $API_PORT..."
+    cd python_backend && "$ABS_PYTHON" -m uvicorn main:app --host 0.0.0.0 --port "$API_PORT" --reload &
     BACKEND_PID=$!
     cd "$APP_DIR"
 
@@ -99,7 +110,7 @@ else
     echo -e "${BLUE}  ================================================================${NC}"
     echo ""
     echo "  App: http://localhost:${PORT:-5000}"
-    echo "  API: http://localhost:8000"
+    echo "  API: http://localhost:$API_PORT"
     echo ""
     echo "  Press Ctrl+C to stop"
     echo ""
