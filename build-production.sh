@@ -188,42 +188,7 @@ EOF
     chmod +x packages/enterprise/banky/install.sh
 
     # Create start script (development mode)
-    cat > packages/enterprise/banky/start.sh << 'STARTSCRIPT'
-#!/bin/bash
-
-echo "Starting BANKY (development mode)..."
-echo ""
-
-# Start Python backend
-cd python_backend
-python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload &
-BACKEND_PID=$!
-cd ..
-
-# Start scheduler
-cd python_backend
-python3 scheduler.py &
-SCHEDULER_PID=$!
-cd ..
-
-# Start main frontend dev server
-npx vite --host 0.0.0.0 --port 5000 &
-FRONTEND_PID=$!
-
-echo ""
-echo "========================================"
-echo "  BANKY is running!"
-echo "========================================"
-echo ""
-echo "  App: http://localhost:5000"
-echo "  API: http://localhost:8000"
-echo ""
-echo "Press Ctrl+C to stop all servers"
-echo ""
-
-trap "kill $BACKEND_PID $SCHEDULER_PID $FRONTEND_PID 2>/dev/null" EXIT
-wait
-STARTSCRIPT
+    cp start.sh packages/enterprise/banky/start.sh
     chmod +x packages/enterprise/banky/start.sh
 
     # Create ecosystem.config.js for production (PM2)
@@ -338,58 +303,8 @@ EOF
     cp install.sh packages/codecanyon/banky/install.sh
     chmod +x packages/codecanyon/banky/install.sh
 
-    # ── start.sh: Cross-platform dev start script ──
-    cat > packages/codecanyon/banky/start.sh << 'STARTSCRIPT'
-#!/bin/bash
-
-APP_DIR=$(pwd)
-
-echo ""
-echo "  Starting BANKY..."
-echo ""
-
-# Find python in venv
-PYTHON_CMD=""
-if [ -f "venv/bin/python3" ]; then
-    PYTHON_CMD="venv/bin/python3"
-elif [ -f "venv/Scripts/python.exe" ]; then
-    PYTHON_CMD="venv/Scripts/python.exe"
-elif [ -f "venv/bin/python" ]; then
-    PYTHON_CMD="venv/bin/python"
-else
-    PYTHON_CMD=$(command -v python3 || command -v python)
-fi
-
-# Start Python backend
-echo "  Starting API server on port 8000..."
-$PYTHON_CMD -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload --app-dir python_backend &
-BACKEND_PID=$!
-
-# Start scheduler
-echo "  Starting scheduler..."
-cd python_backend && $PYTHON_CMD scheduler.py &
-SCHEDULER_PID=$!
-cd "$APP_DIR"
-
-# Start frontend dev server
-echo "  Starting frontend on port 5000..."
-npx vite --host 0.0.0.0 --port 5000 &
-FRONTEND_PID=$!
-
-echo ""
-echo "  ========================================"
-echo "  BANKY is running!"
-echo "  ========================================"
-echo ""
-echo "  App: http://localhost:5000"
-echo "  API: http://localhost:8000"
-echo ""
-echo "  Press Ctrl+C to stop"
-echo ""
-
-trap "kill $BACKEND_PID $SCHEDULER_PID $FRONTEND_PID 2>/dev/null; exit" INT TERM
-wait
-STARTSCRIPT
+    # ── start.sh: copied from root so it's always up to date ──
+    cp start.sh packages/codecanyon/banky/start.sh
     chmod +x packages/codecanyon/banky/start.sh
 
     # ── ecosystem.config.js for PM2 production setup ──
