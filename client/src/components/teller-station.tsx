@@ -890,7 +890,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
               </div>
               <CardTitle className="text-2xl">Teller Station Setup</CardTitle>
               <CardDescription>
-                Select a branch and teller to operate as before accessing the teller station
+                Select a teller to operate as before accessing the teller station
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
