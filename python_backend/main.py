@@ -213,7 +213,7 @@ def run_pending_migrations_sync():
         db.close()
     print("All tenant migrations complete")
 
-_MASTER_SCHEMA_VERSION = 2
+_MASTER_SCHEMA_VERSION = 3
 
 def _get_master_migration_version():
     """Check the migration version stored in the master database"""
@@ -290,9 +290,15 @@ def run_master_migrations():
             ("currency", "VARCHAR(10) DEFAULT 'KES'"),
             ("financial_year_start", "VARCHAR(10)"),
             ("enforce_working_hours", "BOOLEAN DEFAULT FALSE"),
+            ("require_clock_in", "BOOLEAN DEFAULT FALSE"),
+            ("allow_weekend_access", "BOOLEAN DEFAULT TRUE"),
+            ("timezone", "VARCHAR(100) DEFAULT 'Africa/Nairobi'"),
             ("auto_logout_minutes", "VARCHAR(10)"),
             ("require_two_factor_auth", "BOOLEAN DEFAULT FALSE"),
             ("updated_at", "TIMESTAMP DEFAULT NOW()"),
+            ("neon_project_id", "VARCHAR(255)"),
+            ("neon_branch_id", "VARCHAR(255)"),
+            ("connection_string", "TEXT"),
         ]
         for col_name, col_type in org_columns:
             _add_master_column_if_not_exists(conn, "organizations", col_name, col_type)
