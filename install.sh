@@ -314,13 +314,23 @@ sys.path.insert(0, 'python_backend')
 os.chdir('python_backend')
 from dotenv import load_dotenv
 load_dotenv('../.env')
+
+# Must import all models before create_all so SQLAlchemy knows about them
+from models.database import engine, Base
+import models.master
+import models.tenant
+
+# Step 1: create all tables (safe — does nothing if tables already exist)
+Base.metadata.create_all(bind=engine)
+
+# Step 2: run incremental column migrations
 from main import run_master_migrations
 run_master_migrations()
-print('done')
-" 2>&1 | grep -v "^$"; then
+print('Migrations complete')
+" 2>&1; then
     print_ok "Database migrations applied"
 else
-    print_warn "Migration output above — app will also run migrations on first start"
+    print_warn "Migration check — app will also run migrations on first start"
 fi
 
 deactivate 2>/dev/null || true
