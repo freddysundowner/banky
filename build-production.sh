@@ -11,7 +11,7 @@ show_menu() {
     echo "Select build type:"
     echo "  1) SaaS Build (for your cloud deployment)"
     echo "  2) Enterprise Build (end-user self-hosting)"
-    echo "  3) CodeCanyon Build (end-user with lifetime key)"
+    echo "  3) CodeCanyon Package (source code + installer for buyers)"
     echo "  4) Build All"
     echo "  5) Exit"
     echo ""
@@ -322,13 +322,11 @@ PMEOF
 build_codecanyon() {
     echo ""
     echo "========================================"
-    echo "  Building CodeCanyon Version"
+    echo "  Building CodeCanyon Package"
     echo "========================================"
-    
-    build_frontend
-    
     echo ""
-    echo ">>> Creating CodeCanyon source package..."
+    echo ">>> Packaging source code for CodeCanyon..."
+    echo "    (No build needed - buyers run install.sh on their server)"
     
     rm -rf packages/codecanyon
     mkdir -p packages/codecanyon/banky
