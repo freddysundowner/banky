@@ -8,270 +8,199 @@ RED='\033[0;31m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-print_header() {
-    echo ""
-    echo -e "${BLUE}════════════════════════════════════════════════════════════${NC}"
-    echo -e "${BLUE}  BANKY - Bank & Sacco Management System${NC}"
-    echo -e "${BLUE}  Installation Script${NC}"
-    echo -e "${BLUE}════════════════════════════════════════════════════════════${NC}"
-    echo ""
-}
+print_step() { echo -e "\n${GREEN}>>> $1${NC}"; }
+print_ok()   { echo -e "${GREEN}    [OK] $1${NC}"; }
+print_skip() { echo -e "${YELLOW}    [SKIP] $1${NC}"; }
+print_warn() { echo -e "${YELLOW}    [WARN] $1${NC}"; }
+print_err()  { echo -e "${RED}    [ERROR] $1${NC}"; }
 
-print_step() {
-    echo ""
-    echo -e "${GREEN}>>> $1${NC}"
-}
+APP_DIR=$(pwd)
 
-print_warn() {
-    echo -e "${YELLOW}    ⚠ $1${NC}"
-}
+echo ""
+echo -e "${BLUE}================================================================${NC}"
+echo -e "${BLUE}  BANKY - Bank & Sacco Management System${NC}"
+echo -e "${BLUE}  Installer${NC}"
+echo -e "${BLUE}================================================================${NC}"
+echo ""
 
-print_error() {
-    echo -e "${RED}    ✗ $1${NC}"
-}
+# ── Detect platform ──
+PLATFORM="linux"
+case "$(uname -s)" in
+    Darwin*)  PLATFORM="mac" ;;
+    MINGW*|MSYS*|CYGWIN*) PLATFORM="windows" ;;
+esac
+echo "  Platform: ${PLATFORM}"
 
-print_success() {
-    echo -e "${GREEN}    ✓ $1${NC}"
-}
+# ══════════════════════════════════════════════════════════════
+#  Check prerequisites
+# ══════════════════════════════════════════════════════════════
+print_step "Step 1/5: Checking prerequisites..."
 
-UPDATE_MODE=false
-if [ "$1" = "--update" ]; then
-    UPDATE_MODE=true
-fi
-
-print_header
-
-# ── Check prerequisites ──────────────────────────────────────────
-
-print_step "Checking prerequisites..."
-
-MISSING=false
+MISSING=""
 
 if command -v node >/dev/null 2>&1; then
-    NODE_VER=$(node -v)
-    print_success "Node.js $NODE_VER"
+    print_ok "Node.js $(node -v)"
 else
-    print_error "Node.js is not installed (v18+ required)"
-    echo "         Install: curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt install -y nodejs"
-    MISSING=true
+    MISSING="${MISSING} Node.js"
+    print_err "Node.js not found"
 fi
 
+PYTHON_CMD=""
 if command -v python3 >/dev/null 2>&1; then
-    PY_VER=$(python3 --version)
+    PYTHON_CMD="python3"
+    PY_VER=$(python3 --version 2>&1)
     PY_MINOR=$(python3 -c "import sys; print(sys.version_info.minor)")
     PY_MAJOR=$(python3 -c "import sys; print(sys.version_info.major)")
     if [ "$PY_MAJOR" -ge 3 ] && [ "$PY_MINOR" -ge 11 ]; then
-        print_success "$PY_VER"
+        print_ok "$PY_VER"
     else
-        print_error "$PY_VER is too old — Python 3.11+ is required"
-        echo "         Install 3.11: sudo apt install -y python3.11 python3.11-venv python3-pip"
-        echo "         On macOS:     brew install python@3.11"
-        MISSING=true
+        MISSING="${MISSING} Python3.11+"
+        print_err "$PY_VER is too old — Python 3.11+ is required"
+    fi
+elif command -v python >/dev/null 2>&1; then
+    PY_VER=$(python --version 2>&1)
+    if echo "$PY_VER" | grep -q "Python 3"; then
+        PY_MINOR=$(python -c "import sys; print(sys.version_info.minor)")
+        PY_MAJOR=$(python -c "import sys; print(sys.version_info.major)")
+        if [ "$PY_MAJOR" -ge 3 ] && [ "$PY_MINOR" -ge 11 ]; then
+            PYTHON_CMD="python"
+            print_ok "$PY_VER"
+        else
+            MISSING="${MISSING} Python3.11+"
+            print_err "$PY_VER is too old — Python 3.11+ is required"
+        fi
+    else
+        MISSING="${MISSING} Python3"
+        print_err "Python 3 not found (found Python 2)"
     fi
 else
-    print_error "Python 3 is not installed (v3.11+ required)"
-    echo "         Install: sudo apt install -y python3.11 python3.11-venv python3-pip"
-    MISSING=true
+    MISSING="${MISSING} Python3"
+    print_err "Python 3 not found"
 fi
 
-if command -v psql >/dev/null 2>&1; then
-    print_success "PostgreSQL client found"
-else
-    print_warn "PostgreSQL client not found locally (OK if using remote database)"
-fi
-
-if command -v pm2 >/dev/null 2>&1; then
-    print_success "PM2 process manager found"
-else
-    print_warn "PM2 not found - will install globally"
-    sudo npm install -g pm2
-    print_success "PM2 installed"
-fi
-
-if command -v nginx >/dev/null 2>&1; then
-    print_success "Nginx found"
-else
-    print_warn "Nginx not found - install with: sudo apt install -y nginx"
-fi
-
-if [ "$MISSING" = true ]; then
+if [ -n "$MISSING" ]; then
     echo ""
-    print_error "Missing required dependencies. Please install them and re-run this script."
+    print_err "Missing or incompatible required software:${MISSING}"
+    echo ""
+    if [ "$PLATFORM" = "mac" ]; then
+        echo "  Install with Homebrew:"
+        echo "    brew install node python@3.11"
+    elif [ "$PLATFORM" = "windows" ]; then
+        echo "  Download and install:"
+        echo "    Node.js:  https://nodejs.org"
+        echo "    Python 3: https://python.org (check 'Add to PATH')"
+        echo "              Make sure to install version 3.11 or newer"
+    else
+        echo "  Install on Ubuntu/Debian:"
+        echo "    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -"
+        echo "    sudo apt install -y nodejs python3.11 python3.11-venv python3-pip"
+    fi
+    echo ""
+    echo "  After installing, run this script again."
     exit 1
 fi
 
-# ── Environment configuration ────────────────────────────────────
+# ══════════════════════════════════════════════════════════════
+#  Environment configuration
+# ══════════════════════════════════════════════════════════════
+print_step "Step 2/5: Setting up environment..."
 
-print_step "Setting up environment..."
-
-if [ ! -f .env ]; then
-    if [ -f .env.example ]; then
-        cp .env.example .env
-        print_success "Created .env from template"
-        print_warn "IMPORTANT: Edit .env with your database credentials and settings"
-        print_warn "Run: nano .env"
-    else
-        print_error "No .env.example found. Cannot create environment file."
-        exit 1
-    fi
+if [ -f .env ]; then
+    print_skip ".env already exists (your settings are preserved)"
 else
-    print_success ".env file already exists"
+    SESSION_SECRET=$(openssl rand -hex 32 2>/dev/null || echo "change-me-to-a-random-string-at-least-32-chars")
+    cp .env.example .env
+    if [ "$PLATFORM" = "mac" ] || [ "$PLATFORM" = "windows" ]; then
+        sed -i.bak "s|SESSION_SECRET=.*|SESSION_SECRET=${SESSION_SECRET}|" .env 2>/dev/null || true
+        rm -f .env.bak
+    else
+        sed -i "s|SESSION_SECRET=.*|SESSION_SECRET=${SESSION_SECRET}|" .env
+    fi
+    print_ok ".env file created from template"
+    echo ""
+    print_warn "IMPORTANT: Edit .env and set your DATABASE_URL"
+    echo "    Open .env in a text editor and update the database connection string."
+    echo ""
+    echo "    Example: DATABASE_URL=postgresql://user:password@localhost:5432/banky"
 fi
 
-source .env 2>/dev/null || true
+# ══════════════════════════════════════════════════════════════
+#  Install Node.js dependencies
+# ══════════════════════════════════════════════════════════════
+print_step "Step 3/5: Installing frontend dependencies..."
 
-if [ -z "$DATABASE_URL" ]; then
-    print_error "DATABASE_URL is not set in .env - please configure it first"
-    echo ""
-    echo "  Edit your .env file:"
-    echo "    nano .env"
-    echo ""
-    echo "  Then re-run this script:"
-    echo "    ./install.sh"
-    exit 1
-fi
+npm install 2>&1 | tail -5
+print_ok "Node.js dependencies installed"
 
-# ── Create Python virtual environment ────────────────────────────
-
-print_step "Setting up Python virtual environment..."
+# ══════════════════════════════════════════════════════════════
+#  Install Python dependencies
+# ══════════════════════════════════════════════════════════════
+print_step "Step 4/5: Installing Python backend dependencies..."
 
 if [ ! -d "venv" ]; then
-    python3 -m venv venv
-    print_success "Created virtual environment"
+    $PYTHON_CMD -m venv venv
+    print_ok "Python virtual environment created"
 else
-    print_success "Virtual environment already exists"
+    print_skip "Virtual environment already exists"
 fi
 
-source venv/bin/activate
+if [ -f "venv/bin/activate" ]; then
+    source venv/bin/activate
+elif [ -f "venv/Scripts/activate" ]; then
+    source venv/Scripts/activate
+fi
 
-# ── Install backend dependencies ─────────────────────────────────
+pip install --upgrade pip -q 2>/dev/null || true
 
-print_step "Installing backend dependencies..."
-
-if [ -f python_backend/requirements.txt ]; then
-    pip install --upgrade pip -q
-    if pip install -r python_backend/requirements.txt; then
-        print_success "Backend dependencies installed"
-    else
-        print_error "Failed to install Python dependencies"
-        echo ""
-        echo "  Common causes:"
-        echo "    - No internet connection"
-        echo "    - Python version too old (need 3.11+, you have: $(python3 --version))"
-        echo "    - pip not available in this environment"
-        echo ""
-        echo "  Try manually:"
-        echo "    pip install -r python_backend/requirements.txt"
-        exit 1
-    fi
+if pip install -r python_backend/requirements.txt 2>&1; then
+    print_ok "Python dependencies installed"
 else
-    print_error "python_backend/requirements.txt not found"
+    echo ""
+    print_err "Failed to install Python dependencies"
+    echo ""
+    echo "  Common causes:"
+    echo "    - No internet connection"
+    echo "    - Python version incompatible (need 3.11+, found: $($PYTHON_CMD --version))"
+    echo "    - pip not available in the virtual environment"
+    echo ""
+    echo "  Try running manually:"
+    echo "    source venv/bin/activate"
+    echo "    pip install -r python_backend/requirements.txt"
+    deactivate 2>/dev/null || true
     exit 1
 fi
 
-# ── Install frontend dependencies & build ────────────────────────
+deactivate 2>/dev/null || true
 
-print_step "Installing frontend dependencies..."
+# ══════════════════════════════════════════════════════════════
+#  Setup directories & build
+# ══════════════════════════════════════════════════════════════
+print_step "Step 5/5: Building application..."
 
-if [ -f package.json ]; then
-    npm install --silent 2>/dev/null
-    print_success "Frontend dependencies installed"
-else
-    print_warn "No package.json found - skipping frontend install"
-fi
+mkdir -p python_backend/uploads logs backups
+npx vite build 2>&1 | tail -3
+print_ok "Frontend built successfully"
 
-print_step "Building frontend for production..."
-
-if npm run build 2>/dev/null; then
-    print_success "Frontend built to dist/public/"
-else
-    print_warn "Frontend build failed or not configured - check if dist/public/ exists"
-fi
-
-# ── Database setup ───────────────────────────────────────────────
-
-print_step "Setting up database..."
-
-cd python_backend
-
-if python3 -c "
-from models.database import engine
-from sqlalchemy import text
-with engine.connect() as conn:
-    conn.execute(text('SELECT 1'))
-    print('Connection successful')
-" 2>/dev/null; then
-    print_success "Database connection verified"
-else
-    print_error "Cannot connect to database. Check DATABASE_URL in .env"
-    cd ..
-    exit 1
-fi
-
-print_step "Running database migrations..."
-
-python3 -c "
-from main import app
-print('Migrations complete')
-" 2>/dev/null && print_success "Database migrations applied" || print_warn "Migration check - application will run migrations on first start"
-
-cd ..
-
-# ── Set up PM2 ecosystem ─────────────────────────────────────────
-
-print_step "Configuring PM2 process manager..."
-
-if [ ! -f ecosystem.config.js ]; then
-    print_warn "ecosystem.config.js not found in project root"
-fi
-
-# ── Create scripts directory ─────────────────────────────────────
-
-print_step "Setting up utility scripts..."
-
-mkdir -p scripts logs backups
-chmod +x scripts/*.sh 2>/dev/null || true
-chmod +x install.sh 2>/dev/null || true
-
-print_success "Utility scripts and directories ready"
-
-# ── Final summary ────────────────────────────────────────────────
-
+# ══════════════════════════════════════════════════════════════
+#  Done
+# ══════════════════════════════════════════════════════════════
 echo ""
-echo -e "${BLUE}════════════════════════════════════════════════════════════${NC}"
+echo -e "${BLUE}================================================================${NC}"
 echo -e "${GREEN}  Installation Complete!${NC}"
-echo -e "${BLUE}════════════════════════════════════════════════════════════${NC}"
+echo -e "${BLUE}================================================================${NC}"
 echo ""
-
-if [ "$UPDATE_MODE" = true ]; then
-    echo "  Update applied successfully."
-    echo ""
-    echo "  Restart the application:"
-    echo "    pm2 restart all"
-    echo ""
-else
-    echo "  Next steps:"
-    echo ""
-    echo "  1. Edit your .env file (if you haven't already):"
-    echo "       nano .env"
-    echo ""
-    echo "  2. Start the application:"
-    echo "       pm2 start ecosystem.config.js"
-    echo "       pm2 save"
-    echo "       pm2 startup"
-    echo ""
-    echo "  3. Set up Nginx (see nginx/banky.conf template):"
-    echo "       sudo cp nginx/banky.conf /etc/nginx/sites-available/banky"
-    echo "       sudo ln -s /etc/nginx/sites-available/banky /etc/nginx/sites-enabled/"
-    echo "       sudo nginx -t && sudo systemctl reload nginx"
-    echo ""
-    echo "  4. Set up SSL:"
-    echo "       sudo apt install -y certbot python3-certbot-nginx"
-    echo "       sudo certbot --nginx -d yoursite.com"
-    echo ""
-    echo "  5. Open http://your-server-ip:5000 to register your organization"
-    echo ""
-fi
-
-echo "  For help: See the documentation at /docs or contact support."
+echo "  Before starting, make sure:"
+echo "    1. PostgreSQL is running and accessible"
+echo "    2. DATABASE_URL in .env points to your database"
+echo ""
+echo "  To start BANKY:"
+echo ""
+echo "    ./start.sh"
+echo ""
+echo "  Then open: http://localhost:5000"
+echo ""
+echo "  For production deployment (Nginx, PM2, SSL), see the"
+echo "  deployment guide in the documentation."
+echo ""
+echo "  All features are unlocked. No license key needed."
 echo ""
