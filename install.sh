@@ -16,6 +16,7 @@ print_err()  { echo -e "${RED}    [ERROR] $1${NC}"; }
 
 APP_DIR=$(pwd)
 REQUIRED_PYTHON="3.11.9"
+DB_NAME="banky"
 
 echo ""
 echo -e "${BLUE}================================================================${NC}"
@@ -33,9 +34,9 @@ esac
 echo "  Platform: ${PLATFORM}"
 
 # ══════════════════════════════════════════════════════════════
-#  Check prerequisites
+#  Step 1/6: Check prerequisites
 # ══════════════════════════════════════════════════════════════
-print_step "Step 1/5: Checking prerequisites..."
+print_step "Step 1/6: Checking prerequisites..."
 
 MISSING=""
 
@@ -49,7 +50,6 @@ fi
 # ── Python: find 3.11+, or use pyenv to install it ──────────
 PYTHON_CMD=""
 
-# First pass: check if a suitable version is already on the system
 for _candidate in python3.13 python3.12 python3.11 python3 python; do
     if command -v "$_candidate" >/dev/null 2>&1; then
         _major=$("$_candidate" -c "import sys; print(sys.version_info.major)" 2>/dev/null || echo 0)
@@ -62,11 +62,9 @@ for _candidate in python3.13 python3.12 python3.11 python3 python; do
     fi
 done
 
-# Second pass: use pyenv to install the required version
 if [ -z "$PYTHON_CMD" ]; then
     print_warn "No Python 3.11+ found on system — using pyenv to install Python ${REQUIRED_PYTHON}"
 
-    # Load pyenv into this session if it's already installed
     export PYENV_ROOT="${PYENV_ROOT:-$HOME/.pyenv}"
     export PATH="$PYENV_ROOT/bin:$PATH"
 
@@ -127,9 +125,9 @@ if [ -n "$MISSING" ]; then
 fi
 
 # ══════════════════════════════════════════════════════════════
-#  Environment configuration
+#  Step 2/6: Environment configuration
 # ══════════════════════════════════════════════════════════════
-print_step "Step 2/5: Setting up environment..."
+print_step "Step 2/6: Setting up environment..."
 
 if [ -f .env ]; then
     print_skip ".env already exists (your settings are preserved)"
@@ -143,25 +141,20 @@ else
         sed -i "s|SESSION_SECRET=.*|SESSION_SECRET=${SESSION_SECRET}|" .env
     fi
     print_ok ".env file created from template"
-    echo ""
-    print_warn "IMPORTANT: Edit .env and set your DATABASE_URL"
-    echo "    Open .env in a text editor and update the database connection string."
-    echo ""
-    echo "    Example: DATABASE_URL=postgresql://user:password@localhost:5432/banky"
 fi
 
 # ══════════════════════════════════════════════════════════════
-#  Install Node.js dependencies
+#  Step 3/6: Install Node.js dependencies
 # ══════════════════════════════════════════════════════════════
-print_step "Step 3/5: Installing frontend dependencies..."
+print_step "Step 3/6: Installing frontend dependencies..."
 
 npm install 2>&1 | tail -5
 print_ok "Node.js dependencies installed"
 
 # ══════════════════════════════════════════════════════════════
-#  Install Python dependencies
+#  Step 4/6: Install Python dependencies
 # ══════════════════════════════════════════════════════════════
-print_step "Step 4/5: Installing Python backend dependencies..."
+print_step "Step 4/6: Installing Python backend dependencies..."
 
 VENV_PYTHON=""
 if [ -f "venv/bin/python3" ]; then
@@ -210,9 +203,132 @@ fi
 deactivate 2>/dev/null || true
 
 # ══════════════════════════════════════════════════════════════
-#  Setup directories & build
+#  Step 5/6: PostgreSQL setup + database + migrations
 # ══════════════════════════════════════════════════════════════
-print_step "Step 5/5: Building application..."
+print_step "Step 5/6: Setting up database..."
+
+# ── Install PostgreSQL if missing ────────────────────────────
+if ! command -v psql >/dev/null 2>&1; then
+    print_warn "PostgreSQL not found — installing..."
+    if [ "$PLATFORM" = "mac" ]; then
+        if command -v brew >/dev/null 2>&1; then
+            brew install postgresql@15 -q
+            brew services start postgresql@15
+            export PATH="/opt/homebrew/opt/postgresql@15/bin:/usr/local/opt/postgresql@15/bin:$PATH"
+            print_ok "PostgreSQL installed and started (via Homebrew)"
+        else
+            print_err "Homebrew not found. Install it first: https://brew.sh"
+            print_err "Then re-run this script."
+            exit 1
+        fi
+    elif [ "$PLATFORM" = "linux" ]; then
+        sudo apt-get update -q
+        sudo apt-get install -y postgresql postgresql-contrib -q
+        sudo systemctl enable postgresql
+        sudo systemctl start postgresql
+        print_ok "PostgreSQL installed and started"
+    else
+        print_err "Automatic PostgreSQL install is not supported on Windows."
+        echo "    Download from: https://www.postgresql.org/download/windows/"
+        exit 1
+    fi
+else
+    print_ok "PostgreSQL $(psql --version | awk '{print $3}')"
+fi
+
+# ── Ensure PostgreSQL is running ─────────────────────────────
+if ! pg_isready -q 2>/dev/null; then
+    print_warn "PostgreSQL is not running — attempting to start..."
+    if [ "$PLATFORM" = "mac" ]; then
+        brew services start postgresql@15 2>/dev/null || brew services start postgresql 2>/dev/null || true
+    elif [ "$PLATFORM" = "linux" ]; then
+        sudo systemctl start postgresql 2>/dev/null || sudo service postgresql start 2>/dev/null || true
+    fi
+    sleep 2
+    if pg_isready -q 2>/dev/null; then
+        print_ok "PostgreSQL started"
+    else
+        print_err "Could not start PostgreSQL. Please start it manually and re-run."
+        exit 1
+    fi
+fi
+
+# ── Determine how to run psql commands ───────────────────────
+# On Linux, PostgreSQL creates a system 'postgres' user (peer auth).
+# On Mac with Homebrew, the current user can connect directly.
+if [ "$PLATFORM" = "linux" ] && sudo -u postgres psql -c '\q' 2>/dev/null; then
+    PSQL_CMD="sudo -u postgres psql"
+    CREATEDB_CMD="sudo -u postgres createdb"
+elif psql -U postgres -c '\q' 2>/dev/null; then
+    PSQL_CMD="psql -U postgres"
+    CREATEDB_CMD="createdb -U postgres"
+else
+    PSQL_CMD="psql"
+    CREATEDB_CMD="createdb"
+fi
+
+# ── Create database if it doesn't exist ──────────────────────
+if $PSQL_CMD -lqt 2>/dev/null | cut -d \| -f 1 | grep -qw "$DB_NAME"; then
+    print_skip "Database '${DB_NAME}' already exists"
+else
+    print_warn "Database '${DB_NAME}' not found — creating..."
+    $CREATEDB_CMD "$DB_NAME"
+    print_ok "Database '${DB_NAME}' created"
+fi
+
+# ── Write DATABASE_URL to .env if not already set ────────────
+source .env 2>/dev/null || true
+if [ -z "$DATABASE_URL" ] || echo "$DATABASE_URL" | grep -q "localhost:5432/banky$"; then
+    if [ "$PLATFORM" = "linux" ]; then
+        NEW_DB_URL="postgresql:///banky"
+    else
+        NEW_DB_URL="postgresql://localhost:5432/banky"
+    fi
+
+    if grep -q "^DATABASE_URL=" .env 2>/dev/null; then
+        if [ "$PLATFORM" = "mac" ] || [ "$PLATFORM" = "windows" ]; then
+            sed -i.bak "s|^DATABASE_URL=.*|DATABASE_URL=${NEW_DB_URL}|" .env
+            rm -f .env.bak
+        else
+            sed -i "s|^DATABASE_URL=.*|DATABASE_URL=${NEW_DB_URL}|" .env
+        fi
+    else
+        echo "DATABASE_URL=${NEW_DB_URL}" >> .env
+    fi
+    print_ok "DATABASE_URL set to: ${NEW_DB_URL}"
+else
+    print_skip "DATABASE_URL already configured"
+fi
+
+# ── Run database migrations ───────────────────────────────────
+echo "    Running database migrations..."
+if [ -f "venv/bin/activate" ]; then
+    source venv/bin/activate
+elif [ -f "venv/Scripts/activate" ]; then
+    source venv/Scripts/activate
+fi
+
+if python3 -c "
+import sys, os
+sys.path.insert(0, 'python_backend')
+os.chdir('python_backend')
+from dotenv import load_dotenv
+load_dotenv('../.env')
+from main import run_master_migrations
+run_master_migrations()
+print('done')
+" 2>&1 | grep -v "^$"; then
+    print_ok "Database migrations applied"
+else
+    print_warn "Migration output above — app will also run migrations on first start"
+fi
+
+deactivate 2>/dev/null || true
+
+# ══════════════════════════════════════════════════════════════
+#  Step 6/6: Build application
+# ══════════════════════════════════════════════════════════════
+print_step "Step 6/6: Building application..."
 
 mkdir -p python_backend/uploads logs backups
 npx vite build 2>&1 | tail -3
@@ -225,10 +341,6 @@ echo ""
 echo -e "${BLUE}================================================================${NC}"
 echo -e "${GREEN}  Installation Complete!${NC}"
 echo -e "${BLUE}================================================================${NC}"
-echo ""
-echo "  Before starting, make sure:"
-echo "    1. PostgreSQL is running and accessible"
-echo "    2. DATABASE_URL in .env points to your database"
 echo ""
 echo "  To start BANKY:"
 echo ""
