@@ -46,33 +46,35 @@ else
 fi
 
 PYTHON_CMD=""
-if command -v python3 >/dev/null 2>&1; then
-    PYTHON_CMD="python3"
-    PY_VER=$(python3 --version 2>&1)
-    PY_MINOR=$(python3 -c "import sys; print(sys.version_info.minor)")
-    PY_MAJOR=$(python3 -c "import sys; print(sys.version_info.major)")
-    if [ "$PY_MAJOR" -ge 3 ] && [ "$PY_MINOR" -ge 11 ]; then
-        print_ok "$PY_VER"
-    else
-        print_warn "$PY_VER detected — Python 3.11+ is recommended, will try anyway"
-    fi
-elif command -v python >/dev/null 2>&1; then
-    PY_VER=$(python --version 2>&1)
-    if echo "$PY_VER" | grep -q "Python 3"; then
-        PY_MINOR=$(python -c "import sys; print(sys.version_info.minor)")
-        PY_MAJOR=$(python -c "import sys; print(sys.version_info.major)")
-        if [ "$PY_MAJOR" -ge 3 ] && [ "$PY_MINOR" -ge 11 ]; then
-            PYTHON_CMD="python"
-            print_ok "$PY_VER"
-        else
-            PYTHON_CMD="python"
-            print_warn "$PY_VER detected — Python 3.11+ is recommended, will try anyway"
+# Try to find Python 3.11+ — check versioned binaries first, then fall back
+for _candidate in python3.13 python3.12 python3.11 python3 python; do
+    if command -v "$_candidate" >/dev/null 2>&1; then
+        _ver=$("$_candidate" --version 2>&1)
+        _major=$("$_candidate" -c "import sys; print(sys.version_info.major)" 2>/dev/null || echo 0)
+        _minor=$("$_candidate" -c "import sys; print(sys.version_info.minor)" 2>/dev/null || echo 0)
+        if [ "$_major" -ge 3 ] && [ "$_minor" -ge 11 ]; then
+            PYTHON_CMD="$_candidate"
+            print_ok "$_ver (using $_candidate)"
+            break
         fi
-    else
-        MISSING="${MISSING} Python3"
-        print_err "Python 3 not found (found Python 2)"
     fi
-else
+done
+
+if [ -z "$PYTHON_CMD" ]; then
+    # No 3.11+ found — check if any Python 3 exists and warn
+    for _candidate in python3 python; do
+        if command -v "$_candidate" >/dev/null 2>&1; then
+            _ver=$("$_candidate" --version 2>&1)
+            if echo "$_ver" | grep -q "Python 3"; then
+                PYTHON_CMD="$_candidate"
+                print_warn "$_ver detected — Python 3.11+ is recommended, will try anyway"
+                break
+            fi
+        fi
+    done
+fi
+
+if [ -z "$PYTHON_CMD" ]; then
     MISSING="${MISSING} Python3"
     print_err "Python 3 not found"
 fi
