@@ -255,13 +255,12 @@ PORT=5000`}</CodeBlock>
               <StepNumber n={4} />
               <h3 className="font-semibold text-gray-900 text-lg">Start the Application</h3>
             </div>
-            <p className="text-gray-600 mb-4">For quick testing, use the start script:</p>
-            <CodeBlock>{`chmod +x start.sh
-./start.sh
+            <p className="text-gray-600 mb-4">Start the application using PM2:</p>
+            <CodeBlock>{`pm2 start ecosystem.config.js
 
 # Opens at http://localhost:5000`}</CodeBlock>
-            <Tip type="warning">
-              <strong>For production:</strong> Don't use start.sh on a live server. Instead, use PM2 for process management — see the <strong>PM2 Process Manager</strong> section below.
+            <Tip type="info">
+              <strong>PM2 recommended:</strong> PM2 keeps BANKY running in the background and restarts it automatically if it crashes. See the <strong>PM2 Process Manager</strong> section below for full setup including auto-start on server reboot.
             </Tip>
           </div>
 
@@ -455,13 +454,13 @@ pm2 status
 pm2 logs
 
 # View API logs only
-pm2 logs banky-api
+pm2 logs banky
 
 # Restart all services
 pm2 restart all
 
 # Restart just the API
-pm2 restart banky-api
+pm2 restart banky
 
 # Stop all services
 pm2 stop all
@@ -471,7 +470,7 @@ pm2 monit`}</CodeBlock>
           </div>
 
           <Tip type="info">
-            <strong>What gets started?</strong> The ecosystem config runs two processes: <code className="bg-blue-100 px-1 rounded text-sm">banky-api</code> (the main application server on port 8000) and <code className="bg-blue-100 px-1 rounded text-sm">banky-scheduler</code> (handles automated tasks like loan notifications and fixed deposit maturity).
+            <strong>What gets started?</strong> The ecosystem config runs two processes: <code className="bg-blue-100 px-1 rounded text-sm">banky</code> (the main application server on port 5000) and <code className="bg-blue-100 px-1 rounded text-sm">banky-scheduler</code> (handles automated tasks like loan notifications and fixed deposit maturity).
           </Tip>
         </div>
       </div>
@@ -511,7 +510,7 @@ sudo systemctl start nginx`}</CodeBlock>
     client_max_body_size 20M;
 
     location / {
-        proxy_pass http://127.0.0.1:8000;
+        proxy_pass http://127.0.0.1:5000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
