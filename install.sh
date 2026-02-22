@@ -54,8 +54,7 @@ if command -v python3 >/dev/null 2>&1; then
     if [ "$PY_MAJOR" -ge 3 ] && [ "$PY_MINOR" -ge 11 ]; then
         print_ok "$PY_VER"
     else
-        MISSING="${MISSING} Python3.11+"
-        print_err "$PY_VER is too old — Python 3.11+ is required"
+        print_warn "$PY_VER detected — Python 3.11+ is recommended, will try anyway"
     fi
 elif command -v python >/dev/null 2>&1; then
     PY_VER=$(python --version 2>&1)
@@ -66,8 +65,8 @@ elif command -v python >/dev/null 2>&1; then
             PYTHON_CMD="python"
             print_ok "$PY_VER"
         else
-            MISSING="${MISSING} Python3.11+"
-            print_err "$PY_VER is too old — Python 3.11+ is required"
+            PYTHON_CMD="python"
+            print_warn "$PY_VER detected — Python 3.11+ is recommended, will try anyway"
         fi
     else
         MISSING="${MISSING} Python3"
