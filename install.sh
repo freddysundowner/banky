@@ -58,7 +58,16 @@ fi
 
 if command -v python3 >/dev/null 2>&1; then
     PY_VER=$(python3 --version)
-    print_success "$PY_VER"
+    PY_MINOR=$(python3 -c "import sys; print(sys.version_info.minor)")
+    PY_MAJOR=$(python3 -c "import sys; print(sys.version_info.major)")
+    if [ "$PY_MAJOR" -ge 3 ] && [ "$PY_MINOR" -ge 11 ]; then
+        print_success "$PY_VER"
+    else
+        print_error "$PY_VER is too old — Python 3.11+ is required"
+        echo "         Install 3.11: sudo apt install -y python3.11 python3.11-venv python3-pip"
+        echo "         On macOS:     brew install python@3.11"
+        MISSING=true
+    fi
 else
     print_error "Python 3 is not installed (v3.11+ required)"
     echo "         Install: sudo apt install -y python3.11 python3.11-venv python3-pip"
@@ -141,8 +150,20 @@ print_step "Installing backend dependencies..."
 
 if [ -f python_backend/requirements.txt ]; then
     pip install --upgrade pip -q
-    pip install -r python_backend/requirements.txt -q
-    print_success "Backend dependencies installed"
+    if pip install -r python_backend/requirements.txt; then
+        print_success "Backend dependencies installed"
+    else
+        print_error "Failed to install Python dependencies"
+        echo ""
+        echo "  Common causes:"
+        echo "    - No internet connection"
+        echo "    - Python version too old (need 3.11+, you have: $(python3 --version))"
+        echo "    - pip not available in this environment"
+        echo ""
+        echo "  Try manually:"
+        echo "    pip install -r python_backend/requirements.txt"
+        exit 1
+    fi
 else
     print_error "python_backend/requirements.txt not found"
     exit 1

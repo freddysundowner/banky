@@ -1,0 +1,61 @@
+mac@macs-MacBook-Pro banky % ./install.sh 
+
+================================================================
+  BANKY - Bank & Sacco Management System
+  Installer
+================================================================
+
+  Platform: mac
+
+>>> Step 1/5: Checking prerequisites...
+    [OK] Node.js v25.2.1
+    [OK] Python 3.9.6
+
+>>> Step 2/5: Setting up environment...
+    [OK] .env file created from template
+
+    [WARN] IMPORTANT: Edit .env and set your DATABASE_URL
+    Open .env in a text editor and update the database connection string.
+
+    Example: DATABASE_URL=postgresql://user:password@localhost:5432/banky
+
+>>> Step 3/5: Installing frontend dependencies...
+
+To address all issues, run:
+  npm audit fix
+
+Run `npm audit` for details.
+    [OK] Node.js dependencies installed
+
+>>> Step 4/5: Installing Python backend dependencies...
+    [OK] Python virtual environment created
+WARNING: Retrying (Retry(total=0, connect=None, read=None, redirect=None, status=None)) after connection broken by 'NewConnectionError('<pip._vendor.urllib3.connection.HTTPSConnection object at 0x10b10beb0>: Failed to establish a new connection: [Errno 8] nodename nor servname provided, or not known')': /simple/fastapi/
+ERROR: Could not find a version that satisfies the requirement fastapi==0.129.0 (from versions: none)
+ERROR: No matching distribution found for fastapi==0.129.0
+    [OK] Python dependencies installed
+
+>>> Step 5/5: Building application...
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 7.33s
+    [OK] Frontend built successfully
+
+================================================================
+  Installation Complete!
+================================================================
+
+  Before starting, make sure:
+    1. PostgreSQL is running and accessible
+    2. DATABASE_URL in .env points to your database
+
+  To start BANKY:
+
+    ./start.sh
+
+  Then open: http://localhost:5000
+
+  For production deployment (Nginx, PM2, SSL), see the
+  deployment guide in the documentation.
+
+  All features are unlocked. No license key needed.
+
