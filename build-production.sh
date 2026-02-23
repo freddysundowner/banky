@@ -452,13 +452,13 @@ const rootDir = __dirname;
 
 module.exports = {
   // ─── Set your domain here before running install.sh ───
-  domain: "admin.yourdomain.com",
+  domain: "admin.banky.com",
 
   // ─── Local preview port (access at http://localhost:PORT) ───
   port: 5002,
 
   // ─── Port your BankyKit backend is running on ───
-  backend_port: 8000,
+  backend_port: 5000,
 
   apps: [
     {
@@ -657,13 +657,13 @@ const rootDir = __dirname;
 
 module.exports = {
   // ─── Set your domain here before running install.sh ───
-  domain: "yourdomain.com",
+  domain: "bankykit.com",
 
   // ─── Local preview port (access at http://localhost:PORT) ───
   port: 5003,
 
   // ─── Port your BankyKit backend is running on ───
-  backend_port: 8000,
+  backend_port: 5000,
 
   apps: [
     {
