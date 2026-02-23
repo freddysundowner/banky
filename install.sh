@@ -454,6 +454,21 @@ deactivate 2>/dev/null || true
 print_step "Step 6/6: Building application..."
 
 mkdir -p python_backend/uploads logs backups
+
+# Set VITE_PRODUCTION_MODE based on install type
+if [ "$DB_NAME" = "bankykit-demo" ]; then
+    if grep -q "^VITE_PRODUCTION_MODE=" .env 2>/dev/null; then
+        sed -i "s|^VITE_PRODUCTION_MODE=.*|VITE_PRODUCTION_MODE=demo|" .env
+    else
+        echo "VITE_PRODUCTION_MODE=demo" >> .env
+    fi
+    print_ok "Demo mode enabled — login page will show demo credentials"
+else
+    if grep -q "^VITE_PRODUCTION_MODE=" .env 2>/dev/null; then
+        sed -i "s|^VITE_PRODUCTION_MODE=.*|VITE_PRODUCTION_MODE=|" .env
+    fi
+fi
+
 npx vite build 2>&1 | tail -3
 print_ok "Frontend built successfully"
 
