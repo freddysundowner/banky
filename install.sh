@@ -391,13 +391,13 @@ fi
 
 # ── Write DATABASE_URL to .env if not already set ────────────
 source .env 2>/dev/null || true
-if [ -z "$DATABASE_URL" ] || echo "$DATABASE_URL" | grep -q "localhost:5432/bankykit$"; then
-    if [ "$PLATFORM" = "linux" ]; then
-        NEW_DB_URL="postgresql:///bankykit"
-    else
-        NEW_DB_URL="postgresql://localhost:5432/bankykit"
-    fi
+if [ "$PLATFORM" = "linux" ]; then
+    NEW_DB_URL="postgresql:///${DB_NAME}"
+else
+    NEW_DB_URL="postgresql://localhost:5432/${DB_NAME}"
+fi
 
+if [ -z "$DATABASE_URL" ] || echo "$DATABASE_URL" | grep -qE "(localhost:5432|///)[^/]*$"; then
     if grep -q "^DATABASE_URL=" .env 2>/dev/null; then
         if [ "$PLATFORM" = "mac" ] || [ "$PLATFORM" = "windows" ]; then
             sed -i.bak "s|^DATABASE_URL=.*|DATABASE_URL=${NEW_DB_URL}|" .env
