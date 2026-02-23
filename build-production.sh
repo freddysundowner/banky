@@ -337,9 +337,13 @@ DOMAIN=localhost
 PORT=5000
 EOF
 
-    # Use the repo install.sh but set DB_NAME=demo for CodeCanyon buyers
-    sed 's/^DB_NAME="bankykit"/DB_NAME="demo"/' install.sh > packages/codecanyon/bankykit/install.sh
+    # Original install.sh — uses DB_NAME="bankykit"
+    cp install.sh packages/codecanyon/bankykit/install.sh
     chmod +x packages/codecanyon/bankykit/install.sh
+
+    # Demo variant — replaces every "bankykit" identifier with "bankykit-demo"
+    sed 's/bankykit/bankykit-demo/g' install.sh > packages/codecanyon/bankykit/install-demo.sh
+    chmod +x packages/codecanyon/bankykit/install-demo.sh
 
     # ── start.sh: copied from root so it's always up to date ──
     cp start.sh packages/codecanyon/bankykit/start.sh
