@@ -169,15 +169,29 @@ build_compiled() {
     rm -f packages/enterprise/bankykit/components.json 2>/dev/null || true
     
     cat > packages/enterprise/bankykit/.env.example << 'EOF'
-# Database connection
-DATABASE_URL=postgresql://user:password@host:5432/bankykit
+# ═══════════════════════════════════════════════════════════════════
+#  BankyKit - Bank & Sacco Management System
+#  Environment Configuration
+# ═══════════════════════════════════════════════════════════════════
+
+# PostgreSQL connection string (auto-configured by install.sh)
+# Local:  postgresql:///bankykit
+# Remote: postgresql://user:pass@host:5432/dbname?sslmode=require
+DATABASE_URL=postgresql:///bankykit
 
 # Deployment mode (do not change)
 DEPLOYMENT_MODE=enterprise
 
+# Production mode: "demo" prefills login with demo credentials
+# Set to blank or remove for normal production use
+VITE_PRODUCTION_MODE=demo
+
 # Random secret for session encryption (minimum 32 characters)
 # Generate with: openssl rand -hex 32
 SESSION_SECRET=change-this-to-a-random-string-at-least-32-characters
+
+# Your domain (set by install.sh)
+DOMAIN=localhost
 
 # Application port (default: 5000)
 PORT=5000
@@ -279,23 +293,30 @@ build_codecanyon() {
     
     cat > packages/codecanyon/bankykit/.env.example << 'EOF'
 # ═══════════════════════════════════════════════════════════════════
-#  BANKYKIT - Bank & Sacco Management System
+#  BankyKit - Bank & Sacco Management System
 #  Environment Configuration
 # ═══════════════════════════════════════════════════════════════════
 
 # PostgreSQL connection string (auto-configured by install.sh)
-DATABASE_URL=postgresql://bankykit:bankykit_secure_2024@localhost:5432/bankykit
+# Local:  postgresql:///bankykit
+# Remote: postgresql://user:pass@host:5432/dbname?sslmode=require
+DATABASE_URL=postgresql:///bankykit
 
 # Deployment mode (do not change)
 DEPLOYMENT_MODE=enterprise
 
-# Random secret for session encryption
+# Production mode: "demo" prefills login with demo credentials
+# Set to blank or remove for normal production use
+VITE_PRODUCTION_MODE=demo
+
+# Random secret for session encryption (minimum 32 characters)
+# Generate with: openssl rand -hex 32
 SESSION_SECRET=CHANGE_ME
 
 # Your domain (set by install.sh)
 DOMAIN=localhost
 
-# Application port
+# Application port (default: 5000)
 PORT=5000
 EOF
 
