@@ -543,15 +543,23 @@ export default function Home() {
     },
   });
 
-  if (authLoading || orgsLoading || (selectedOrg && permissionsLoading)) {
+  const isBootstrapping =
+    authLoading ||
+    orgsLoading ||
+    (memberships && memberships.length > 0 && (!selectedOrg || permissionsLoading || featuresLoading));
+
+  if (isBootstrapping) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary mb-4">
-          <Landmark className="h-6 w-6 text-primary-foreground" />
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-0">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg mb-6">
+          <Landmark className="h-9 w-9 text-primary-foreground" />
         </div>
-        <p className="text-lg font-medium mb-4">Loading...</p>
-        <div className="w-64 h-2 bg-muted rounded-full overflow-hidden">
-          <div className="h-full bg-primary rounded-full animate-pulse" style={{width: '60%'}}></div>
+        <h1 className="text-xl font-bold mb-1">{platformName || "BankyKit"}</h1>
+        <p className="text-muted-foreground text-sm mb-8">
+          {authLoading ? "Verifying session..." : orgsLoading || !selectedOrg ? "Loading your organization..." : "Loading permissions..."}
+        </p>
+        <div className="w-56 h-1.5 bg-muted rounded-full overflow-hidden">
+          <div className="h-full w-2/3 bg-primary rounded-full animate-pulse" />
         </div>
       </div>
     );

@@ -17,6 +17,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Landmark, Eye, EyeOff, ShieldCheck, Users, CreditCard, BarChart3, Lock } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { useBranding } from "@/context/BrandingContext";
 
 const registerSchema = z.object({
@@ -49,6 +50,8 @@ export default function Register() {
   const { platform_name, guide_url } = useBranding();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -68,12 +71,16 @@ export default function Register() {
       return apiRequest("POST", "/api/auth/register", data);
     },
     onSuccess: async () => {
+      setIsSigningUp(true);
+      setLoadingProgress(20);
       await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
+      setLoadingProgress(60);
       toast({
         title: "Account created",
         description: `Welcome to ${platform_name}! Let's set up your organization.`,
       });
-      navigate("/");
+      setLoadingProgress(100);
+      setTimeout(() => navigate("/"), 200);
     },
     onError: (error: any) => {
       toast({
@@ -83,6 +90,21 @@ export default function Register() {
       });
     },
   });
+
+  if (isSigningUp) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg mb-6">
+          <Landmark className="h-9 w-9 text-primary-foreground" />
+        </div>
+        <h1 className="text-2xl font-bold mb-1">{platform_name}</h1>
+        <p className="text-muted-foreground mb-8 text-sm">Setting up your account...</p>
+        <div className="w-56">
+          <Progress value={loadingProgress} className="h-1.5" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex">
