@@ -827,7 +827,7 @@ export default function DocsPage() {
   const [activeSection, setActiveSection] = useState<SectionId>('overview');
   const contentRef = useRef<HTMLDivElement>(null);
   const [config, setConfig] = useState<DocsConfig>({
-    support_email: 'support@bankykit.co.ke',
+    support_email: '',
     show_license: false,
   });
   const [loading, setLoading] = useState(true);
@@ -848,7 +848,7 @@ export default function DocsPage() {
         if (res.ok) {
           const data = await res.json();
           setConfig({
-            support_email: data.support_email || 'support@bankykit.co.ke',
+            support_email: data.support_email || '',
             show_license: !!data.show_license,
           });
         }
@@ -931,13 +931,15 @@ export default function DocsPage() {
             <p className="text-purple-100 mb-6 max-w-xl mx-auto">
               Our support team is here to help you get BANKYKIT up and running. Reach out anytime.
             </p>
-            <a
-              href={`mailto:${config.support_email}`}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-purple-600 font-semibold rounded-lg hover:bg-purple-50 transition"
-            >
-              <Mail className="w-5 h-5" />
-              {config.support_email}
-            </a>
+            {config.support_email && (
+              <a
+                href={`mailto:${config.support_email}`}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-white text-purple-600 font-semibold rounded-lg hover:bg-purple-50 transition"
+              >
+                <Mail className="w-5 h-5" />
+                {config.support_email}
+              </a>
+            )}
           </div>
         </div>
       </div>

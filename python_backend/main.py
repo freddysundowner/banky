@@ -1099,6 +1099,7 @@ async def get_public_docs_config():
     db = SessionLocal()
     try:
         keys = [
+            "support_email",
             "landing_docs_support_email",
             "landing_docs_mode",
             "landing_docs_codecanyon_title",
@@ -1111,8 +1112,14 @@ async def get_public_docs_config():
             PlatformSettings.setting_key.in_(keys)
         ).all()}
         
+        support_email = (
+            settings.get("support_email") or
+            settings.get("landing_docs_support_email") or
+            ""
+        )
+        
         return {
-            "support_email": settings.get("landing_docs_support_email", "support@bankykit.co.ke"),
+            "support_email": support_email,
             "docs_mode": settings.get("landing_docs_mode", "both"),
             "codecanyon_title": settings.get("landing_docs_codecanyon_title", "CodeCanyon Purchase"),
             "codecanyon_subtitle": settings.get("landing_docs_codecanyon_subtitle", "Installation guide for buyers who purchased BANKYKIT from CodeCanyon marketplace."),
