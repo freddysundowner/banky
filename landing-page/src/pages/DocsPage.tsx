@@ -274,7 +274,7 @@ pm2 startup`}</CodeBlock>
           </div>
 
           <Tip type="success">
-            <strong>First Login:</strong> Open BANKY in your browser, register your account, and create your organization. All features are unlocked automatically in enterprise mode — no license key needed.
+            <strong>First Login:</strong> Open BANKY in your browser, register your account, and create your organization.
           </Tip>
         </div>
       </div>
