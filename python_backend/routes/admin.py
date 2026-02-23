@@ -1008,6 +1008,8 @@ DEFAULT_PLATFORM_SETTINGS = [
     {"key": "terms_last_updated", "value": "", "type": "string", "description": "Terms of Service last updated date"},
     {"key": "privacy_last_updated", "value": "", "type": "string", "description": "Privacy Policy last updated date"},
     {"key": "guide_url", "value": "", "type": "string", "description": "URL for the View Guide link shown on login and registration pages"},
+    {"key": "logo_url", "value": "", "type": "string", "description": "URL for the platform logo image (PNG, JPG, or SVG) - used in sidebar and login page"},
+    {"key": "favicon_url", "value": "", "type": "string", "description": "URL for the browser tab favicon (PNG, ICO, or SVG) - defaults to a generated bank icon if not set"},
 ]
 
 def initialize_platform_settings(db: Session):

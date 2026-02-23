@@ -613,6 +613,68 @@ export default function Settings() {
                 <div>
                   <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                     <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Branding Assets
+                  </h2>
+                  <p className="text-sm text-gray-500 mt-1">Upload your logo and favicon to brand the platform</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Platform Logo URL
+                    </label>
+                    <p className="text-xs text-gray-500 mb-3">Displayed in the sidebar and on the login page. Use a PNG, JPG, or SVG hosted on a public URL.</p>
+                    <input
+                      type="url"
+                      value={getValue('logo_url')}
+                      onChange={(e) => handleChange('logo_url', e.target.value)}
+                      placeholder="https://example.com/logo.png"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white text-sm"
+                    />
+                    {getValue('logo_url') && (
+                      <div className="mt-3 flex items-center gap-3">
+                        <img
+                          src={getValue('logo_url')}
+                          alt="Logo preview"
+                          className="h-10 max-w-[120px] object-contain rounded border border-gray-200 bg-white p-1"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                        />
+                        <span className="text-xs text-gray-500">Preview</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Favicon URL
+                    </label>
+                    <p className="text-xs text-gray-500 mb-3">Browser tab icon. Use a square PNG, ICO, or SVG (32×32 recommended). Falls back to a generated bank icon using your primary color.</p>
+                    <input
+                      type="url"
+                      value={getValue('favicon_url')}
+                      onChange={(e) => handleChange('favicon_url', e.target.value)}
+                      placeholder="https://example.com/favicon.png"
+                      className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white text-sm"
+                    />
+                    {getValue('favicon_url') && (
+                      <div className="mt-3 flex items-center gap-3">
+                        <img
+                          src={getValue('favicon_url')}
+                          alt="Favicon preview"
+                          className="w-8 h-8 object-contain rounded border border-gray-200 bg-white p-0.5"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                        />
+                        <span className="text-xs text-gray-500">Preview (32×32)</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200 pt-8">
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-1">
+                    <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
                     </svg>
                     Theme Colors
