@@ -588,8 +588,10 @@ http.createServer((req, res) => {
     req.pipe(proxy);
     return;
   }
+  const BASE = '/admin';
   const urlPath = req.url.split('?')[0].split('#')[0];
-  let file = path.join(DIST_DIR, urlPath === '/' ? 'index.html' : urlPath);
+  const filePath = urlPath.startsWith(BASE) ? (urlPath.slice(BASE.length) || '/') : urlPath;
+  let file = path.join(DIST_DIR, filePath === '/' ? 'index.html' : filePath);
   if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) {
     file = path.join(DIST_DIR, 'index.html');
   }
