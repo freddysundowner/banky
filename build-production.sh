@@ -533,7 +533,7 @@ const rootDir = __dirname;
 
 module.exports = {
   // ─── Set your domain here before running install.sh ───
-  domain: "admin-demo.bankykit.com",
+  domain: "demoadmin.bankykit.com",
 
   // ─── Local preview port (access at http://localhost:PORT) ───
   port: 6002,
