@@ -442,7 +442,7 @@ case $choice in
 
         find packages/admin-panel/bankykit-admin -name ".DS_Store" -delete 2>/dev/null || true
 
-        cat > packages/admin-panel/bankykit-admin/ecosystem.config.js << 'ECOEOF'
+        cat > packages/admin-panel/bankykit-admin/ecosystem.config.cjs << 'ECOEOF'
 const path = require("path");
 
 const rootDir = __dirname;
@@ -477,7 +477,7 @@ set -e
 
 GREEN='\033[0;32m'; BLUE='\033[0;34m'; NC='\033[0m'
 
-PORT=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.port || 5002);")
+PORT=$(node --input-type=commonjs -e "const c = require('./ecosystem.config.cjs'); console.log(c.port || 5002);" 2>/dev/null || echo "5002")
 
 echo ""
 echo -e "${BLUE}================================================================${NC}"
@@ -490,7 +490,7 @@ if ! command -v pm2 &>/dev/null; then
     npx vite preview --port "$PORT" --host 0.0.0.0
 else
     echo -e "${GREEN}>>> Starting with PM2...${NC}"
-    pm2 start ecosystem.config.js
+    pm2 start ecosystem.config.cjs
     pm2 save
     echo ""
     echo -e "${GREEN}  Admin Panel running at: http://localhost:${PORT}${NC}"
@@ -516,23 +516,23 @@ echo -e "${BLUE}  BankyKit Admin Panel - Installer${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
 
-if [ ! -f ecosystem.config.js ]; then
-    print_err "ecosystem.config.js not found. Cannot proceed."
+if [ ! -f ecosystem.config.cjs ]; then
+    print_err "ecosystem.config.cjs not found. Cannot proceed."
 fi
 
-ADMIN_DOMAIN=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.domain);" 2>/dev/null || echo "")
+ADMIN_DOMAIN=$(node --input-type=commonjs -e "const c = require('./ecosystem.config.cjs'); console.log(c.domain);" 2>/dev/null || echo "")
 if [ -z "$ADMIN_DOMAIN" ] || [ "$ADMIN_DOMAIN" = "undefined" ] || [ "$ADMIN_DOMAIN" = "null" ] || [ "$ADMIN_DOMAIN" = "admin.yourdomain.com" ]; then
     echo ""
-    echo -e "${RED}  [ERROR] Domain not set in ecosystem.config.js${NC}"
+    echo -e "${RED}  [ERROR] Domain not set in ecosystem.config.cjs${NC}"
     echo ""
-    echo "  Open ecosystem.config.js and set your domain:"
+    echo "  Open ecosystem.config.cjs and set your domain:"
     echo "    domain: \"admin.yourdomain.com\","
     echo ""
     exit 1
 fi
 
-BACKEND_PORT=$(node -e "const c = require('./ecosystem.config.js'); const p = c.backend_port; console.log((p !== undefined && p !== null) ? p : 8000);" 2>/dev/null || echo "8000")
-PREVIEW_PORT=$(node -e "const c = require('./ecosystem.config.js'); const p = c.port; console.log((p !== undefined && p !== null) ? p : 5002);" 2>/dev/null || echo "5002")
+BACKEND_PORT=$(node --input-type=commonjs -e "const c = require('./ecosystem.config.cjs'); const p = c.backend_port; console.log((p !== undefined && p !== null) ? p : 8000);" 2>/dev/null || echo "8000")
+PREVIEW_PORT=$(node --input-type=commonjs -e "const c = require('./ecosystem.config.cjs'); const p = c.port; console.log((p !== undefined && p !== null) ? p : 5002);" 2>/dev/null || echo "5002")
 
 echo -e "  Domain:       ${GREEN}${ADMIN_DOMAIN}${NC}"
 echo -e "  Backend port: ${GREEN}${BACKEND_PORT}${NC}"
@@ -613,7 +613,7 @@ INSTALLEOF
 
         find packages/landing-page/bankykit-landing -name ".DS_Store" -delete 2>/dev/null || true
 
-        cat > packages/landing-page/bankykit-landing/ecosystem.config.js << 'ECOEOF'
+        cat > packages/landing-page/bankykit-landing/ecosystem.config.cjs << 'ECOEOF'
 const path = require("path");
 
 const rootDir = __dirname;
@@ -648,7 +648,7 @@ set -e
 
 GREEN='\033[0;32m'; BLUE='\033[0;34m'; NC='\033[0m'
 
-PORT=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.port || 5003);")
+PORT=$(node --input-type=commonjs -e "const c = require('./ecosystem.config.cjs'); console.log(c.port || 5003);" 2>/dev/null || echo "5003")
 
 echo ""
 echo -e "${BLUE}================================================================${NC}"
@@ -661,7 +661,7 @@ if ! command -v pm2 &>/dev/null; then
     npx vite preview --port "$PORT" --host 0.0.0.0
 else
     echo -e "${GREEN}>>> Starting with PM2...${NC}"
-    pm2 start ecosystem.config.js
+    pm2 start ecosystem.config.cjs
     pm2 save
     echo ""
     echo -e "${GREEN}  Landing Page running at: http://localhost:${PORT}${NC}"
@@ -687,23 +687,23 @@ echo -e "${BLUE}  BankyKit Landing Page - Installer${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
 
-if [ ! -f ecosystem.config.js ]; then
-    print_err "ecosystem.config.js not found. Cannot proceed."
+if [ ! -f ecosystem.config.cjs ]; then
+    print_err "ecosystem.config.cjs not found. Cannot proceed."
 fi
 
-DOMAIN=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.domain);" 2>/dev/null || echo "")
+DOMAIN=$(node --input-type=commonjs -e "const c = require('./ecosystem.config.cjs'); console.log(c.domain);" 2>/dev/null || echo "")
 if [ -z "$DOMAIN" ] || [ "$DOMAIN" = "undefined" ] || [ "$DOMAIN" = "null" ] || [ "$DOMAIN" = "yourdomain.com" ]; then
     echo ""
-    echo -e "${RED}  [ERROR] Domain not set in ecosystem.config.js${NC}"
+    echo -e "${RED}  [ERROR] Domain not set in ecosystem.config.cjs${NC}"
     echo ""
-    echo "  Open ecosystem.config.js and set your domain:"
+    echo "  Open ecosystem.config.cjs and set your domain:"
     echo "    domain: \"yourdomain.com\","
     echo ""
     exit 1
 fi
 
-BACKEND_PORT=$(node -e "const c = require('./ecosystem.config.js'); const p = c.backend_port; console.log((p !== undefined && p !== null) ? p : 8000);" 2>/dev/null || echo "8000")
-PREVIEW_PORT=$(node -e "const c = require('./ecosystem.config.js'); const p = c.port; console.log((p !== undefined && p !== null) ? p : 5003);" 2>/dev/null || echo "5003")
+BACKEND_PORT=$(node --input-type=commonjs -e "const c = require('./ecosystem.config.cjs'); const p = c.backend_port; console.log((p !== undefined && p !== null) ? p : 8000);" 2>/dev/null || echo "8000")
+PREVIEW_PORT=$(node --input-type=commonjs -e "const c = require('./ecosystem.config.cjs'); const p = c.port; console.log((p !== undefined && p !== null) ? p : 5003);" 2>/dev/null || echo "5003")
 
 echo -e "  Domain:       ${GREEN}${DOMAIN}${NC}"
 echo -e "  Backend port: ${GREEN}${BACKEND_PORT}${NC}"
