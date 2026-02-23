@@ -3,7 +3,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, HTMLResponse
@@ -1079,7 +1079,6 @@ async def list_public_hero_placeholders():
 @app.get("/api/public/hero_placeholders/{name}", tags=["Public"])
 async def get_public_hero_placeholder(name: str):
     """Serve an uploaded hero placeholder image."""
-    from fastapi.responses import FileResponse
     import re as _re
     if not _re.match(r'^[a-zA-Z0-9_-]{1,64}$', name):
         raise HTTPException(status_code=404, detail="Not found")
