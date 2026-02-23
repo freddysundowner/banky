@@ -426,7 +426,7 @@ case $choice in
         echo ">>> Packaging Admin Panel..."
         rm -rf packages/admin-panel
         mkdir -p packages/admin-panel/bankykit-admin
-        cp -r admin-client/dist packages/admin-panel/bankykit-admin/dist
+        cp -r admin-client/dist/. packages/admin-panel/bankykit-admin/
         cat > packages/admin-panel/bankykit-admin/README.txt << 'EOF'
 BankyKit Admin Panel
 ====================
@@ -434,9 +434,9 @@ BankyKit Admin Panel
 This is the pre-built admin panel for BankyKit.
 
 Deployment (Nginx — subdomain, e.g. admin.yourdomain.com):
-  1. Copy the 'dist/' folder to your server:
+  1. Copy the files to your server:
        sudo mkdir -p /var/www/bankykit-admin
-       sudo cp -r dist/* /var/www/bankykit-admin/
+       sudo cp -r * /var/www/bankykit-admin/
 
   2. Create /etc/nginx/sites-available/bankykit-admin:
 
@@ -480,7 +480,7 @@ EOF
         echo ">>> Packaging Landing Page..."
         rm -rf packages/landing-page
         mkdir -p packages/landing-page/bankykit-landing
-        cp -r landing-page/dist packages/landing-page/bankykit-landing/dist
+        cp -r landing-page/dist/. packages/landing-page/bankykit-landing/
         cat > packages/landing-page/bankykit-landing/README.txt << 'EOF'
 BankyKit Landing Page
 =====================
@@ -488,9 +488,9 @@ BankyKit Landing Page
 This is the pre-built marketing landing page for BankyKit.
 
 Deployment (Nginx — root domain, e.g. yourdomain.com):
-  1. Copy the 'dist/' folder to your server:
+  1. Copy the files to your server:
        sudo mkdir -p /var/www/bankykit-landing
-       sudo cp -r dist/* /var/www/bankykit-landing/
+       sudo cp -r * /var/www/bankykit-landing/
 
   2. Create /etc/nginx/sites-available/bankykit-landing:
 
