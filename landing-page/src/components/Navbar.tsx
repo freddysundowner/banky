@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
 import { Link } from 'wouter';
 import { useBranding } from '../context/BrandingContext';
@@ -9,6 +10,18 @@ interface NavbarProps {
 
 export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProps) {
   const { platform_name, theme_primary_color } = useBranding();
+  const [ctaUrl, setCtaUrl] = useState('/register');
+  const [ctaText, setCtaText] = useState('Start Free Trial');
+
+  useEffect(() => {
+    fetch('/api/public/landing-settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.cta_primary_url) setCtaUrl(data.cta_primary_url);
+        if (data.cta_primary_text) setCtaText(data.cta_primary_text);
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <>
@@ -36,11 +49,11 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
             <div className="hidden md:flex items-center gap-4">
               <a href="/login" className="px-4 py-2 text-gray-700 hover:text-gray-900 transition">Sign In</a>
               <a 
-                href="/register" 
+                href={ctaUrl} 
                 className="px-4 py-2 text-white rounded-lg transition"
                 style={{ backgroundColor: theme_primary_color }}
               >
-                Start Free Trial
+                {ctaText}
               </a>
             </div>
             
@@ -66,12 +79,12 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
             <hr className="my-2" />
             <a href="/login" className="py-3 text-center border border-gray-300 rounded-lg" onClick={() => setMobileMenuOpen(false)}>Sign In</a>
             <a 
-              href="/register" 
+              href={ctaUrl} 
               className="py-3 text-center text-white rounded-lg" 
               style={{ backgroundColor: theme_primary_color }}
               onClick={() => setMobileMenuOpen(false)}
             >
-              Start Free Trial
+              {ctaText}
             </a>
           </div>
         </div>
