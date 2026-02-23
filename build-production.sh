@@ -442,6 +442,13 @@ case $choice in
 
         find packages/admin-panel/bankykit-admin -name ".DS_Store" -delete 2>/dev/null || true
 
+        cat > packages/admin-panel/bankykit-admin/ecosystem.config.js << 'ECOEOF'
+module.exports = {
+  // ─── Set your domain here before running install.sh ───
+  domain: "admin.yourdomain.com",
+};
+ECOEOF
+
         cat > packages/admin-panel/bankykit-admin/install.sh << 'INSTALLEOF'
 #!/bin/bash
 set -e
@@ -449,7 +456,7 @@ set -e
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; BLUE='\033[0;34m'; NC='\033[0m'
 print_step() { echo -e "\n${GREEN}>>> $1${NC}"; }
 print_ok()   { echo -e "${GREEN}    [OK] $1${NC}"; }
-print_err()  { echo -e "${RED}    [ERROR] $1${NC}"; }
+print_err()  { echo -e "${RED}    [ERROR] $1${NC}"; exit 1; }
 
 echo ""
 echo -e "${BLUE}================================================================${NC}"
@@ -457,8 +464,17 @@ echo -e "${BLUE}  BankyKit Admin Panel - Installer${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
 
-read -p "  Enter your admin subdomain (e.g. admin.yourdomain.com): " ADMIN_DOMAIN
-ADMIN_DOMAIN=${ADMIN_DOMAIN:-admin.localhost}
+if [ ! -f ecosystem.config.js ]; then
+    print_err "ecosystem.config.js not found. Cannot proceed."
+fi
+
+ADMIN_DOMAIN=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.domain);")
+if [ -z "$ADMIN_DOMAIN" ] || [ "$ADMIN_DOMAIN" = "admin.yourdomain.com" ]; then
+    print_err "Please set your domain in ecosystem.config.js before running install.sh"
+fi
+
+echo -e "  Domain: ${GREEN}${ADMIN_DOMAIN}${NC}"
+echo ""
 
 print_step "Step 1/3: Installing dependencies..."
 npm install
@@ -534,6 +550,13 @@ INSTALLEOF
 
         find packages/landing-page/bankykit-landing -name ".DS_Store" -delete 2>/dev/null || true
 
+        cat > packages/landing-page/bankykit-landing/ecosystem.config.js << 'ECOEOF'
+module.exports = {
+  // ─── Set your domain here before running install.sh ───
+  domain: "yourdomain.com",
+};
+ECOEOF
+
         cat > packages/landing-page/bankykit-landing/install.sh << 'INSTALLEOF'
 #!/bin/bash
 set -e
@@ -541,7 +564,7 @@ set -e
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; BLUE='\033[0;34m'; NC='\033[0m'
 print_step() { echo -e "\n${GREEN}>>> $1${NC}"; }
 print_ok()   { echo -e "${GREEN}    [OK] $1${NC}"; }
-print_err()  { echo -e "${RED}    [ERROR] $1${NC}"; }
+print_err()  { echo -e "${RED}    [ERROR] $1${NC}"; exit 1; }
 
 echo ""
 echo -e "${BLUE}================================================================${NC}"
@@ -549,8 +572,17 @@ echo -e "${BLUE}  BankyKit Landing Page - Installer${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
 
-read -p "  Enter your domain (e.g. yourdomain.com): " DOMAIN
-DOMAIN=${DOMAIN:-localhost}
+if [ ! -f ecosystem.config.js ]; then
+    print_err "ecosystem.config.js not found. Cannot proceed."
+fi
+
+DOMAIN=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.domain);")
+if [ -z "$DOMAIN" ] || [ "$DOMAIN" = "yourdomain.com" ]; then
+    print_err "Please set your domain in ecosystem.config.js before running install.sh"
+fi
+
+echo -e "  Domain: ${GREEN}${DOMAIN}${NC}"
+echo ""
 
 print_step "Step 1/3: Installing dependencies..."
 npm install
@@ -586,7 +618,7 @@ NGINXEOF
 
 sudo ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/bankykit-landing
 sudo nginx -t && sudo nginx -s reload
-print_ok "Nginx configured for ${DOMAIN}"
+print_ok "Nginx configured for ${DOMAIN} and www.${DOMAIN}"
 
 echo ""
 echo -e "${BLUE}================================================================${NC}"
