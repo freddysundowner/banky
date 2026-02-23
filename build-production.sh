@@ -398,6 +398,55 @@ module.exports = {
 };
 PMEOF
 
+    # ── ecosystem-demo.config.cjs — demo environment, ports from 6000, -demo PM2 names ──
+    cat > packages/codecanyon/bankykit/ecosystem-demo.config.cjs << 'PMEOF'
+const path = require("path");
+const fs = require("fs");
+
+const rootDir = __dirname;
+const envPath = path.join(rootDir, ".env");
+const envVars = {};
+
+if (fs.existsSync(envPath)) {
+  const lines = fs.readFileSync(envPath, "utf-8").split("\n");
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith("#")) {
+      const eqIdx = trimmed.indexOf("=");
+      if (eqIdx > 0) {
+        envVars[trimmed.substring(0, eqIdx).trim()] = trimmed.substring(eqIdx + 1).trim();
+      }
+    }
+  }
+}
+
+module.exports = {
+  apps: [
+    {
+      name: "bankykit-demo-api",
+      cwd: path.join(rootDir, "python_backend"),
+      script: path.join(rootDir, "venv", "bin", "python3"),
+      args: "-m uvicorn main:app --host 0.0.0.0 --port 6000 --workers 2",
+      interpreter: "none",
+      env: { ...envVars, NODE_ENV: "production", PORT: "6000" },
+      max_memory_restart: "500M",
+      autorestart: true,
+    },
+    {
+      name: "bankykit-demo-scheduler",
+      cwd: path.join(rootDir, "python_backend"),
+      script: path.join(rootDir, "venv", "bin", "python3"),
+      args: "scheduler.py",
+      interpreter: "none",
+      env: { ...envVars, NODE_ENV: "production", PORT: "6000" },
+      max_memory_restart: "200M",
+      autorestart: true,
+      cron_restart: "0 */6 * * *",
+    }
+  ],
+};
+PMEOF
+
     echo ">>> CodeCanyon build complete: packages/codecanyon/"
 
     # Zip the package
@@ -467,6 +516,34 @@ module.exports = {
   apps: [
     {
       name: "bankykit-admin",
+      cwd: rootDir,
+      script: "server.cjs",
+      env: { NODE_ENV: "production" },
+      autorestart: true,
+    },
+  ],
+};
+ECOEOF
+
+        # ── ecosystem-demo.config.cjs — demo environment, ports from 6000, -demo PM2 names ──
+        cat > packages/admin-panel/bankykit-admin/ecosystem-demo.config.cjs << 'ECOEOF'
+const path = require("path");
+
+const rootDir = __dirname;
+
+module.exports = {
+  // ─── Set your domain here before running install.sh ───
+  domain: "admin-demo.bankykit.com",
+
+  // ─── Local preview port (access at http://localhost:PORT) ───
+  port: 6002,
+
+  // ─── Port your BankyKit demo backend is running on ───
+  backend_port: 6000,
+
+  apps: [
+    {
+      name: "bankykit-demo-admin",
       cwd: rootDir,
       script: "server.cjs",
       env: { NODE_ENV: "production" },
@@ -672,6 +749,34 @@ module.exports = {
   apps: [
     {
       name: "bankykit-landing",
+      cwd: rootDir,
+      script: "server.cjs",
+      env: { NODE_ENV: "production" },
+      autorestart: true,
+    },
+  ],
+};
+ECOEOF
+
+        # ── ecosystem-demo.config.cjs — demo environment, ports from 6000, -demo PM2 names ──
+        cat > packages/landing-page/bankykit-landing/ecosystem-demo.config.cjs << 'ECOEOF'
+const path = require("path");
+
+const rootDir = __dirname;
+
+module.exports = {
+  // ─── Set your domain here before running install.sh ───
+  domain: "demo.bankykit.com",
+
+  // ─── Local preview port (access at http://localhost:PORT) ───
+  port: 6003,
+
+  // ─── Port your BankyKit demo backend is running on ───
+  backend_port: 6000,
+
+  apps: [
+    {
+      name: "bankykit-demo-landing",
       cwd: rootDir,
       script: "server.cjs",
       env: { NODE_ENV: "production" },
