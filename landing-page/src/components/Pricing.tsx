@@ -59,55 +59,37 @@ function getSaasFeatures(plan: SaaSPlan): string[] {
 export default function Pricing() {
   const [pricingType, setPricingType] = useState<'saas' | 'enterprise'>('saas');
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
-  const defaultSaasPlans: SaaSPlan[] = [
-    { name: 'Starter', plan_type: 'starter', monthly_price: 29, annual_price: 0, max_members: 200, max_staff: 3, max_branches: 1, features: ['Loans & Savings', 'Basic Reports', 'SMS Notifications', 'Email Support'] },
-    { name: 'Growth', plan_type: 'growth', monthly_price: 79, annual_price: 0, max_members: 1000, max_staff: 10, max_branches: 3, features: ['Everything in Starter', 'Advanced Reports', 'M-Pesa Integration', 'API Access', 'Priority Support'] },
-    { name: 'Enterprise', plan_type: 'enterprise_saas', monthly_price: 199, annual_price: 0, max_members: 10000, max_staff: 50, max_branches: 10, features: ['Everything in Growth', 'Custom Branding', 'Dedicated Support', 'SLA Guarantee', 'Multi-currency'] },
-  ];
-
-  const defaultEnterprisePlans: EnterprisePlan[] = [
-    { name: 'Basic', price: 499, max_members: 500, max_staff: 5, max_branches: 1, features: ['Source Code', '1 Year Support', 'Free Updates', 'Installation Guide'] },
-    { name: 'Standard', price: 999, max_members: 2000, max_staff: 20, max_branches: 5, features: ['Source Code', '2 Years Support', 'Free Updates', 'Priority Installation', 'White-label'] },
-    { name: 'Enterprise', price: 1999, max_members: -1, max_staff: -1, max_branches: -1, features: ['Source Code', '3 Years Support', 'Free Updates', 'Dedicated Onboarding', 'White-label', 'Custom Features'] },
-  ];
-
-  const [saasPlans, setSaasPlans] = useState<SaaSPlan[]>(defaultSaasPlans);
-  const [enterprisePlans, setEnterprisePlans] = useState<EnterprisePlan[]>(defaultEnterprisePlans);
+  const [saasPlans, setSaasPlans] = useState<SaaSPlan[]>([]);
+  const [enterprisePlans, setEnterprisePlans] = useState<EnterprisePlan[]>([]);
   const [title, setTitle] = useState('Choose Your Plan');
   const [subtitle, setSubtitle] = useState('Flexible options for Saccos of all sizes');
   const [saasLabel, setSaasLabel] = useState('SaaS (Monthly)');
   const [enterpriseLabel, setEnterpriseLabel] = useState('Enterprise (One-time)');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
-    async function fetchPlans() {
-      const controller = new AbortController()
-      const timeout = setTimeout(() => controller.abort(), 5000)
-      try {
-        const response = await fetch('/api/public/plans', { signal: controller.signal });
-        if (response.ok) {
-          const data: PlansResponse = await response.json();
-          if (data.title) setTitle(data.title);
-          if (data.subtitle) setSubtitle(data.subtitle);
-          if (data.saas_label) setSaasLabel(data.saas_label);
-          if (data.enterprise_label) setEnterpriseLabel(data.enterprise_label);
-          const filteredSaas = data.saas.filter(p => p.plan_type !== 'enterprise');
-          setSaasPlans(filteredSaas);
-          setEnterprisePlans(data.enterprise);
-        } else {
-          setError(true);
-        }
-      } catch (err) {
-        console.error('Failed to fetch plans:', err);
-        setError(true);
-      } finally {
-        clearTimeout(timeout)
-        setLoading(false);
-      }
-    }
-    fetchPlans();
-  }, []);
+    setLoading(true);
+    setError(false);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    fetch('/api/public/plans', { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Bad response');
+        const data: PlansResponse = await response.json();
+        if (data.title) setTitle(data.title);
+        if (data.subtitle) setSubtitle(data.subtitle);
+        if (data.saas_label) setSaasLabel(data.saas_label);
+        if (data.enterprise_label) setEnterpriseLabel(data.enterprise_label);
+        const filteredSaas = data.saas.filter(p => p.plan_type !== 'enterprise');
+        setSaasPlans(filteredSaas);
+        setEnterprisePlans(data.enterprise);
+      })
+      .catch(() => setError(true))
+      .finally(() => { clearTimeout(timeout); setLoading(false); });
+    return () => controller.abort();
+  }, [retryCount]);
 
   const popularSaasPlan = 'growth';
   const popularEnterprisePlan = 'Standard';
@@ -148,7 +130,7 @@ export default function Pricing() {
           </div>
         </div>
 
-        {pricingType === 'saas' && hasAnnualPricing && (
+        {pricingType === 'saas' && hasAnnualPricing && !loading && !error && (
           <div className="flex justify-center mb-8">
             <div className="inline-flex items-center gap-3">
               <span className={`text-sm font-medium ${billingPeriod === 'monthly' ? 'text-gray-900' : 'text-gray-500'}`}>
@@ -178,7 +160,22 @@ export default function Pricing() {
           </div>
         )}
 
-        {pricingType === 'saas' ? (
+        {loading ? (
+          <div className="text-center py-16">
+            <div className="inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="mt-4 text-gray-500 text-sm">Loading plans...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-16">
+            <p className="text-gray-600 mb-4">Could not load pricing plans. Please try again.</p>
+            <button
+              onClick={() => setRetryCount(c => c + 1)}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm font-medium"
+            >
+              Retry
+            </button>
+          </div>
+        ) : pricingType === 'saas' ? (
           <div className="grid gap-8 md:grid-cols-3">
             {saasPlans.map((plan) => {
               const isPopular = plan.plan_type === popularSaasPlan;
@@ -287,7 +284,7 @@ export default function Pricing() {
           </div>
         )}
 
-        {pricingType === 'enterprise' && (
+        {pricingType === 'enterprise' && !loading && !error && (
           <div className="mt-16 bg-white rounded-2xl border border-gray-200 p-8 md:p-12">
             <div className="max-w-3xl mx-auto">
               <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">
