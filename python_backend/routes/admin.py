@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends, Cookie, Response
+from fastapi import APIRouter, HTTPException, Depends, Cookie, Response, UploadFile, File
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from typing import Optional
@@ -889,6 +890,38 @@ def delete_plan(plan_id: str, admin: AdminUser = Depends(require_admin), db: Ses
     db.delete(plan)
     db.commit()
     return {"message": "Plan deleted"}
+
+SCREENSHOT_NAMES = {"dashboard", "members", "loans", "teller"}
+SCREENSHOTS_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads", "screenshots")
+
+@router.post("/landing-page/screenshots/{name}")
+async def upload_screenshot(name: str, file: UploadFile = File(...), admin: AdminUser = Depends(require_admin)):
+    if name not in SCREENSHOT_NAMES:
+        raise HTTPException(status_code=400, detail=f"Invalid screenshot name. Must be one of: {', '.join(SCREENSHOT_NAMES)}")
+    ext = os.path.splitext(file.filename or "")[1].lower()
+    if ext not in {".png", ".jpg", ".jpeg", ".webp"}:
+        raise HTTPException(status_code=400, detail="Only PNG, JPG, JPEG, WEBP images are allowed")
+    os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
+    dest = os.path.join(SCREENSHOTS_DIR, f"{name}{ext}")
+    for old_ext in [".png", ".jpg", ".jpeg", ".webp"]:
+        old = os.path.join(SCREENSHOTS_DIR, f"{name}{old_ext}")
+        if os.path.exists(old) and old != dest:
+            os.remove(old)
+    content = await file.read()
+    with open(dest, "wb") as f:
+        f.write(content)
+    return {"message": f"Screenshot '{name}' uploaded successfully", "url": f"/api/public/screenshots/{name}"}
+
+@router.delete("/landing-page/screenshots/{name}")
+def delete_screenshot(name: str, admin: AdminUser = Depends(require_admin)):
+    if name not in SCREENSHOT_NAMES:
+        raise HTTPException(status_code=400, detail="Invalid screenshot name")
+    for ext in [".png", ".jpg", ".jpeg", ".webp"]:
+        path = os.path.join(SCREENSHOTS_DIR, f"{name}{ext}")
+        if os.path.exists(path):
+            os.remove(path)
+            return {"message": f"Screenshot '{name}' deleted"}
+    raise HTTPException(status_code=404, detail="Screenshot not found")
 
 @router.get("/setup-status")
 def check_setup_status(db: Session = Depends(get_db)):

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 
 interface LandingSettings {
@@ -58,7 +58,7 @@ interface CTASectionData {
   secondary_button_text: string
 }
 
-type TabType = 'hero' | 'cta' | 'stats' | 'urls' | 'features' | 'testimonials' | 'faq' | 'how_it_works' | 'cta_section' | 'docs'
+type TabType = 'hero' | 'cta' | 'stats' | 'urls' | 'features' | 'testimonials' | 'faq' | 'how_it_works' | 'cta_section' | 'docs' | 'screenshots'
 
 const ICON_OPTIONS = [
   'Users', 'DollarSign', 'CreditCard', 'Wallet', 'UserPlus', 'BookOpen',
@@ -83,6 +83,7 @@ const tabs: { id: TabType; label: string }[] = [
   { id: 'how_it_works', label: 'How It Works' },
   { id: 'cta_section', label: 'CTA Section' },
   { id: 'docs', label: 'Docs Page' },
+  { id: 'screenshots', label: 'Screenshots' },
 ]
 
 const DEFAULT_FEATURES: FeatureItem[] = [
@@ -135,6 +136,108 @@ const DEFAULT_CTA_SECTION: CTASectionData = {
   subheading: '500+ banks, Saccos, and chamas have already switched. Start your free trial today and see why they never looked back.',
   primary_button_text: 'Start Free Trial',
   secondary_button_text: 'Schedule a Demo',
+}
+
+const SCREENSHOT_SLOTS = [
+  { name: 'dashboard', label: 'Dashboard' },
+  { name: 'members', label: 'Members' },
+  { name: 'loans', label: 'Loans' },
+  { name: 'teller', label: 'Teller' },
+]
+
+function ScreenshotSlot({ name, label }: { name: string; label: string }) {
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [imgKey, setImgKey] = useState(Date.now())
+  const [hasImage, setHasImage] = useState(false)
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    setStatus('idle')
+    const form = new FormData()
+    form.append('file', file)
+    try {
+      const res = await fetch(`/api/admin/landing-page/screenshots/${name}`, {
+        method: 'POST', body: form, credentials: 'include',
+      })
+      if (!res.ok) throw new Error()
+      setStatus('success')
+      setImgKey(Date.now())
+      setHasImage(true)
+    } catch {
+      setStatus('error')
+    } finally {
+      setUploading(false)
+      if (fileRef.current) fileRef.current.value = ''
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirm(`Remove the ${label} screenshot?`)) return
+    await fetch(`/api/admin/landing-page/screenshots/${name}`, { method: 'DELETE', credentials: 'include' })
+    setHasImage(false)
+    setImgKey(Date.now())
+  }
+
+  return (
+    <div className="border border-gray-200 rounded-lg overflow-hidden">
+      <div className="bg-gray-50 border-b border-gray-200 px-3 py-2 flex items-center justify-between">
+        <span className="text-sm font-medium text-gray-700">{label}</span>
+        {hasImage && (
+          <button type="button" onClick={handleDelete} className="text-xs text-red-500 hover:text-red-700">Remove</button>
+        )}
+      </div>
+      <div className="relative bg-gray-100 aspect-video flex items-center justify-center overflow-hidden">
+        <img
+          key={imgKey}
+          src={`/api/public/screenshots/${name}?t=${imgKey}`}
+          alt={label}
+          className="w-full h-full object-cover"
+          onLoad={() => setHasImage(true)}
+          onError={() => setHasImage(false)}
+        />
+        {!hasImage && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 gap-2">
+            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span className="text-xs">No image uploaded</span>
+          </div>
+        )}
+      </div>
+      <div className="px-3 py-2 flex items-center justify-between gap-2 bg-white">
+        <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={handleUpload} />
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          className="flex-1 py-1.5 text-sm bg-primary-600 text-white rounded hover:bg-primary-700 disabled:opacity-50 transition"
+        >
+          {uploading ? 'Uploading...' : 'Upload Image'}
+        </button>
+        {status === 'success' && <span className="text-xs text-green-600">Saved</span>}
+        {status === 'error' && <span className="text-xs text-red-500">Failed</span>}
+      </div>
+    </div>
+  )
+}
+
+function ScreenshotsTab() {
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="text-sm text-gray-600">Upload screenshots of your app that appear in the hero section of the landing page. Recommended size: 1280×800px or similar 16:10 ratio.</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {SCREENSHOT_SLOTS.map(slot => (
+          <ScreenshotSlot key={slot.name} name={slot.name} label={slot.label} />
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default function LandingPageSettings() {
@@ -672,6 +775,9 @@ export default function LandingPageSettings() {
                   </div>
                 </div>
               </div>
+            )}
+            {activeTab === 'screenshots' && (
+              <ScreenshotsTab />
             )}
           </div>
 

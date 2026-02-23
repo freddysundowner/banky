@@ -1061,6 +1061,20 @@ async def get_public_landing_content(section: str):
     finally:
         db.close()
 
+@app.get("/api/public/screenshots/{name}", tags=["Public"])
+async def get_public_screenshot(name: str):
+    """Serve an uploaded landing page screenshot."""
+    from fastapi.responses import FileResponse
+    allowed = {"dashboard", "members", "loans", "teller"}
+    if name not in allowed:
+        raise HTTPException(status_code=404, detail="Not found")
+    screenshots_dir = BASE_DIR / "uploads" / "screenshots"
+    for ext in [".png", ".jpg", ".jpeg", ".webp"]:
+        path = screenshots_dir / f"{name}{ext}"
+        if path.exists():
+            return FileResponse(str(path))
+    raise HTTPException(status_code=404, detail="Screenshot not uploaded yet")
+
 @app.get("/api/public/docs-config", tags=["Public"])
 async def get_public_docs_config():
     """Get docs page configuration."""

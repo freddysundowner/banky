@@ -3,11 +3,13 @@ import { ArrowRight, Play, Shield, ChevronLeft, ChevronRight, Landmark, Coins, U
 import { useBranding } from '../context/BrandingContext';
 
 const screenshots = [
-  { src: '/screenshots/dashboard.png', label: 'Dashboard' },
-  { src: '/screenshots/members.png', label: 'Members' },
-  { src: '/screenshots/loans.png', label: 'Loans' },
-  { src: '/screenshots/teller.png', label: 'Teller' },
+  { src: '/api/public/screenshots/dashboard', label: 'Dashboard' },
+  { src: '/api/public/screenshots/members', label: 'Members' },
+  { src: '/api/public/screenshots/loans', label: 'Loans' },
+  { src: '/api/public/screenshots/teller', label: 'Teller' },
 ];
+
+const PLACEHOLDER = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='500' viewBox='0 0 800 500'%3E%3Crect width='800' height='500' fill='%23e2e8f0'/%3E%3Crect x='20' y='20' width='760' height='40' rx='6' fill='%23cbd5e1'/%3E%3Crect x='20' y='80' width='180' height='400' rx='6' fill='%23cbd5e1'/%3E%3Crect x='215' y='80' width='565' height='190' rx='6' fill='%23cbd5e1'/%3E%3Crect x='215' y='285' width='270' height='195' rx='6' fill='%23cbd5e1'/%3E%3Crect x='500' y='285' width='280' height='195' rx='6' fill='%23cbd5e1'/%3E%3Ctext x='400' y='260' text-anchor='middle' fill='%2394a3b8' font-family='sans-serif' font-size='16'%3EUpload a screenshot in the Admin Panel%3E%3C/text%3E%3C/svg%3E`;
 
 interface LandingSettings {
   hero_title: string;
@@ -198,6 +200,7 @@ export default function Hero() {
                         src={screenshot.src} 
                         alt={`${platform_name} ${screenshot.label}`}
                         className="w-full h-auto flex-shrink-0"
+                        onError={(e) => { (e.target as HTMLImageElement).src = PLACEHOLDER; }}
                       />
                     ))}
                   </div>
