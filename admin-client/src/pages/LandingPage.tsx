@@ -58,7 +58,7 @@ interface CTASectionData {
   secondary_button_text: string
 }
 
-type TabType = 'hero' | 'cta' | 'stats' | 'urls' | 'features' | 'testimonials' | 'faq' | 'how_it_works' | 'cta_section' | 'docs' | 'screenshots'
+type TabType = 'hero' | 'cta' | 'stats' | 'urls' | 'features' | 'testimonials' | 'faq' | 'how_it_works' | 'cta_section' | 'docs' | 'hero_placeholders'
 
 const ICON_OPTIONS = [
   'Users', 'DollarSign', 'CreditCard', 'Wallet', 'UserPlus', 'BookOpen',
@@ -83,7 +83,7 @@ const tabs: { id: TabType; label: string }[] = [
   { id: 'how_it_works', label: 'How It Works' },
   { id: 'cta_section', label: 'CTA Section' },
   { id: 'docs', label: 'Docs Page' },
-  { id: 'screenshots', label: 'Screenshots' },
+  { id: 'hero_placeholders', label: 'Hero Placeholders' },
 ]
 
 const DEFAULT_FEATURES: FeatureItem[] = [
@@ -138,14 +138,7 @@ const DEFAULT_CTA_SECTION: CTASectionData = {
   secondary_button_text: 'Schedule a Demo',
 }
 
-const SCREENSHOT_SLOTS = [
-  { name: 'dashboard', label: 'Dashboard' },
-  { name: 'members', label: 'Members' },
-  { name: 'loans', label: 'Loans' },
-  { name: 'teller', label: 'Teller' },
-]
-
-function ScreenshotSlot({ name, label }: { name: string; label: string }) {
+function HeroPlaceholderSlot({ name, onDeleted }: { name: string; onDeleted: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
   const [status, setStatus] = useState<'idle' | 'success' | 'error'>('idle')
@@ -160,7 +153,7 @@ function ScreenshotSlot({ name, label }: { name: string; label: string }) {
     const form = new FormData()
     form.append('file', file)
     try {
-      const res = await fetch(`/api/admin/landing-page/screenshots/${name}`, {
+      const res = await fetch(`/api/admin/landing-page/hero_placeholders/${name}`, {
         method: 'POST', body: form, credentials: 'include',
       })
       if (!res.ok) throw new Error()
@@ -176,25 +169,22 @@ function ScreenshotSlot({ name, label }: { name: string; label: string }) {
   }
 
   const handleDelete = async () => {
-    if (!confirm(`Remove the ${label} screenshot?`)) return
-    await fetch(`/api/admin/landing-page/screenshots/${name}`, { method: 'DELETE', credentials: 'include' })
-    setHasImage(false)
-    setImgKey(Date.now())
+    if (!confirm(`Remove the "${name}" placeholder?`)) return
+    await fetch(`/api/admin/landing-page/hero_placeholders/${name}`, { method: 'DELETE', credentials: 'include' })
+    onDeleted()
   }
 
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden">
       <div className="bg-gray-50 border-b border-gray-200 px-3 py-2 flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-700">{label}</span>
-        {hasImage && (
-          <button type="button" onClick={handleDelete} className="text-xs text-red-500 hover:text-red-700">Remove</button>
-        )}
+        <span className="text-sm font-medium text-gray-700 font-mono">{name}</span>
+        <button type="button" onClick={handleDelete} className="text-xs text-red-500 hover:text-red-700">Remove</button>
       </div>
       <div className="relative bg-gray-100 aspect-video flex items-center justify-center overflow-hidden">
         <img
           key={imgKey}
-          src={`/api/public/screenshots/${name}?t=${imgKey}`}
-          alt={label}
+          src={`/api/public/hero_placeholders/${name}?t=${imgKey}`}
+          alt={name}
           className="w-full h-full object-cover"
           onLoad={() => setHasImage(true)}
           onError={() => setHasImage(false)}
@@ -225,17 +215,79 @@ function ScreenshotSlot({ name, label }: { name: string; label: string }) {
   )
 }
 
-function ScreenshotsTab() {
+function HeroPlaceholdersTab() {
+  const [slots, setSlots] = useState<string[]>([])
+  const [loading, setLoading] = useState(true)
+  const [newName, setNewName] = useState('')
+  const [addError, setAddError] = useState('')
+
+  const fetchSlots = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/admin/landing-page/hero_placeholders', { credentials: 'include' })
+      const data = await res.json()
+      setSlots((data as { name: string }[]).map(d => d.name))
+    } catch {
+      setSlots([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { fetchSlots() }, [])
+
+  const handleAdd = () => {
+    const name = newName.trim()
+    if (!name) { setAddError('Enter a name'); return }
+    if (!/^[a-zA-Z0-9_-]{1,64}$/.test(name)) { setAddError('Only letters, numbers, dash, underscore (max 64)'); return }
+    if (slots.includes(name)) { setAddError('Name already exists'); return }
+    setAddError('')
+    setSlots(prev => [...prev, name])
+    setNewName('')
+  }
+
   return (
     <div className="space-y-4">
-      <div>
-        <p className="text-sm text-gray-600">Upload screenshots of your app that appear in the hero section of the landing page. Recommended size: 1280×800px or similar 16:10 ratio.</p>
+      <p className="text-sm text-gray-600">
+        Add named image slots that appear as slides in the landing page hero carousel. Recommended size: 1280×800px or similar 16:10 ratio.
+      </p>
+
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          value={newName}
+          onChange={e => { setNewName(e.target.value); setAddError('') }}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAdd() } }}
+          placeholder="e.g. dashboard, members, loans"
+          className="flex-1 border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 font-mono"
+        />
+        <button
+          type="button"
+          onClick={handleAdd}
+          className="px-4 py-1.5 text-sm bg-primary-600 text-white rounded hover:bg-primary-700 transition whitespace-nowrap"
+        >
+          Add Slot
+        </button>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {SCREENSHOT_SLOTS.map(slot => (
-          <ScreenshotSlot key={slot.name} name={slot.name} label={slot.label} />
-        ))}
-      </div>
+      {addError && <p className="text-xs text-red-500 -mt-2">{addError}</p>}
+
+      {loading ? (
+        <div className="text-sm text-gray-400">Loading...</div>
+      ) : slots.length === 0 ? (
+        <div className="text-sm text-gray-400 py-6 text-center border border-dashed border-gray-200 rounded-lg">
+          No placeholders yet. Add a slot above to get started.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {slots.map(name => (
+            <HeroPlaceholderSlot
+              key={name}
+              name={name}
+              onDeleted={() => setSlots(prev => prev.filter(s => s !== name))}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -776,8 +828,8 @@ export default function LandingPageSettings() {
                 </div>
               </div>
             )}
-            {activeTab === 'screenshots' && (
-              <ScreenshotsTab />
+            {activeTab === 'hero_placeholders' && (
+              <HeroPlaceholdersTab />
             )}
           </div>
 

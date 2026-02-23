@@ -2,14 +2,8 @@ import { useState, useEffect } from 'react';
 import { ArrowRight, Play, Shield, ChevronLeft, ChevronRight, Landmark, Coins, UsersRound } from 'lucide-react';
 import { useBranding } from '../context/BrandingContext';
 
-const screenshots = [
-  { src: '/api/public/screenshots/dashboard', label: 'Dashboard' },
-  { src: '/api/public/screenshots/members', label: 'Members' },
-  { src: '/api/public/screenshots/loans', label: 'Loans' },
-  { src: '/api/public/screenshots/teller', label: 'Teller' },
-];
-
-const PLACEHOLDER = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='500' viewBox='0 0 800 500'%3E%3Crect width='800' height='500' fill='%23e2e8f0'/%3E%3Crect x='20' y='20' width='760' height='40' rx='6' fill='%23cbd5e1'/%3E%3Crect x='20' y='80' width='180' height='400' rx='6' fill='%23cbd5e1'/%3E%3Crect x='215' y='80' width='565' height='190' rx='6' fill='%23cbd5e1'/%3E%3Crect x='215' y='285' width='270' height='195' rx='6' fill='%23cbd5e1'/%3E%3Crect x='500' y='285' width='280' height='195' rx='6' fill='%23cbd5e1'/%3E%3Ctext x='400' y='260' text-anchor='middle' fill='%2394a3b8' font-family='sans-serif' font-size='16'%3EUpload a screenshot in the Admin Panel%3E%3C/text%3E%3C/svg%3E`;
+const PLACEHOLDER = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='500' viewBox='0 0 800 500'%3E%3Crect width='800' height='500' fill='%23e2e8f0'/%3E%3Crect x='20' y='20' width='760' height='40' rx='6' fill='%23cbd5e1'/%3E%3Crect x='20' y='80' width='180' height='400' rx='6' fill='%23cbd5e1'/%3E%3Crect x='215' y='80' width='565' height='190' rx='6' fill='%23cbd5e1'/%3E%3Crect x='215' y='285' width='270' height='195' rx='6' fill='%23cbd5e1'/%3E%3Crect x='500' y='285' width='280' height='195' rx='6' fill='%23cbd5e1'/%3E%3Ctext x='400' y='260' text-anchor='middle' fill='%2394a3b8' font-family='sans-serif' font-size='16'%3EAdd placeholders in the Admin Panel%3E%3C/text%3E%3C/svg%3E`;
+const FALLBACK_SLIDES = [{ name: 'preview', src: PLACEHOLDER }];
 
 interface LandingSettings {
   hero_title: string;
@@ -48,6 +42,7 @@ export default function Hero() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [settings, setSettings] = useState<LandingSettings>(defaultSettings);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [slides, setSlides] = useState(FALLBACK_SLIDES);
 
   useEffect(() => {
     fetch('/api/public/landing-settings')
@@ -57,15 +52,28 @@ export default function Hero() {
   }, []);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % screenshots.length);
-    }, 4000);
-    return () => clearInterval(timer);
+    fetch('/api/public/hero_placeholders')
+      .then(res => res.json())
+      .then((data: { name: string; url: string }[]) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setSlides(data.map(d => ({ name: d.name, src: d.url })));
+        } else {
+          setSlides(FALLBACK_SLIDES);
+        }
+      })
+      .catch(() => setSlides(FALLBACK_SLIDES));
   }, []);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [slides.length]);
+
   const goToSlide = (index: number) => setCurrentSlide(index);
-  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + screenshots.length) % screenshots.length);
-  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % screenshots.length);
+  const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
+  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
 
   const handleSecondaryClick = () => {
     if (settings.demo_video_url) {
@@ -194,11 +202,11 @@ export default function Hero() {
                     className="flex transition-transform duration-500 ease-in-out"
                     style={{ transform: `translateX(-${currentSlide * 100}%)` }}
                   >
-                    {screenshots.map((screenshot, index) => (
+                    {slides.map((slide, index) => (
                       <img 
                         key={index}
-                        src={screenshot.src} 
-                        alt={`${platform_name} ${screenshot.label}`}
+                        src={slide.src} 
+                        alt={`${platform_name} ${slide.name}`}
                         className="w-full h-auto flex-shrink-0"
                         onError={(e) => { (e.target as HTMLImageElement).src = PLACEHOLDER; }}
                       />
@@ -207,7 +215,7 @@ export default function Hero() {
                 </div>
 
                 <div className="flex items-center justify-center gap-2 py-3 bg-gray-50 border-t">
-                  {screenshots.map((screenshot, index) => (
+                  {slides.map((slide, index) => (
                     <button
                       key={index}
                       onClick={() => goToSlide(index)}
@@ -217,7 +225,7 @@ export default function Hero() {
                           : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
                       }`}
                     >
-                      {screenshot.label}
+                      {slide.name}
                     </button>
                   ))}
                 </div>

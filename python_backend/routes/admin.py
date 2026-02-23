@@ -891,37 +891,52 @@ def delete_plan(plan_id: str, admin: AdminUser = Depends(require_admin), db: Ses
     db.commit()
     return {"message": "Plan deleted"}
 
-SCREENSHOT_NAMES = {"dashboard", "members", "loans", "teller"}
-SCREENSHOTS_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads", "screenshots")
+import re as _re
+HERO_PLACEHOLDERS_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads", "hero_placeholders")
+_VALID_SLUG = _re.compile(r'^[a-zA-Z0-9_-]{1,64}$')
+_IMAGE_EXTS = [".png", ".jpg", ".jpeg", ".webp"]
 
-@router.post("/landing-page/screenshots/{name}")
-async def upload_screenshot(name: str, file: UploadFile = File(...), admin: AdminUser = Depends(require_admin)):
-    if name not in SCREENSHOT_NAMES:
-        raise HTTPException(status_code=400, detail=f"Invalid screenshot name. Must be one of: {', '.join(SCREENSHOT_NAMES)}")
+def _valid_placeholder_name(name: str) -> bool:
+    return bool(_VALID_SLUG.match(name))
+
+@router.get("/landing-page/hero_placeholders")
+def list_hero_placeholders(admin: AdminUser = Depends(require_admin)):
+    os.makedirs(HERO_PLACEHOLDERS_DIR, exist_ok=True)
+    results = []
+    for fname in sorted(os.listdir(HERO_PLACEHOLDERS_DIR)):
+        stem, ext = os.path.splitext(fname)
+        if ext.lower() in _IMAGE_EXTS:
+            results.append({"name": stem, "url": f"/api/public/hero_placeholders/{stem}"})
+    return results
+
+@router.post("/landing-page/hero_placeholders/{name}")
+async def upload_hero_placeholder(name: str, file: UploadFile = File(...), admin: AdminUser = Depends(require_admin)):
+    if not _valid_placeholder_name(name):
+        raise HTTPException(status_code=400, detail="Name must be 1-64 alphanumeric, dash, or underscore characters")
     ext = os.path.splitext(file.filename or "")[1].lower()
-    if ext not in {".png", ".jpg", ".jpeg", ".webp"}:
+    if ext not in set(_IMAGE_EXTS):
         raise HTTPException(status_code=400, detail="Only PNG, JPG, JPEG, WEBP images are allowed")
-    os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
-    dest = os.path.join(SCREENSHOTS_DIR, f"{name}{ext}")
-    for old_ext in [".png", ".jpg", ".jpeg", ".webp"]:
-        old = os.path.join(SCREENSHOTS_DIR, f"{name}{old_ext}")
+    os.makedirs(HERO_PLACEHOLDERS_DIR, exist_ok=True)
+    dest = os.path.join(HERO_PLACEHOLDERS_DIR, f"{name}{ext}")
+    for old_ext in _IMAGE_EXTS:
+        old = os.path.join(HERO_PLACEHOLDERS_DIR, f"{name}{old_ext}")
         if os.path.exists(old) and old != dest:
             os.remove(old)
     content = await file.read()
     with open(dest, "wb") as f:
         f.write(content)
-    return {"message": f"Screenshot '{name}' uploaded successfully", "url": f"/api/public/screenshots/{name}"}
+    return {"message": f"Placeholder '{name}' uploaded successfully", "url": f"/api/public/hero_placeholders/{name}"}
 
-@router.delete("/landing-page/screenshots/{name}")
-def delete_screenshot(name: str, admin: AdminUser = Depends(require_admin)):
-    if name not in SCREENSHOT_NAMES:
-        raise HTTPException(status_code=400, detail="Invalid screenshot name")
-    for ext in [".png", ".jpg", ".jpeg", ".webp"]:
-        path = os.path.join(SCREENSHOTS_DIR, f"{name}{ext}")
+@router.delete("/landing-page/hero_placeholders/{name}")
+def delete_hero_placeholder(name: str, admin: AdminUser = Depends(require_admin)):
+    if not _valid_placeholder_name(name):
+        raise HTTPException(status_code=400, detail="Invalid name")
+    for ext in _IMAGE_EXTS:
+        path = os.path.join(HERO_PLACEHOLDERS_DIR, f"{name}{ext}")
         if os.path.exists(path):
             os.remove(path)
-            return {"message": f"Screenshot '{name}' deleted"}
-    raise HTTPException(status_code=404, detail="Screenshot not found")
+            return {"message": f"Placeholder '{name}' deleted"}
+    raise HTTPException(status_code=404, detail="Placeholder not found")
 
 @router.get("/setup-status")
 def check_setup_status(db: Session = Depends(get_db)):

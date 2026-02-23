@@ -1061,19 +1061,34 @@ async def get_public_landing_content(section: str):
     finally:
         db.close()
 
-@app.get("/api/public/screenshots/{name}", tags=["Public"])
-async def get_public_screenshot(name: str):
-    """Serve an uploaded landing page screenshot."""
+@app.get("/api/public/hero_placeholders", tags=["Public"])
+async def list_public_hero_placeholders():
+    """List all uploaded hero placeholder names."""
+    import re as _re
+    _valid = _re.compile(r'^[a-zA-Z0-9_-]{1,64}$')
+    _exts = {".png", ".jpg", ".jpeg", ".webp"}
+    placeholders_dir = BASE_DIR / "uploads" / "hero_placeholders"
+    if not placeholders_dir.exists():
+        return []
+    results = []
+    for fname in sorted(placeholders_dir.iterdir()):
+        if fname.suffix.lower() in _exts and _valid.match(fname.stem):
+            results.append({"name": fname.stem, "url": f"/api/public/hero_placeholders/{fname.stem}"})
+    return results
+
+@app.get("/api/public/hero_placeholders/{name}", tags=["Public"])
+async def get_public_hero_placeholder(name: str):
+    """Serve an uploaded hero placeholder image."""
     from fastapi.responses import FileResponse
-    allowed = {"dashboard", "members", "loans", "teller"}
-    if name not in allowed:
+    import re as _re
+    if not _re.match(r'^[a-zA-Z0-9_-]{1,64}$', name):
         raise HTTPException(status_code=404, detail="Not found")
-    screenshots_dir = BASE_DIR / "uploads" / "screenshots"
+    placeholders_dir = BASE_DIR / "uploads" / "hero_placeholders"
     for ext in [".png", ".jpg", ".jpeg", ".webp"]:
-        path = screenshots_dir / f"{name}{ext}"
+        path = placeholders_dir / f"{name}{ext}"
         if path.exists():
             return FileResponse(str(path))
-    raise HTTPException(status_code=404, detail="Screenshot not uploaded yet")
+    raise HTTPException(status_code=404, detail="Placeholder not uploaded yet")
 
 @app.get("/api/public/docs-config", tags=["Public"])
 async def get_public_docs_config():
