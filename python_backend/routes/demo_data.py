@@ -346,34 +346,42 @@ def _truncate_tenant(conn_str: str):
         def ids_clause(rows):
             return "'" + "','".join(r[0] for r in rows) + "'" if rows else None
 
-        loan_rows = tdb.execute(
-            text(f"SELECT id FROM loan_applications WHERE application_number LIKE '{DEMO_LOAN_PREFIX}%'")
-        ).fetchall()
+        # Find demo members by number prefix
         member_rows = tdb.execute(
             text(f"SELECT id FROM members WHERE member_number LIKE '{DEMO_MEMBER_PREFIX}%'")
         ).fetchall()
+        member_clause = ids_clause(member_rows)
+
+        # Find ALL loans for those members (catches any naming scheme)
+        loan_rows = []
+        if member_clause:
+            loan_rows = tdb.execute(
+                text(f"SELECT id FROM loan_applications WHERE member_id IN ({member_clause})")
+            ).fetchall()
+        loan_clause = ids_clause(loan_rows)
+
         staff_rows = tdb.execute(
             text(f"SELECT id FROM staff WHERE staff_number LIKE '{DEMO_STAFF_PREFIX}%'")
         ).fetchall()
         prod_codes = ",".join(f"'{c}'" for c in DEMO_PROD_CODES)
 
-        if loan_rows:
-            c = ids_clause(loan_rows)
+        # Delete loan dependents first, then loans
+        if loan_clause:
             for t in ("loan_repayments", "loan_instalments", "loan_extra_charges", "loan_guarantors"):
                 try:
-                    tdb.execute(text(f"DELETE FROM {t} WHERE loan_id IN ({c})"))
+                    tdb.execute(text(f"DELETE FROM {t} WHERE loan_id IN ({loan_clause})"))
                 except Exception:
                     tdb.rollback()
-            tdb.execute(text(f"DELETE FROM loan_applications WHERE id IN ({c})"))
+            tdb.execute(text(f"DELETE FROM loan_applications WHERE id IN ({loan_clause})"))
 
-        if member_rows:
-            c = ids_clause(member_rows)
+        # Delete member dependents, then members
+        if member_clause:
             for t in ("transactions", "fixed_deposits"):
                 try:
-                    tdb.execute(text(f"DELETE FROM {t} WHERE member_id IN ({c})"))
+                    tdb.execute(text(f"DELETE FROM {t} WHERE member_id IN ({member_clause})"))
                 except Exception:
                     tdb.rollback()
-            tdb.execute(text(f"DELETE FROM members WHERE id IN ({c})"))
+            tdb.execute(text(f"DELETE FROM members WHERE id IN ({member_clause})"))
 
         if staff_rows:
             c = ids_clause(staff_rows)
