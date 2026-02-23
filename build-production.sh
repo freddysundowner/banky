@@ -704,6 +704,75 @@ echo ""
 INSTALLEOF
         chmod +x packages/admin-panel/bankykit-admin/install.sh
 
+        # ── install-demo.sh — uses ecosystem-demo.config.cjs, port 6002, -demo PM2 name ──
+        cat > packages/admin-panel/bankykit-admin/install-demo.sh << 'INSTALLEOF'
+#!/bin/bash
+set -e
+
+GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; BLUE='\033[0;34m'; NC='\033[0m'
+print_step() { echo -e "\n${GREEN}>>> $1${NC}"; }
+print_ok()   { echo -e "${GREEN}    [OK] $1${NC}"; }
+print_err()  { echo -e "${RED}    [ERROR] $1${NC}"; exit 1; }
+
+echo ""
+echo -e "${BLUE}================================================================${NC}"
+echo -e "${BLUE}  BankyKit Admin Panel - Demo Installer${NC}"
+echo -e "${BLUE}================================================================${NC}"
+echo ""
+
+if [ ! -f ecosystem-demo.config.cjs ]; then
+    print_err "ecosystem-demo.config.cjs not found. Cannot proceed."
+fi
+
+ADMIN_DOMAIN=$(node --input-type=commonjs -e "const c = require('./ecosystem-demo.config.cjs'); console.log(c.domain);" 2>/dev/null || echo "")
+if [ -z "$ADMIN_DOMAIN" ] || [ "$ADMIN_DOMAIN" = "undefined" ] || [ "$ADMIN_DOMAIN" = "null" ] || [ "$ADMIN_DOMAIN" = "admin.yourdomain.com" ]; then
+    echo ""
+    echo -e "${RED}  [ERROR] Domain not set in ecosystem-demo.config.cjs${NC}"
+    echo ""
+    echo "  Open ecosystem-demo.config.cjs and set your domain:"
+    echo "    domain: \"admin-demo.yourdomain.com\","
+    echo ""
+    exit 1
+fi
+
+BACKEND_PORT=$(node --input-type=commonjs -e "const c = require('./ecosystem-demo.config.cjs'); const p = c.backend_port; console.log((p !== undefined && p !== null) ? p : 6000);" 2>/dev/null || echo "6000")
+PREVIEW_PORT=$(node --input-type=commonjs -e "const c = require('./ecosystem-demo.config.cjs'); const p = c.port; console.log((p !== undefined && p !== null) ? p : 6002);" 2>/dev/null || echo "6002")
+
+echo -e "  Domain:       ${GREEN}${ADMIN_DOMAIN}${NC}"
+echo -e "  Backend port: ${GREEN}${BACKEND_PORT}${NC}"
+echo -e "  Preview port: ${GREEN}${PREVIEW_PORT}${NC}"
+echo ""
+
+print_step "Step 1/2: Installing dependencies..."
+npm install
+print_ok "Dependencies installed"
+
+print_step "Step 2/2: Building admin panel..."
+npm run build
+print_ok "Admin panel built to dist/"
+
+print_step "Starting admin panel (demo)..."
+if command -v pm2 &>/dev/null; then
+    pm2 start ecosystem-demo.config.cjs
+    pm2 save
+    print_ok "Admin panel (demo) running via PM2 on port ${PREVIEW_PORT}"
+else
+    node server.cjs &
+    print_ok "Admin panel (demo) running on port ${PREVIEW_PORT}"
+fi
+
+echo ""
+echo -e "${BLUE}================================================================${NC}"
+echo -e "${GREEN}  Admin Panel (Demo) installed!${NC}"
+echo -e "${BLUE}================================================================${NC}"
+echo ""
+echo "  Running on:   http://localhost:${PREVIEW_PORT}"
+echo "  Stop:         pm2 stop bankykit-demo-admin"
+echo "  Logs:         pm2 logs bankykit-demo-admin"
+echo ""
+INSTALLEOF
+        chmod +x packages/admin-panel/bankykit-admin/install-demo.sh
+
         cd packages/admin-panel
         zip -r bankykit-admin-v1.0.0.zip bankykit-admin
         cd ../..
