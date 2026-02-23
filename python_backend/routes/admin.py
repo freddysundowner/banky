@@ -985,6 +985,8 @@ DEFAULT_PLATFORM_SETTINGS = [
     {"key": "trial_days", "value": "14", "type": "number", "description": "Number of trial days for new organizations"},
     {"key": "platform_name", "value": "BANKYKIT", "type": "string", "description": "Platform name displayed across the system"},
     {"key": "support_email", "value": "", "type": "string", "description": "Support email address"},
+    {"key": "support_phone", "value": "", "type": "string", "description": "Support phone number"},
+    {"key": "support_whatsapp", "value": "", "type": "string", "description": "WhatsApp number for direct support (include country code, e.g. 254700000000)"},
     {"key": "sales_email", "value": "", "type": "string", "description": "Sales email address for enterprise inquiries"},
     {"key": "brevo_api_key", "value": "", "type": "string", "description": "Brevo API key for sending emails (sales inquiries, notifications)"},
     {"key": "brevo_sender_email", "value": "", "type": "string", "description": "Verified sender email for platform emails (verification, welcome, password reset)"},

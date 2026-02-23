@@ -3,7 +3,7 @@ import { Mail, Phone, MapPin, Send, Clock, MessageSquare } from 'lucide-react';
 import { useBranding } from '../context/BrandingContext';
 
 export default function ContactPage() {
-  const { platform_name, support_email } = useBranding();
+  const { platform_name, support_email, support_phone, support_whatsapp } = useBranding();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -59,13 +59,31 @@ export default function ContactPage() {
                     </div>
                   </div>
                 )}
-                <div className="flex items-start gap-3">
-                  <Phone className="w-5 h-5 text-blue-600 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Phone</p>
-                    <p className="text-sm text-gray-600">+254 700 000 000</p>
+                {support_phone && (
+                  <div className="flex items-start gap-3">
+                    <Phone className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Phone</p>
+                      <a href={`tel:${support_phone}`} className="text-sm text-blue-600 hover:underline">{support_phone}</a>
+                    </div>
                   </div>
-                </div>
+                )}
+                {support_whatsapp && (
+                  <div className="flex items-start gap-3">
+                    <MessageSquare className="w-5 h-5 text-green-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">WhatsApp</p>
+                      <a
+                        href={`https://wa.me/${support_whatsapp.replace(/[^0-9]/g, '')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-green-600 hover:underline"
+                      >
+                        Chat on WhatsApp
+                      </a>
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-start gap-3">
                   <MapPin className="w-5 h-5 text-blue-600 mt-0.5" />
                   <div>

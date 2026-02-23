@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query';
 interface Branding {
   platform_name: string;
   support_email: string;
+  support_phone: string;
+  support_whatsapp: string;
   theme_primary_color: string;
   theme_secondary_color: string;
   theme_accent_color: string;
@@ -14,6 +16,8 @@ interface Branding {
 const defaultBranding: Branding = {
   platform_name: 'BANKYKIT',
   support_email: '',
+  support_phone: '',
+  support_whatsapp: '',
   theme_primary_color: '#2563eb',
   theme_secondary_color: '#64748b',
   theme_accent_color: '#10b981',
