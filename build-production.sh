@@ -443,11 +443,60 @@ case $choice in
         find packages/admin-panel/bankykit-admin -name ".DS_Store" -delete 2>/dev/null || true
 
         cat > packages/admin-panel/bankykit-admin/ecosystem.config.js << 'ECOEOF'
+const path = require("path");
+
+const rootDir = __dirname;
+
 module.exports = {
   // ─── Set your domain here before running install.sh ───
   domain: "admin.yourdomain.com",
+
+  // ─── Local preview port (access at http://localhost:PORT) ───
+  port: 5002,
+
+  apps: [
+    {
+      name: "bankykit-admin",
+      cwd: rootDir,
+      script: "npx",
+      args: `vite preview --port 5002 --host 0.0.0.0`,
+      interpreter: "none",
+      env: { NODE_ENV: "production" },
+      autorestart: true,
+    },
+  ],
 };
 ECOEOF
+
+        cat > packages/admin-panel/bankykit-admin/start.sh << 'STARTEOF'
+#!/bin/bash
+set -e
+
+GREEN='\033[0;32m'; BLUE='\033[0;34m'; NC='\033[0m'
+
+PORT=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.port || 5002);")
+
+echo ""
+echo -e "${BLUE}================================================================${NC}"
+echo -e "${BLUE}  BankyKit Admin Panel - Starting${NC}"
+echo -e "${BLUE}================================================================${NC}"
+echo ""
+
+if ! command -v pm2 &>/dev/null; then
+    echo -e "${GREEN}>>> Starting with Vite preview (no PM2 found)...${NC}"
+    npx vite preview --port "$PORT" --host 0.0.0.0
+else
+    echo -e "${GREEN}>>> Starting with PM2...${NC}"
+    pm2 start ecosystem.config.js
+    pm2 save
+    echo ""
+    echo -e "${GREEN}  Admin Panel running at: http://localhost:${PORT}${NC}"
+    echo "  Stop:    pm2 stop bankykit-admin"
+    echo "  Logs:    pm2 logs bankykit-admin"
+fi
+echo ""
+STARTEOF
+        chmod +x packages/admin-panel/bankykit-admin/start.sh
 
         cat > packages/admin-panel/bankykit-admin/install.sh << 'INSTALLEOF'
 #!/bin/bash
@@ -517,8 +566,9 @@ echo -e "${BLUE}================================================================
 echo -e "${GREEN}  Admin Panel installed!${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
-echo "  Access at: http://${ADMIN_DOMAIN}"
-echo "  Add SSL:   sudo certbot --nginx -d ${ADMIN_DOMAIN}"
+echo "  Live (Nginx):   http://${ADMIN_DOMAIN}"
+echo "  Local preview:  ./start.sh  →  http://localhost:5002"
+echo "  Add SSL:        sudo certbot --nginx -d ${ADMIN_DOMAIN}"
 echo ""
 INSTALLEOF
         chmod +x packages/admin-panel/bankykit-admin/install.sh
@@ -551,11 +601,60 @@ INSTALLEOF
         find packages/landing-page/bankykit-landing -name ".DS_Store" -delete 2>/dev/null || true
 
         cat > packages/landing-page/bankykit-landing/ecosystem.config.js << 'ECOEOF'
+const path = require("path");
+
+const rootDir = __dirname;
+
 module.exports = {
   // ─── Set your domain here before running install.sh ───
   domain: "yourdomain.com",
+
+  // ─── Local preview port (access at http://localhost:PORT) ───
+  port: 5003,
+
+  apps: [
+    {
+      name: "bankykit-landing",
+      cwd: rootDir,
+      script: "npx",
+      args: `vite preview --port 5003 --host 0.0.0.0`,
+      interpreter: "none",
+      env: { NODE_ENV: "production" },
+      autorestart: true,
+    },
+  ],
 };
 ECOEOF
+
+        cat > packages/landing-page/bankykit-landing/start.sh << 'STARTEOF'
+#!/bin/bash
+set -e
+
+GREEN='\033[0;32m'; BLUE='\033[0;34m'; NC='\033[0m'
+
+PORT=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.port || 5003);")
+
+echo ""
+echo -e "${BLUE}================================================================${NC}"
+echo -e "${BLUE}  BankyKit Landing Page - Starting${NC}"
+echo -e "${BLUE}================================================================${NC}"
+echo ""
+
+if ! command -v pm2 &>/dev/null; then
+    echo -e "${GREEN}>>> Starting with Vite preview (no PM2 found)...${NC}"
+    npx vite preview --port "$PORT" --host 0.0.0.0
+else
+    echo -e "${GREEN}>>> Starting with PM2...${NC}"
+    pm2 start ecosystem.config.js
+    pm2 save
+    echo ""
+    echo -e "${GREEN}  Landing Page running at: http://localhost:${PORT}${NC}"
+    echo "  Stop:    pm2 stop bankykit-landing"
+    echo "  Logs:    pm2 logs bankykit-landing"
+fi
+echo ""
+STARTEOF
+        chmod +x packages/landing-page/bankykit-landing/start.sh
 
         cat > packages/landing-page/bankykit-landing/install.sh << 'INSTALLEOF'
 #!/bin/bash
@@ -625,8 +724,9 @@ echo -e "${BLUE}================================================================
 echo -e "${GREEN}  Landing Page installed!${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
-echo "  Access at: http://${DOMAIN}"
-echo "  Add SSL:   sudo certbot --nginx -d ${DOMAIN} -d www.${DOMAIN}"
+echo "  Live (Nginx):   http://${DOMAIN}"
+echo "  Local preview:  ./start.sh  →  http://localhost:5003"
+echo "  Add SSL:        sudo certbot --nginx -d ${DOMAIN} -d www.${DOMAIN}"
 echo ""
 INSTALLEOF
         chmod +x packages/landing-page/bankykit-landing/install.sh
