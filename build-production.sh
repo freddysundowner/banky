@@ -337,8 +337,8 @@ DOMAIN=localhost
 PORT=5000
 EOF
 
-    # Use the repo install.sh so updates are always reflected in the package
-    cp install.sh packages/codecanyon/bankykit/install.sh
+    # Use the repo install.sh but set DB_NAME=demo for CodeCanyon buyers
+    sed 's/^DB_NAME="bankykit"/DB_NAME="demo"/' install.sh > packages/codecanyon/bankykit/install.sh
     chmod +x packages/codecanyon/bankykit/install.sh
 
     # ── start.sh: copied from root so it's always up to date ──
