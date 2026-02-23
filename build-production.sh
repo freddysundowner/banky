@@ -589,6 +589,11 @@ http.createServer((req, res) => {
     return;
   }
   const urlPath = req.url.split('?')[0].split('#')[0];
+  if (!urlPath.startsWith('/admin') && !urlPath.startsWith('/api/')) {
+    res.writeHead(302, { Location: '/admin' + (urlPath === '/' ? '/' : urlPath) });
+    res.end();
+    return;
+  }
   const filePath = urlPath.startsWith('/admin') ? (urlPath.slice('/admin'.length) || '/') : urlPath;
   let file = path.join(DIST_DIR, filePath === '/' ? 'index.html' : filePath);
   if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) {
