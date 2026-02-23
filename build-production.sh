@@ -423,14 +423,84 @@ case $choice in
     4)
         build_admin
         echo ""
-        echo "Admin panel built to: admin-client/dist/"
-        echo "Deploy by copying this folder to your server and serving it at /admin/"
+        echo ">>> Packaging Admin Panel..."
+        rm -rf packages/admin-panel
+        mkdir -p packages/admin-panel/bankykit-admin
+        cp -r admin-client/dist packages/admin-panel/bankykit-admin/dist
+        cat > packages/admin-panel/bankykit-admin/README.txt << 'EOF'
+BankyKit Admin Panel
+====================
+
+This is the pre-built admin panel for BankyKit.
+
+Deployment (Nginx):
+  1. Copy the 'dist/' folder to your server, e.g. /var/www/bankykit-admin/
+  2. Add this to your Nginx config (inside your server block):
+
+     location /admin/ {
+         alias /var/www/bankykit-admin/dist/;
+         try_files $uri $uri/ /admin/index.html;
+     }
+
+     location /api/ {
+         proxy_pass http://127.0.0.1:8000/;
+         proxy_set_header Host $host;
+         proxy_set_header X-Real-IP $remote_addr;
+     }
+
+  3. Reload Nginx: sudo nginx -s reload
+
+The admin panel connects to your BankyKit backend via /api/ on the same domain.
+EOF
+        cd packages/admin-panel
+        zip -r bankykit-admin-v1.0.0.zip bankykit-admin
+        cd ../..
+        echo ">>> Admin Panel package: packages/admin-panel/bankykit-admin-v1.0.0.zip"
         ;;
     5)
         build_landing
         echo ""
-        echo "Landing page built to: landing-page/dist/"
-        echo "Deploy by copying this folder to your server and serving it at /"
+        echo ">>> Packaging Landing Page..."
+        rm -rf packages/landing-page
+        mkdir -p packages/landing-page/bankykit-landing
+        cp -r landing-page/dist packages/landing-page/bankykit-landing/dist
+        cat > packages/landing-page/bankykit-landing/README.txt << 'EOF'
+BankyKit Landing Page
+=====================
+
+This is the pre-built marketing landing page for BankyKit.
+
+Deployment (Nginx):
+  1. Copy the 'dist/' folder to your server, e.g. /var/www/bankykit-landing/
+  2. Add this to your Nginx config (new server block for your domain):
+
+     server {
+         listen 80;
+         server_name yourdomain.com www.yourdomain.com;
+         root /var/www/bankykit-landing/dist;
+         index index.html;
+
+         location / {
+             try_files $uri $uri/ /index.html;
+         }
+
+         # Proxy API calls to your BankyKit backend
+         location /api/ {
+             proxy_pass http://127.0.0.1:8000/;
+             proxy_set_header Host $host;
+             proxy_set_header X-Real-IP $remote_addr;
+         }
+     }
+
+  3. Reload Nginx: sudo nginx -s reload
+
+Replace 'yourdomain.com' with your actual domain.
+The landing page connects to your BankyKit backend via /api/ on the same domain.
+EOF
+        cd packages/landing-page
+        zip -r bankykit-landing-v1.0.0.zip bankykit-landing
+        cd ../..
+        echo ">>> Landing Page package: packages/landing-page/bankykit-landing-v1.0.0.zip"
         ;;
     6)
         build_saas
@@ -455,8 +525,10 @@ echo "  Build Complete!"
 echo "========================================"
 echo ""
 echo "Build outputs:"
-[ -d "packages/saas" ] && echo "  - SaaS:       packages/saas/"
-[ -d "packages/enterprise" ] && echo "  - Enterprise: packages/enterprise/"
-[ -d "packages/codecanyon" ] && echo "  - CodeCanyon: packages/codecanyon/"
-[ -f "packages/codecanyon/bankykit-v1.0.0.zip" ] && echo "                packages/codecanyon/bankykit-v1.0.0.zip"
+[ -d "packages/saas" ]          && echo "  - SaaS:         packages/saas/"
+[ -d "packages/enterprise" ]    && echo "  - Enterprise:   packages/enterprise/"
+[ -d "packages/codecanyon" ]    && echo "  - CodeCanyon:   packages/codecanyon/"
+[ -f "packages/codecanyon/bankykit-v1.0.0.zip" ]         && echo "                  packages/codecanyon/bankykit-v1.0.0.zip"
+[ -f "packages/admin-panel/bankykit-admin-v1.0.0.zip" ]  && echo "  - Admin Panel:  packages/admin-panel/bankykit-admin-v1.0.0.zip"
+[ -f "packages/landing-page/bankykit-landing-v1.0.0.zip" ] && echo "  - Landing Page: packages/landing-page/bankykit-landing-v1.0.0.zip"
 echo ""
