@@ -11,10 +11,10 @@ interface DocsConfig {
 const baseSections: { id: SectionId; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'requirements', label: 'Requirements' },
-  { id: 'installation', label: 'Installation' },
-  { id: 'database', label: 'Database Setup' },
-  { id: 'pm2', label: 'PM2 Process Manager' },
   { id: 'nginx', label: 'Nginx Reverse Proxy' },
+  { id: 'database', label: 'Database Setup' },
+  { id: 'installation', label: 'Installation' },
+  { id: 'pm2', label: 'PM2 Process Manager' },
   { id: 'ssl', label: 'SSL Certificates' },
   { id: 'backup', label: 'Backup & Restore' },
   { id: 'updates', label: 'Updates' },
