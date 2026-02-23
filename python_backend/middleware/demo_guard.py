@@ -2,13 +2,11 @@ import os
 from fastapi import HTTPException, Depends
 
 DEMO_BLOCKED_MESSAGE = (
-    "This operation is disabled in demo mode. "
-    "Purchase a license to enable full access on your own installation."
+    "This action is not available in the demo."
 )
 
 DEMO_SETTINGS_MESSAGE = (
-    "Changing this setting is disabled in demo mode. "
-    "On your own installation you have full control over all settings."
+    "This setting cannot be changed in the demo."
 )
 
 SENSITIVE_KEYS = {
