@@ -464,9 +464,7 @@ module.exports = {
     {
       name: "bankykit-admin",
       cwd: rootDir,
-      script: "node",
-      args: "server.js",
-      interpreter: "none",
+      script: "server.js",
       env: { NODE_ENV: "production" },
       autorestart: true,
     },
@@ -671,9 +669,7 @@ module.exports = {
     {
       name: "bankykit-landing",
       cwd: rootDir,
-      script: "node",
-      args: "server.js",
-      interpreter: "none",
+      script: "server.js",
       env: { NODE_ENV: "production" },
       autorestart: true,
     },
