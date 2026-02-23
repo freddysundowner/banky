@@ -1,0 +1,95 @@
+root@vmi3102280:/var/www/bankykit# ./start.sh 
+
+================================================================
+  BANKYKIT - Bank & Sacco Management System
+================================================================
+
+  Starting BANKYKIT with PM2 (production mode)...
+
+[PM2] cron restart at 0 */6 * * *
+[PM2] Applying action restartProcessId on app [bankykit-scheduler](ids: [ 0 ])
+[PM2] [bankykit-scheduler](0) ✓
+[PM2][WARN] Applications bankykit-api not running, starting...
+[PM2] App [bankykit-api] launched (1 instances)
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 1  │ bankykit-api       │ fork     │ 0    │ online    │ 0%       │ 0b       │
+│ 0  │ bankykit-scheduler │ fork     │ 2    │ online    │ 0%       │ 0b       │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+
+    [OK] BANKYKIT is running
+
+  View logs:    pm2 logs
+  Status:       pm2 status
+  Stop:         pm2 stop all
+
+  Open:         http://localhost:5000
+
+root@vmi3102280:/var/www/bankykit# sudo systemctl reload nginx
+root@vmi3102280:/var/www/bankykit# pm2 logs
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+/root/.pm2/pm2.log last 15 lines:
+PM2        | 2026-02-23T12:59:19: PM2 error: TypeError: One of the pids provided is invalid
+PM2        | 2026-02-23T12:59:49: PM2 error: Error caught while calling pidusage
+PM2        | 2026-02-23T12:59:49: PM2 error: TypeError: One of the pids provided is invalid
+PM2        | 2026-02-23T13:00:19: PM2 error: Error caught while calling pidusage
+PM2        | 2026-02-23T13:00:19: PM2 error: TypeError: One of the pids provided is invalid
+PM2        | 2026-02-23T13:00:49: PM2 error: Error caught while calling pidusage
+PM2        | 2026-02-23T13:00:49: PM2 error: TypeError: One of the pids provided is invalid
+PM2        | 2026-02-23T13:01:19: PM2 error: Error caught while calling pidusage
+PM2        | 2026-02-23T13:01:19: PM2 error: TypeError: One of the pids provided is invalid
+PM2        | 2026-02-23T13:01:49: PM2 error: Error caught while calling pidusage
+PM2        | 2026-02-23T13:01:49: PM2 error: TypeError: One of the pids provided is invalid
+PM2        | 2026-02-23T13:02:19: PM2 error: Error caught while calling pidusage
+PM2        | 2026-02-23T13:02:19: PM2 error: TypeError: One of the pids provided is invalid
+PM2        | 2026-02-23T13:02:39: PM2 error: Error caught while calling pidusage
+PM2        | 2026-02-23T13:02:39: PM2 error: TypeError: One of the pids provided is invalid
+
+/root/.pm2/logs/bankykit-scheduler-error.log last 15 lines:
+/root/.pm2/logs/bankykit-scheduler-out.log last 15 lines:
+0|bankykit | ============================================================
+0|bankykit | [2026-02-23 12:47:44] Running: Send subscription renewal reminders
+0|bankykit | ============================================================
+0|bankykit | === Renewal Reminders - 2026-02-23 ===
+0|bankykit | 
+0|bankykit | === SUMMARY ===
+0|bankykit | Trial expiry reminders: 0
+0|bankykit | Renewal reminders: 0
+0|bankykit | Past-due notices: 0
+0|bankykit | [12:47:44] Completed: Send subscription renewal reminders
+0|bankykit | 
+0|bankykit | [Scheduler] Initial run complete. Entering loop (checking every 60s)...
+0|bankykit | 
+0|bankykit | [Scheduler] Received signal 2, shutting down gracefully...
+0|bankykit | [Scheduler] Shutdown complete.
+
+/root/.pm2/logs/bankykit-api-out.log last 15 lines:
+/root/.pm2/logs/bankykit-api-error.log last 15 lines:
+1|bankykit | ERROR:    [Errno 98] Address already in use
+1|bankykit | ERROR:    [Errno 98] Address already in use
+1|bankykit | ERROR:    [Errno 98] Address already in use
+1|bankykit | ERROR:    [Errno 98] Address already in use
+1|bankykit | ERROR:    [Errno 98] Address already in use
+1|bankykit | ERROR:    [Errno 98] Address already in use
+1|bankykit | ERROR:    [Errno 98] Address already in use
+1|bankykit | ERROR:    [Errno 98] Address already in use
+1|bankykit | ERROR:    [Errno 98] Address already in use
+1|bankykit | ERROR:    [Errno 98] Address already in use
+1|bankykit | ERROR:    [Errno 98] Address already in use
+1|bankykit | ERROR:    [Errno 98] Address already in use
+1|bankykit | ERROR:    [Errno 98] Address already in use
+1|bankykit | ERROR:    [Errno 98] Address already in use
+1|bankykit | ERROR:    [Errno 98] Address already in use
+
+PM2      | Error caught while calling pidusage
+PM2      | TypeError: One of the pids provided is invalid
+PM2      |     at get (/usr/lib/node_modules/pm2/node_modules/pidusage/lib/stats.js:78:23)
+PM2      |     at pidusage (/usr/lib/node_modules/pm2/node_modules/pidusage/index.js:30:5)
+PM2      |     at Object.getMonitorData (/usr/lib/node_modules/pm2/lib/God/ActionMethods.js:60:5)
+PM2      |     at tasks (/usr/lib/node_modules/pm2/lib/Worker.js:104:9)
+PM2      |     at Domain.<anonymous> (/usr/lib/node_modules/pm2/lib/Worker.js:147:7)
+PM2      |     at Domain.run (node:domain:389:15)
+PM2      |     at Timeout.wrappedTasks [as _onTimeout] (/usr/lib/node_modules/pm2/lib/Worker.js:146:7)
+PM2      |     at listOnTimeout (node:internal/timers:581:17)
+PM2      |     at process.processTimers (node:internal/timers:519:7)
