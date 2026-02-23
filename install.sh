@@ -184,6 +184,16 @@ print_step "Step 2/6: Setting up environment..."
 
 if [ -f .env ]; then
     print_skip ".env already exists (your settings are preserved)"
+    # Inject any variables that exist in .env.example but are missing from .env
+    while IFS= read -r line; do
+        # Skip comments and blank lines
+        [[ "$line" =~ ^#.*$ || -z "$line" ]] && continue
+        key="${line%%=*}"
+        if ! grep -q "^${key}=" .env 2>/dev/null; then
+            echo "$line" >> .env
+            print_ok "Added missing variable: ${key}"
+        fi
+    done < .env.example
 else
     SESSION_SECRET=$(openssl rand -hex 32 2>/dev/null || echo "change-me-to-a-random-string-at-least-32-chars")
     cp .env.example .env
