@@ -28,6 +28,10 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
+const IS_DEMO = import.meta.env.VITE_PRODUCTION_MODE === "demo";
+const DEMO_EMAIL = "demo@demo.banky";
+const DEMO_PASSWORD = "Demo@1234";
+
 export default function Login() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -39,8 +43,8 @@ export default function Login() {
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      email: IS_DEMO ? DEMO_EMAIL : "",
+      password: IS_DEMO ? DEMO_PASSWORD : "",
     },
   });
 
@@ -105,6 +109,17 @@ export default function Login() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {IS_DEMO && (
+              <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm dark:border-blue-800 dark:bg-blue-950">
+                <p className="font-medium text-blue-800 dark:text-blue-300 mb-1">Demo Mode</p>
+                <p className="text-blue-700 dark:text-blue-400">
+                  Email: <span className="font-mono font-semibold" data-testid="text-demo-email">{DEMO_EMAIL}</span>
+                </p>
+                <p className="text-blue-700 dark:text-blue-400">
+                  Password: <span className="font-mono font-semibold" data-testid="text-demo-password">{DEMO_PASSWORD}</span>
+                </p>
+              </div>
+            )}
             <Form {...form}>
               <form onSubmit={form.handleSubmit((data) => loginMutation.mutate(data))} className="space-y-4">
                 <FormField

@@ -83,3 +83,9 @@ externalPort = 8000
 deploymentTarget = "autoscale"
 run = ["node", "./dist/index.cjs"]
 build = ["npm", "run", "build"]
+
+[userenv]
+
+[userenv.shared]
+VITE_PRODUCTION_MODE = "demo"
+PRODUCTION_MODE = "demo"
