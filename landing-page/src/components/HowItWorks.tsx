@@ -33,11 +33,20 @@ const colorClasses: Record<string, { bg: string; text: string; border: string }>
 
 export default function HowItWorks() {
   const [steps, setSteps] = useState<HowItWorksItem[]>(defaultSteps);
+  const [ctaUrl, setCtaUrl] = useState('#pricing');
+  const [ctaText, setCtaText] = useState('Start Your Free Trial');
 
   useEffect(() => {
     fetch('/api/public/landing-content/how_it_works')
       .then(res => res.json())
       .then(data => { if (data.data) setSteps(data.data); })
+      .catch(() => {});
+    fetch('/api/public/landing-settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.cta_primary_url) setCtaUrl(data.cta_primary_url);
+        if (data.cta_primary_text) setCtaText(data.cta_primary_text);
+      })
       .catch(() => {});
   }, []);
 
@@ -80,8 +89,8 @@ export default function HowItWorks() {
         </div>
 
         <div className="text-center mt-12">
-          <a href="#pricing" className="inline-flex items-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition">
-            Start Your Free Trial
+          <a href={ctaUrl} className="inline-flex items-center gap-2 px-8 py-4 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition">
+            {ctaText}
             <ArrowRight className="w-5 h-5" />
           </a>
         </div>
