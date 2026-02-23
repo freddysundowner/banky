@@ -147,8 +147,8 @@ export default function Login() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 bg-background overflow-y-auto">
-        <div className="w-full max-w-[400px]">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 sm:px-10 py-8 bg-background overflow-y-auto">
+        <div className="w-full max-w-[500px]">
           <div className="lg:hidden flex items-center gap-2.5 mb-8">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
               <Landmark className="h-5 w-5 text-primary-foreground" />
