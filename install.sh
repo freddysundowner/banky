@@ -455,8 +455,8 @@ print_step "Step 6/6: Building application..."
 
 mkdir -p python_backend/uploads logs backups
 
-# Set VITE_PRODUCTION_MODE based on install type
-if [ "$DB_NAME" = "bankykit-demo" ]; then
+# Set VITE_PRODUCTION_MODE based on install type (check if DB name ends with -demo)
+if echo "$DB_NAME" | grep -q "\-demo$"; then
     if grep -q "^VITE_PRODUCTION_MODE=" .env 2>/dev/null; then
         sed -i "s|^VITE_PRODUCTION_MODE=.*|VITE_PRODUCTION_MODE=demo|" .env
     else
