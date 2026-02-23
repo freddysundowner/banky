@@ -32,9 +32,20 @@ build_admin() {
     echo ""
     echo ">>> Building Admin Panel..."
     cd admin-client
+    npm install --silent 2>/dev/null || npm install
     npm run build
     cd ..
     echo ">>> Admin panel built to admin-client/dist/"
+}
+
+build_landing() {
+    echo ""
+    echo ">>> Building Landing Page..."
+    cd landing-page
+    npm install --silent 2>/dev/null || npm install
+    npm run build
+    cd ..
+    echo ">>> Landing page built to landing-page/dist/"
 }
 
 build_saas() {
@@ -45,6 +56,7 @@ build_saas() {
     
     build_frontend
     build_admin
+    build_landing
     
     echo ""
     echo ">>> Creating SaaS deployment package..."
@@ -54,6 +66,7 @@ build_saas() {
     
     cp -r dist/public packages/saas/frontend
     cp -r admin-client/dist packages/saas/admin
+    cp -r landing-page/dist packages/saas/landing
     cp -r python_backend packages/saas/backend
     cp -r shared packages/saas/shared 2>/dev/null || true
     
