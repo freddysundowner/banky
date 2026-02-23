@@ -43,8 +43,73 @@ MISSING=""
 if command -v node >/dev/null 2>&1; then
     print_ok "Node.js $(node -v)"
 else
-    MISSING="${MISSING} Node.js"
-    print_err "Node.js not found"
+    print_warn "Node.js not found — attempting automatic installation..."
+
+    NODE_INSTALLED=0
+
+    if [ "$PLATFORM" = "linux" ]; then
+        if command -v apt-get >/dev/null 2>&1; then
+            echo "    Detected apt — installing Node.js 20.x via NodeSource..."
+            if curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - >/dev/null 2>&1 && \
+               sudo apt-get install -y nodejs >/dev/null 2>&1; then
+                NODE_INSTALLED=1
+            fi
+        elif command -v dnf >/dev/null 2>&1; then
+            echo "    Detected dnf — installing Node.js 20.x via NodeSource..."
+            if curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash - >/dev/null 2>&1 && \
+               sudo dnf install -y nodejs >/dev/null 2>&1; then
+                NODE_INSTALLED=1
+            fi
+        elif command -v yum >/dev/null 2>&1; then
+            echo "    Detected yum — installing Node.js 20.x via NodeSource..."
+            if curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash - >/dev/null 2>&1 && \
+               sudo yum install -y nodejs >/dev/null 2>&1; then
+                NODE_INSTALLED=1
+            fi
+        fi
+    elif [ "$PLATFORM" = "mac" ]; then
+        if command -v brew >/dev/null 2>&1; then
+            echo "    Detected Homebrew — installing Node.js..."
+            if brew install node >/dev/null 2>&1; then
+                NODE_INSTALLED=1
+            fi
+        fi
+    fi
+
+    # Fallback: nvm (works on any Linux/macOS)
+    if [ "$NODE_INSTALLED" = "0" ]; then
+        echo "    Falling back to nvm installation..."
+        export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+        if [ ! -d "$NVM_DIR" ]; then
+            curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash >/dev/null 2>&1
+        fi
+        # shellcheck disable=SC1091
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        if command -v nvm >/dev/null 2>&1; then
+            nvm install 20 >/dev/null 2>&1 && nvm use 20 >/dev/null 2>&1 && NODE_INSTALLED=1
+        fi
+    fi
+
+    if [ "$NODE_INSTALLED" = "1" ] && command -v node >/dev/null 2>&1; then
+        print_ok "Node.js $(node -v) installed successfully"
+    else
+        MISSING="${MISSING} Node.js"
+        print_err "Could not install Node.js automatically"
+        echo ""
+        if [ "$PLATFORM" = "mac" ]; then
+            echo "  Install manually:"
+            echo "    brew install node"
+        elif [ "$PLATFORM" = "windows" ]; then
+            echo "  Download and install:"
+            echo "    Node.js: https://nodejs.org"
+        else
+            echo "  Install manually on Ubuntu/Debian:"
+            echo "    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -"
+            echo "    sudo apt install -y nodejs"
+        fi
+        echo ""
+        echo "  After installing, run this script again."
+    fi
 fi
 
 # ── Python: find 3.11+, or use pyenv to install it ──────────
@@ -106,21 +171,9 @@ fi
 
 if [ -n "$MISSING" ]; then
     echo ""
-    print_err "Missing required software:${MISSING}"
+    print_err "Could not satisfy all requirements:${MISSING}"
     echo ""
-    if [ "$PLATFORM" = "mac" ]; then
-        echo "  Install with Homebrew:"
-        echo "    brew install node"
-    elif [ "$PLATFORM" = "windows" ]; then
-        echo "  Download and install:"
-        echo "    Node.js: https://nodejs.org"
-    else
-        echo "  Install on Ubuntu/Debian:"
-        echo "    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -"
-        echo "    sudo apt install -y nodejs"
-    fi
-    echo ""
-    echo "  After installing, run this script again."
+    echo "  Please install the missing software and run this script again."
     exit 1
 fi
 
