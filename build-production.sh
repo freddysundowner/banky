@@ -221,8 +221,8 @@ EOF
     cp start.sh packages/enterprise/bankykit/start.sh
     chmod +x packages/enterprise/bankykit/start.sh
 
-    # Create ecosystem.config.js for production (PM2)
-    cat > packages/enterprise/bankykit/ecosystem.config.js << 'PMEOF'
+    # Create ecosystem.config.cjs for production (PM2)
+    cat > packages/enterprise/bankykit/ecosystem.config.cjs << 'PMEOF'
 const path = require("path");
 const fs = require("fs");
 
@@ -345,8 +345,8 @@ EOF
     cp start.sh packages/codecanyon/bankykit/start.sh
     chmod +x packages/codecanyon/bankykit/start.sh
 
-    # ── ecosystem.config.js for PM2 production setup ──
-    cat > packages/codecanyon/bankykit/ecosystem.config.js << 'PMEOF'
+    # ── ecosystem.config.cjs for PM2 production setup ──
+    cat > packages/codecanyon/bankykit/ecosystem.config.cjs << 'PMEOF'
 const path = require("path");
 const fs = require("fs");
 

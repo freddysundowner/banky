@@ -53,10 +53,14 @@ if [ -z "$PYTHON_CMD" ]; then
 fi
 
 # ── Start with PM2 (production) or directly (development) ───
-if command -v pm2 >/dev/null 2>&1 && [ -f ecosystem.config.js ]; then
+ECO_FILE=""
+[ -f ecosystem.config.cjs ] && ECO_FILE="ecosystem.config.cjs"
+[ -z "$ECO_FILE" ] && [ -f ecosystem.config.js ] && ECO_FILE="ecosystem.config.js"
+
+if command -v pm2 >/dev/null 2>&1 && [ -n "$ECO_FILE" ]; then
     echo -e "${GREEN}  Starting BANKYKIT with PM2 (production mode)...${NC}"
     echo ""
-    pm2 start ecosystem.config.js
+    pm2 start "$ECO_FILE"
     echo ""
     print_ok "BANKYKIT is running"
     echo ""
