@@ -391,7 +391,12 @@ def populate_demo(admin: AdminUser = Depends(require_admin), db: Session = Depen
     if not conn_str:
         raise HTTPException(status_code=500, detail="No database connection string available.")
 
-    plan = db.query(SubscriptionPlan).first()
+    plan = (
+        db.query(SubscriptionPlan)
+        .filter(SubscriptionPlan.is_active == True)
+        .order_by(SubscriptionPlan.sort_order.desc(), SubscriptionPlan.max_members.desc())
+        .first()
+    )
 
     try:
         org = Organization(
@@ -426,8 +431,9 @@ def populate_demo(admin: AdminUser = Depends(require_admin), db: Session = Depen
                 organization_id=org.id,
                 plan_id=plan.id,
                 status="active",
+                trial_ends_at=None,
                 current_period_start=datetime.utcnow(),
-                current_period_end=datetime.utcnow() + timedelta(days=365),
+                current_period_end=datetime(2099, 12, 31),
             ))
 
         db.commit()
