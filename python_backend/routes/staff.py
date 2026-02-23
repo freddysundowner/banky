@@ -317,7 +317,7 @@ async def create_staff(
     if org.staff_email_domain:
         domain = org.staff_email_domain.lstrip('@')
     else:
-        domain = f"{sanitize_org_name_for_domain(org.name)}.banky.local"
+        domain = f"{sanitize_org_name_for_domain(org.name)}.bankykit.local"
     email = f"{data.username.lower().strip()}@{domain}"
     
     tenant_session = tenant_ctx.create_session()

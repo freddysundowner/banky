@@ -40,7 +40,7 @@ async def create_checkout_session(
             "price_data": {
                 "currency": currency.lower(),
                 "product_data": {
-                    "name": f"BANKY - {plan_name} Plan Subscription",
+                    "name": f"BANKYKIT - {plan_name} Plan Subscription",
                 },
                 "unit_amount": amount_cents,
             },

@@ -94,7 +94,7 @@ export default function Features() {
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Everything Your Financial Institution Needs
           </h2>
-          <p className="text-xl text-gray-600">Whether you run a bank, a Sacco, or a chama -- BANKY has the tools to replace spreadsheets, reduce errors, and save you hours every day.</p>
+          <p className="text-xl text-gray-600">Whether you run a bank, a Sacco, or a chama -- BANKYKIT has the tools to replace spreadsheets, reduce errors, and save you hours every day.</p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">

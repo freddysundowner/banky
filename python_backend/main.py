@@ -345,7 +345,7 @@ async def lifespan(app: FastAPI):
     
     yield
 
-app = FastAPI(title="BANKY - Bank & Sacco Management System", lifespan=lifespan)
+app = FastAPI(title="BANKYKIT - Bank & Sacco Management System", lifespan=lifespan)
 
 ALLOWED_ORIGINS = [
     "http://localhost:5000",
@@ -432,7 +432,7 @@ app.include_router(subscription_payments_router, prefix="/api/organizations", ta
 
 @app.get("/api/health")
 async def health_check():
-    return {"status": "healthy", "service": "BANKY API", "backend": "python"}
+    return {"status": "healthy", "service": "BANKYKIT API", "backend": "python"}
 
 @app.post("/api/webhooks/subscription-payment", tags=["Webhooks"])
 async def subscription_payment_webhook(request: Request):
@@ -605,7 +605,7 @@ async def stripe_return(request: Request, status: str = "", payment_id: str = ""
 
     from fastapi.responses import HTMLResponse
     html = f"""<!DOCTYPE html>
-<html><head><title>BANKY - Payment</title>
+<html><head><title>BANKYKIT - Payment</title>
 <style>body{{font-family:Inter,sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;background:#f8fafc;}}
 .card{{background:white;border-radius:12px;padding:40px;text-align:center;box-shadow:0 4px 6px rgba(0,0,0,0.1);max-width:400px;}}
 .icon{{font-size:48px;margin-bottom:16px;}}
@@ -617,7 +617,7 @@ a:hover{{background:#1d4ed8;}}</style></head>
 <div class="icon">{"✅" if "successful" in message or "active" in message else "⏳" if "processing" in message.lower() or "shortly" in message.lower() else "❌"}</div>
 <h2>{"Payment Successful" if "successful" in message or "active" in message else "Processing" if "processing" in message.lower() or "shortly" in message.lower() else "Payment Cancelled"}</h2>
 <p>{message}</p>
-<a href="/">Return to BANKY</a>
+<a href="/">Return to BANKYKIT</a>
 </div></body></html>"""
     return HTMLResponse(content=html)
 
@@ -643,11 +643,11 @@ async def paystack_subscription_webhook(request: Request):
     reference = tx_data.get("reference", "")
     status = tx_data.get("status", "")
 
-    if not reference.startswith("BANKY-SUB-"):
+    if not reference.startswith("BANKYKIT-SUB-"):
         print(f"[Paystack Webhook] Not a subscription payment: {reference}")
         return {"status": "ignored"}
 
-    payment_id = reference.replace("BANKY-SUB-", "")
+    payment_id = reference.replace("BANKYKIT-SUB-", "")
 
     db = SessionLocal()
     try:
@@ -850,7 +850,7 @@ async def submit_contact_form(request: ContactFormRequest):
         ).all()
         config = {s.setting_key: s.setting_value for s in settings}
 
-        platform_name = config.get("platform_name", "BANKY")
+        platform_name = config.get("platform_name", "BANKYKIT")
         support_email = config.get("support_email")
         brevo_api_key = config.get("brevo_api_key")
 
@@ -919,7 +919,7 @@ async def send_sales_inquiry(request: SalesInquiryRequest):
         
         config = {s.setting_key: s.setting_value for s in settings}
         
-        platform_name = config.get("platform_name", "BANKY")
+        platform_name = config.get("platform_name", "BANKYKIT")
         sales_email = config.get("sales_email") or config.get("support_email")
         brevo_api_key = config.get("brevo_api_key")
         
@@ -1021,7 +1021,7 @@ async def get_public_landing_settings():
             "cta_secondary_text": "Watch Demo",
             "cta_secondary_url": "",
             "demo_video_url": "",
-            "app_url": "https://app.banky.co.ke",
+            "app_url": "https://app.bankykit.co.ke",
             "stats_saccos": "500+",
             "stats_transactions": "KES 2B+",
             "stats_members": "1M+",
@@ -1083,12 +1083,12 @@ async def get_public_docs_config():
         ).all()}
         
         return {
-            "support_email": settings.get("landing_docs_support_email", "support@banky.co.ke"),
+            "support_email": settings.get("landing_docs_support_email", "support@bankykit.co.ke"),
             "docs_mode": settings.get("landing_docs_mode", "both"),
             "codecanyon_title": settings.get("landing_docs_codecanyon_title", "CodeCanyon Purchase"),
-            "codecanyon_subtitle": settings.get("landing_docs_codecanyon_subtitle", "Installation guide for buyers who purchased BANKY from CodeCanyon marketplace."),
+            "codecanyon_subtitle": settings.get("landing_docs_codecanyon_subtitle", "Installation guide for buyers who purchased BANKYKIT from CodeCanyon marketplace."),
             "direct_title": settings.get("landing_docs_direct_title", "Enterprise License"),
-            "direct_subtitle": settings.get("landing_docs_direct_subtitle", "Installation guide for organizations who purchased BANKY directly from our sales team."),
+            "direct_subtitle": settings.get("landing_docs_direct_subtitle", "Installation guide for organizations who purchased BANKYKIT directly from our sales team."),
             "show_license": settings.get("landing_docs_show_license", "false") == "true",
         }
     finally:
@@ -1113,9 +1113,9 @@ async def serve_spa(request: Request, full_path: str):
         content="""
         <!DOCTYPE html>
         <html>
-        <head><title>BANKY</title></head>
+        <head><title>BANKYKIT</title></head>
         <body>
-            <h1>BANKY - Bank & Sacco Management System</h1>
+            <h1>BANKYKIT - Bank & Sacco Management System</h1>
             <p>Frontend is being built. Please wait a moment and refresh.</p>
             <p>If this persists, run: <code>npm run build</code></p>
         </body>

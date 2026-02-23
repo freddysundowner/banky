@@ -16,11 +16,11 @@ print_err()  { echo -e "${RED}    [ERROR] $1${NC}"; }
 
 APP_DIR=$(pwd)
 REQUIRED_PYTHON="3.11.9"
-DB_NAME="banky"
+DB_NAME="bankykit"
 
 echo ""
 echo -e "${BLUE}================================================================${NC}"
-echo -e "${BLUE}  BANKY - Bank & Sacco Management System${NC}"
+echo -e "${BLUE}  BANKYKIT - Bank & Sacco Management System${NC}"
 echo -e "${BLUE}  Installer${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
@@ -278,11 +278,11 @@ fi
 
 # ── Write DATABASE_URL to .env if not already set ────────────
 source .env 2>/dev/null || true
-if [ -z "$DATABASE_URL" ] || echo "$DATABASE_URL" | grep -q "localhost:5432/banky$"; then
+if [ -z "$DATABASE_URL" ] || echo "$DATABASE_URL" | grep -q "localhost:5432/bankykit$"; then
     if [ "$PLATFORM" = "linux" ]; then
-        NEW_DB_URL="postgresql:///banky"
+        NEW_DB_URL="postgresql:///bankykit"
     else
-        NEW_DB_URL="postgresql://localhost:5432/banky"
+        NEW_DB_URL="postgresql://localhost:5432/bankykit"
     fi
 
     if grep -q "^DATABASE_URL=" .env 2>/dev/null; then
@@ -352,7 +352,7 @@ echo -e "${BLUE}================================================================
 echo -e "${GREEN}  Installation Complete!${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
-echo "  To start BANKY:"
+echo "  To start BANKYKIT:"
 echo ""
 echo "    ./start.sh"
 echo ""

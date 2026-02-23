@@ -4,7 +4,7 @@ import { Link } from 'wouter'
 
 async function fetchBranding() {
   const res = await fetch('/api/public/branding')
-  if (!res.ok) return { platform_name: 'BANKY' }
+  if (!res.ok) return { platform_name: 'BANKYKIT' }
   return res.json()
 }
 
@@ -30,7 +30,7 @@ export default function Login() {
     queryFn: fetchSetupStatus,
   })
 
-  const platformName = branding?.platform_name || 'BANKY'
+  const platformName = branding?.platform_name || 'BANKYKIT'
   const adminExists = setupStatus?.admin_exists !== false
 
   const loginMutation = useMutation({

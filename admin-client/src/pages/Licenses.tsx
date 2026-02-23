@@ -4,7 +4,7 @@ import { toast } from 'sonner'
 
 async function fetchBranding() {
   const res = await fetch('/api/public/branding')
-  if (!res.ok) return { platform_name: 'BANKY' }
+  if (!res.ok) return { platform_name: 'BANKYKIT' }
   return res.json()
 }
 
@@ -24,7 +24,7 @@ export default function Licenses() {
     queryFn: fetchBranding,
   })
 
-  const platformName = branding?.platform_name || 'BANKY'
+  const platformName = branding?.platform_name || 'BANKYKIT'
 
   const { data: licenses, isLoading } = useQuery({
     queryKey: ['licenses'],

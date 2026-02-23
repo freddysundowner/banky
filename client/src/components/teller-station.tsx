@@ -182,7 +182,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
   const [showStatementPage, setShowStatementPage] = useState(false);
   const [counterNumber, setCounterNumber] = useState<string | null>(() => {
     try {
-      return localStorage.getItem(`banky_counter_${organizationId}`) || null;
+      return localStorage.getItem(`bankykit_counter_${organizationId}`) || null;
     } catch { return null; }
   });
   const [counterInput, setCounterInput] = useState("");
@@ -258,12 +258,12 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
   useEffect(() => {
     if (!counterNumber && preEffectActiveCounter) {
       setCounterNumber(preEffectActiveCounter.counter_number);
-      try { localStorage.setItem(`banky_counter_${organizationId}`, preEffectActiveCounter.counter_number); } catch {}
+      try { localStorage.setItem(`bankykit_counter_${organizationId}`, preEffectActiveCounter.counter_number); } catch {}
     } else if (counterNumber && activeCounters && !preEffectActiveCounter) {
       const takenByOther = activeCounters.find(c => c.counter_number === counterNumber && c.staff_id !== preEffectStaffId);
       if (takenByOther) {
         setCounterNumber(null);
-        try { localStorage.removeItem(`banky_counter_${organizationId}`); } catch {}
+        try { localStorage.removeItem(`bankykit_counter_${organizationId}`); } catch {}
       }
     }
   }, [preEffectActiveCounter, activeCounters, counterNumber, preEffectStaffId, organizationId]);
@@ -1052,7 +1052,7 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
                       return;
                     }
                     setCounterNumber(counterInput.trim());
-                    try { localStorage.setItem(`banky_counter_${organizationId}`, counterInput.trim()); } catch {}
+                    try { localStorage.setItem(`bankykit_counter_${organizationId}`, counterInput.trim()); } catch {}
                     refetchCounters();
                   } catch (e: any) {
                     toast({ title: "Error", description: e.message, variant: "destructive" });

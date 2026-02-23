@@ -21,7 +21,7 @@ from models.master import AdminUser
 router = APIRouter(prefix="/admin/demo-data", tags=["admin"])
 
 DEMO_CODE = "DEMO"
-DEMO_OWNER_EMAIL = "demo@demo.banky"
+DEMO_OWNER_EMAIL = "demo@demo.bankykit"
 DEMO_OWNER_PASSWORD = "Demo@1234"
 
 
@@ -48,7 +48,7 @@ DEMO_TXN_PREFIX   = "DTXN"
 DEMO_LOAN_PREFIX  = "DLN"
 DEMO_REP_PREFIX   = "DREP"
 DEMO_PROD_CODES   = ("DDEV", "DEMG")
-DEMO_EMAIL_DOMAIN = "@demo.banky"
+DEMO_EMAIL_DOMAIN = "@demo.bankykit"
 
 
 def _seed_tenant(conn_str: str):

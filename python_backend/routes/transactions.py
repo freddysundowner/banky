@@ -575,7 +575,7 @@ async def get_member_statement_pdf(
         org_name_setting = tenant_session.query(OrganizationSettings).filter(
             OrganizationSettings.setting_key == "organization_name"
         ).first()
-        org_name = org_name_setting.setting_value if org_name_setting else "BANKY"
+        org_name = org_name_setting.setting_value if org_name_setting else "BANKYKIT"
 
         pdf_buffer = generate_statement_pdf(member, transactions, symbol, org_name, account_type, start_date, end_date)
 

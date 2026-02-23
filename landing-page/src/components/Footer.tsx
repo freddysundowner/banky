@@ -31,10 +31,10 @@ export default function Footer() {
           </nav>
 
           <a
-            href="mailto:info@banky.co.ke"
+            href="mailto:info@bankykit.co.ke"
             className="text-sm text-gray-400 hover:text-white transition"
           >
-            info@banky.co.ke
+            info@bankykit.co.ke
           </a>
         </div>
       </div>

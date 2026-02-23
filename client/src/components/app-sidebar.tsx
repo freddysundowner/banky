@@ -206,7 +206,7 @@ export function AppSidebar() {
             <Landmark className="h-6 w-6 text-sidebar-primary-foreground" />
           </div>
           <div className="flex flex-col">
-            <span className="text-lg font-bold text-sidebar-foreground">BANKY</span>
+            <span className="text-lg font-bold text-sidebar-foreground">BANKYKIT</span>
             <span className="text-xs text-sidebar-foreground/60">Management System</span>
           </div>
         </Link>

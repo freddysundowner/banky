@@ -4,7 +4,7 @@ import { Link, useLocation } from 'wouter'
 
 async function fetchBranding() {
   const res = await fetch('/api/public/branding')
-  if (!res.ok) return { platform_name: 'BANKY' }
+  if (!res.ok) return { platform_name: 'BANKYKIT' }
   return res.json()
 }
 
@@ -32,7 +32,7 @@ export default function Setup() {
     queryFn: fetchSetupStatus,
   })
 
-  const platformName = branding?.platform_name || 'BANKY'
+  const platformName = branding?.platform_name || 'BANKYKIT'
 
   useEffect(() => {
     if (setupStatus?.admin_exists) {

@@ -73,7 +73,7 @@ def get_public_legal_content(page_type: str, db: Session = Depends(get_db)):
     return {
         "content": result.get(content_key, ""),
         "last_updated": result.get(date_key, ""),
-        "platform_name": result.get("platform_name", "BANKY"),
+        "platform_name": result.get("platform_name", "BANKYKIT"),
     }
 
 @router.get("/public/enabled-gateways")
@@ -116,8 +116,8 @@ def get_current_admin(token: str, db: Session):
         return None
     return db.query(AdminUser).filter(AdminUser.id == session.admin_id).first()
 
-def require_admin(banky_admin_token: Optional[str] = Cookie(None), db: Session = Depends(get_db)):
-    admin = get_current_admin(banky_admin_token, db)
+def require_admin(bankykit_admin_token: Optional[str] = Cookie(None), db: Session = Depends(get_db)):
+    admin = get_current_admin(bankykit_admin_token, db)
     if not admin:
         raise HTTPException(status_code=401, detail="Admin authentication required")
     return admin
@@ -151,7 +151,7 @@ def admin_login(data: dict, response: Response, db: Session = Depends(get_db)):
     is_prod = os.environ.get("REPL_SLUG") is not None
     
     response.set_cookie(
-        key="banky_admin_token",
+        key="bankykit_admin_token",
         value=token,
         httponly=True,
         max_age=7*24*60*60,
@@ -162,11 +162,11 @@ def admin_login(data: dict, response: Response, db: Session = Depends(get_db)):
     return {"id": admin.id, "email": admin.email, "name": admin.name}
 
 @router.post("/logout")
-def admin_logout(response: Response, banky_admin_token: Optional[str] = Cookie(None), db: Session = Depends(get_db)):
-    if banky_admin_token:
-        db.query(AdminSession).filter(AdminSession.token == banky_admin_token).delete()
+def admin_logout(response: Response, bankykit_admin_token: Optional[str] = Cookie(None), db: Session = Depends(get_db)):
+    if bankykit_admin_token:
+        db.query(AdminSession).filter(AdminSession.token == bankykit_admin_token).delete()
         db.commit()
-    response.delete_cookie("banky_admin_token")
+    response.delete_cookie("bankykit_admin_token")
     return {"message": "Logged out"}
 
 @router.get("/me")
@@ -735,18 +735,18 @@ def get_landing_page_settings(admin: AdminUser = Depends(require_admin), db: Ses
         "landing_cta_secondary_text": "Watch Demo",
         "landing_cta_secondary_url": "",
         "landing_demo_video_url": "",
-        "landing_app_url": "https://app.banky.co.ke",
+        "landing_app_url": "https://app.bankykit.co.ke",
         "landing_stats_saccos": "500+",
         "landing_stats_transactions": "KES 2B+",
         "landing_stats_members": "1M+",
         "landing_stats_uptime": "99.9%",
-        "landing_docs_support_email": "support@banky.co.ke",
+        "landing_docs_support_email": "support@bankykit.co.ke",
         "landing_show_subscription_content": "true",
         "landing_docs_mode": "both",
         "landing_docs_codecanyon_title": "CodeCanyon Purchase",
-        "landing_docs_codecanyon_subtitle": "Installation guide for buyers who purchased BANKY from CodeCanyon marketplace.",
+        "landing_docs_codecanyon_subtitle": "Installation guide for buyers who purchased BANKYKIT from CodeCanyon marketplace.",
         "landing_docs_direct_title": "Enterprise License",
-        "landing_docs_direct_subtitle": "Installation guide for organizations who purchased BANKY directly from our sales team.",
+        "landing_docs_direct_subtitle": "Installation guide for organizations who purchased BANKYKIT directly from our sales team.",
         "landing_docs_show_license": "false",
     }
     
@@ -935,7 +935,7 @@ def initial_setup(data: dict, db: Session = Depends(get_db)):
 DEFAULT_PLATFORM_SETTINGS = [
     {"key": "default_plan_id", "value": "", "type": "string", "description": "Default subscription plan for new organizations"},
     {"key": "trial_days", "value": "14", "type": "number", "description": "Number of trial days for new organizations"},
-    {"key": "platform_name", "value": "BANKY", "type": "string", "description": "Platform name displayed across the system"},
+    {"key": "platform_name", "value": "BANKYKIT", "type": "string", "description": "Platform name displayed across the system"},
     {"key": "support_email", "value": "", "type": "string", "description": "Support email address"},
     {"key": "sales_email", "value": "", "type": "string", "description": "Sales email address for enterprise inquiries"},
     {"key": "brevo_api_key", "value": "", "type": "string", "description": "Brevo API key for sending emails (sales inquiries, notifications)"},

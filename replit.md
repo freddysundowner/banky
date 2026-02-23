@@ -1,7 +1,7 @@
-# BANKY - Bank & Sacco Management System
+# BANKYKIT - Bank & Sacco Management System
 
 ## Overview
-BANKY is a comprehensive multi-tenant bank and Sacco management system designed with a database-per-tenant SaaS architecture. It provides a robust, scalable, and secure platform for managing banking and Sacco operations, including core financial functionalities, advanced loan management, comprehensive accounting, and administrative tools.
+BANKYKIT is a comprehensive multi-tenant bank and Sacco management system designed with a database-per-tenant SaaS architecture. It provides a robust, scalable, and secure platform for managing banking and Sacco operations, including core financial functionalities, advanced loan management, comprehensive accounting, and administrative tools.
 
 ## User Preferences
 I want iterative development. Ask before making major changes.

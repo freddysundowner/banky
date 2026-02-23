@@ -118,7 +118,7 @@ def is_perpetual_license(license_key: str) -> bool:
     return len(parts) >= 4 and parts[2].upper() == "PERP"
 
 def validate_license_key(license_key: str, db=None) -> Optional[Dict]:
-    if not license_key or not license_key.startswith("BANKY-"):
+    if not license_key or not license_key.startswith("BANKYKIT-"):
         return None
     
     parts = license_key.split("-")
@@ -160,7 +160,7 @@ def get_feature_access_for_saas(plan_type: str = "starter", db=None) -> FeatureA
 
 def get_feature_access_for_enterprise(license_key: Optional[str] = None, db=None) -> FeatureAccess:
     import logging
-    logger = logging.getLogger("banky.license")
+    logger = logging.getLogger("bankykit.license")
     
     if license_key:
         license_info = validate_license_key(license_key, db)
@@ -243,7 +243,7 @@ def generate_license_key(edition: str, org_name: str, perpetual: bool = False) -
     import uuid
     unique = str(uuid.uuid4())[:8].upper()
     
-    return f"BANKY-{edition_code}-{time_segment}-{unique}"
+    return f"BANKYKIT-{edition_code}-{time_segment}-{unique}"
 
 
 def get_org_features(organization_id: str, db) -> Set[str]:

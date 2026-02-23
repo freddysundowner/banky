@@ -311,13 +311,13 @@ export default function Pricing() {
                   </div>
                   <h4 className="font-semibold text-gray-900 mb-2">Deploy & Activate</h4>
                   <p className="text-gray-600 text-sm">
-                    Install on your server, add your license key, and start using BANKY
+                    Install on your server, add your license key, and start using BANKYKIT
                   </p>
                 </div>
               </div>
               <div className="mt-8 p-4 bg-gray-50 rounded-lg">
                 <p className="text-sm text-gray-600 text-center">
-                  <strong>License Key Format:</strong> BANKY-XXX-YEAR-XXXXXXXX
+                  <strong>License Key Format:</strong> BANKYKIT-XXX-YEAR-XXXXXXXX
                   <br />
                   Your license key unlocks features based on your purchased edition and includes support for the specified duration.
                 </p>

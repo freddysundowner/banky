@@ -179,7 +179,7 @@ export default function Settings() {
                       type="text"
                       value={getValue('platform_name')}
                       onChange={(e) => handleChange('platform_name', e.target.value)}
-                      placeholder="BANKY"
+                      placeholder="BANKYKIT"
                       className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
                     />
                     <p className="text-sm text-gray-500 mt-2">Displayed across all parts of the system</p>
@@ -600,7 +600,7 @@ export default function Settings() {
                     type="text"
                     value={getValue('brevo_sender_name')}
                     onChange={(e) => handleChange('brevo_sender_name', e.target.value)}
-                    placeholder="BANKY"
+                    placeholder="BANKYKIT"
                     className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white text-sm"
                   />
                   <p className="text-sm text-gray-500 mt-2">Display name shown in the "From" field of platform emails</p>

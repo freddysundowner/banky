@@ -8,14 +8,14 @@ def test_health_check(auth_client):
     assert resp.status_code == 200
     data = resp.json()
     assert data["status"] == "healthy"
-    assert data["service"] == "BANKY API"
+    assert data["service"] == "BANKYKIT API"
 
 
 def test_get_current_user(auth_client):
     resp = auth_client.get("/api/auth/user")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["email"] == "test@banky.test"
+    assert data["email"] == "test@bankykit.test"
 
 
 def test_get_user_unauthenticated(app):
@@ -28,7 +28,7 @@ def test_get_user_unauthenticated(app):
 
 def test_register_user(app):
     with TestClient(app) as c:
-        email = f"newuser_{uuid.uuid4().hex[:8]}@bankytest.com"
+        email = f"newuser_{uuid.uuid4().hex[:8]}@bankykittest.com"
         resp = c.post("/api/auth/register", json={
             "email": email,
             "password": "SecurePass123!",
@@ -43,7 +43,7 @@ def test_register_user(app):
 
 def test_register_duplicate_email(app):
     with TestClient(app) as c:
-        email = f"dup_{uuid.uuid4().hex[:8]}@bankytest.com"
+        email = f"dup_{uuid.uuid4().hex[:8]}@bankykittest.com"
         c.post("/api/auth/register", json={
             "email": email,
             "password": "SecurePass123!",
@@ -62,7 +62,7 @@ def test_register_duplicate_email(app):
 
 def test_login_success(app):
     with TestClient(app) as c:
-        email = f"login_{uuid.uuid4().hex[:8]}@bankytest.com"
+        email = f"login_{uuid.uuid4().hex[:8]}@bankykittest.com"
         c.post("/api/auth/register", json={
             "email": email,
             "password": "TestPass123!",
@@ -79,7 +79,7 @@ def test_login_success(app):
 
 def test_login_wrong_password(app):
     with TestClient(app) as c:
-        email = f"wrongpw_{uuid.uuid4().hex[:8]}@bankytest.com"
+        email = f"wrongpw_{uuid.uuid4().hex[:8]}@bankykittest.com"
         c.post("/api/auth/register", json={
             "email": email,
             "password": "CorrectPass123!",
@@ -96,7 +96,7 @@ def test_login_wrong_password(app):
 def test_login_nonexistent_user(app):
     with TestClient(app) as c:
         resp = c.post("/api/auth/login", json={
-            "email": f"nonexistent_{uuid.uuid4().hex[:8]}@bankytest.com",
+            "email": f"nonexistent_{uuid.uuid4().hex[:8]}@bankykittest.com",
             "password": "AnyPass123!",
         })
         assert resp.status_code == 401
@@ -104,7 +104,7 @@ def test_login_nonexistent_user(app):
 
 def test_logout(app):
     with TestClient(app) as c:
-        email = f"logout_{uuid.uuid4().hex[:8]}@bankytest.com"
+        email = f"logout_{uuid.uuid4().hex[:8]}@bankykittest.com"
         c.post("/api/auth/register", json={
             "email": email,
             "password": "TestPass123!",

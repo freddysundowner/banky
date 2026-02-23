@@ -63,7 +63,7 @@ def test_check_limit():
 
 
 def test_license_key_validation():
-    result = validate_license_key("BANKY-STD-2025-ABCDEF01")
+    result = validate_license_key("BANKYKIT-STD-2025-ABCDEF01")
     assert result is not None
     assert result["valid"] is True
     assert result["edition"] == "standard"
@@ -74,13 +74,13 @@ def test_license_key_validation():
     result_none = validate_license_key("")
     assert result_none is None
 
-    result_short = validate_license_key("BANKY-XX")
+    result_short = validate_license_key("BANKYKIT-XX")
     assert result_short is None
 
 
 def test_generate_license_key():
     key = generate_license_key("standard", "Test Org")
-    assert key.startswith("BANKY-STD-")
+    assert key.startswith("BANKYKIT-STD-")
     parts = key.split("-")
     assert len(parts) == 4
     assert len(parts[3]) == 8

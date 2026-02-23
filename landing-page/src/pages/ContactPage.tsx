@@ -52,8 +52,8 @@ export default function ContactPage() {
                   <Mail className="w-5 h-5 text-blue-600 mt-0.5" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">Email</p>
-                    <a href="mailto:info@banky.co.ke" className="text-sm text-blue-600 hover:text-blue-700">
-                      info@banky.co.ke
+                    <a href="mailto:info@bankykit.co.ke" className="text-sm text-blue-600 hover:text-blue-700">
+                      info@bankykit.co.ke
                     </a>
                   </div>
                 </div>
@@ -88,7 +88,7 @@ export default function ContactPage() {
                 Looking for a self-hosted solution? Our enterprise team can help you choose the right edition and support plan.
               </p>
               <a
-                href="mailto:sales@banky.co.ke"
+                href="mailto:sales@bankykit.co.ke"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-white text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-50 transition"
               >
                 Contact Sales

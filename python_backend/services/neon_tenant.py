@@ -20,7 +20,7 @@ class NeonTenantService:
             raise ValueError("NEON_API_KEY environment variable is not set")
         
         async with httpx.AsyncClient() as client:
-            project_name = f"banky-{org_id[:8]}"
+            project_name = f"bankykit-{org_id[:8]}"
             
             response = await client.post(
                 f"{NEON_API_BASE}/projects",

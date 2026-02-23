@@ -12,7 +12,7 @@ interface Branding {
 }
 
 const defaultBranding: Branding = {
-  platform_name: 'BANKY',
+  platform_name: 'BANKYKIT',
   support_email: '',
   theme_primary_color: '#2563eb',
   theme_secondary_color: '#64748b',

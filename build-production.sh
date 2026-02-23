@@ -3,7 +3,7 @@
 set -e
 
 echo "========================================"
-echo "  BANKY Production Build Script"
+echo "  BANKYKIT Production Build Script"
 echo "========================================"
 echo ""
 
@@ -65,7 +65,7 @@ build_saas() {
     
     cat > packages/saas/.env.example << 'EOF'
 # Database connection
-DATABASE_URL=postgresql://user:password@host:5432/banky_master
+DATABASE_URL=postgresql://user:password@host:5432/bankykit_master
 
 # Deployment mode (saas = multi-tenant platform)
 DEPLOYMENT_MODE=saas
@@ -98,7 +98,7 @@ if (fs.existsSync(envPath)) {
 module.exports = {
   apps: [
     {
-      name: "banky-api",
+      name: "bankykit-api",
       cwd: path.join(rootDir, "backend"),
       script: "uvicorn",
       args: "main:app --host 0.0.0.0 --port 8000 --workers 2",
@@ -108,7 +108,7 @@ module.exports = {
       autorestart: true,
     },
     {
-      name: "banky-scheduler",
+      name: "bankykit-scheduler",
       cwd: path.join(rootDir, "backend"),
       script: "python3",
       args: "scheduler.py",
@@ -141,36 +141,36 @@ build_compiled() {
     echo ">>> Creating Enterprise source package..."
     
     rm -rf packages/enterprise
-    mkdir -p packages/enterprise/banky
+    mkdir -p packages/enterprise/bankykit
     
     # Copy only end-user source code (no admin-client, no landing-page)
-    cp -r client packages/enterprise/banky/
-    cp -r python_backend packages/enterprise/banky/
-    cp -r server packages/enterprise/banky/
-    cp -r shared packages/enterprise/banky/ 2>/dev/null || true
-    cp package.json packages/enterprise/banky/
-    cp package-lock.json packages/enterprise/banky/ 2>/dev/null || true
-    cp vite.config.ts packages/enterprise/banky/
-    cp tsconfig.json packages/enterprise/banky/
-    cp tailwind.config.ts packages/enterprise/banky/ 2>/dev/null || true
-    cp postcss.config.js packages/enterprise/banky/ 2>/dev/null || true
+    cp -r client packages/enterprise/bankykit/
+    cp -r python_backend packages/enterprise/bankykit/
+    cp -r server packages/enterprise/bankykit/
+    cp -r shared packages/enterprise/bankykit/ 2>/dev/null || true
+    cp package.json packages/enterprise/bankykit/
+    cp package-lock.json packages/enterprise/bankykit/ 2>/dev/null || true
+    cp vite.config.ts packages/enterprise/bankykit/
+    cp tsconfig.json packages/enterprise/bankykit/
+    cp tailwind.config.ts packages/enterprise/bankykit/ 2>/dev/null || true
+    cp postcss.config.js packages/enterprise/bankykit/ 2>/dev/null || true
     
     # Clean up unnecessary files
-    find packages/enterprise/banky -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
-    find packages/enterprise/banky -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-    find packages/enterprise/banky -type d -name ".git" -exec rm -rf {} + 2>/dev/null || true
-    find packages/enterprise/banky -type f -name "*.pyc" -delete 2>/dev/null || true
-    find packages/enterprise/banky -type f -name ".env" -delete 2>/dev/null || true
-    find packages/enterprise/banky -type d -name "dist" -exec rm -rf {} + 2>/dev/null || true
-    find packages/enterprise/banky -name ".DS_Store" -delete 2>/dev/null || true
-    rm -rf packages/enterprise/banky/python_backend/tests 2>/dev/null || true
-    rm -rf packages/enterprise/banky/python_backend/uploads 2>/dev/null || true
-    rm -f packages/enterprise/banky/drizzle.config.ts 2>/dev/null || true
-    rm -f packages/enterprise/banky/components.json 2>/dev/null || true
+    find packages/enterprise/bankykit -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
+    find packages/enterprise/bankykit -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+    find packages/enterprise/bankykit -type d -name ".git" -exec rm -rf {} + 2>/dev/null || true
+    find packages/enterprise/bankykit -type f -name "*.pyc" -delete 2>/dev/null || true
+    find packages/enterprise/bankykit -type f -name ".env" -delete 2>/dev/null || true
+    find packages/enterprise/bankykit -type d -name "dist" -exec rm -rf {} + 2>/dev/null || true
+    find packages/enterprise/bankykit -name ".DS_Store" -delete 2>/dev/null || true
+    rm -rf packages/enterprise/bankykit/python_backend/tests 2>/dev/null || true
+    rm -rf packages/enterprise/bankykit/python_backend/uploads 2>/dev/null || true
+    rm -f packages/enterprise/bankykit/drizzle.config.ts 2>/dev/null || true
+    rm -f packages/enterprise/bankykit/components.json 2>/dev/null || true
     
-    cat > packages/enterprise/banky/.env.example << 'EOF'
+    cat > packages/enterprise/bankykit/.env.example << 'EOF'
 # Database connection
-DATABASE_URL=postgresql://user:password@host:5432/banky
+DATABASE_URL=postgresql://user:password@host:5432/bankykit
 
 # Deployment mode (do not change)
 DEPLOYMENT_MODE=enterprise
@@ -184,15 +184,15 @@ PORT=5000
 EOF
 
     # Use the repo install.sh so updates are always reflected in the package
-    cp install.sh packages/enterprise/banky/install.sh
-    chmod +x packages/enterprise/banky/install.sh
+    cp install.sh packages/enterprise/bankykit/install.sh
+    chmod +x packages/enterprise/bankykit/install.sh
 
     # Create start script (development mode)
-    cp start.sh packages/enterprise/banky/start.sh
-    chmod +x packages/enterprise/banky/start.sh
+    cp start.sh packages/enterprise/bankykit/start.sh
+    chmod +x packages/enterprise/bankykit/start.sh
 
     # Create ecosystem.config.js for production (PM2)
-    cat > packages/enterprise/banky/ecosystem.config.js << 'PMEOF'
+    cat > packages/enterprise/bankykit/ecosystem.config.js << 'PMEOF'
 const path = require("path");
 const fs = require("fs");
 
@@ -216,7 +216,7 @@ if (fs.existsSync(envPath)) {
 module.exports = {
   apps: [
     {
-      name: "banky-api",
+      name: "bankykit-api",
       cwd: path.join(rootDir, "python_backend"),
       script: "uvicorn",
       args: "main:app --host 0.0.0.0 --port 8000 --workers 2",
@@ -226,7 +226,7 @@ module.exports = {
       autorestart: true,
     },
     {
-      name: "banky-scheduler",
+      name: "bankykit-scheduler",
       cwd: path.join(rootDir, "python_backend"),
       script: "python3",
       args: "scheduler.py",
@@ -252,39 +252,39 @@ build_codecanyon() {
     echo "    (No build needed - buyers run install.sh on their server)"
     
     rm -rf packages/codecanyon
-    mkdir -p packages/codecanyon/banky
+    mkdir -p packages/codecanyon/bankykit
     
-    cp -r client packages/codecanyon/banky/
-    cp -r python_backend packages/codecanyon/banky/
-    cp -r server packages/codecanyon/banky/
-    cp -r shared packages/codecanyon/banky/ 2>/dev/null || true
-    cp package.json packages/codecanyon/banky/
-    cp package-lock.json packages/codecanyon/banky/ 2>/dev/null || true
-    cp vite.config.ts packages/codecanyon/banky/
-    cp tsconfig.json packages/codecanyon/banky/
-    cp tailwind.config.ts packages/codecanyon/banky/ 2>/dev/null || true
-    cp postcss.config.js packages/codecanyon/banky/ 2>/dev/null || true
+    cp -r client packages/codecanyon/bankykit/
+    cp -r python_backend packages/codecanyon/bankykit/
+    cp -r server packages/codecanyon/bankykit/
+    cp -r shared packages/codecanyon/bankykit/ 2>/dev/null || true
+    cp package.json packages/codecanyon/bankykit/
+    cp package-lock.json packages/codecanyon/bankykit/ 2>/dev/null || true
+    cp vite.config.ts packages/codecanyon/bankykit/
+    cp tsconfig.json packages/codecanyon/bankykit/
+    cp tailwind.config.ts packages/codecanyon/bankykit/ 2>/dev/null || true
+    cp postcss.config.js packages/codecanyon/bankykit/ 2>/dev/null || true
     
-    find packages/codecanyon/banky -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
-    find packages/codecanyon/banky -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-    find packages/codecanyon/banky -type d -name ".git" -exec rm -rf {} + 2>/dev/null || true
-    find packages/codecanyon/banky -type f -name "*.pyc" -delete 2>/dev/null || true
-    find packages/codecanyon/banky -type f -name ".env" -delete 2>/dev/null || true
-    find packages/codecanyon/banky -type d -name "dist" -exec rm -rf {} + 2>/dev/null || true
-    find packages/codecanyon/banky -name ".DS_Store" -delete 2>/dev/null || true
-    rm -rf packages/codecanyon/banky/python_backend/tests 2>/dev/null || true
-    rm -rf packages/codecanyon/banky/python_backend/uploads 2>/dev/null || true
-    rm -f packages/codecanyon/banky/drizzle.config.ts 2>/dev/null || true
-    rm -f packages/codecanyon/banky/components.json 2>/dev/null || true
+    find packages/codecanyon/bankykit -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
+    find packages/codecanyon/bankykit -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+    find packages/codecanyon/bankykit -type d -name ".git" -exec rm -rf {} + 2>/dev/null || true
+    find packages/codecanyon/bankykit -type f -name "*.pyc" -delete 2>/dev/null || true
+    find packages/codecanyon/bankykit -type f -name ".env" -delete 2>/dev/null || true
+    find packages/codecanyon/bankykit -type d -name "dist" -exec rm -rf {} + 2>/dev/null || true
+    find packages/codecanyon/bankykit -name ".DS_Store" -delete 2>/dev/null || true
+    rm -rf packages/codecanyon/bankykit/python_backend/tests 2>/dev/null || true
+    rm -rf packages/codecanyon/bankykit/python_backend/uploads 2>/dev/null || true
+    rm -f packages/codecanyon/bankykit/drizzle.config.ts 2>/dev/null || true
+    rm -f packages/codecanyon/bankykit/components.json 2>/dev/null || true
     
-    cat > packages/codecanyon/banky/.env.example << 'EOF'
+    cat > packages/codecanyon/bankykit/.env.example << 'EOF'
 # ═══════════════════════════════════════════════════════════════════
-#  BANKY - Bank & Sacco Management System
+#  BANKYKIT - Bank & Sacco Management System
 #  Environment Configuration
 # ═══════════════════════════════════════════════════════════════════
 
 # PostgreSQL connection string (auto-configured by install.sh)
-DATABASE_URL=postgresql://banky:banky_secure_2024@localhost:5432/banky
+DATABASE_URL=postgresql://bankykit:bankykit_secure_2024@localhost:5432/bankykit
 
 # Deployment mode (do not change)
 DEPLOYMENT_MODE=enterprise
@@ -300,15 +300,15 @@ PORT=5000
 EOF
 
     # Use the repo install.sh so updates are always reflected in the package
-    cp install.sh packages/codecanyon/banky/install.sh
-    chmod +x packages/codecanyon/banky/install.sh
+    cp install.sh packages/codecanyon/bankykit/install.sh
+    chmod +x packages/codecanyon/bankykit/install.sh
 
     # ── start.sh: copied from root so it's always up to date ──
-    cp start.sh packages/codecanyon/banky/start.sh
-    chmod +x packages/codecanyon/banky/start.sh
+    cp start.sh packages/codecanyon/bankykit/start.sh
+    chmod +x packages/codecanyon/bankykit/start.sh
 
     # ── ecosystem.config.js for PM2 production setup ──
-    cat > packages/codecanyon/banky/ecosystem.config.js << 'PMEOF'
+    cat > packages/codecanyon/bankykit/ecosystem.config.js << 'PMEOF'
 const path = require("path");
 const fs = require("fs");
 
@@ -332,7 +332,7 @@ if (fs.existsSync(envPath)) {
 module.exports = {
   apps: [
     {
-      name: "banky-api",
+      name: "bankykit-api",
       cwd: path.join(rootDir, "python_backend"),
       script: "uvicorn",
       args: "main:app --host 0.0.0.0 --port 8000 --workers 2",
@@ -342,7 +342,7 @@ module.exports = {
       autorestart: true,
     },
     {
-      name: "banky-scheduler",
+      name: "bankykit-scheduler",
       cwd: path.join(rootDir, "python_backend"),
       script: "scheduler.py",
       interpreter: path.join(rootDir, "venv", "bin", "python3"),
@@ -359,17 +359,17 @@ PMEOF
 
     # Zip the package
     cd packages/codecanyon
-    zip -r banky-v1.0.0.zip banky
+    zip -r bankykit-v1.0.0.zip bankykit
     cd ../..
     
-    echo ">>> ZIP package: packages/codecanyon/banky-v1.0.0.zip"
+    echo ">>> ZIP package: packages/codecanyon/bankykit-v1.0.0.zip"
 }
 
 cleanup() {
     echo ""
     echo ">>> Cleaning up temporary files..."
     rm -rf python_backend/build python_backend/dist python_backend/*.spec 2>/dev/null || true
-    rm -f python_backend/banky_server.py 2>/dev/null || true
+    rm -f python_backend/bankykit_server.py 2>/dev/null || true
 }
 
 show_menu
@@ -410,5 +410,5 @@ echo "Build outputs:"
 [ -d "packages/saas" ] && echo "  - SaaS:       packages/saas/"
 [ -d "packages/enterprise" ] && echo "  - Enterprise: packages/enterprise/"
 [ -d "packages/codecanyon" ] && echo "  - CodeCanyon: packages/codecanyon/"
-[ -f "packages/codecanyon/banky-v1.0.0.zip" ] && echo "                packages/codecanyon/banky-v1.0.0.zip"
+[ -f "packages/codecanyon/bankykit-v1.0.0.zip" ] && echo "                packages/codecanyon/bankykit-v1.0.0.zip"
 echo ""

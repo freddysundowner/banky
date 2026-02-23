@@ -52,7 +52,7 @@ function OverviewSection() {
       <div className="bg-gradient-to-br from-purple-50 to-indigo-50 rounded-2xl p-8 border border-purple-100">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">What You Get</h2>
         <p className="text-gray-600 mb-6">
-          BANKY is a complete self-hosted banking and Sacco management system. Deploy it on your own server with full data ownership and no recurring platform fees.
+          BANKYKIT is a complete self-hosted banking and Sacco management system. Deploy it on your own server with full data ownership and no recurring platform fees.
         </p>
         <div className="grid md:grid-cols-2 gap-6">
           <div className="bg-white rounded-xl p-5 shadow-sm">
@@ -102,35 +102,35 @@ function OverviewSection() {
             <tbody className="text-gray-900 divide-y divide-gray-100">
               <tr className="hover:bg-purple-50/50">
                 <td className="py-4 px-4 font-medium">Basic</td>
-                <td className="py-4 px-4 font-mono text-purple-600 text-xs">BANKY-BAS-XXXX-XXXX</td>
+                <td className="py-4 px-4 font-mono text-purple-600 text-xs">BANKYKIT-BAS-XXXX-XXXX</td>
                 <td className="py-4 px-4 text-center">1,000</td>
                 <td className="py-4 px-4 text-center">5</td>
                 <td className="py-4 px-4 text-center">1</td>
               </tr>
               <tr className="hover:bg-purple-50/50">
                 <td className="py-4 px-4 font-medium">Standard</td>
-                <td className="py-4 px-4 font-mono text-purple-600 text-xs">BANKY-STD-XXXX-XXXX</td>
+                <td className="py-4 px-4 font-mono text-purple-600 text-xs">BANKYKIT-STD-XXXX-XXXX</td>
                 <td className="py-4 px-4 text-center">5,000</td>
                 <td className="py-4 px-4 text-center">20</td>
                 <td className="py-4 px-4 text-center">10</td>
               </tr>
               <tr className="hover:bg-purple-50/50">
                 <td className="py-4 px-4 font-medium">Premium</td>
-                <td className="py-4 px-4 font-mono text-purple-600 text-xs">BANKY-PRE-XXXX-XXXX</td>
+                <td className="py-4 px-4 font-mono text-purple-600 text-xs">BANKYKIT-PRE-XXXX-XXXX</td>
                 <td className="py-4 px-4 text-center">20,000</td>
                 <td className="py-4 px-4 text-center">100</td>
                 <td className="py-4 px-4 text-center">50</td>
               </tr>
               <tr className="hover:bg-purple-50/50">
                 <td className="py-4 px-4 font-medium">Enterprise</td>
-                <td className="py-4 px-4 font-mono text-purple-600 text-xs">BANKY-ENT-XXXX-XXXX</td>
+                <td className="py-4 px-4 font-mono text-purple-600 text-xs">BANKYKIT-ENT-XXXX-XXXX</td>
                 <td className="py-4 px-4 text-center font-medium text-green-600">Unlimited</td>
                 <td className="py-4 px-4 text-center font-medium text-green-600">Unlimited</td>
                 <td className="py-4 px-4 text-center font-medium text-green-600">Unlimited</td>
               </tr>
               <tr className="hover:bg-purple-50/50 bg-green-50/30">
                 <td className="py-4 px-4 font-medium">Perpetual (Lifetime)</td>
-                <td className="py-4 px-4 font-mono text-green-600 text-xs">BANKY-ENT-PERP-XXXX</td>
+                <td className="py-4 px-4 font-mono text-green-600 text-xs">BANKYKIT-ENT-PERP-XXXX</td>
                 <td className="py-4 px-4 text-center font-medium text-green-600">Unlimited</td>
                 <td className="py-4 px-4 text-center font-medium text-green-600">Unlimited</td>
                 <td className="py-4 px-4 text-center font-medium text-green-600">Unlimited</td>
@@ -202,10 +202,10 @@ function InstallationSection() {
               <StepNumber n={1} />
               <h3 className="font-semibold text-gray-900 text-lg">Upload & Extract</h3>
             </div>
-            <p className="text-gray-600 mb-4">Upload the BANKY package to your server and extract it:</p>
+            <p className="text-gray-600 mb-4">Upload the BANKYKIT package to your server and extract it:</p>
             <CodeBlock>{`# Upload via scp, rsync, or SFTP — then extract:
-unzip banky-*.zip
-cd banky`}</CodeBlock>
+unzip bankykit-*.zip
+cd bankykit`}</CodeBlock>
           </div>
 
           <div className="border-l-4 border-purple-500 pl-6">
@@ -222,7 +222,7 @@ cd banky`}</CodeBlock>
               <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" /><span><strong>Environment:</strong> Creates <code className="bg-gray-100 px-1 rounded">.env</code> from the template if not already present</span></li>
               <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" /><span><strong>Frontend deps:</strong> Runs <code className="bg-gray-100 px-1 rounded">npm install</code></span></li>
               <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" /><span><strong>Python deps:</strong> Creates a virtual environment and installs all Python packages</span></li>
-              <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" /><span><strong>Database:</strong> Detects PostgreSQL, creates the <code className="bg-gray-100 px-1 rounded">banky</code> database if it doesn't exist, writes <code className="bg-gray-100 px-1 rounded">DATABASE_URL</code> to your <code className="bg-gray-100 px-1 rounded">.env</code>, and runs all migrations</span></li>
+              <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" /><span><strong>Database:</strong> Detects PostgreSQL, creates the <code className="bg-gray-100 px-1 rounded">bankykit</code> database if it doesn't exist, writes <code className="bg-gray-100 px-1 rounded">DATABASE_URL</code> to your <code className="bg-gray-100 px-1 rounded">.env</code>, and runs all migrations</span></li>
               <li className="flex items-start gap-2"><CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" /><span><strong>Build:</strong> Compiles the React frontend for production</span></li>
             </ul>
           </div>
@@ -238,7 +238,7 @@ cd banky`}</CodeBlock>
             <CodeBlock>{`nano .env`}</CodeBlock>
             <p className="text-gray-600 mt-4 mb-3">The complete set of <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">.env</code> settings:</p>
             <CodeBlock>{`# Database — set automatically by the installer
-DATABASE_URL=postgresql://localhost:5432/banky
+DATABASE_URL=postgresql://localhost:5432/bankykit
 
 # Deployment mode — must be "enterprise" for self-hosted
 DEPLOYMENT_MODE=enterprise
@@ -271,7 +271,7 @@ pm2 startup`}</CodeBlock>
           </div>
 
           <Tip type="success">
-            <strong>First Login:</strong> Open BANKY in your browser, register your account, and create your organization.
+            <strong>First Login:</strong> Open BANKYKIT in your browser, register your account, and create your organization.
           </Tip>
         </div>
       </div>
@@ -297,7 +297,7 @@ function LicenseSection({ supportEmail }: { supportEmail: string }) {
 
           <div className="bg-purple-50 rounded-xl p-6 border border-purple-200">
             <h3 className="font-semibold text-gray-900 mb-3">License Key Format</h3>
-            <div className="font-mono text-lg text-purple-700 mb-4">BANKY-{'{EDITION}'}-{'{YEAR}'}-{'{UNIQUE_ID}'}</div>
+            <div className="font-mono text-lg text-purple-700 mb-4">BANKYKIT-{'{EDITION}'}-{'{YEAR}'}-{'{UNIQUE_ID}'}</div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
               {[
                 { code: 'BAS', label: 'Basic' },
@@ -315,7 +315,7 @@ function LicenseSection({ supportEmail }: { supportEmail: string }) {
 
           <div className="bg-green-50 rounded-xl p-6 border border-green-200">
             <h3 className="font-semibold text-gray-900 mb-3">Perpetual (Lifetime) Keys</h3>
-            <div className="font-mono text-lg text-green-700 mb-3">BANKY-ENT-PERP-XXXXXXXX</div>
+            <div className="font-mono text-lg text-green-700 mb-3">BANKYKIT-ENT-PERP-XXXXXXXX</div>
             <p className="text-sm text-gray-600">Keys containing <code className="bg-white px-1.5 py-0.5 rounded text-sm">PERP</code> are perpetual lifetime keys. They never expire and unlock all features with no limits. If your <code className="bg-white px-1.5 py-0.5 rounded text-sm">.env.example</code> already has a key pre-filled, it is a lifetime key — do not remove it.</p>
           </div>
 
@@ -355,7 +355,7 @@ function DatabaseSection() {
           Database Setup
         </h2>
 
-        <p className="text-gray-600 mb-6">BANKY requires PostgreSQL 14 or higher. You can use a local installation, a managed cloud database (AWS RDS, Neon, Supabase), or any PostgreSQL provider.</p>
+        <p className="text-gray-600 mb-6">BANKYKIT requires PostgreSQL 14 or higher. You can use a local installation, a managed cloud database (AWS RDS, Neon, Supabase), or any PostgreSQL provider.</p>
 
         <div className="space-y-8">
           <div>
@@ -370,13 +370,13 @@ sudo systemctl enable postgresql
 
 # Create the database and user
 sudo -u postgres psql << EOF
-CREATE USER banky WITH PASSWORD 'your_secure_password';
-CREATE DATABASE banky OWNER banky;
-GRANT ALL PRIVILEGES ON DATABASE banky TO banky;
+CREATE USER bankykit WITH PASSWORD 'your_secure_password';
+CREATE DATABASE bankykit OWNER bankykit;
+GRANT ALL PRIVILEGES ON DATABASE bankykit TO bankykit;
 EOF
 
 # Your connection string:
-# DATABASE_URL=postgresql://banky:your_secure_password@localhost:5432/banky`}</CodeBlock>
+# DATABASE_URL=postgresql://bankykit:your_secure_password@localhost:5432/bankykit`}</CodeBlock>
           </div>
 
           <div>
@@ -386,24 +386,24 @@ brew install postgresql@16
 brew services start postgresql@16
 
 # Create the database
-createdb banky
+createdb bankykit
 
 # Your connection string:
-# DATABASE_URL=postgresql://$(whoami)@localhost:5432/banky`}</CodeBlock>
+# DATABASE_URL=postgresql://$(whoami)@localhost:5432/bankykit`}</CodeBlock>
           </div>
 
           <div>
             <h3 className="font-semibold text-gray-900 mb-3">Option 3: Cloud Database</h3>
             <p className="text-gray-600 mb-3">If using a managed database service, simply copy the connection string they provide and paste it into your <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">.env</code> file as <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">DATABASE_URL</code>.</p>
             <Tip type="info">
-              Cloud providers like <strong>Neon</strong>, <strong>Supabase</strong>, and <strong>AWS RDS</strong> all work with BANKY. Just make sure SSL is enabled if required by your provider (add <code className="bg-blue-100 px-1 rounded text-sm">?sslmode=require</code> to the connection string).
+              Cloud providers like <strong>Neon</strong>, <strong>Supabase</strong>, and <strong>AWS RDS</strong> all work with BANKYKIT. Just make sure SSL is enabled if required by your provider (add <code className="bg-blue-100 px-1 rounded text-sm">?sslmode=require</code> to the connection string).
             </Tip>
           </div>
 
           <div>
             <h3 className="font-semibold text-gray-900 mb-3">Verify Connection</h3>
             <CodeBlock>{`# Test your connection string
-psql "postgresql://banky:your_password@localhost:5432/banky" -c "SELECT 1;"
+psql "postgresql://bankykit:your_password@localhost:5432/bankykit" -c "SELECT 1;"
 
 # If successful, you'll see:
 #  ?column?
@@ -425,7 +425,7 @@ function Pm2Section() {
           PM2 Process Manager
         </h2>
 
-        <p className="text-gray-600 mb-6">PM2 keeps BANKY running in the background, restarts it if it crashes, and auto-starts it when your server reboots. This is the recommended way to run BANKY in production.</p>
+        <p className="text-gray-600 mb-6">PM2 keeps BANKYKIT running in the background, restarts it if it crashes, and auto-starts it when your server reboots. This is the recommended way to run BANKYKIT in production.</p>
 
         <div className="space-y-8">
           <div>
@@ -435,10 +435,10 @@ sudo npm install -g pm2`}</CodeBlock>
           </div>
 
           <div>
-            <h3 className="font-semibold text-gray-900 mb-3">Start BANKY with PM2</h3>
-            <p className="text-gray-600 mb-3">BANKY includes an <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">ecosystem.config.js</code> file pre-configured for PM2:</p>
-            <CodeBlock>{`# Navigate to your BANKY directory
-cd /opt/banky
+            <h3 className="font-semibold text-gray-900 mb-3">Start BANKYKIT with PM2</h3>
+            <p className="text-gray-600 mb-3">BANKYKIT includes an <code className="bg-gray-100 px-1.5 py-0.5 rounded text-sm">ecosystem.config.js</code> file pre-configured for PM2:</p>
+            <CodeBlock>{`# Navigate to your BANKYKIT directory
+cd /opt/bankykit
 
 # Start all services
 pm2 start ecosystem.config.js
@@ -460,13 +460,13 @@ pm2 status
 pm2 logs
 
 # View API logs only
-pm2 logs banky
+pm2 logs bankykit
 
 # Restart all services
 pm2 restart all
 
 # Restart just the API
-pm2 restart banky
+pm2 restart bankykit
 
 # Stop all services
 pm2 stop all
@@ -476,7 +476,7 @@ pm2 monit`}</CodeBlock>
           </div>
 
           <Tip type="info">
-            <strong>What gets started?</strong> The ecosystem config runs two processes: <code className="bg-blue-100 px-1 rounded text-sm">banky</code> (the main application server on port 5000) and <code className="bg-blue-100 px-1 rounded text-sm">banky-scheduler</code> (handles automated tasks like loan notifications and fixed deposit maturity).
+            <strong>What gets started?</strong> The ecosystem config runs two processes: <code className="bg-blue-100 px-1 rounded text-sm">bankykit</code> (the main application server on port 5000) and <code className="bg-blue-100 px-1 rounded text-sm">bankykit-scheduler</code> (handles automated tasks like loan notifications and fixed deposit maturity).
           </Tip>
         </div>
       </div>
@@ -493,7 +493,7 @@ function NginxSection() {
           Nginx Reverse Proxy
         </h2>
 
-        <p className="text-gray-600 mb-6">Nginx sits in front of BANKY and forwards web traffic to the application. This is standard practice for production deployments and required for SSL/HTTPS.</p>
+        <p className="text-gray-600 mb-6">Nginx sits in front of BANKYKIT and forwards web traffic to the application. This is standard practice for production deployments and required for SSL/HTTPS.</p>
 
         <div className="space-y-6">
           <div>
@@ -506,8 +506,8 @@ sudo systemctl start nginx`}</CodeBlock>
 
           <div>
             <h3 className="font-semibold text-gray-900 mb-3">2. Create the Configuration</h3>
-            <p className="text-gray-600 mb-4">Create a new Nginx config file for BANKY:</p>
-            <CodeBlock>{`sudo nano /etc/nginx/sites-available/banky`}</CodeBlock>
+            <p className="text-gray-600 mb-4">Create a new Nginx config file for BANKYKIT:</p>
+            <CodeBlock>{`sudo nano /etc/nginx/sites-available/bankykit`}</CodeBlock>
             <p className="text-gray-600 mt-3 mb-4">Paste the following (replace <code className="bg-gray-100 px-1 rounded text-sm">yourdomain.com</code> with your actual domain):</p>
             <CodeBlock>{`server {
     listen 80;
@@ -533,7 +533,7 @@ sudo systemctl start nginx`}</CodeBlock>
           <div>
             <h3 className="font-semibold text-gray-900 mb-3">3. Enable & Test</h3>
             <CodeBlock>{`# Enable the site
-sudo ln -sf /etc/nginx/sites-available/banky /etc/nginx/sites-enabled/banky
+sudo ln -sf /etc/nginx/sites-available/bankykit /etc/nginx/sites-enabled/bankykit
 
 # Optionally remove the default site
 sudo rm -f /etc/nginx/sites-enabled/default
@@ -564,7 +564,7 @@ function SslSection() {
         </h2>
 
         <div className="space-y-6">
-          <p className="text-gray-600">Secure your BANKY installation with a free SSL certificate from Let's Encrypt. This is required for M-Pesa callbacks and recommended for all deployments.</p>
+          <p className="text-gray-600">Secure your BANKYKIT installation with a free SSL certificate from Let's Encrypt. This is required for M-Pesa callbacks and recommended for all deployments.</p>
 
           <div>
             <h3 className="font-semibold text-gray-900 mb-3">Install & Configure Certbot</h3>
@@ -618,7 +618,7 @@ function BackupSection() {
           <div>
             <h3 className="font-semibold text-gray-900 mb-3">Manual Database Backup</h3>
             <CodeBlock>{`# Create a compressed backup
-pg_dump -h localhost -U banky -d banky -F c -f backup_$(date +%Y%m%d).dump
+pg_dump -h localhost -U bankykit -d bankykit -F c -f backup_$(date +%Y%m%d).dump
 
 # Or using your DATABASE_URL from .env
 pg_dump "$DATABASE_URL" -F c -f backup_$(date +%Y%m%d).dump`}</CodeBlock>
@@ -627,23 +627,23 @@ pg_dump "$DATABASE_URL" -F c -f backup_$(date +%Y%m%d).dump`}</CodeBlock>
           <div>
             <h3 className="font-semibold text-gray-900 mb-3">Automated Daily Backups</h3>
             <CodeBlock>{`# Create a backup script
-cat > /opt/banky/backup.sh << 'SCRIPT'
+cat > /opt/bankykit/backup.sh << 'SCRIPT'
 #!/bin/bash
 set -e
-BACKUP_DIR="/opt/banky/backups"
+BACKUP_DIR="/opt/bankykit/backups"
 mkdir -p "$BACKUP_DIR"
-export $(grep -v '^#' /opt/banky/banky/.env | grep -v '^\\s*$' | xargs)
-BACKUP_FILE="$BACKUP_DIR/banky_backup_$(date +%Y%m%d_%H%M%S).dump"
+export $(grep -v '^#' /opt/bankykit/bankykit/.env | grep -v '^\\s*$' | xargs)
+BACKUP_FILE="$BACKUP_DIR/bankykit_backup_$(date +%Y%m%d_%H%M%S).dump"
 pg_dump "$DATABASE_URL" -F c -f "$BACKUP_FILE"
-ls -t "$BACKUP_DIR"/banky_backup_*.dump | tail -n +31 | xargs rm -f 2>/dev/null || true
+ls -t "$BACKUP_DIR"/bankykit_backup_*.dump | tail -n +31 | xargs rm -f 2>/dev/null || true
 echo "[$(date)] Backup: $BACKUP_FILE ($(du -sh "$BACKUP_FILE" | cut -f1))"
 SCRIPT
-chmod +x /opt/banky/backup.sh
+chmod +x /opt/bankykit/backup.sh
 
 # Schedule daily backup at 2 AM
 crontab -e
 # Add this line:
-0 2 * * * /opt/banky/backup.sh >> /var/log/banky-backup.log 2>&1`}</CodeBlock>
+0 2 * * * /opt/bankykit/backup.sh >> /var/log/bankykit-backup.log 2>&1`}</CodeBlock>
           </div>
 
           <div>
@@ -652,7 +652,7 @@ crontab -e
 pm2 stop all
 
 # Restore the database
-pg_restore -h localhost -U banky -d banky -c backup_20260219.dump
+pg_restore -h localhost -U bankykit -d bankykit -c backup_20260219.dump
 
 # Restart the application
 pm2 restart all`}</CodeBlock>
@@ -673,7 +673,7 @@ function UpdatesSection({ supportEmail }: { supportEmail: string }) {
       <div className="bg-white rounded-2xl p-8 border border-gray-200">
         <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
           <RefreshCw className="w-7 h-7 text-purple-600" />
-          Updating BANKY
+          Updating BANKYKIT
         </h2>
         <p className="text-gray-600 mb-6">When a new version is released, follow these steps to update your installation.</p>
 
@@ -685,13 +685,13 @@ pg_dump "$DATABASE_URL" -F c -f backup_$(date +%Y%m%d).dump
 pm2 stop all
 
 # 3. Extract the new version
-unzip banky-v2.x.zip -d /tmp/banky-update
+unzip bankykit-v2.x.zip -d /tmp/bankykit-update
 
 # 4. Copy new files (preserving your .env)
-rsync -av --exclude='.env' /tmp/banky-update/ /opt/banky/
+rsync -av --exclude='.env' /tmp/bankykit-update/ /opt/bankykit/
 
 # 5. Run the installer — handles deps, migrations, and frontend build
-cd /opt/banky && ./install.sh
+cd /opt/bankykit && ./install.sh
 
 # 6. Start the application (migrations run automatically on startup too)
 pm2 restart all
@@ -731,7 +731,7 @@ function TroubleshootingSection({ supportEmail }: { supportEmail: string }) {
       content: (
         <div className="p-4 text-sm text-gray-600 space-y-2">
           <p>Verify your PostgreSQL connection:</p>
-          <div className="bg-gray-900 rounded p-3"><pre className="text-green-400 font-mono text-xs">{`psql "postgresql://banky:password@localhost:5432/banky" -c "SELECT 1;"`}</pre></div>
+          <div className="bg-gray-900 rounded p-3"><pre className="text-green-400 font-mono text-xs">{`psql "postgresql://bankykit:password@localhost:5432/bankykit" -c "SELECT 1;"`}</pre></div>
           <p>Check that PostgreSQL is running: <code className="bg-gray-100 px-1 rounded">sudo systemctl status postgresql</code></p>
         </div>
       ),
@@ -827,7 +827,7 @@ export default function DocsPage() {
   const [activeSection, setActiveSection] = useState<SectionId>('overview');
   const contentRef = useRef<HTMLDivElement>(null);
   const [config, setConfig] = useState<DocsConfig>({
-    support_email: 'support@banky.co.ke',
+    support_email: 'support@bankykit.co.ke',
     show_license: false,
   });
   const [loading, setLoading] = useState(true);
@@ -848,7 +848,7 @@ export default function DocsPage() {
         if (res.ok) {
           const data = await res.json();
           setConfig({
-            support_email: data.support_email || 'support@banky.co.ke',
+            support_email: data.support_email || 'support@bankykit.co.ke',
             show_license: !!data.show_license,
           });
         }
@@ -884,7 +884,7 @@ export default function DocsPage() {
             Installation & Setup Guide
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Everything you need to deploy BANKY on your own server.
+            Everything you need to deploy BANKYKIT on your own server.
           </p>
         </div>
 
@@ -929,7 +929,7 @@ export default function DocsPage() {
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-8 text-white">
             <h2 className="text-2xl font-bold mb-3">Need Help?</h2>
             <p className="text-purple-100 mb-6 max-w-xl mx-auto">
-              Our support team is here to help you get BANKY up and running. Reach out anytime.
+              Our support team is here to help you get BANKYKIT up and running. Reach out anytime.
             </p>
             <a
               href={`mailto:${config.support_email}`}

@@ -107,7 +107,7 @@ def seed_master_data(MasterSession):
 
         user = User(
             id=TEST_USER_ID,
-            email="test@banky.test",
+            email="test@bankykit.test",
             password=hash_password("TestPass123!"),
             first_name="Test",
             last_name="User",
@@ -182,7 +182,7 @@ def seed_tenant_data(TenantSession):
             staff_number="ST01",
             first_name="Test",
             last_name="Admin",
-            email="test@banky.test",
+            email="test@bankykit.test",
             phone="+254700333333",
             role="admin",
             branch_id=TEST_BRANCH_ID,

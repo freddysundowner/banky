@@ -34,7 +34,7 @@ const defaultSettings: LandingSettings = {
   cta_secondary_text: "Watch Demo",
   cta_secondary_url: "",
   demo_video_url: "",
-  app_url: "app.banky.co.ke",
+  app_url: "app.bankykit.co.ke",
   stats_saccos: "500+",
   stats_transactions: "KES 2B+",
   stats_members: "1M+",

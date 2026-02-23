@@ -29,7 +29,7 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 const IS_DEMO = import.meta.env.VITE_PRODUCTION_MODE === "demo";
-const DEMO_EMAIL = "demo@demo.banky";
+const DEMO_EMAIL = "demo@demo.bankykit";
 const DEMO_PASSWORD = "Demo@1234";
 
 export default function Login() {

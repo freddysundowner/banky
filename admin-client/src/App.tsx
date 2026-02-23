@@ -20,7 +20,7 @@ async function fetchAdmin() {
 
 async function fetchBranding() {
   const res = await fetch('/api/public/branding')
-  if (!res.ok) return { platform_name: 'BANKY' }
+  if (!res.ok) return { platform_name: 'BANKYKIT' }
   return res.json()
 }
 
@@ -190,7 +190,7 @@ function App() {
     queryFn: fetchBranding,
   })
 
-  const platformName = branding?.platform_name || 'BANKY'
+  const platformName = branding?.platform_name || 'BANKYKIT'
 
   if (isLoading) {
     return (

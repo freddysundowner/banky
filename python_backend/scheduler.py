@@ -113,7 +113,7 @@ def run_job(job_name: str, job_config: dict):
 
 def main():
     print(f"{'='*60}")
-    print(f"  BANKY Unified Scheduler")
+    print(f"  BANKYKIT Unified Scheduler")
     print(f"  Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"{'='*60}")
     print(f"\nRegistered jobs:")

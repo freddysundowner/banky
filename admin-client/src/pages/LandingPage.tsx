@@ -103,24 +103,24 @@ const DEFAULT_FEATURES: FeatureItem[] = [
 ]
 
 const DEFAULT_TESTIMONIALS: TestimonialItem[] = [
-  { name: 'James Mwangi', role: 'Chairman', organization: 'Ukulima Sacco', quote: 'We moved 5,000 members from paper ledgers to BANKY in a single weekend. Loan processing that took three days now takes three minutes.', rating: 5 },
-  { name: 'Grace Achieng', role: 'General Manager', organization: 'Boresha Sacco', quote: "Our accountant used to spend the first two weeks of every month reconciling spreadsheets. With BANKY's automatic journal entries, she now closes the books in a single day.", rating: 5 },
+  { name: 'James Mwangi', role: 'Chairman', organization: 'Ukulima Sacco', quote: 'We moved 5,000 members from paper ledgers to BANKYKIT in a single weekend. Loan processing that took three days now takes three minutes.', rating: 5 },
+  { name: 'Grace Achieng', role: 'General Manager', organization: 'Boresha Sacco', quote: "Our accountant used to spend the first two weeks of every month reconciling spreadsheets. With BANKYKIT's automatic journal entries, she now closes the books in a single day.", rating: 5 },
   { name: 'Peter Kamau', role: 'IT Manager', organization: 'Wekeza Investment Sacco', quote: 'Data security was our biggest concern. Knowing that our member data sits in a completely isolated database gave our board the confidence to go digital.', rating: 5 },
-  { name: 'Amina Hassan', role: 'Treasurer', organization: 'Maisha Chama Group', quote: 'Our chama had 30 members and a WhatsApp group for records. BANKY gave us a proper system with loan tracking, savings accounts, and dividend calculations.', rating: 5 },
-  { name: 'David Ochieng', role: 'CEO', organization: 'Pamoja Microfinance', quote: 'We evaluated six different systems before choosing BANKY. The dividend calculation, fixed deposit module, and teller station put it miles ahead.', rating: 5 },
+  { name: 'Amina Hassan', role: 'Treasurer', organization: 'Maisha Chama Group', quote: 'Our chama had 30 members and a WhatsApp group for records. BANKYKIT gave us a proper system with loan tracking, savings accounts, and dividend calculations.', rating: 5 },
+  { name: 'David Ochieng', role: 'CEO', organization: 'Pamoja Microfinance', quote: 'We evaluated six different systems before choosing BANKYKIT. The dividend calculation, fixed deposit module, and teller station put it miles ahead.', rating: 5 },
   { name: 'Sarah Wambui', role: 'Finance Manager', organization: 'Umoja Community Sacco', quote: "Our board now has real-time visibility into portfolio performance. Generating regulator reports used to take a week. Now it's one click.", rating: 5 },
   { name: 'Faith Njeri', role: 'Operations Director', organization: 'Fanaka Savings Sacco', quote: 'The teller station transformed our branch operations. Each teller has their own float, every transaction is accountable.', rating: 5 },
 ]
 
 const DEFAULT_FAQ: FAQItem[] = [
-  { question: 'Is BANKY right for my chama or small group?', answer: 'Absolutely. Whether you have 15 members or 15,000, BANKY scales with you. Chamas love the loan tracking, savings accounts, M-Pesa integration, and automated dividend sharing.' },
-  { question: 'How is BANKY different from a spreadsheet?', answer: 'Spreadsheets break when you grow. BANKY gives you real-time dashboards, automatic interest calculations, M-Pesa integration, SMS notifications, audit trails, and proper double-entry accounting.' },
-  { question: 'What is the difference between SaaS and Enterprise?', answer: 'SaaS is hosted by us -- you log in and start using it immediately with monthly billing. Enterprise is a one-time purchase where you install BANKY on your own servers for full control.' },
-  { question: 'Does BANKY work with M-Pesa?', answer: 'Yes. Members can deposit, repay loans, and receive disbursements directly via M-Pesa STK Push. Transactions reconcile automatically.' },
+  { question: 'Is BANKYKIT right for my chama or small group?', answer: 'Absolutely. Whether you have 15 members or 15,000, BANKYKIT scales with you. Chamas love the loan tracking, savings accounts, M-Pesa integration, and automated dividend sharing.' },
+  { question: 'How is BANKYKIT different from a spreadsheet?', answer: 'Spreadsheets break when you grow. BANKYKIT gives you real-time dashboards, automatic interest calculations, M-Pesa integration, SMS notifications, audit trails, and proper double-entry accounting.' },
+  { question: 'What is the difference between SaaS and Enterprise?', answer: 'SaaS is hosted by us -- you log in and start using it immediately with monthly billing. Enterprise is a one-time purchase where you install BANKYKIT on your own servers for full control.' },
+  { question: 'Does BANKYKIT work with M-Pesa?', answer: 'Yes. Members can deposit, repay loans, and receive disbursements directly via M-Pesa STK Push. Transactions reconcile automatically.' },
   { question: 'Is my data safe and private?', answer: "Every organization gets its own isolated database -- your data is never shared or mixed with anyone else's. We use bank-grade encryption and role-based access control." },
   { question: 'Can I switch from SaaS to Enterprise later?', answer: 'Yes. We can migrate your entire database and member records from our cloud platform to your own self-hosted Enterprise installation.' },
   { question: 'Do you offer training and support?', answer: 'All plans include online training and email support. Growth and Professional plans get priority support. Enterprise customers can request on-site training.' },
-  { question: 'What reports can I generate for regulators?', answer: 'BANKY generates Trial Balance, Income Statement, Balance Sheet, loan portfolio reports, member statements, and transaction summaries -- all exportable with a single click.' },
+  { question: 'What reports can I generate for regulators?', answer: 'BANKYKIT generates Trial Balance, Income Statement, Balance Sheet, loan portfolio reports, member statements, and transaction summaries -- all exportable with a single click.' },
   { question: 'How quickly can we go live?', answer: "Most organizations sign up and process their first transaction within an hour. Larger Saccos migrating historical data typically go live within a week." },
 ]
 
@@ -156,10 +156,10 @@ export default function LandingPageSettings() {
     landing_stats_uptime: '',
     landing_docs_mode: 'both',
     landing_docs_codecanyon_title: 'CodeCanyon Purchase',
-    landing_docs_codecanyon_subtitle: 'Installation guide for buyers who purchased BANKY from CodeCanyon marketplace.',
+    landing_docs_codecanyon_subtitle: 'Installation guide for buyers who purchased BANKYKIT from CodeCanyon marketplace.',
     landing_docs_direct_title: 'Enterprise License',
-    landing_docs_direct_subtitle: 'Installation guide for organizations who purchased BANKY directly from our sales team.',
-    landing_docs_support_email: 'support@banky.co.ke',
+    landing_docs_direct_subtitle: 'Installation guide for organizations who purchased BANKYKIT directly from our sales team.',
+    landing_docs_support_email: 'support@bankykit.co.ke',
     landing_docs_show_license: 'false',
     landing_show_subscription_content: 'true',
   })
@@ -388,7 +388,7 @@ export default function LandingPageSettings() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Main App URL</label>
-                  <input type="text" value={formData.landing_app_url} onChange={e => handleChange('landing_app_url', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g. https://app.banky.co.ke" />
+                  <input type="text" value={formData.landing_app_url} onChange={e => handleChange('landing_app_url', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g. https://app.bankykit.co.ke" />
                   <p className="text-xs text-gray-500 mt-1">URL shown in the browser mockup on the hero section</p>
                 </div>
                 <div className="border-t pt-4">
@@ -651,7 +651,7 @@ export default function LandingPageSettings() {
                 <div className="border-t border-gray-200 pt-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Support Email</label>
-                    <input type="email" value={formData.landing_docs_support_email || ''} onChange={e => handleChange('landing_docs_support_email', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g. support@banky.co.ke" />
+                    <input type="email" value={formData.landing_docs_support_email || ''} onChange={e => handleChange('landing_docs_support_email', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g. support@bankykit.co.ke" />
                     <p className="text-xs text-gray-500 mt-1">Shown in troubleshooting sections of both guides</p>
                   </div>
                 </div>

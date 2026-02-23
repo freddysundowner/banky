@@ -358,7 +358,7 @@ async def _send_welcome_email(first_name: str, email: str, org_name: str = None)
         
         api_key = brevo_key_setting.setting_value if brevo_key_setting else None
         from_email = from_email_setting.setting_value if from_email_setting else None
-        platform_name = platform_name_setting.setting_value if platform_name_setting else "BANKY"
+        platform_name = platform_name_setting.setting_value if platform_name_setting else "BANKYKIT"
         sender_name = sender_name_setting.setting_value if sender_name_setting else platform_name
         
         if not api_key or not from_email:
@@ -792,7 +792,7 @@ async def _send_password_reset_email(first_name: str, email: str, token: str, ap
         
         api_key = brevo_key_setting.setting_value if brevo_key_setting else None
         from_email = from_email_setting.setting_value if from_email_setting else None
-        platform_name = platform_name_setting.setting_value if platform_name_setting else "BANKY"
+        platform_name = platform_name_setting.setting_value if platform_name_setting else "BANKYKIT"
         sender_name = sender_name_setting.setting_value if sender_name_setting else platform_name
         
         if not api_key or not from_email:
@@ -865,7 +865,7 @@ async def _send_verification_email(first_name: str, email: str, token: str, app_
         
         api_key = brevo_key_setting.setting_value if brevo_key_setting else None
         from_email = from_email_setting.setting_value if from_email_setting else None
-        platform_name = platform_name_setting.setting_value if platform_name_setting else "BANKY"
+        platform_name = platform_name_setting.setting_value if platform_name_setting else "BANKYKIT"
         sender_name = sender_name_setting.setting_value if sender_name_setting else platform_name
         
         if not api_key or not from_email:

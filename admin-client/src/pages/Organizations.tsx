@@ -57,7 +57,7 @@ function DemoDataPanel() {
       {msg && (
         <div className={`mb-4 px-3 py-2 rounded-lg text-sm ${msg.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
           {msg.text}
-          {msg.ok && status?.exists && <span className="ml-2 text-xs">Login: <code>demo@demo.banky</code> / <code>Demo@1234</code></span>}
+          {msg.ok && status?.exists && <span className="ml-2 text-xs">Login: <code>demo@demo.bankykit</code> / <code>Demo@1234</code></span>}
         </div>
       )}
 

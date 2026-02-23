@@ -14,7 +14,7 @@ APP_DIR=$(pwd)
 
 echo ""
 echo -e "${BLUE}================================================================${NC}"
-echo -e "${BLUE}  BANKY - Bank & Sacco Management System${NC}"
+echo -e "${BLUE}  BANKYKIT - Bank & Sacco Management System${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
 
@@ -35,7 +35,7 @@ if [ -z "$DATABASE_URL" ]; then
     echo "    nano .env"
     echo ""
     echo "  Example:"
-    echo "    DATABASE_URL=postgresql://localhost:5432/banky"
+    echo "    DATABASE_URL=postgresql://localhost:5432/bankykit"
     exit 1
 fi
 
@@ -54,11 +54,11 @@ fi
 
 # ── Start with PM2 (production) or directly (development) ───
 if command -v pm2 >/dev/null 2>&1 && [ -f ecosystem.config.js ]; then
-    echo -e "${GREEN}  Starting BANKY with PM2 (production mode)...${NC}"
+    echo -e "${GREEN}  Starting BANKYKIT with PM2 (production mode)...${NC}"
     echo ""
     pm2 start ecosystem.config.js
     echo ""
-    print_ok "BANKY is running"
+    print_ok "BANKYKIT is running"
     echo ""
     echo "  View logs:    pm2 logs"
     echo "  Status:       pm2 status"
@@ -67,7 +67,7 @@ if command -v pm2 >/dev/null 2>&1 && [ -f ecosystem.config.js ]; then
     echo "  Open:         http://localhost:${PORT:-5000}"
     echo ""
 else
-    echo -e "${GREEN}  Starting BANKY (development mode)...${NC}"
+    echo -e "${GREEN}  Starting BANKYKIT (development mode)...${NC}"
     echo ""
 
     # Resolve PYTHON_CMD to absolute path
@@ -106,7 +106,7 @@ else
 
     echo ""
     echo -e "${BLUE}  ================================================================${NC}"
-    echo -e "${GREEN}  BANKY is running!${NC}"
+    echo -e "${GREEN}  BANKYKIT is running!${NC}"
     echo -e "${BLUE}  ================================================================${NC}"
     echo ""
     echo "  App: http://localhost:${PORT:-5000}"

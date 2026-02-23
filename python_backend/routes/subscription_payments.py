@@ -437,7 +437,7 @@ async def initiate_paystack_payment(organization_id: str, data: dict, auth=Depen
     db.commit()
     db.refresh(payment)
 
-    reference = f"BANKY-SUB-{payment.id}"
+    reference = f"BANKYKIT-SUB-{payment.id}"
 
     public_domain = os.environ.get("REPLIT_DEV_DOMAIN", "") or os.environ.get("REPL_SLUG", "")
     if public_domain and not public_domain.startswith("http"):
