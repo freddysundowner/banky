@@ -31,7 +31,7 @@ export default function Login() {
   })
 
   const platformName = branding?.platform_name || 'BANKYKIT'
-  const adminExists = setupStatus?.admin_exists === true
+  const adminExists = setupStatus?.admin_exists !== false
 
   const loginMutation = useMutation({
     mutationFn: async () => {
