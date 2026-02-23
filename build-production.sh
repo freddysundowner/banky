@@ -3,19 +3,21 @@
 set -e
 
 echo "========================================"
-echo "  BANKYKIT Production Build Script"
+echo "  BankyKit Production Build Script"
 echo "========================================"
 echo ""
 
 show_menu() {
     echo "Select build type:"
-    echo "  1) SaaS Build (for your cloud deployment)"
-    echo "  2) Enterprise Build (end-user self-hosting)"
+    echo "  1) SaaS Build         (for your cloud deployment)"
+    echo "  2) Enterprise Build   (end-user self-hosting)"
     echo "  3) CodeCanyon Package (source code + installer for buyers)"
-    echo "  4) Build All"
-    echo "  5) Exit"
+    echo "  4) Admin Panel only   (builds admin-client/dist/)"
+    echo "  5) Landing Page only  (builds landing-page/dist/)"
+    echo "  6) Build All"
+    echo "  7) Exit"
     echo ""
-    read -p "Enter choice [1-5]: " choice
+    read -p "Enter choice [1-7]: " choice
 }
 
 build_frontend() {
@@ -419,11 +421,23 @@ case $choice in
         build_codecanyon
         ;;
     4)
+        build_admin
+        echo ""
+        echo "Admin panel built to: admin-client/dist/"
+        echo "Deploy by copying this folder to your server and serving it at /admin/"
+        ;;
+    5)
+        build_landing
+        echo ""
+        echo "Landing page built to: landing-page/dist/"
+        echo "Deploy by copying this folder to your server and serving it at /"
+        ;;
+    6)
         build_saas
         build_compiled
         build_codecanyon
         ;;
-    5)
+    7)
         echo "Exiting..."
         exit 0
         ;;
