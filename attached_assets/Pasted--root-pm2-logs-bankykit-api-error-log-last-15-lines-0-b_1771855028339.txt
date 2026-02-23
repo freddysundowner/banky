@@ -1,0 +1,38 @@
+/root/.pm2/logs/bankykit-api-error.log last 15 lines:
+0|bankykit |     return self._exec_single_context(
+0|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+0|bankykit |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1986, in _exec_single_context
+0|bankykit |     self._handle_dbapi_exception(
+0|bankykit |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2363, in _handle_dbapi_exception
+0|bankykit |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+0|bankykit |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1967, in _exec_single_context
+0|bankykit |     self.dialect.do_execute(
+0|bankykit |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 952, in do_execute
+0|bankykit |     cursor.execute(statement, parameters)
+0|bankykit | sqlalchemy.exc.IntegrityError: (psycopg2.errors.ForeignKeyViolation) update or delete on table "branches" violates foreign key constraint "branch_vaults_branch_id_fkey" on table "branch_vaults"
+0|bankykit | DETAIL:  Key (id)=(a91ca603-3afa-4c94-905f-5fcd2dd0b14f) is still referenced from table "branch_vaults".
+0|bankykit | 
+0|bankykit | [SQL: DELETE FROM branches WHERE code = 'DEMO']
+0|bankykit | (Background on this error at: https://sqlalche.me/e/20/gkpj)
+
+/root/.pm2/logs/bankykit-api-out.log last 15 lines:
+0|bankykit | INFO:     196.96.14.162:0 - "GET /api/admin/landing-content/testimonials HTTP/1.1" 200 OK
+0|bankykit | [TIMING] GET /api/admin/landing-page/hero_placeholders -> 200 in 2ms
+0|bankykit | INFO:     196.96.14.162:0 - "GET /api/admin/landing-page/hero_placeholders HTTP/1.1" 200 OK
+0|bankykit | [TIMING] GET /api/public/hero_placeholders/test -> 200 in 4ms
+0|bankykit | INFO:     196.96.14.162:0 - "GET /api/public/hero_placeholders/test?t=1771854820194 HTTP/1.1" 200 OK
+0|bankykit | INFO:     54.203.52.94:0 - "GET / HTTP/1.1" 200 OK
+0|bankykit | INFO:     54.203.52.94:0 - "GET / HTTP/1.1" 200 OK
+0|bankykit | [TIMING] POST /api/admin/landing-page/hero_placeholders/test -> 405 in 1ms
+0|bankykit | INFO:     196.96.14.162:0 - "POST /api/admin/landing-page/hero_placeholders/test HTTP/1.1" 405 Method Not Allowed
+0|bankykit | [TIMING] GET /api/auth/session/dae6d33a-204b-4ee8-a236-171e333aa60f -> 200 in 36ms
+0|bankykit | INFO:     196.96.14.162:0 - "GET /api/auth/session/dae6d33a-204b-4ee8-a236-171e333aa60f HTTP/1.1" 200 OK
+0|bankykit | [TIMING] GET /api/auth/session/dae6d33a-204b-4ee8-a236-171e333aa60f -> 200 in 12ms
+0|bankykit | INFO:     196.96.14.162:0 - "GET /api/auth/session/dae6d33a-204b-4ee8-a236-171e333aa60f HTTP/1.1" 200 OK
+0|bankykit | [TIMING] GET /api/auth/session/dae6d33a-204b-4ee8-a236-171e333aa60f -> 200 in 21ms
+0|bankykit | INFO:     196.96.14.162:0 - "GET /api/auth/session/dae6d33a-204b-4ee8-a236-171e333aa60f HTTP/1.1" 200 OK
+
+0|bankykit-api  | [TIMING] GET /api/public/branding -> 200 in 43ms
+0|bankykit-api  | INFO:     196.96.14.162:0 - "GET /api/public/branding HTTP/1.1" 200 OK
+0|bankykit-api  | [TIMING] POST /api/admin/landing-page/hero_placeholders/test -> 405 in 1ms
+0|bankykit-api  | INFO:     196.96.14.162:0 - "POST /api/admin/landing-page/hero_placeholders/test HTTP/1.1" 405 Method Not Allowed
