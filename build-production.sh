@@ -12,8 +12,8 @@ show_menu() {
     echo "  1) SaaS Build         (for your cloud deployment)"
     echo "  2) Enterprise Build   (end-user self-hosting)"
     echo "  3) CodeCanyon Package (source code + installer for buyers)"
-    echo "  4) Admin Panel only   (builds admin-client/dist/)"
-    echo "  5) Landing Page only  (builds landing-page/dist/)"
+    echo "  4) Admin Panel        (source code + installer, like CodeCanyon)"
+    echo "  5) Landing Page       (source code + installer, like CodeCanyon)"
     echo "  6) Build All"
     echo "  7) Exit"
     echo ""
@@ -421,110 +421,184 @@ case $choice in
         build_codecanyon
         ;;
     4)
-        build_admin
         echo ""
-        echo ">>> Packaging Admin Panel..."
+        echo "========================================"
+        echo "  Packaging Admin Panel (source code)"
+        echo "========================================"
+        echo "    (No build needed - run install.sh on your server)"
+
         rm -rf packages/admin-panel
         mkdir -p packages/admin-panel/bankykit-admin
-        cp -r admin-client/dist/. packages/admin-panel/bankykit-admin/
-        cat > packages/admin-panel/bankykit-admin/README.txt << 'EOF'
-BankyKit Admin Panel
-====================
 
-This is the pre-built admin panel for BankyKit.
+        cp -r admin-client/src       packages/admin-panel/bankykit-admin/
+        cp    admin-client/index.html packages/admin-panel/bankykit-admin/
+        cp    admin-client/package.json packages/admin-panel/bankykit-admin/
+        cp    admin-client/package-lock.json packages/admin-panel/bankykit-admin/ 2>/dev/null || true
+        cp    admin-client/vite.config.ts packages/admin-panel/bankykit-admin/
+        cp    admin-client/tsconfig.json packages/admin-panel/bankykit-admin/
+        cp    admin-client/tsconfig.node.json packages/admin-panel/bankykit-admin/ 2>/dev/null || true
+        cp    admin-client/tailwind.config.js packages/admin-panel/bankykit-admin/ 2>/dev/null || true
+        cp    admin-client/postcss.config.js packages/admin-panel/bankykit-admin/ 2>/dev/null || true
 
-Deployment (Nginx — subdomain, e.g. admin.yourdomain.com):
-  1. Copy the files to your server:
-       sudo mkdir -p /var/www/bankykit-admin
-       sudo cp -r * /var/www/bankykit-admin/
+        find packages/admin-panel/bankykit-admin -name ".DS_Store" -delete 2>/dev/null || true
 
-  2. Create /etc/nginx/sites-available/bankykit-admin:
+        cat > packages/admin-panel/bankykit-admin/install.sh << 'INSTALLEOF'
+#!/bin/bash
+set -e
 
-       server {
-           listen 80;
-           server_name admin.yourdomain.com;
-           root /var/www/bankykit-admin;
-           index index.html;
+GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; BLUE='\033[0;34m'; NC='\033[0m'
+print_step() { echo -e "\n${GREEN}>>> $1${NC}"; }
+print_ok()   { echo -e "${GREEN}    [OK] $1${NC}"; }
+print_err()  { echo -e "${RED}    [ERROR] $1${NC}"; }
 
-           location / {
-               try_files $uri $uri/ /index.html;
-           }
+echo ""
+echo -e "${BLUE}================================================================${NC}"
+echo -e "${BLUE}  BankyKit Admin Panel - Installer${NC}"
+echo -e "${BLUE}================================================================${NC}"
+echo ""
 
-           # Connects admin panel to the BankyKit backend
-           location /api/ {
-               proxy_pass http://127.0.0.1:8000/;
-               proxy_set_header Host $host;
-               proxy_set_header X-Real-IP $remote_addr;
-               proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-           }
-       }
+read -p "  Enter your admin subdomain (e.g. admin.yourdomain.com): " ADMIN_DOMAIN
+ADMIN_DOMAIN=${ADMIN_DOMAIN:-admin.localhost}
 
-  3. Enable and reload:
-       sudo ln -s /etc/nginx/sites-available/bankykit-admin /etc/nginx/sites-enabled/
-       sudo nginx -s reload
+print_step "Step 1/3: Installing dependencies..."
+npm install
+print_ok "Dependencies installed"
 
-  4. (Optional) Add SSL with Certbot:
-       sudo certbot --nginx -d admin.yourdomain.com
+print_step "Step 2/3: Building admin panel..."
+npm run build
+print_ok "Admin panel built to dist/"
 
-Replace 'yourdomain.com' with your actual domain.
-The admin panel uses relative /api/ calls — Nginx proxies them to the backend on port 8000.
-EOF
+print_step "Step 3/3: Configuring Nginx..."
+NGINX_CONF="/etc/nginx/sites-available/bankykit-admin"
+APP_DIR=$(pwd)
+
+sudo tee "$NGINX_CONF" > /dev/null << NGINXEOF
+server {
+    listen 80;
+    server_name ${ADMIN_DOMAIN};
+    root ${APP_DIR}/dist;
+    index index.html;
+
+    location / {
+        try_files \$uri \$uri/ /index.html;
+    }
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000/;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    }
+}
+NGINXEOF
+
+sudo ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/bankykit-admin
+sudo nginx -t && sudo nginx -s reload
+print_ok "Nginx configured for ${ADMIN_DOMAIN}"
+
+echo ""
+echo -e "${BLUE}================================================================${NC}"
+echo -e "${GREEN}  Admin Panel installed!${NC}"
+echo -e "${BLUE}================================================================${NC}"
+echo ""
+echo "  Access at: http://${ADMIN_DOMAIN}"
+echo "  Add SSL:   sudo certbot --nginx -d ${ADMIN_DOMAIN}"
+echo ""
+INSTALLEOF
+        chmod +x packages/admin-panel/bankykit-admin/install.sh
+
         cd packages/admin-panel
         zip -r bankykit-admin-v1.0.0.zip bankykit-admin
         cd ../..
         echo ">>> Admin Panel package: packages/admin-panel/bankykit-admin-v1.0.0.zip"
         ;;
     5)
-        build_landing
         echo ""
-        echo ">>> Packaging Landing Page..."
+        echo "========================================"
+        echo "  Packaging Landing Page (source code)"
+        echo "========================================"
+        echo "    (No build needed - run install.sh on your server)"
+
         rm -rf packages/landing-page
         mkdir -p packages/landing-page/bankykit-landing
-        cp -r landing-page/dist/. packages/landing-page/bankykit-landing/
-        cat > packages/landing-page/bankykit-landing/README.txt << 'EOF'
-BankyKit Landing Page
-=====================
 
-This is the pre-built marketing landing page for BankyKit.
+        cp -r landing-page/src        packages/landing-page/bankykit-landing/
+        cp    landing-page/index.html  packages/landing-page/bankykit-landing/
+        cp    landing-page/package.json packages/landing-page/bankykit-landing/
+        cp    landing-page/package-lock.json packages/landing-page/bankykit-landing/ 2>/dev/null || true
+        cp    landing-page/vite.config.ts packages/landing-page/bankykit-landing/
+        cp    landing-page/tsconfig.json packages/landing-page/bankykit-landing/ 2>/dev/null || true
+        cp    landing-page/tsconfig.node.json packages/landing-page/bankykit-landing/ 2>/dev/null || true
+        cp    landing-page/tailwind.config.js packages/landing-page/bankykit-landing/ 2>/dev/null || true
+        cp    landing-page/postcss.config.js packages/landing-page/bankykit-landing/ 2>/dev/null || true
 
-Deployment (Nginx — root domain, e.g. yourdomain.com):
-  1. Copy the files to your server:
-       sudo mkdir -p /var/www/bankykit-landing
-       sudo cp -r * /var/www/bankykit-landing/
+        find packages/landing-page/bankykit-landing -name ".DS_Store" -delete 2>/dev/null || true
 
-  2. Create /etc/nginx/sites-available/bankykit-landing:
+        cat > packages/landing-page/bankykit-landing/install.sh << 'INSTALLEOF'
+#!/bin/bash
+set -e
 
-       server {
-           listen 80;
-           server_name yourdomain.com www.yourdomain.com;
-           root /var/www/bankykit-landing;
-           index index.html;
+GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; BLUE='\033[0;34m'; NC='\033[0m'
+print_step() { echo -e "\n${GREEN}>>> $1${NC}"; }
+print_ok()   { echo -e "${GREEN}    [OK] $1${NC}"; }
+print_err()  { echo -e "${RED}    [ERROR] $1${NC}"; }
 
-           location / {
-               try_files $uri $uri/ /index.html;
-           }
+echo ""
+echo -e "${BLUE}================================================================${NC}"
+echo -e "${BLUE}  BankyKit Landing Page - Installer${NC}"
+echo -e "${BLUE}================================================================${NC}"
+echo ""
 
-           # Connects landing page to the BankyKit backend (same server)
-           # This lets pricing, features, and contact forms fetch live data
-           location /api/ {
-               proxy_pass http://127.0.0.1:8000/;
-               proxy_set_header Host $host;
-               proxy_set_header X-Real-IP $remote_addr;
-               proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-           }
-       }
+read -p "  Enter your domain (e.g. yourdomain.com): " DOMAIN
+DOMAIN=${DOMAIN:-localhost}
 
-  3. Enable and reload:
-       sudo ln -s /etc/nginx/sites-available/bankykit-landing /etc/nginx/sites-enabled/
-       sudo nginx -s reload
+print_step "Step 1/3: Installing dependencies..."
+npm install
+print_ok "Dependencies installed"
 
-  4. (Optional) Add SSL with Certbot:
-       sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
+print_step "Step 2/3: Building landing page..."
+npm run build
+print_ok "Landing page built to dist/"
 
-Replace 'yourdomain.com' with your actual domain.
-The landing page uses relative /api/ calls — Nginx proxies them to the backend on port 8000.
-All three apps (main, admin, landing) share the same backend on this server.
-EOF
+print_step "Step 3/3: Configuring Nginx..."
+NGINX_CONF="/etc/nginx/sites-available/bankykit-landing"
+APP_DIR=$(pwd)
+
+sudo tee "$NGINX_CONF" > /dev/null << NGINXEOF
+server {
+    listen 80;
+    server_name ${DOMAIN} www.${DOMAIN};
+    root ${APP_DIR}/dist;
+    index index.html;
+
+    location / {
+        try_files \$uri \$uri/ /index.html;
+    }
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000/;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    }
+}
+NGINXEOF
+
+sudo ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/bankykit-landing
+sudo nginx -t && sudo nginx -s reload
+print_ok "Nginx configured for ${DOMAIN}"
+
+echo ""
+echo -e "${BLUE}================================================================${NC}"
+echo -e "${GREEN}  Landing Page installed!${NC}"
+echo -e "${BLUE}================================================================${NC}"
+echo ""
+echo "  Access at: http://${DOMAIN}"
+echo "  Add SSL:   sudo certbot --nginx -d ${DOMAIN} -d www.${DOMAIN}"
+echo ""
+INSTALLEOF
+        chmod +x packages/landing-page/bankykit-landing/install.sh
+
         cd packages/landing-page
         zip -r bankykit-landing-v1.0.0.zip bankykit-landing
         cd ../..
