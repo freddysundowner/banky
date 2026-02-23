@@ -3,7 +3,7 @@ import { Mail, Phone, MapPin, Send, Clock, MessageSquare } from 'lucide-react';
 import { useBranding } from '../context/BrandingContext';
 
 export default function ContactPage() {
-  const { platform_name } = useBranding();
+  const { platform_name, support_email } = useBranding();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -48,15 +48,17 @@ export default function ContactPage() {
             <div className="bg-white rounded-xl border border-gray-200 p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
               <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <Mail className="w-5 h-5 text-blue-600 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">Email</p>
-                    <a href="mailto:info@bankykit.co.ke" className="text-sm text-blue-600 hover:text-blue-700">
-                      info@bankykit.co.ke
-                    </a>
+                {support_email && (
+                  <div className="flex items-start gap-3">
+                    <Mail className="w-5 h-5 text-blue-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">Email</p>
+                      <a href={`mailto:${support_email}`} className="text-sm text-blue-600 hover:text-blue-700">
+                        {support_email}
+                      </a>
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className="flex items-start gap-3">
                   <Phone className="w-5 h-5 text-blue-600 mt-0.5" />
                   <div>

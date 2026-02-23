@@ -2,7 +2,7 @@ import { Link } from 'wouter';
 import { useBranding } from '../context/BrandingContext';
 
 export default function Footer() {
-  const { platform_name, theme_primary_color } = useBranding();
+  const { platform_name, theme_primary_color, support_email } = useBranding();
 
   return (
     <footer className="bg-gray-900 border-t border-gray-800">
@@ -30,12 +30,14 @@ export default function Footer() {
             <Link href="/privacy" className="hover:text-white transition">Privacy</Link>
           </nav>
 
-          <a
-            href="mailto:info@bankykit.co.ke"
-            className="text-sm text-gray-400 hover:text-white transition"
-          >
-            info@bankykit.co.ke
-          </a>
+          {support_email && (
+            <a
+              href={`mailto:${support_email}`}
+              className="text-sm text-gray-400 hover:text-white transition"
+            >
+              {support_email}
+            </a>
+          )}
         </div>
       </div>
     </footer>

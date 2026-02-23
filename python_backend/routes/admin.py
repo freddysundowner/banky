@@ -741,7 +741,7 @@ def get_landing_page_settings(admin: AdminUser = Depends(require_admin), db: Ses
         "landing_stats_transactions": "KES 2B+",
         "landing_stats_members": "1M+",
         "landing_stats_uptime": "99.9%",
-        "landing_docs_support_email": "support@bankykit.co.ke",
+        "landing_docs_support_email": "",
         "landing_show_subscription_content": "true",
         "landing_docs_mode": "both",
         "landing_docs_codecanyon_title": "CodeCanyon Purchase",

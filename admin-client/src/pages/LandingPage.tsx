@@ -313,7 +313,7 @@ export default function LandingPageSettings() {
     landing_docs_codecanyon_subtitle: 'Installation guide for buyers who purchased BANKYKIT from CodeCanyon marketplace.',
     landing_docs_direct_title: 'Enterprise License',
     landing_docs_direct_subtitle: 'Installation guide for organizations who purchased BANKYKIT directly from our sales team.',
-    landing_docs_support_email: 'support@bankykit.co.ke',
+    landing_docs_support_email: '',
     landing_docs_show_license: 'false',
     landing_show_subscription_content: 'true',
   })
