@@ -341,8 +341,12 @@ EOF
     cp install.sh packages/codecanyon/bankykit/install.sh
     chmod +x packages/codecanyon/bankykit/install.sh
 
-    # Demo variant — replaces every "bankykit" identifier with "bankykit-demo"
-    sed 's/bankykit/bankykit-demo/g' install.sh > packages/codecanyon/bankykit/install-demo.sh
+    # Demo variant — DB name becomes "demo", all other "bankykit" identifiers become "bankykit-demo"
+    sed 's/bankykit/bankykit-demo/g' install.sh \
+      | sed 's/DB_NAME="bankykit-demo"/DB_NAME="demo"/g' \
+      | sed 's|postgresql:///bankykit-demo|postgresql:///demo|g' \
+      | sed 's|localhost:5432/bankykit-demo|localhost:5432/demo|g' \
+      > packages/codecanyon/bankykit/install-demo.sh
     chmod +x packages/codecanyon/bankykit/install-demo.sh
 
     # ── start.sh: copied from root so it's always up to date ──
