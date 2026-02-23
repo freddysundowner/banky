@@ -546,7 +546,7 @@ module.exports = {
       name: "bankykit-demo-admin",
       cwd: rootDir,
       script: "server.cjs",
-      env: { NODE_ENV: "production" },
+      env: { NODE_ENV: "production", PORT: "6002", BACKEND_PORT: "6000" },
       autorestart: true,
     },
   ],
@@ -559,8 +559,8 @@ const fs = require('fs');
 const path = require('path');
 const config = require('./ecosystem.config.cjs');
 
-const PORT = config.port || 5002;
-const BACKEND_PORT = config.backend_port || 8000;
+const PORT = process.env.PORT || config.port || 5002;
+const BACKEND_PORT = process.env.BACKEND_PORT || config.backend_port || 8000;
 const DIST_DIR = path.join(__dirname, 'dist');
 
 const MIME = {
@@ -848,7 +848,7 @@ module.exports = {
       name: "bankykit-demo-landing",
       cwd: rootDir,
       script: "server.cjs",
-      env: { NODE_ENV: "production" },
+      env: { NODE_ENV: "production", PORT: "6003", BACKEND_PORT: "6000" },
       autorestart: true,
     },
   ],
@@ -861,8 +861,8 @@ const fs = require('fs');
 const path = require('path');
 const config = require('./ecosystem.config.cjs');
 
-const PORT = config.port || 5003;
-const BACKEND_PORT = config.backend_port || 8000;
+const PORT = process.env.PORT || config.port || 5003;
+const BACKEND_PORT = process.env.BACKEND_PORT || config.backend_port || 8000;
 const DIST_DIR = path.join(__dirname, 'dist');
 
 const MIME = {
