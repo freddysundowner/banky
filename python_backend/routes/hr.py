@@ -29,7 +29,7 @@ from schemas.tenant import (
     PayPeriodCreate, PayPeriodResponse, SalaryAdvanceCreate, DisbursementRequest
 )
 from routes.auth import get_current_user
-from routes.common import get_tenant_session_context, require_permission, require_role
+from routes.common import get_tenant_session_context, require_permission
 
 router = APIRouter()
 
@@ -203,7 +203,7 @@ async def get_performance_review(org_id: str, review_id: str, user=Depends(get_c
 @router.put("/{org_id}/hr/staff/{staff_id}/lock", dependencies=[Depends(require_not_demo)])
 async def lock_staff_account(org_id: str, staff_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin", "hr"])
+    require_permission(membership, "hr:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         staff = tenant_session.query(Staff).filter(Staff.id == staff_id).first()
@@ -220,7 +220,7 @@ async def lock_staff_account(org_id: str, staff_id: str, user=Depends(get_curren
 @router.put("/{org_id}/hr/staff/{staff_id}/unlock")
 async def unlock_staff_account(org_id: str, staff_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin", "hr"])
+    require_permission(membership, "hr:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         staff = tenant_session.query(Staff).filter(Staff.id == staff_id).first()
@@ -237,7 +237,7 @@ async def unlock_staff_account(org_id: str, staff_id: str, user=Depends(get_curr
 @router.put("/{org_id}/hr/staff/{staff_id}/deactivate", dependencies=[Depends(require_not_demo)])
 async def deactivate_staff(org_id: str, staff_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin", "hr"])
+    require_permission(membership, "hr:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         staff = tenant_session.query(Staff).filter(Staff.id == staff_id).first()
@@ -254,7 +254,7 @@ async def deactivate_staff(org_id: str, staff_id: str, user=Depends(get_current_
 @router.put("/{org_id}/hr/staff/{staff_id}/activate")
 async def activate_staff(org_id: str, staff_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin", "hr"])
+    require_permission(membership, "hr:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         staff = tenant_session.query(Staff).filter(Staff.id == staff_id).first()
@@ -276,7 +276,7 @@ async def reset_staff_password(org_id: str, staff_id: str, request: ResetPasswor
     from services.auth import hash_password
     
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin"])
+    require_permission(membership, "hr:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         staff = tenant_session.query(Staff).filter(Staff.id == staff_id).first()
@@ -334,7 +334,7 @@ async def list_leave_types(org_id: str, user=Depends(get_current_user), db: Sess
 @router.post("/{org_id}/hr/leave-types")
 async def create_leave_type(org_id: str, data: LeaveTypeCreate, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin"])
+    require_permission(membership, "hr:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         existing = tenant_session.query(LeaveType).filter(LeaveType.code == data.code).first()
@@ -353,7 +353,7 @@ async def create_leave_type(org_id: str, data: LeaveTypeCreate, user=Depends(get
 @router.put("/{org_id}/hr/leave-types/{leave_type_id}")
 async def update_leave_type(org_id: str, leave_type_id: str, data: LeaveTypeUpdate, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin"])
+    require_permission(membership, "hr:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         leave_type = tenant_session.query(LeaveType).filter(LeaveType.id == leave_type_id).first()
@@ -402,7 +402,7 @@ async def list_leave_balances(org_id: str, staff_id: str = None, year: int = Non
 async def initialize_leave_balances(org_id: str, year: int = None, user=Depends(get_current_user), db: Session = Depends(get_db)):
     """Initialize leave balances for all staff for a given year"""
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin"])
+    require_permission(membership, "hr:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         current_year = year or date.today().year
@@ -1149,7 +1149,7 @@ async def list_disciplinary_records(org_id: str, staff_id: str = None, user=Depe
 @router.post("/{org_id}/hr/disciplinary")
 async def create_disciplinary_record(org_id: str, data: DisciplinaryRecordCreate, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin", "manager"])
+    require_permission(membership, "hr:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         issuer = tenant_session.query(Staff).filter(Staff.email == user.email).first()
@@ -1170,7 +1170,7 @@ async def create_disciplinary_record(org_id: str, data: DisciplinaryRecordCreate
 @router.put("/{org_id}/hr/disciplinary/{record_id}")
 async def update_disciplinary_record(org_id: str, record_id: str, data: DisciplinaryRecordUpdate, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin", "manager"])
+    require_permission(membership, "hr:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         record = tenant_session.query(DisciplinaryRecord).filter(DisciplinaryRecord.id == record_id).first()
@@ -1837,7 +1837,7 @@ async def run_payroll(org_id: str, period_id: str, user=Depends(get_current_user
 async def approve_payroll(org_id: str, period_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     """Approve payroll for disbursement"""
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["admin", "owner"])
+    require_permission(membership, "hr:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         period = tenant_session.query(PayPeriod).filter(PayPeriod.id == period_id).first()
@@ -1871,7 +1871,7 @@ async def approve_payroll(org_id: str, period_id: str, user=Depends(get_current_
 async def disburse_payroll(org_id: str, period_id: str, data: DisbursementRequest, user=Depends(get_current_user), db: Session = Depends(get_db)):
     """Disburse salaries to staff accounts"""
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["admin", "owner"])
+    require_permission(membership, "hr:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         period = tenant_session.query(PayPeriod).filter(PayPeriod.id == period_id).first()
@@ -2235,7 +2235,7 @@ async def request_salary_advance(org_id: str, data: SalaryAdvanceCreate, user=De
 @router.put("/{org_id}/hr/salary-advances/{advance_id}/approve")
 async def approve_salary_advance(org_id: str, advance_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["admin", "owner"])
+    require_permission(membership, "hr:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         advance = tenant_session.query(SalaryAdvance).filter(SalaryAdvance.id == advance_id).first()
@@ -2257,7 +2257,7 @@ async def approve_salary_advance(org_id: str, advance_id: str, user=Depends(get_
 @router.put("/{org_id}/hr/salary-advances/{advance_id}/disburse")
 async def disburse_salary_advance(org_id: str, advance_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["admin", "owner"])
+    require_permission(membership, "hr:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         advance = tenant_session.query(SalaryAdvance).filter(SalaryAdvance.id == advance_id).first()

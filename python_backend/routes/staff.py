@@ -6,7 +6,7 @@ from models.database import get_db
 from models.tenant import Staff, Branch, Member
 from schemas.tenant import StaffCreate, StaffUpdate, StaffResponse
 from routes.auth import get_current_user
-from routes.common import generate_code, generate_account_number, get_tenant_session_context, require_permission, require_role, invalidate_permissions_cache
+from routes.common import generate_code, generate_account_number, get_tenant_session_context, require_permission, invalidate_permissions_cache
 from middleware.demo_guard import require_not_demo
 
 router = APIRouter()
@@ -474,7 +474,7 @@ async def delete_staff(
     from sqlalchemy.exc import IntegrityError
     
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin"])
+    require_permission(membership, "staff:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         staff = tenant_session.query(Staff).filter(Staff.id == staff_id).first()
@@ -527,7 +527,7 @@ async def create_member_account_for_staff(
     db: Session = Depends(get_db)
 ):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin"])
+    require_permission(membership, "staff:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         staff = tenant_session.query(Staff).filter(Staff.id == staff_id).first()

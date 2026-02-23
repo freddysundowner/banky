@@ -6,7 +6,7 @@ from models.database import get_db
 from models.tenant import Member, Transaction, OrganizationSettings, LoanApplication, LoanGuarantor, AuditLog, Staff, SMSNotification
 from schemas.tenant import MemberCreate, MemberUpdate, MemberResponse
 from routes.auth import get_current_user
-from routes.common import generate_code, generate_account_number, get_tenant_session_context, require_permission, require_role
+from routes.common import generate_code, generate_account_number, get_tenant_session_context, require_permission
 from middleware.demo_guard import require_not_demo
 
 def try_send_sms(tenant_session, template_type: str, phone: str, name: str, context: dict, member_id=None, loan_id=None):
@@ -401,7 +401,7 @@ async def delete_member(
     db: Session = Depends(get_db)
 ):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin"])
+    require_permission(membership, "members:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         member = tenant_session.query(Member).filter(Member.id == member_id).first()

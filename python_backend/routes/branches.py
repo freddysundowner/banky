@@ -4,7 +4,7 @@ from models.database import get_db
 from models.tenant import Branch
 from schemas.tenant import BranchCreate, BranchUpdate, BranchResponse
 from routes.auth import get_current_user
-from routes.common import generate_code, get_tenant_session_context, require_permission, require_role
+from routes.common import generate_code, get_tenant_session_context, require_permission
 from middleware.demo_guard import require_not_demo
 
 router = APIRouter()
@@ -34,7 +34,7 @@ async def create_branch(
     from services.feature_flags import check_plan_limit, PlanLimitExceededError
     
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin"])
+    require_permission(membership, "branches:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         try:
@@ -65,7 +65,7 @@ async def update_branch(
     db: Session = Depends(get_db)
 ):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin"])
+    require_permission(membership, "branches:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         branch = tenant_session.query(Branch).filter(Branch.id == branch_id).first()
@@ -93,7 +93,7 @@ async def delete_branch(
     db: Session = Depends(get_db)
 ):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin"])
+    require_permission(membership, "branches:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         branch = tenant_session.query(Branch).filter(Branch.id == branch_id).first()
