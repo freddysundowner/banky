@@ -433,24 +433,41 @@ BankyKit Admin Panel
 
 This is the pre-built admin panel for BankyKit.
 
-Deployment (Nginx):
-  1. Copy the 'dist/' folder to your server, e.g. /var/www/bankykit-admin/
-  2. Add this to your Nginx config (inside your server block):
+Deployment (Nginx — subdomain, e.g. admin.yourdomain.com):
+  1. Copy the 'dist/' folder to your server:
+       sudo mkdir -p /var/www/bankykit-admin
+       sudo cp -r dist/* /var/www/bankykit-admin/
 
-     location /admin/ {
-         alias /var/www/bankykit-admin/dist/;
-         try_files $uri $uri/ /admin/index.html;
-     }
+  2. Create /etc/nginx/sites-available/bankykit-admin:
 
-     location /api/ {
-         proxy_pass http://127.0.0.1:8000/;
-         proxy_set_header Host $host;
-         proxy_set_header X-Real-IP $remote_addr;
-     }
+       server {
+           listen 80;
+           server_name admin.yourdomain.com;
+           root /var/www/bankykit-admin;
+           index index.html;
 
-  3. Reload Nginx: sudo nginx -s reload
+           location / {
+               try_files $uri $uri/ /index.html;
+           }
 
-The admin panel connects to your BankyKit backend via /api/ on the same domain.
+           # Connects admin panel to the BankyKit backend
+           location /api/ {
+               proxy_pass http://127.0.0.1:8000/;
+               proxy_set_header Host $host;
+               proxy_set_header X-Real-IP $remote_addr;
+               proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           }
+       }
+
+  3. Enable and reload:
+       sudo ln -s /etc/nginx/sites-available/bankykit-admin /etc/nginx/sites-enabled/
+       sudo nginx -s reload
+
+  4. (Optional) Add SSL with Certbot:
+       sudo certbot --nginx -d admin.yourdomain.com
+
+Replace 'yourdomain.com' with your actual domain.
+The admin panel uses relative /api/ calls — Nginx proxies them to the backend on port 8000.
 EOF
         cd packages/admin-panel
         zip -r bankykit-admin-v1.0.0.zip bankykit-admin
@@ -470,32 +487,43 @@ BankyKit Landing Page
 
 This is the pre-built marketing landing page for BankyKit.
 
-Deployment (Nginx):
-  1. Copy the 'dist/' folder to your server, e.g. /var/www/bankykit-landing/
-  2. Add this to your Nginx config (new server block for your domain):
+Deployment (Nginx — root domain, e.g. yourdomain.com):
+  1. Copy the 'dist/' folder to your server:
+       sudo mkdir -p /var/www/bankykit-landing
+       sudo cp -r dist/* /var/www/bankykit-landing/
 
-     server {
-         listen 80;
-         server_name yourdomain.com www.yourdomain.com;
-         root /var/www/bankykit-landing/dist;
-         index index.html;
+  2. Create /etc/nginx/sites-available/bankykit-landing:
 
-         location / {
-             try_files $uri $uri/ /index.html;
-         }
+       server {
+           listen 80;
+           server_name yourdomain.com www.yourdomain.com;
+           root /var/www/bankykit-landing;
+           index index.html;
 
-         # Proxy API calls to your BankyKit backend
-         location /api/ {
-             proxy_pass http://127.0.0.1:8000/;
-             proxy_set_header Host $host;
-             proxy_set_header X-Real-IP $remote_addr;
-         }
-     }
+           location / {
+               try_files $uri $uri/ /index.html;
+           }
 
-  3. Reload Nginx: sudo nginx -s reload
+           # Connects landing page to the BankyKit backend (same server)
+           # This lets pricing, features, and contact forms fetch live data
+           location /api/ {
+               proxy_pass http://127.0.0.1:8000/;
+               proxy_set_header Host $host;
+               proxy_set_header X-Real-IP $remote_addr;
+               proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           }
+       }
+
+  3. Enable and reload:
+       sudo ln -s /etc/nginx/sites-available/bankykit-landing /etc/nginx/sites-enabled/
+       sudo nginx -s reload
+
+  4. (Optional) Add SSL with Certbot:
+       sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
 
 Replace 'yourdomain.com' with your actual domain.
-The landing page connects to your BankyKit backend via /api/ on the same domain.
+The landing page uses relative /api/ calls — Nginx proxies them to the backend on port 8000.
+All three apps (main, admin, landing) share the same backend on this server.
 EOF
         cd packages/landing-page
         zip -r bankykit-landing-v1.0.0.zip bankykit-landing
