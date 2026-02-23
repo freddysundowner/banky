@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Building2, CheckCircle2, Users, CreditCard, UserPlus } from "lucide-react";
+import { CURRENCIES } from "@/lib/currency";
 
 interface OnboardingWizardProps {
   organizationId: string;
@@ -28,17 +29,6 @@ interface OnboardingWizardProps {
   onFinalize: (needsBranch: boolean) => void;
 }
 
-const CURRENCIES = [
-  { value: "KES", label: "KES - Kenyan Shilling" },
-  { value: "USD", label: "USD - US Dollar" },
-  { value: "UGX", label: "UGX - Ugandan Shilling" },
-  { value: "TZS", label: "TZS - Tanzanian Shilling" },
-  { value: "NGN", label: "NGN - Nigerian Naira" },
-  { value: "GHS", label: "GHS - Ghanaian Cedi" },
-  { value: "ZAR", label: "ZAR - South African Rand" },
-  { value: "GBP", label: "GBP - British Pound" },
-  { value: "EUR", label: "EUR - Euro" },
-];
 
 export function OnboardingWizard({ organizationId, organizationName, onComplete, onFinalize }: OnboardingWizardProps) {
   const { toast } = useToast();
@@ -160,9 +150,7 @@ export function OnboardingWizard({ organizationId, organizationName, onComplete,
                 </SelectTrigger>
                 <SelectContent>
                   {CURRENCIES.map((c) => (
-                    <SelectItem key={c.value} value={c.value} data-testid={`currency-option-${c.value}`}>
-                      {c.label}
-                    </SelectItem>
+                    <SelectItem key={c.code} value={c.code} data-testid={`currency-option-${c.code}`}>{c.code} - {c.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
