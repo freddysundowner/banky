@@ -595,7 +595,7 @@ echo -e "  Domain:       ${GREEN}${ADMIN_DOMAIN}${NC}"
 echo -e "  Backend port: ${GREEN}${BACKEND_PORT}${NC}"
 echo ""
 
-print_step "Step 1/3: Installing dependencies..."
+print_step "Step 1/2: Installing dependencies..."
 npm install
 print_ok "Dependencies installed"
 
@@ -802,7 +802,7 @@ echo -e "  Domain:       ${GREEN}${DOMAIN}${NC}"
 echo -e "  Backend port: ${GREEN}${BACKEND_PORT}${NC}"
 echo ""
 
-print_step "Step 1/3: Installing dependencies..."
+print_step "Step 1/2: Installing dependencies..."
 npm install
 print_ok "Dependencies installed"
 
