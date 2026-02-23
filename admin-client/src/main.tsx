@@ -8,7 +8,7 @@ import './index.css'
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
+      retry: false,
       refetchOnWindowFocus: false,
     },
   },
@@ -17,7 +17,7 @@ const queryClient = new QueryClient({
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <Router base="/admin">
+      <Router>
         <App />
       </Router>
     </QueryClientProvider>

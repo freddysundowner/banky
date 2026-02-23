@@ -13,9 +13,15 @@ import Settings from './pages/Settings'
 import LandingPageSettings from './pages/LandingPage'
 
 async function fetchAdmin() {
-  const res = await fetch('/api/admin/me', { credentials: 'include' })
-  if (!res.ok) throw new Error('Not authenticated')
-  return res.json()
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 5000)
+  try {
+    const res = await fetch('/api/admin/me', { credentials: 'include', signal: controller.signal })
+    if (!res.ok) throw new Error('Not authenticated')
+    return res.json()
+  } finally {
+    clearTimeout(timeout)
+  }
 }
 
 async function fetchBranding() {
