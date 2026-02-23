@@ -415,9 +415,29 @@ def _truncate_tenant(conn_str: str):
             ).fetchall()
             if staff_rows:
                 sc = "'" + "','".join(r[0] for r in staff_rows) + "'"
-                for t in ("staff_sessions", "staff_documents", "performance_reviews"):
-                    if _table_exists(conn, t):
-                        conn.execute(text(f"DELETE FROM {t} WHERE staff_id IN ({sc})"))
+                # Dynamically resolve all FK references to staff.id
+                fk_refs = conn.execute(text("""
+                    SELECT DISTINCT tc.table_name, kcu.column_name, c.is_nullable
+                    FROM information_schema.table_constraints tc
+                    JOIN information_schema.key_column_usage kcu
+                        ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
+                    JOIN information_schema.referential_constraints rc
+                        ON tc.constraint_name = rc.constraint_name AND tc.table_schema = rc.constraint_schema
+                    JOIN information_schema.key_column_usage kcu2
+                        ON rc.unique_constraint_name = kcu2.constraint_name AND rc.unique_constraint_schema = kcu2.constraint_schema
+                    JOIN information_schema.columns c
+                        ON c.table_schema = tc.table_schema AND c.table_name = tc.table_name AND c.column_name = kcu.column_name
+                    WHERE tc.constraint_type = 'FOREIGN KEY'
+                        AND kcu2.table_name = 'staff'
+                        AND kcu2.column_name = 'id'
+                        AND tc.table_schema = 'public'
+                """)).fetchall()
+                for ref_table, ref_col, is_nullable in fk_refs:
+                    if _table_exists(conn, ref_table):
+                        if is_nullable == 'YES':
+                            conn.execute(text(f"UPDATE {ref_table} SET {ref_col} = NULL WHERE {ref_col} IN ({sc})"))
+                        else:
+                            conn.execute(text(f"DELETE FROM {ref_table} WHERE {ref_col} IN ({sc})"))
                 conn.execute(text(f"DELETE FROM staff WHERE id IN ({sc})"))
 
             # 5. Delete demo branch and loan products
