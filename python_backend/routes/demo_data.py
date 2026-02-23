@@ -333,81 +333,67 @@ def _seed_tenant(conn_str: str):
         tdb.close()
 
 
+def _table_exists(conn, table: str) -> bool:
+    return conn.execute(
+        text("SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name=:t)"),
+        {"t": table}
+    ).scalar()
+
+
 def _truncate_tenant(conn_str: str):
-    """Delete only demo-specific records, identified by their DEMO_ prefixed codes.
-    This is safe on both dedicated (SaaS) and shared (enterprise) databases."""
+    """Delete only demo-specific records — safe on shared and dedicated databases."""
     from sqlalchemy import create_engine
-    from sqlalchemy.orm import sessionmaker
 
     engine = create_engine(conn_str, pool_pre_ping=True)
-    Session = sessionmaker(bind=engine)
-    tdb = Session()
-    try:
-        def ids_clause(rows):
-            return "'" + "','".join(r[0] for r in rows) + "'" if rows else None
 
-        # Find demo members by number prefix
-        member_rows = tdb.execute(
-            text(f"SELECT id FROM members WHERE member_number LIKE '{DEMO_MEMBER_PREFIX}%'")
-        ).fetchall()
-        member_clause = ids_clause(member_rows)
-
-        # Find ALL loans for those members (catches any naming scheme)
-        loan_rows = []
-        if member_clause:
-            loan_rows = tdb.execute(
-                text(f"SELECT id FROM loan_applications WHERE member_id IN ({member_clause})")
+    with engine.connect() as conn:
+        with conn.begin():
+            # 1. Find demo members
+            member_rows = conn.execute(
+                text(f"SELECT id FROM members WHERE member_number LIKE '{DEMO_MEMBER_PREFIX}%'")
             ).fetchall()
-        loan_clause = ids_clause(loan_rows)
+            if not member_rows:
+                # Nothing to clean up in tenant tables
+                conn.execute(text(f"DELETE FROM branches WHERE code = '{DEMO_BRANCH_CODE}'"))
+                prod_codes = ",".join(f"'{c}'" for c in DEMO_PROD_CODES)
+                conn.execute(text(f"DELETE FROM loan_products WHERE code IN ({prod_codes})"))
+                return
 
-        staff_rows = tdb.execute(
-            text(f"SELECT id FROM staff WHERE staff_number LIKE '{DEMO_STAFF_PREFIX}%'")
-        ).fetchall()
-        prod_codes = ",".join(f"'{c}'" for c in DEMO_PROD_CODES)
+            member_ids = [r[0] for r in member_rows]
+            mc = "'" + "','".join(member_ids) + "'"
 
-        # Delete loan dependents first, then loans
-        if loan_clause:
-            for t in ("loan_repayments", "loan_instalments", "loan_extra_charges", "loan_guarantors"):
-                try:
-                    tdb.execute(text(f"DELETE FROM {t} WHERE loan_id IN ({loan_clause})"))
-                except Exception:
-                    tdb.rollback()
-            tdb.execute(text(f"DELETE FROM loan_applications WHERE id IN ({loan_clause})"))
+            # 2. Delete all loans for those members and their dependents
+            loan_rows = conn.execute(
+                text(f"SELECT id FROM loan_applications WHERE member_id IN ({mc})")
+            ).fetchall()
+            if loan_rows:
+                lc = "'" + "','".join(r[0] for r in loan_rows) + "'"
+                for t in ("loan_repayments", "loan_instalments", "loan_extra_charges", "loan_guarantors"):
+                    if _table_exists(conn, t):
+                        conn.execute(text(f"DELETE FROM {t} WHERE loan_id IN ({lc})"))
+                conn.execute(text(f"DELETE FROM loan_applications WHERE member_id IN ({mc})"))
 
-        # Delete member dependents, then members
-        if member_clause:
-            for t in ("transactions", "fixed_deposits"):
-                try:
-                    tdb.execute(text(f"DELETE FROM {t} WHERE member_id IN ({member_clause})"))
-                except Exception:
-                    tdb.rollback()
-            tdb.execute(text(f"DELETE FROM members WHERE id IN ({member_clause})"))
+            # 3. Delete member-level dependents, then members
+            for t in ("transactions", "fixed_deposits", "dividends"):
+                if _table_exists(conn, t):
+                    conn.execute(text(f"DELETE FROM {t} WHERE member_id IN ({mc})"))
+            conn.execute(text(f"DELETE FROM members WHERE id IN ({mc})"))
 
-        if staff_rows:
-            c = ids_clause(staff_rows)
-            for t in ("staff_sessions", "staff_documents", "performance_reviews"):
-                try:
-                    tdb.execute(text(f"DELETE FROM {t} WHERE staff_id IN ({c})"))
-                except Exception:
-                    tdb.rollback()
-            tdb.execute(text(f"DELETE FROM staff WHERE id IN ({c})"))
+            # 4. Delete demo staff and their dependents
+            staff_rows = conn.execute(
+                text(f"SELECT id FROM staff WHERE staff_number LIKE '{DEMO_STAFF_PREFIX}%'")
+            ).fetchall()
+            if staff_rows:
+                sc = "'" + "','".join(r[0] for r in staff_rows) + "'"
+                for t in ("staff_sessions", "staff_documents", "performance_reviews"):
+                    if _table_exists(conn, t):
+                        conn.execute(text(f"DELETE FROM {t} WHERE staff_id IN ({sc})"))
+                conn.execute(text(f"DELETE FROM staff WHERE id IN ({sc})"))
 
-        try:
-            tdb.execute(text(f"DELETE FROM branches WHERE code = '{DEMO_BRANCH_CODE}'"))
-        except Exception:
-            tdb.rollback()
-
-        try:
-            tdb.execute(text(f"DELETE FROM loan_products WHERE code IN ({prod_codes})"))
-        except Exception:
-            tdb.rollback()
-
-        tdb.commit()
-    except Exception:
-        tdb.rollback()
-        raise
-    finally:
-        tdb.close()
+            # 5. Delete demo branch and loan products
+            conn.execute(text(f"DELETE FROM branches WHERE code = '{DEMO_BRANCH_CODE}'"))
+            prod_codes = ",".join(f"'{c}'" for c in DEMO_PROD_CODES)
+            conn.execute(text(f"DELETE FROM loan_products WHERE code IN ({prod_codes})"))
 
 
 @router.get("/status")
