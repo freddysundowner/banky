@@ -83,7 +83,6 @@ const tabs: { id: TabType; label: string }[] = [
   { id: 'how_it_works', label: 'How It Works' },
   { id: 'cta_section', label: 'CTA Section' },
   { id: 'docs', label: 'Docs Page' },
-  { id: 'hero_placeholders', label: 'Hero Placeholders' },
 ]
 
 const DEFAULT_FEATURES: FeatureItem[] = [
@@ -478,6 +477,10 @@ export default function LandingPageSettings() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
                   <textarea value={formData.landing_hero_subtitle} onChange={e => handleChange('landing_hero_subtitle', e.target.value)} rows={3} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="Brief description of your product" />
                 </div>
+                <div className="border-t border-gray-200 pt-4">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">Hero Placeholders</h3>
+                  <HeroPlaceholdersTab />
+                </div>
               </div>
             )}
 
@@ -827,9 +830,6 @@ export default function LandingPageSettings() {
                   </div>
                 </div>
               </div>
-            )}
-            {activeTab === 'hero_placeholders' && (
-              <HeroPlaceholdersTab />
             )}
           </div>
 
