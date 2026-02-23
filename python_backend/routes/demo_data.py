@@ -120,6 +120,36 @@ def _seed_tenant(conn_str: str):
         )
         tdb.add(teller)
 
+        hr_id = _uid()
+        hr_staff = Staff(
+            id=hr_id,
+            staff_number=f"{DEMO_STAFF_PREFIX}004",
+            first_name="Dave",
+            last_name="HR",
+            email=f"dave{DEMO_EMAIL_DOMAIN}",
+            phone="+1 555 000 0004",
+            role="hr",
+            branch_id=branch_id,
+            password_hash=_hash("Demo@1234"),
+            is_active=True,
+        )
+        tdb.add(hr_staff)
+
+        kiosk_id = _uid()
+        kiosk_staff = Staff(
+            id=kiosk_id,
+            staff_number=f"{DEMO_STAFF_PREFIX}005",
+            first_name="Eve",
+            last_name="Kiosk",
+            email=f"eve{DEMO_EMAIL_DOMAIN}",
+            phone="+1 555 000 0005",
+            role="kiosk_operator",
+            branch_id=branch_id,
+            password_hash=_hash("Demo@1234"),
+            is_active=True,
+        )
+        tdb.add(kiosk_staff)
+
         tdb.flush()
 
         # Loan Products

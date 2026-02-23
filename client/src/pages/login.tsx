@@ -35,6 +35,8 @@ const DEMO_ACCOUNTS = [
   { role: "Admin", email: "alice@demo.bankykit" },
   { role: "Loan Officer", email: "bob@demo.bankykit" },
   { role: "Teller", email: "carol@demo.bankykit" },
+  { role: "HR Officer", email: "dave@demo.bankykit" },
+  { role: "Kiosk / Queue", email: "eve@demo.bankykit" },
 ];
 
 export default function Login() {
@@ -114,31 +116,6 @@ export default function Login() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {IS_DEMO && (
-              <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
-                <div className="px-4 pt-3 pb-2">
-                  <p className="font-medium text-blue-800 dark:text-blue-300 text-sm">Demo Mode — click a role to log in</p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400">Password for all: <span className="font-mono font-semibold" data-testid="text-demo-password">{DEMO_PASSWORD}</span></p>
-                </div>
-                <div className="border-t border-blue-200 dark:border-blue-800">
-                  {DEMO_ACCOUNTS.map((account) => (
-                    <button
-                      key={account.email}
-                      type="button"
-                      data-testid={`button-demo-${account.role.toLowerCase().replace(" ", "-")}`}
-                      className="w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors text-left border-b border-blue-100 dark:border-blue-900 last:border-b-0"
-                      onClick={() => {
-                        form.setValue("email", account.email);
-                        form.setValue("password", DEMO_PASSWORD);
-                      }}
-                    >
-                      <span className="font-medium text-blue-800 dark:text-blue-300 w-28">{account.role}</span>
-                      <span className="font-mono text-xs text-blue-600 dark:text-blue-400" data-testid={`text-demo-email-${account.role.toLowerCase().replace(" ", "-")}`}>{account.email}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
             <Form {...form}>
               <form onSubmit={form.handleSubmit((data) => loginMutation.mutate(data))} className="space-y-4">
                 <FormField
@@ -208,6 +185,34 @@ export default function Login() {
                 Create one
               </Link>
             </div>
+
+            {IS_DEMO && (
+              <div className="mt-6 rounded-md border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+                <div className="px-4 pt-3 pb-2">
+                  <p className="font-medium text-blue-800 dark:text-blue-300 text-sm">Try a demo account</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400">
+                    Password for all: <span className="font-mono font-semibold" data-testid="text-demo-password">{DEMO_PASSWORD}</span>
+                  </p>
+                </div>
+                <div className="border-t border-blue-200 dark:border-blue-800 grid grid-cols-2">
+                  {DEMO_ACCOUNTS.map((account) => (
+                    <button
+                      key={account.email}
+                      type="button"
+                      data-testid={`button-demo-${account.role.toLowerCase().replace(/[\s/]+/g, "-")}`}
+                      className="flex flex-col items-start px-4 py-2.5 text-sm hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors border-b border-r border-blue-100 dark:border-blue-900 odd:border-r even:border-r-0"
+                      onClick={() => {
+                        form.setValue("email", account.email);
+                        form.setValue("password", DEMO_PASSWORD);
+                      }}
+                    >
+                      <span className="font-medium text-blue-800 dark:text-blue-300">{account.role}</span>
+                      <span className="font-mono text-xs text-blue-500 dark:text-blue-400 truncate w-full" data-testid={`text-demo-email-${account.role.toLowerCase().replace(/[\s/]+/g, "-")}`}>{account.email}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
