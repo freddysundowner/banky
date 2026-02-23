@@ -6,7 +6,6 @@ import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Form,
   FormControl,
@@ -17,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Landmark, Eye, EyeOff } from "lucide-react";
+import { Landmark, Eye, EyeOff, ShieldCheck, Users, CreditCard, BarChart3, Lock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useBranding } from "@/context/BrandingContext";
 
@@ -37,6 +36,13 @@ const DEMO_ACCOUNTS = [
   { role: "Teller", email: "carol@demo.bankykit" },
   { role: "HR Officer", email: "dave@demo.bankykit" },
   { role: "Kiosk / Queue", email: "eve@demo.bankykit" },
+];
+
+const FEATURES = [
+  { icon: Users, text: "Member & account management" },
+  { icon: CreditCard, text: "Loan processing & repayments" },
+  { icon: BarChart3, text: "Real-time reports & analytics" },
+  { icon: ShieldCheck, text: "Role-based access control" },
 ];
 
 export default function Login() {
@@ -85,143 +91,207 @@ export default function Login() {
   if (isLoggingIn) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-primary mb-6">
-          <Landmark className="h-8 w-8 text-primary-foreground" />
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg mb-6">
+          <Landmark className="h-9 w-9 text-primary-foreground" />
         </div>
-        <h1 className="text-2xl font-bold mb-2">{platform_name}</h1>
-        <p className="text-muted-foreground mb-6">Signing you in...</p>
-        <div className="w-64">
-          <Progress value={loadingProgress} className="h-2" />
+        <h1 className="text-2xl font-bold mb-1">{platform_name}</h1>
+        <p className="text-muted-foreground mb-8 text-sm">Verifying your credentials...</p>
+        <div className="w-56">
+          <Progress value={loadingProgress} className="h-1.5" />
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="flex flex-col items-center mb-8">
-          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary mb-4">
-            <Landmark className="h-7 w-7 text-primary-foreground" />
+    <div className="min-h-screen flex">
+      <div className="hidden lg:flex lg:w-[52%] bg-primary flex-col justify-between p-12 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-blue-800 opacity-100" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm border border-white/20">
+              <Landmark className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-white font-bold text-xl tracking-tight">{platform_name}</span>
           </div>
-          <h1 className="text-2xl font-bold">Welcome back</h1>
-          <p className="text-muted-foreground mt-1">Sign in to your {platform_name} account</p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Sign In</CardTitle>
-            <CardDescription>
-              Enter your credentials to access your account
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit((data) => loginMutation.mutate(data))} className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="john@example.com" {...field} data-testid="input-email" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+        <div className="relative z-10 flex-1 flex flex-col justify-center">
+          <h2 className="text-white text-4xl font-bold leading-tight mb-4">
+            Modern banking<br />management platform
+          </h2>
+          <p className="text-blue-100 text-base mb-10 leading-relaxed max-w-sm">
+            A complete solution for banks and SACCOs — managing members, loans, teller operations, and more from one place.
+          </p>
 
-                <FormField
-                  control={form.control}
-                  name="password"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Password</FormLabel>
-                      <FormControl>
-                        <div className="relative">
-                          <Input
-                            type={showPassword ? "text" : "password"}
-                            placeholder="Enter password"
-                            {...field}
-                            data-testid="input-password"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                            onClick={() => setShowPassword(!showPassword)}
-                          >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={loginMutation.isPending}
-                  data-testid="button-login"
-                >
-                  {loginMutation.isPending ? "Signing in..." : "Sign In"}
-                </Button>
-              </form>
-            </Form>
-
-            <div className="mt-4 text-center">
-              <Link href="/forgot-password" className="text-primary hover:underline text-sm" data-testid="link-forgot-password">
-                Forgot password?
-              </Link>
-            </div>
-
-            <div className="mt-4 text-center text-sm">
-              <span className="text-muted-foreground">Don't have an account? </span>
-              <Link href="/register" className="text-primary hover:underline" data-testid="link-register">
-                Create one
-              </Link>
-            </div>
-
-            {IS_DEMO && (
-              <div className="mt-6 rounded-md border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
-                <div className="px-4 pt-3 pb-2">
-                  <p className="font-medium text-blue-800 dark:text-blue-300 text-sm">Try a demo account</p>
-                  <p className="text-xs text-blue-600 dark:text-blue-400">
-                    Password for all: <span className="font-mono font-semibold" data-testid="text-demo-password">{DEMO_PASSWORD}</span>
-                  </p>
+          <div className="space-y-4">
+            {FEATURES.map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 shrink-0">
+                  <Icon className="h-4 w-4 text-white" />
                 </div>
-                <div className="border-t border-blue-200 dark:border-blue-800 grid grid-cols-2">
-                  {DEMO_ACCOUNTS.map((account) => (
-                    <button
-                      key={account.email}
-                      type="button"
-                      data-testid={`button-demo-${account.role.toLowerCase().replace(/[\s/]+/g, "-")}`}
-                      className="flex flex-col items-start px-4 py-2.5 text-sm hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors border-b border-r border-blue-100 dark:border-blue-900 odd:border-r even:border-r-0"
-                      onClick={() => {
-                        form.setValue("email", account.email);
-                        form.setValue("password", DEMO_PASSWORD);
-                      }}
-                    >
-                      <span className="font-medium text-blue-800 dark:text-blue-300">{account.role}</span>
-                      <span className="font-mono text-xs text-blue-500 dark:text-blue-400 truncate w-full" data-testid={`text-demo-email-${account.role.toLowerCase().replace(/[\s/]+/g, "-")}`}>{account.email}</span>
-                    </button>
-                  ))}
-                </div>
+                <span className="text-blue-50 text-sm font-medium">{text}</span>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            ))}
+          </div>
+        </div>
 
-        <div className="mt-6 text-center">
-          {guide_url && (
-            <a href={guide_url} target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:underline" data-testid="link-view-guide">
-              View Guide
-            </a>
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 text-blue-200 text-xs">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            <span>Bank-grade security · Multi-tenant architecture · Role-based access</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 bg-background overflow-y-auto">
+        <div className="w-full max-w-[400px]">
+          <div className="lg:hidden flex items-center gap-2.5 mb-8">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+              <Landmark className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="font-bold text-lg">{platform_name}</span>
+          </div>
+
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-foreground mb-1">Sign in to your account</h1>
+            <p className="text-muted-foreground text-sm">Enter your credentials to access the dashboard</p>
+          </div>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit((data) => loginMutation.mutate(data))} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-sm font-medium">Email address</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="you@example.com"
+                        className="h-11"
+                        {...field}
+                        data-testid="input-email"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <div className="flex items-center justify-between">
+                      <FormLabel className="text-sm font-medium">Password</FormLabel>
+                      <Link
+                        href="/forgot-password"
+                        className="text-xs text-primary hover:underline"
+                        data-testid="link-forgot-password"
+                      >
+                        Forgot password?
+                      </Link>
+                    </div>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Enter your password"
+                          className="h-11 pr-10"
+                          {...field}
+                          data-testid="input-password"
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                          onClick={() => setShowPassword(!showPassword)}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Button
+                type="submit"
+                className="w-full h-11 font-semibold mt-2"
+                disabled={loginMutation.isPending}
+                data-testid="button-login"
+              >
+                {loginMutation.isPending ? "Signing in..." : "Sign In"}
+              </Button>
+            </form>
+          </Form>
+
+          <p className="mt-5 text-center text-sm text-muted-foreground">
+            Don't have an account?{" "}
+            <Link href="/register" className="text-primary font-medium hover:underline" data-testid="link-register">
+              Create one
+            </Link>
+          </p>
+
+          {IS_DEMO && (
+            <div className="mt-6 border border-border rounded-xl overflow-hidden">
+              <div className="bg-muted/50 px-4 py-3 border-b border-border">
+                <p className="text-sm font-semibold text-foreground">Try a demo account</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Click any role below · Password: <span className="font-mono font-semibold text-foreground" data-testid="text-demo-password">{DEMO_PASSWORD}</span>
+                </p>
+              </div>
+              <div className="grid grid-cols-2">
+                {DEMO_ACCOUNTS.map((account, i) => (
+                  <button
+                    key={account.email}
+                    type="button"
+                    data-testid={`button-demo-${account.role.toLowerCase().replace(/[\s/]+/g, "-")}`}
+                    className={`flex flex-col items-start px-4 py-3 text-left hover:bg-muted/70 transition-colors
+                      ${i % 2 === 0 ? "border-r border-border" : ""}
+                      ${i < DEMO_ACCOUNTS.length - 2 ? "border-b border-border" : ""}
+                    `}
+                    onClick={() => {
+                      form.setValue("email", account.email);
+                      form.setValue("password", DEMO_PASSWORD);
+                    }}
+                  >
+                    <span className="text-sm font-medium text-foreground">{account.role}</span>
+                    <span
+                      className="font-mono text-xs text-muted-foreground truncate w-full mt-0.5"
+                      data-testid={`text-demo-email-${account.role.toLowerCase().replace(/[\s/]+/g, "-")}`}
+                    >
+                      {account.email}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
+
+          <div className="mt-8 flex flex-col items-center gap-3">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
+              <Lock className="h-3 w-3" />
+              <span>Secured with end-to-end encryption</span>
+            </div>
+            {guide_url && (
+              <a
+                href={guide_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-primary hover:underline"
+                data-testid="link-view-guide"
+              >
+                View Documentation Guide
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </div>
