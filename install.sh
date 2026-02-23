@@ -359,6 +359,17 @@ else
     CREATEDB_CMD="createdb"
 fi
 
+# ── Ensure a PostgreSQL role exists for the current OS user ──
+# peer auth (postgresql:///dbname) connects as the current OS user.
+# If no matching role exists (common when running as root), create one.
+CURRENT_OS_USER=$(whoami)
+if [ "$PLATFORM" = "linux" ] && [ "$PSQL_CMD" = "sudo -u postgres psql" ]; then
+    if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='${CURRENT_OS_USER}'" 2>/dev/null | grep -q 1; then
+        sudo -u postgres psql -c "CREATE ROLE \"${CURRENT_OS_USER}\" WITH SUPERUSER LOGIN;" >/dev/null 2>&1
+        print_ok "PostgreSQL role '${CURRENT_OS_USER}' created"
+    fi
+fi
+
 # ── Create database if it doesn't exist ──────────────────────
 if $PSQL_CMD -lqt 2>/dev/null | cut -d \| -f 1 | grep -qw "$DB_NAME"; then
     print_skip "Database '${DB_NAME}' already exists"
