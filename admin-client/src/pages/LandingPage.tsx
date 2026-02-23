@@ -21,6 +21,7 @@ interface LandingSettings {
   landing_docs_direct_title: string
   landing_docs_direct_subtitle: string
   landing_docs_support_email: string
+  landing_docs_show_license: string
   landing_show_subscription_content: string
 }
 
@@ -159,6 +160,7 @@ export default function LandingPageSettings() {
     landing_docs_direct_title: 'Enterprise License',
     landing_docs_direct_subtitle: 'Installation guide for organizations who purchased BANKY directly from our sales team.',
     landing_docs_support_email: 'support@banky.co.ke',
+    landing_docs_show_license: 'false',
     landing_show_subscription_content: 'true',
   })
   const [saved, setSaved] = useState(false)
@@ -651,6 +653,22 @@ export default function LandingPageSettings() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Support Email</label>
                     <input type="email" value={formData.landing_docs_support_email || ''} onChange={e => handleChange('landing_docs_support_email', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g. support@banky.co.ke" />
                     <p className="text-xs text-gray-500 mt-1">Shown in troubleshooting sections of both guides</p>
+                  </div>
+                </div>
+
+                <div className="border-t border-gray-200 pt-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700">Show License Activation section</label>
+                      <p className="text-xs text-gray-500 mt-0.5">Enable for direct/enterprise clients who need license key instructions. Keep off for CodeCanyon buyers.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleChange('landing_docs_show_license', formData.landing_docs_show_license === 'true' ? 'false' : 'true')}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${formData.landing_docs_show_license === 'true' ? 'bg-primary-600' : 'bg-gray-300'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.landing_docs_show_license === 'true' ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
                   </div>
                 </div>
               </div>

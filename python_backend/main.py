@@ -1067,12 +1067,27 @@ async def get_public_docs_config():
     
     db = SessionLocal()
     try:
-        setting = db.query(PlatformSettings).filter(
-            PlatformSettings.setting_key == "landing_docs_support_email"
-        ).first()
+        keys = [
+            "landing_docs_support_email",
+            "landing_docs_mode",
+            "landing_docs_codecanyon_title",
+            "landing_docs_codecanyon_subtitle",
+            "landing_docs_direct_title",
+            "landing_docs_direct_subtitle",
+            "landing_docs_show_license",
+        ]
+        settings = {s.setting_key: s.setting_value for s in db.query(PlatformSettings).filter(
+            PlatformSettings.setting_key.in_(keys)
+        ).all()}
         
         return {
-            "support_email": setting.setting_value if setting else "support@banky.co.ke",
+            "support_email": settings.get("landing_docs_support_email", "support@banky.co.ke"),
+            "docs_mode": settings.get("landing_docs_mode", "both"),
+            "codecanyon_title": settings.get("landing_docs_codecanyon_title", "CodeCanyon Purchase"),
+            "codecanyon_subtitle": settings.get("landing_docs_codecanyon_subtitle", "Installation guide for buyers who purchased BANKY from CodeCanyon marketplace."),
+            "direct_title": settings.get("landing_docs_direct_title", "Enterprise License"),
+            "direct_subtitle": settings.get("landing_docs_direct_subtitle", "Installation guide for organizations who purchased BANKY directly from our sales team."),
+            "show_license": settings.get("landing_docs_show_license", "false") == "true",
         }
     finally:
         db.close()

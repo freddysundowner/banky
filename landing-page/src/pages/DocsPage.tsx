@@ -5,13 +5,13 @@ type SectionId = 'overview' | 'requirements' | 'installation' | 'license' | 'dat
 
 interface DocsConfig {
   support_email: string;
+  show_license: boolean;
 }
 
-const allSections: { id: SectionId; label: string }[] = [
+const baseSections: { id: SectionId; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'requirements', label: 'Requirements' },
   { id: 'installation', label: 'Installation' },
-  { id: 'license', label: 'License Activation' },
   { id: 'database', label: 'Database Setup' },
   { id: 'pm2', label: 'PM2 Process Manager' },
   { id: 'nginx', label: 'Nginx Reverse Proxy' },
@@ -20,6 +20,8 @@ const allSections: { id: SectionId; label: string }[] = [
   { id: 'updates', label: 'Updates' },
   { id: 'troubleshooting', label: 'Troubleshooting' },
 ];
+
+const licenseSection = { id: 'license' as SectionId, label: 'License Activation' };
 
 const API_BASE = '';
 
@@ -826,6 +828,7 @@ export default function DocsPage() {
   const contentRef = useRef<HTMLDivElement>(null);
   const [config, setConfig] = useState<DocsConfig>({
     support_email: 'support@banky.co.ke',
+    show_license: false,
   });
   const [loading, setLoading] = useState(true);
 
@@ -844,7 +847,10 @@ export default function DocsPage() {
         const res = await fetch(`${API_BASE}/api/public/docs-config`);
         if (res.ok) {
           const data = await res.json();
-          setConfig({ support_email: data.support_email || 'support@banky.co.ke' });
+          setConfig({
+            support_email: data.support_email || 'support@banky.co.ke',
+            show_license: !!data.show_license,
+          });
         }
       } catch {
       } finally {
@@ -853,6 +859,10 @@ export default function DocsPage() {
     };
     fetchConfig();
   }, []);
+
+  const sections = config.show_license
+    ? [...baseSections.slice(0, 3), licenseSection, ...baseSections.slice(3)]
+    : baseSections;
 
   if (loading) {
     return (
@@ -882,7 +892,7 @@ export default function DocsPage() {
           <nav className="hidden lg:block w-56 flex-shrink-0">
             <div className="sticky top-24 space-y-1">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3">Documentation</p>
-              {allSections.map(s => (
+              {sections.map(s => (
                 <button
                   key={s.id}
                   onClick={() => handleSectionChange(s.id)}
@@ -905,7 +915,7 @@ export default function DocsPage() {
                 onChange={e => handleSectionChange(e.target.value as SectionId)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm font-medium bg-white"
               >
-                {allSections.map(s => (
+                {sections.map(s => (
                   <option key={s.id} value={s.id}>{s.label}</option>
                 ))}
               </select>
