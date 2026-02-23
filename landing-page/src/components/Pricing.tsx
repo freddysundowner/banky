@@ -70,8 +70,10 @@ export default function Pricing() {
 
   useEffect(() => {
     async function fetchPlans() {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 5000)
       try {
-        const response = await fetch('/api/public/plans');
+        const response = await fetch('/api/public/plans', { signal: controller.signal });
         if (response.ok) {
           const data: PlansResponse = await response.json();
           if (data.title) setTitle(data.title);
@@ -88,6 +90,7 @@ export default function Pricing() {
         console.error('Failed to fetch plans:', err);
         setError(true);
       } finally {
+        clearTimeout(timeout)
         setLoading(false);
       }
     }

@@ -24,10 +24,18 @@ const defaultBranding: Branding = {
 const BrandingContext = createContext<Branding>(defaultBranding);
 
 async function fetchBranding(): Promise<Branding> {
-  const res = await fetch('/api/public/branding');
-  if (!res.ok) return defaultBranding;
-  const data = await res.json();
-  return { ...defaultBranding, ...data };
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 5000)
+  try {
+    const res = await fetch('/api/public/branding', { signal: controller.signal });
+    if (!res.ok) return defaultBranding;
+    const data = await res.json();
+    return { ...defaultBranding, ...data };
+  } catch {
+    return defaultBranding;
+  } finally {
+    clearTimeout(timeout)
+  }
 }
 
 export function BrandingProvider({ children }: { children: ReactNode }) {
