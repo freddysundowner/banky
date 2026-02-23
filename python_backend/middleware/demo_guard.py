@@ -35,7 +35,7 @@ CRITICAL_SETTINGS_KEYS = SENSITIVE_KEYS | {
 
 
 def is_demo_mode() -> bool:
-    return os.environ.get("DEPLOYMENT_MODE", "").lower() == "demo"
+    return os.environ.get("VITE_PRODUCTION_MODE", "").lower() == "demo"
 
 
 def require_not_demo():
