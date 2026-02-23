@@ -41,6 +41,16 @@ def _get_connection_string() -> str:
     return os.environ.get("DATABASE_URL", "")
 
 
+DEMO_BRANCH_CODE  = "DEMO"
+DEMO_STAFF_PREFIX = "DMS"
+DEMO_MEMBER_PREFIX = "DMB"
+DEMO_TXN_PREFIX   = "DTXN"
+DEMO_LOAN_PREFIX  = "DLN"
+DEMO_REP_PREFIX   = "DREP"
+DEMO_PROD_CODES   = ("DDEV", "DEMG")
+DEMO_EMAIL_DOMAIN = "@demo.banky"
+
+
 def _seed_tenant(conn_str: str):
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
@@ -55,11 +65,11 @@ def _seed_tenant(conn_str: str):
         branch_id = _uid()
         branch = Branch(
             id=branch_id,
-            name="Head Office",
-            code="HO",
+            name="Demo Head Office",
+            code=DEMO_BRANCH_CODE,
             address="123 Main Street",
             phone="+1 555 000 0000",
-            email="headoffice@demosacco.com",
+            email=f"headoffice{DEMO_EMAIL_DOMAIN}",
             is_active=True,
         )
         tdb.add(branch)
@@ -68,10 +78,10 @@ def _seed_tenant(conn_str: str):
         manager_id = _uid()
         manager = Staff(
             id=manager_id,
-            staff_number="STF001",
+            staff_number=f"{DEMO_STAFF_PREFIX}001",
             first_name="Alice",
             last_name="Manager",
-            email="alice@demosacco.com",
+            email=f"alice{DEMO_EMAIL_DOMAIN}",
             phone="+1 555 000 0001",
             role="admin",
             branch_id=branch_id,
@@ -83,10 +93,10 @@ def _seed_tenant(conn_str: str):
         officer_id = _uid()
         officer = Staff(
             id=officer_id,
-            staff_number="STF002",
+            staff_number=f"{DEMO_STAFF_PREFIX}002",
             first_name="Bob",
             last_name="Officer",
-            email="bob@demosacco.com",
+            email=f"bob{DEMO_EMAIL_DOMAIN}",
             phone="+1 555 000 0002",
             role="loan_officer",
             branch_id=branch_id,
@@ -98,10 +108,10 @@ def _seed_tenant(conn_str: str):
         teller_id = _uid()
         teller = Staff(
             id=teller_id,
-            staff_number="STF003",
+            staff_number=f"{DEMO_STAFF_PREFIX}003",
             first_name="Carol",
             last_name="Teller",
-            email="carol@demosacco.com",
+            email=f"carol{DEMO_EMAIL_DOMAIN}",
             phone="+1 555 000 0003",
             role="teller",
             branch_id=branch_id,
@@ -116,8 +126,8 @@ def _seed_tenant(conn_str: str):
         prod1_id = _uid()
         prod1 = LoanProduct(
             id=prod1_id,
-            name="Development Loan",
-            code="DEV",
+            name="Demo Development Loan",
+            code=DEMO_PROD_CODES[0],
             description="General-purpose development loan for members.",
             interest_rate=1.5,
             interest_rate_period="monthly",
@@ -136,8 +146,8 @@ def _seed_tenant(conn_str: str):
         prod2_id = _uid()
         prod2 = LoanProduct(
             id=prod2_id,
-            name="Emergency Loan",
-            code="EMG",
+            name="Demo Emergency Loan",
+            code=DEMO_PROD_CODES[1],
             description="Quick-access emergency loan disbursed within 24 hours.",
             interest_rate=2.0,
             interest_rate_period="monthly",
@@ -157,34 +167,35 @@ def _seed_tenant(conn_str: str):
 
         # Members
         member_data = [
-            ("MEM001", "James",   "Anderson",  "james.anderson@email.com",  "+1 555 100 0001", 12000, 5000),
-            ("MEM002", "Sarah",   "Mitchell",  "sarah.mitchell@email.com",  "+1 555 100 0002",  8500, 3200),
-            ("MEM003", "David",   "Thompson",  "david.thompson@email.com",  "+1 555 100 0003", 15000, 7500),
-            ("MEM004", "Emily",   "Roberts",   "emily.roberts@email.com",   "+1 555 100 0004",  6200, 2100),
-            ("MEM005", "Michael", "Harris",    "michael.harris@email.com",  "+1 555 100 0005", 22000, 9800),
-            ("MEM006", "Lisa",    "Clark",     "lisa.clark@email.com",      "+1 555 100 0006",  4800, 1800),
-            ("MEM007", "Robert",  "Lewis",     "robert.lewis@email.com",    "+1 555 100 0007", 18500, 6400),
-            ("MEM008", "Karen",   "Walker",    "karen.walker@email.com",    "+1 555 100 0008",  9300, 3700),
-            ("MEM009", "William", "Hall",      "william.hall@email.com",    "+1 555 100 0009", 31000, 12000),
-            ("MEM010", "Nancy",   "Young",     "nancy.young@email.com",     "+1 555 100 0010",  7100, 2900),
-            ("MEM011", "Charles", "King",      "charles.king@email.com",    "+1 555 100 0011", 25500, 10500),
-            ("MEM012", "Betty",   "Wright",    "betty.wright@email.com",    "+1 555 100 0012",  5600, 2400),
-            ("MEM013", "Joseph",  "Scott",     "joseph.scott@email.com",    "+1 555 100 0013", 19200, 8100),
-            ("MEM014", "Sandra",  "Green",     "sandra.green@email.com",    "+1 555 100 0014",  3900, 1600),
-            ("MEM015", "Thomas",  "Adams",     "thomas.adams@email.com",    "+1 555 100 0015", 42000, 17000),
+            ("James",   "Anderson",  12000, 5000),
+            ("Sarah",   "Mitchell",   8500, 3200),
+            ("David",   "Thompson",  15000, 7500),
+            ("Emily",   "Roberts",    6200, 2100),
+            ("Michael", "Harris",    22000, 9800),
+            ("Lisa",    "Clark",      4800, 1800),
+            ("Robert",  "Lewis",     18500, 6400),
+            ("Karen",   "Walker",     9300, 3700),
+            ("William", "Hall",      31000, 12000),
+            ("Nancy",   "Young",      7100, 2900),
+            ("Charles", "King",      25500, 10500),
+            ("Betty",   "Wright",     5600, 2400),
+            ("Joseph",  "Scott",     19200, 8100),
+            ("Sandra",  "Green",      3900, 1600),
+            ("Thomas",  "Adams",     42000, 17000),
         ]
 
         member_ids = []
-        for num, fn, ln, email, phone, savings, shares in member_data:
+        for idx, (fn, ln, savings, shares) in enumerate(member_data):
             mid = _uid()
             member_ids.append(mid)
+            slug = f"{fn.lower()}.{ln.lower()}"
             m = Member(
                 id=mid,
-                member_number=num,
+                member_number=f"{DEMO_MEMBER_PREFIX}{str(idx+1).zfill(3)}",
                 first_name=fn,
                 last_name=ln,
-                email=email,
-                phone=phone,
+                email=f"{slug}{DEMO_EMAIL_DOMAIN}",
+                phone=f"+1 555 100 {str(idx+1).zfill(4)}",
                 gender="male" if fn in ("James","David","Michael","Robert","William","Charles","Joseph","Thomas") else "female",
                 date_of_birth=date(1985, 6, 15),
                 nationality="US",
@@ -208,12 +219,10 @@ def _seed_tenant(conn_str: str):
         tdb.flush()
 
         # Transactions — savings deposits for each member
-        for idx, (mid, savings, shares) in enumerate(
-            zip(member_ids, [r[5] for r in member_data], [r[6] for r in member_data])
-        ):
-            txn = Transaction(
+        for idx, (mid, (fn, ln, savings, shares)) in enumerate(zip(member_ids, member_data)):
+            tdb.add(Transaction(
                 id=_uid(),
-                transaction_number=f"TXN{str(idx+1).zfill(4)}",
+                transaction_number=f"{DEMO_TXN_PREFIX}{str(idx+1).zfill(4)}",
                 member_id=mid,
                 transaction_type="deposit",
                 account_type="savings",
@@ -221,15 +230,14 @@ def _seed_tenant(conn_str: str):
                 balance_before=0,
                 balance_after=savings,
                 payment_method="cash",
-                reference=f"OPENING-SAV-{idx+1}",
+                reference=f"DEMO-SAV-{idx+1}",
                 description="Opening savings deposit",
                 processed_by_id=teller_id,
                 created_at=datetime.utcnow() - timedelta(days=300),
-            )
-            tdb.add(txn)
-            txn2 = Transaction(
+            ))
+            tdb.add(Transaction(
                 id=_uid(),
-                transaction_number=f"TXN{str(idx+100).zfill(4)}",
+                transaction_number=f"{DEMO_TXN_PREFIX}{str(idx+100).zfill(4)}",
                 member_id=mid,
                 transaction_type="deposit",
                 account_type="shares",
@@ -237,12 +245,11 @@ def _seed_tenant(conn_str: str):
                 balance_before=0,
                 balance_after=shares,
                 payment_method="cash",
-                reference=f"OPENING-SHR-{idx+1}",
+                reference=f"DEMO-SHR-{idx+1}",
                 description="Opening shares purchase",
                 processed_by_id=teller_id,
                 created_at=datetime.utcnow() - timedelta(days=300),
-            )
-            tdb.add(txn2)
+            ))
 
         tdb.flush()
 
@@ -272,7 +279,7 @@ def _seed_tenant(conn_str: str):
 
             loan = LoanApplication(
                 id=loan_id,
-                application_number=f"LN{str(i+1).zfill(4)}",
+                application_number=f"{DEMO_LOAN_PREFIX}{str(i+1).zfill(4)}",
                 member_id=member_ids[midx],
                 loan_product_id=prod_id,
                 amount=amt,
@@ -300,24 +307,22 @@ def _seed_tenant(conn_str: str):
             tdb.add(loan)
             tdb.flush()
 
-            # Repayments for disbursed/closed loans
             if status in ("disbursed", "closed") and months_paid > 0:
                 for mo in range(min(months_paid, 6)):
-                    rep = LoanRepayment(
+                    tdb.add(LoanRepayment(
                         id=_uid(),
-                        repayment_number=f"REP-LN{i+1}-{mo+1}",
+                        repayment_number=f"{DEMO_REP_PREFIX}-{i+1}-{mo+1}",
                         loan_id=loan_id,
                         amount=monthly_payment,
                         principal_amount=round(monthly_payment * 0.7, 2),
                         interest_amount=round(monthly_payment * 0.3, 2),
                         penalty_amount=0,
                         payment_method="cash",
-                        reference=f"REF-{i+1}-{mo+1}",
+                        reference=f"DEMO-REF-{i+1}-{mo+1}",
                         notes="Monthly repayment",
                         payment_date=disbursed_at + timedelta(days=30 * (mo + 1)),
                         received_by_id=teller_id,
-                    )
-                    tdb.add(rep)
+                    ))
 
         tdb.commit()
 
@@ -329,6 +334,8 @@ def _seed_tenant(conn_str: str):
 
 
 def _truncate_tenant(conn_str: str):
+    """Delete only demo-specific records, identified by their DEMO_ prefixed codes.
+    This is safe on both dedicated (SaaS) and shared (enterprise) databases."""
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
 
@@ -336,22 +343,61 @@ def _truncate_tenant(conn_str: str):
     Session = sessionmaker(bind=engine)
     tdb = Session()
     try:
-        tables = [
-            "loan_repayments", "loan_instalments", "loan_extra_charges",
-            "loan_guarantors", "loan_applications",
-            "transactions", "fixed_deposits", "dividends",
-            "sms_notifications", "audit_logs", "expenses",
-            "journal_lines", "journal_entries", "chart_of_accounts",
-            "performance_reviews", "staff_documents", "staff_sessions",
-            "members", "staff", "branches",
-            "loan_products", "organization_settings",
-        ]
-        for t in tables:
-            try:
-                tdb.execute(text(f"DELETE FROM {t}"))
-            except Exception:
-                tdb.rollback()
+        def ids_clause(rows):
+            return "'" + "','".join(r[0] for r in rows) + "'" if rows else None
+
+        loan_rows = tdb.execute(
+            text(f"SELECT id FROM loan_applications WHERE application_number LIKE '{DEMO_LOAN_PREFIX}%'")
+        ).fetchall()
+        member_rows = tdb.execute(
+            text(f"SELECT id FROM members WHERE member_number LIKE '{DEMO_MEMBER_PREFIX}%'")
+        ).fetchall()
+        staff_rows = tdb.execute(
+            text(f"SELECT id FROM staff WHERE staff_number LIKE '{DEMO_STAFF_PREFIX}%'")
+        ).fetchall()
+        prod_codes = ",".join(f"'{c}'" for c in DEMO_PROD_CODES)
+
+        if loan_rows:
+            c = ids_clause(loan_rows)
+            for t in ("loan_repayments", "loan_instalments", "loan_extra_charges", "loan_guarantors"):
+                try:
+                    tdb.execute(text(f"DELETE FROM {t} WHERE loan_id IN ({c})"))
+                except Exception:
+                    tdb.rollback()
+            tdb.execute(text(f"DELETE FROM loan_applications WHERE id IN ({c})"))
+
+        if member_rows:
+            c = ids_clause(member_rows)
+            for t in ("transactions", "fixed_deposits"):
+                try:
+                    tdb.execute(text(f"DELETE FROM {t} WHERE member_id IN ({c})"))
+                except Exception:
+                    tdb.rollback()
+            tdb.execute(text(f"DELETE FROM members WHERE id IN ({c})"))
+
+        if staff_rows:
+            c = ids_clause(staff_rows)
+            for t in ("staff_sessions", "staff_documents", "performance_reviews"):
+                try:
+                    tdb.execute(text(f"DELETE FROM {t} WHERE staff_id IN ({c})"))
+                except Exception:
+                    tdb.rollback()
+            tdb.execute(text(f"DELETE FROM staff WHERE id IN ({c})"))
+
+        try:
+            tdb.execute(text(f"DELETE FROM branches WHERE code = '{DEMO_BRANCH_CODE}'"))
+        except Exception:
+            tdb.rollback()
+
+        try:
+            tdb.execute(text(f"DELETE FROM loan_products WHERE code IN ({prod_codes})"))
+        except Exception:
+            tdb.rollback()
+
         tdb.commit()
+    except Exception:
+        tdb.rollback()
+        raise
     finally:
         tdb.close()
 
