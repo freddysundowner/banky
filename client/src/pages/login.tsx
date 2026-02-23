@@ -29,8 +29,13 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 const IS_DEMO = import.meta.env.VITE_PRODUCTION_MODE === "demo";
-const DEMO_EMAIL = "demo@demo.bankykit";
 const DEMO_PASSWORD = "Demo@1234";
+const DEMO_ACCOUNTS = [
+  { role: "Owner", email: "demo@demo.bankykit" },
+  { role: "Admin", email: "alice@demo.bankykit" },
+  { role: "Loan Officer", email: "bob@demo.bankykit" },
+  { role: "Teller", email: "carol@demo.bankykit" },
+];
 
 export default function Login() {
   const [, navigate] = useLocation();
@@ -43,7 +48,7 @@ export default function Login() {
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: IS_DEMO ? DEMO_EMAIL : "",
+      email: IS_DEMO ? DEMO_ACCOUNTS[0].email : "",
       password: IS_DEMO ? DEMO_PASSWORD : "",
     },
   });
@@ -110,14 +115,28 @@ export default function Login() {
           </CardHeader>
           <CardContent>
             {IS_DEMO && (
-              <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm dark:border-blue-800 dark:bg-blue-950">
-                <p className="font-medium text-blue-800 dark:text-blue-300 mb-1">Demo Mode</p>
-                <p className="text-blue-700 dark:text-blue-400">
-                  Email: <span className="font-mono font-semibold" data-testid="text-demo-email">{DEMO_EMAIL}</span>
-                </p>
-                <p className="text-blue-700 dark:text-blue-400">
-                  Password: <span className="font-mono font-semibold" data-testid="text-demo-password">{DEMO_PASSWORD}</span>
-                </p>
+              <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+                <div className="px-4 pt-3 pb-2">
+                  <p className="font-medium text-blue-800 dark:text-blue-300 text-sm">Demo Mode — click a role to log in</p>
+                  <p className="text-xs text-blue-600 dark:text-blue-400">Password for all: <span className="font-mono font-semibold" data-testid="text-demo-password">{DEMO_PASSWORD}</span></p>
+                </div>
+                <div className="border-t border-blue-200 dark:border-blue-800">
+                  {DEMO_ACCOUNTS.map((account) => (
+                    <button
+                      key={account.email}
+                      type="button"
+                      data-testid={`button-demo-${account.role.toLowerCase().replace(" ", "-")}`}
+                      className="w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors text-left border-b border-blue-100 dark:border-blue-900 last:border-b-0"
+                      onClick={() => {
+                        form.setValue("email", account.email);
+                        form.setValue("password", DEMO_PASSWORD);
+                      }}
+                    >
+                      <span className="font-medium text-blue-800 dark:text-blue-300 w-28">{account.role}</span>
+                      <span className="font-mono text-xs text-blue-600 dark:text-blue-400" data-testid={`text-demo-email-${account.role.toLowerCase().replace(" ", "-")}`}>{account.email}</span>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
             <Form {...form}>
