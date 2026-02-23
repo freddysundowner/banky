@@ -520,13 +520,19 @@ if [ ! -f ecosystem.config.js ]; then
     print_err "ecosystem.config.js not found. Cannot proceed."
 fi
 
-ADMIN_DOMAIN=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.domain);")
-if [ -z "$ADMIN_DOMAIN" ] || [ "$ADMIN_DOMAIN" = "admin.yourdomain.com" ]; then
-    print_err "Please set your domain in ecosystem.config.js before running install.sh"
+ADMIN_DOMAIN=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.domain);" 2>/dev/null || echo "")
+if [ -z "$ADMIN_DOMAIN" ] || [ "$ADMIN_DOMAIN" = "undefined" ] || [ "$ADMIN_DOMAIN" = "null" ] || [ "$ADMIN_DOMAIN" = "admin.yourdomain.com" ]; then
+    echo ""
+    echo -e "${RED}  [ERROR] Domain not set in ecosystem.config.js${NC}"
+    echo ""
+    echo "  Open ecosystem.config.js and set your domain:"
+    echo "    domain: \"admin.yourdomain.com\","
+    echo ""
+    exit 1
 fi
 
-BACKEND_PORT=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.backend_port || 8000);")
-PREVIEW_PORT=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.port || 5002);")
+BACKEND_PORT=$(node -e "const c = require('./ecosystem.config.js'); const p = c.backend_port; console.log((p !== undefined && p !== null) ? p : 8000);" 2>/dev/null || echo "8000")
+PREVIEW_PORT=$(node -e "const c = require('./ecosystem.config.js'); const p = c.port; console.log((p !== undefined && p !== null) ? p : 5002);" 2>/dev/null || echo "5002")
 
 echo -e "  Domain:       ${GREEN}${ADMIN_DOMAIN}${NC}"
 echo -e "  Backend port: ${GREEN}${BACKEND_PORT}${NC}"
@@ -685,13 +691,19 @@ if [ ! -f ecosystem.config.js ]; then
     print_err "ecosystem.config.js not found. Cannot proceed."
 fi
 
-DOMAIN=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.domain);")
-if [ -z "$DOMAIN" ] || [ "$DOMAIN" = "yourdomain.com" ]; then
-    print_err "Please set your domain in ecosystem.config.js before running install.sh"
+DOMAIN=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.domain);" 2>/dev/null || echo "")
+if [ -z "$DOMAIN" ] || [ "$DOMAIN" = "undefined" ] || [ "$DOMAIN" = "null" ] || [ "$DOMAIN" = "yourdomain.com" ]; then
+    echo ""
+    echo -e "${RED}  [ERROR] Domain not set in ecosystem.config.js${NC}"
+    echo ""
+    echo "  Open ecosystem.config.js and set your domain:"
+    echo "    domain: \"yourdomain.com\","
+    echo ""
+    exit 1
 fi
 
-BACKEND_PORT=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.backend_port || 8000);")
-PREVIEW_PORT=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.port || 5003);")
+BACKEND_PORT=$(node -e "const c = require('./ecosystem.config.js'); const p = c.backend_port; console.log((p !== undefined && p !== null) ? p : 8000);" 2>/dev/null || echo "8000")
+PREVIEW_PORT=$(node -e "const c = require('./ecosystem.config.js'); const p = c.port; console.log((p !== undefined && p !== null) ? p : 5003);" 2>/dev/null || echo "5003")
 
 echo -e "  Domain:       ${GREEN}${DOMAIN}${NC}"
 echo -e "  Backend port: ${GREEN}${BACKEND_PORT}${NC}"
