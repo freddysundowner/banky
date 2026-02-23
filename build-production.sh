@@ -588,7 +588,8 @@ http.createServer((req, res) => {
     req.pipe(proxy);
     return;
   }
-  let file = path.join(DIST_DIR, req.url === '/' ? 'index.html' : req.url);
+  const urlPath = req.url.split('?')[0].split('#')[0];
+  let file = path.join(DIST_DIR, urlPath === '/' ? 'index.html' : urlPath);
   if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) {
     file = path.join(DIST_DIR, 'index.html');
   }
@@ -890,7 +891,8 @@ http.createServer((req, res) => {
     req.pipe(proxy);
     return;
   }
-  let file = path.join(DIST_DIR, req.url === '/' ? 'index.html' : req.url);
+  const urlPath = req.url.split('?')[0].split('#')[0];
+  let file = path.join(DIST_DIR, urlPath === '/' ? 'index.html' : urlPath);
   if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) {
     file = path.join(DIST_DIR, 'index.html');
   }
