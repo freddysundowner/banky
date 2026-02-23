@@ -841,7 +841,7 @@ async def get_payroll_config(org_id: str, staff_id: str, user=Depends(get_curren
 @router.post("/{org_id}/hr/payroll-configs")
 async def create_payroll_config(org_id: str, data: PayrollConfigCreate, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin"])
+    require_role(membership, ["owner", "admin", "hr"])
     tenant_session = tenant_ctx.create_session()
     try:
         existing = tenant_session.query(PayrollConfig).filter(PayrollConfig.staff_id == data.staff_id).first()
@@ -860,7 +860,7 @@ async def create_payroll_config(org_id: str, data: PayrollConfigCreate, user=Dep
 @router.put("/{org_id}/hr/payroll-configs/{staff_id}")
 async def update_payroll_config(org_id: str, staff_id: str, data: PayrollConfigUpdate, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin"])
+    require_role(membership, ["owner", "admin", "hr"])
     tenant_session = tenant_ctx.create_session()
     try:
         config = tenant_session.query(PayrollConfig).filter(PayrollConfig.staff_id == staff_id).first()
@@ -908,7 +908,7 @@ async def list_payslips(org_id: str, pay_period: str = None, staff_id: str = Non
 async def generate_payslips(org_id: str, pay_period: str, pay_date: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     """Generate payslips for all active staff for a pay period"""
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin"])
+    require_role(membership, ["owner", "admin", "hr"])
     tenant_session = tenant_ctx.create_session()
     try:
         pay_date_parsed = datetime.strptime(pay_date, "%Y-%m-%d").date()
@@ -1013,7 +1013,7 @@ async def create_employee_document(org_id: str, data: EmployeeDocumentCreate, us
 @router.put("/{org_id}/hr/documents/{doc_id}/verify")
 async def verify_document(org_id: str, doc_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_role(membership, ["owner", "admin"])
+    require_role(membership, ["owner", "admin", "hr"])
     tenant_session = tenant_ctx.create_session()
     try:
         doc = tenant_session.query(EmployeeDocument).filter(EmployeeDocument.id == doc_id).first()
