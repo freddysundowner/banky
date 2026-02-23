@@ -283,6 +283,7 @@ export default function Home() {
     }
     return "dashboard";
   });
+  const [isSectionInitialized, setIsSectionInitialized] = useState(false);
   const [emailBannerDismissed, setEmailBannerDismissed] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showSetupProgress, setShowSetupProgress] = useState(false);
@@ -307,7 +308,7 @@ export default function Home() {
     }
   }, [activeSection, selectedOrg, queryClient]);
 
-  useSession(selectedOrg?.id);
+  const { isLoading: sessionLoading } = useSession(selectedOrg?.id);
 
   interface AttendanceStatus {
     clocked_in: boolean;
@@ -368,6 +369,11 @@ export default function Home() {
     return hasAnyPermission(item.permissions);
   });
 
+  // Reset section initialization when org changes so the loader re-gates
+  useEffect(() => {
+    setIsSectionInitialized(false);
+  }, [selectedOrg?.id]);
+
   // Redirect to first available section if current section is not accessible
   // Special sections like "upgrade" are always allowed
   const specialSections = ["upgrade", "settings", "my-account"];
@@ -379,6 +385,7 @@ export default function Home() {
         const preferredItem = filteredNavItems.find(item => item.value === "dashboard") || filteredNavItems.find(item => item.value !== "my-account") || filteredNavItems[0];
         setActiveSection(preferredItem.value);
       }
+      setIsSectionInitialized(true);
     }
   }, [selectedOrg, permissionsLoading, featuresLoading, filteredNavItems, activeSection]);
 
@@ -546,7 +553,7 @@ export default function Home() {
   const isBootstrapping =
     authLoading ||
     orgsLoading ||
-    (memberships && memberships.length > 0 && (!selectedOrg || permissionsLoading || featuresLoading));
+    (memberships && memberships.length > 0 && (!selectedOrg || sessionLoading || permissionsLoading || featuresLoading || !isSectionInitialized));
 
   if (isBootstrapping) {
     return (
@@ -556,7 +563,7 @@ export default function Home() {
         </div>
         <h1 className="text-xl font-bold mb-1">{platformName || "BankyKit"}</h1>
         <p className="text-muted-foreground text-sm mb-8">
-          {authLoading ? "Verifying session..." : orgsLoading || !selectedOrg ? "Loading your organization..." : "Loading permissions..."}
+          {authLoading ? "Verifying session..." : (orgsLoading || !selectedOrg) ? "Loading your organization..." : sessionLoading ? "Loading your workspace..." : "Preparing dashboard..."}
         </p>
         <div className="w-56 h-1.5 bg-muted rounded-full overflow-hidden">
           <div className="h-full w-2/3 bg-primary rounded-full animate-pulse" />
