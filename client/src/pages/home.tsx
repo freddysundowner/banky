@@ -369,16 +369,20 @@ export default function Home() {
     return hasAnyPermission(item.permissions);
   });
 
-  // Reset section initialization when org changes so the loader re-gates
+  // Reset section and initialization when org changes so the loader re-gates cleanly
   useEffect(() => {
     setIsSectionInitialized(false);
+    const params = new URLSearchParams(window.location.search);
+    const isPaymentReturn = params.get("payment") === "success" || params.get("payment") === "cancelled";
+    setActiveSection(isPaymentReturn ? "upgrade" : "dashboard");
   }, [selectedOrg?.id]);
 
-  // Redirect to first available section if current section is not accessible
-  // Special sections like "upgrade" are always allowed
+  // Redirect to first available section if current section is not accessible.
+  // Only runs AFTER the session has loaded so filteredNavItems reflects real permissions.
+  // Special sections like "upgrade" are always allowed.
   const specialSections = ["upgrade", "settings", "my-account"];
   useEffect(() => {
-    if (selectedOrg && !permissionsLoading && !featuresLoading && filteredNavItems.length > 0) {
+    if (selectedOrg && !sessionLoading && !permissionsLoading && !featuresLoading && filteredNavItems.length > 0) {
       const isSpecialSection = specialSections.includes(activeSection);
       const currentSectionAllowed = isSpecialSection || filteredNavItems.some(item => item.value === activeSection);
       if (!currentSectionAllowed) {
@@ -387,7 +391,7 @@ export default function Home() {
       }
       setIsSectionInitialized(true);
     }
-  }, [selectedOrg, permissionsLoading, featuresLoading, filteredNavItems, activeSection]);
+  }, [selectedOrg, sessionLoading, permissionsLoading, featuresLoading, filteredNavItems, activeSection]);
 
   const { data: memberships, isLoading: orgsLoading } = useQuery<OrganizationMembership[]>({
     queryKey: ["/api/organizations/my"],
