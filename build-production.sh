@@ -1006,6 +1006,75 @@ echo ""
 INSTALLEOF
         chmod +x packages/landing-page/bankykit-landing/install.sh
 
+        # ── install-demo.sh — uses ecosystem-demo.config.cjs, port 6003, -demo PM2 name ──
+        cat > packages/landing-page/bankykit-landing/install-demo.sh << 'INSTALLEOF'
+#!/bin/bash
+set -e
+
+GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; BLUE='\033[0;34m'; NC='\033[0m'
+print_step() { echo -e "\n${GREEN}>>> $1${NC}"; }
+print_ok()   { echo -e "${GREEN}    [OK] $1${NC}"; }
+print_err()  { echo -e "${RED}    [ERROR] $1${NC}"; exit 1; }
+
+echo ""
+echo -e "${BLUE}================================================================${NC}"
+echo -e "${BLUE}  BankyKit Landing Page - Demo Installer${NC}"
+echo -e "${BLUE}================================================================${NC}"
+echo ""
+
+if [ ! -f ecosystem-demo.config.cjs ]; then
+    print_err "ecosystem-demo.config.cjs not found. Cannot proceed."
+fi
+
+DOMAIN=$(node --input-type=commonjs -e "const c = require('./ecosystem-demo.config.cjs'); console.log(c.domain);" 2>/dev/null || echo "")
+if [ -z "$DOMAIN" ] || [ "$DOMAIN" = "undefined" ] || [ "$DOMAIN" = "null" ] || [ "$DOMAIN" = "yourdomain.com" ]; then
+    echo ""
+    echo -e "${RED}  [ERROR] Domain not set in ecosystem-demo.config.cjs${NC}"
+    echo ""
+    echo "  Open ecosystem-demo.config.cjs and set your domain:"
+    echo "    domain: \"demo.yourdomain.com\","
+    echo ""
+    exit 1
+fi
+
+BACKEND_PORT=$(node --input-type=commonjs -e "const c = require('./ecosystem-demo.config.cjs'); const p = c.backend_port; console.log((p !== undefined && p !== null) ? p : 6000);" 2>/dev/null || echo "6000")
+PREVIEW_PORT=$(node --input-type=commonjs -e "const c = require('./ecosystem-demo.config.cjs'); const p = c.port; console.log((p !== undefined && p !== null) ? p : 6003);" 2>/dev/null || echo "6003")
+
+echo -e "  Domain:       ${GREEN}${DOMAIN}${NC}"
+echo -e "  Backend port: ${GREEN}${BACKEND_PORT}${NC}"
+echo -e "  Preview port: ${GREEN}${PREVIEW_PORT}${NC}"
+echo ""
+
+print_step "Step 1/2: Installing dependencies..."
+npm install
+print_ok "Dependencies installed"
+
+print_step "Step 2/2: Building landing page..."
+npm run build
+print_ok "Landing page built to dist/"
+
+print_step "Starting landing page (demo)..."
+if command -v pm2 &>/dev/null; then
+    pm2 start ecosystem-demo.config.cjs
+    pm2 save
+    print_ok "Landing page (demo) running via PM2 on port ${PREVIEW_PORT}"
+else
+    node server.cjs &
+    print_ok "Landing page (demo) running on port ${PREVIEW_PORT}"
+fi
+
+echo ""
+echo -e "${BLUE}================================================================${NC}"
+echo -e "${GREEN}  Landing Page (Demo) installed!${NC}"
+echo -e "${BLUE}================================================================${NC}"
+echo ""
+echo "  Running on:   http://localhost:${PREVIEW_PORT}"
+echo "  Stop:         pm2 stop bankykit-demo-landing"
+echo "  Logs:         pm2 logs bankykit-demo-landing"
+echo ""
+INSTALLEOF
+        chmod +x packages/landing-page/bankykit-landing/install-demo.sh
+
         cd packages/landing-page
         zip -r bankykit-landing-v1.0.0.zip bankykit-landing
         cd ../..
