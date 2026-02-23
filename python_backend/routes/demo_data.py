@@ -208,7 +208,7 @@ def _seed_tenant(conn_str: str):
 
         # Transactions — savings deposits for each member
         for idx, (mid, savings, shares) in enumerate(
-            zip(member_ids, [r[6] for r in member_data], [r[7] for r in member_data])
+            zip(member_ids, [r[5] for r in member_data], [r[6] for r in member_data])
         ):
             txn = Transaction(
                 id=_uid(),
