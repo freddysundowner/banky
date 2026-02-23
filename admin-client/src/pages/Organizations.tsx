@@ -2,6 +2,117 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'wouter'
 
+function DemoDataPanel() {
+  const queryClient = useQueryClient()
+  const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null)
+  const [confirmClean, setConfirmClean] = useState(false)
+
+  const { data: status, isLoading: statusLoading } = useQuery({
+    queryKey: ['demo-status'],
+    queryFn: async () => {
+      const res = await fetch('/api/admin/demo-data/status', { credentials: 'include' })
+      if (!res.ok) throw new Error('Failed')
+      return res.json() as Promise<{ exists: boolean; member_count: number; loan_count: number; staff_count: number }>
+    },
+    refetchOnWindowFocus: false,
+  })
+
+  const call = async (path: string) => {
+    setMsg(null)
+    const res = await fetch(path, { method: 'POST', credentials: 'include' })
+    const data = await res.json()
+    setMsg({ text: data.message || data.detail || (res.ok ? 'Done.' : 'Error'), ok: res.ok })
+    queryClient.invalidateQueries({ queryKey: ['demo-status'] })
+    queryClient.invalidateQueries({ queryKey: ['organizations'] })
+  }
+
+  const populateMutation = useMutation({ mutationFn: () => call('/api/admin/demo-data/populate') })
+  const resetMutation    = useMutation({ mutationFn: () => call('/api/admin/demo-data/reset') })
+  const cleanMutation    = useMutation({ mutationFn: () => call('/api/admin/demo-data/clean').then(() => setConfirmClean(false)) })
+
+  const busy = populateMutation.isPending || resetMutation.isPending || cleanMutation.isPending
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-xl p-6 mb-6">
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 className="text-base font-semibold text-gray-900">Demo Data</h3>
+          <p className="text-sm text-gray-500 mt-0.5">Populate the system with one demo organization, 15 members, loans, and transactions for testing or showcasing.</p>
+        </div>
+        {!statusLoading && status?.exists && (
+          <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-50 text-green-700 text-xs font-medium rounded-full border border-green-200">
+            <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Active
+          </span>
+        )}
+      </div>
+
+      {!statusLoading && status?.exists && (
+        <div className="flex gap-6 mb-4 text-sm text-gray-600">
+          <span><strong className="text-gray-900">{status.staff_count}</strong> staff</span>
+          <span><strong className="text-gray-900">{status.member_count}</strong> members</span>
+          <span><strong className="text-gray-900">{status.loan_count}</strong> loans</span>
+        </div>
+      )}
+
+      {msg && (
+        <div className={`mb-4 px-3 py-2 rounded-lg text-sm ${msg.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+          {msg.text}
+          {msg.ok && status?.exists && <span className="ml-2 text-xs">Login: <code>demo@demo.banky</code> / <code>Demo@1234</code></span>}
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-3">
+        {!status?.exists ? (
+          <button
+            onClick={() => populateMutation.mutate()}
+            disabled={busy || statusLoading}
+            className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 disabled:opacity-50 transition"
+          >
+            {populateMutation.isPending ? 'Creating...' : 'Create Demo Data'}
+          </button>
+        ) : (
+          <>
+            <button
+              onClick={() => resetMutation.mutate()}
+              disabled={busy}
+              className="px-4 py-2 bg-amber-500 text-white text-sm font-medium rounded-lg hover:bg-amber-600 disabled:opacity-50 transition"
+            >
+              {resetMutation.isPending ? 'Resetting...' : 'Reset to Fresh Data'}
+            </button>
+
+            {!confirmClean ? (
+              <button
+                onClick={() => setConfirmClean(true)}
+                disabled={busy}
+                className="px-4 py-2 border border-red-300 text-red-600 text-sm font-medium rounded-lg hover:bg-red-50 disabled:opacity-50 transition"
+              >
+                Remove Demo Data
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-red-600">Are you sure?</span>
+                <button
+                  onClick={() => cleanMutation.mutate()}
+                  disabled={busy}
+                  className="px-3 py-1.5 bg-red-600 text-white text-sm font-medium rounded-lg hover:bg-red-700 disabled:opacity-50 transition"
+                >
+                  {cleanMutation.isPending ? 'Removing...' : 'Yes, Remove'}
+                </button>
+                <button
+                  onClick={() => setConfirmClean(false)}
+                  className="px-3 py-1.5 border border-gray-300 text-gray-600 text-sm rounded-lg hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 interface Plan {
   id: string
   name: string
@@ -89,6 +200,8 @@ export default function Organizations() {
 
   return (
     <div>
+      <DemoDataPanel />
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Organizations</h1>

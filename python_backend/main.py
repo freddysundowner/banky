@@ -40,6 +40,7 @@ from routes.dividends import router as dividends_router
 from routes.expenses import router as expenses_router
 from accounting.routes import router as accounting_router
 from routes.admin import router as admin_router
+from routes.demo_data import router as demo_data_router
 from routes.features import router as features_router
 from routes.notifications import router as notifications_router
 from routes.exports import router as exports_router
@@ -423,6 +424,7 @@ app.include_router(dividends_router, prefix="/api/organizations", tags=["Dividen
 app.include_router(expenses_router, prefix="/api", tags=["Expenses"])
 app.include_router(accounting_router, prefix="/api/organizations", tags=["Accounting"])
 app.include_router(admin_router, prefix="/api", tags=["Admin"])
+app.include_router(demo_data_router, prefix="/api", tags=["Admin"])
 app.include_router(features_router, prefix="/api/organizations", tags=["Features"])
 app.include_router(notifications_router, prefix="/api/organizations", tags=["Notifications"])
 app.include_router(exports_router, prefix="/api/organizations", tags=["Data Export"])
