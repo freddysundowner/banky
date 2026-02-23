@@ -464,7 +464,7 @@ module.exports = {
     {
       name: "bankykit-admin",
       cwd: rootDir,
-      script: "server.js",
+      script: "server.cjs",
       env: { NODE_ENV: "production" },
       autorestart: true,
     },
@@ -472,7 +472,7 @@ module.exports = {
 };
 ECOEOF
 
-        cat > packages/admin-panel/bankykit-admin/server.js << 'SERVEREOF'
+        cat > packages/admin-panel/bankykit-admin/server.cjs << 'SERVEREOF'
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -542,7 +542,7 @@ echo ""
 
 if ! command -v pm2 &>/dev/null; then
     echo -e "${GREEN}>>> Starting server (no PM2 found)...${NC}"
-    node server.js
+    node server.cjs
 else
     echo -e "${GREEN}>>> Starting with PM2...${NC}"
     pm2 start ecosystem.config.cjs
@@ -607,7 +607,7 @@ if command -v pm2 &>/dev/null; then
     pm2 save
     print_ok "Admin panel running via PM2 on port ${PREVIEW_PORT}"
 else
-    node server.js &
+    node server.cjs &
     print_ok "Admin panel running on port ${PREVIEW_PORT}"
 fi
 
@@ -669,7 +669,7 @@ module.exports = {
     {
       name: "bankykit-landing",
       cwd: rootDir,
-      script: "server.js",
+      script: "server.cjs",
       env: { NODE_ENV: "production" },
       autorestart: true,
     },
@@ -677,7 +677,7 @@ module.exports = {
 };
 ECOEOF
 
-        cat > packages/landing-page/bankykit-landing/server.js << 'SERVEREOF'
+        cat > packages/landing-page/bankykit-landing/server.cjs << 'SERVEREOF'
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -747,7 +747,7 @@ echo ""
 
 if ! command -v pm2 &>/dev/null; then
     echo -e "${GREEN}>>> Starting server (no PM2 found)...${NC}"
-    node server.js
+    node server.cjs
 else
     echo -e "${GREEN}>>> Starting with PM2...${NC}"
     pm2 start ecosystem.config.cjs
@@ -812,7 +812,7 @@ if command -v pm2 &>/dev/null; then
     pm2 save
     print_ok "Landing page running via PM2 on port ${PREVIEW_PORT}"
 else
-    node server.js &
+    node server.cjs &
     print_ok "Landing page running on port ${PREVIEW_PORT}"
 fi
 
