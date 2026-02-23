@@ -462,11 +462,13 @@ if echo "$DB_NAME" | grep -q "\-demo$"; then
     else
         echo "VITE_PRODUCTION_MODE=demo" >> .env
     fi
+    export VITE_PRODUCTION_MODE=demo
     print_ok "Demo mode enabled — login page will show demo credentials"
 else
     if grep -q "^VITE_PRODUCTION_MODE=" .env 2>/dev/null; then
         sed -i "s|^VITE_PRODUCTION_MODE=.*|VITE_PRODUCTION_MODE=|" .env
     fi
+    export VITE_PRODUCTION_MODE=
 fi
 
 npx vite build 2>&1 | tail -3
