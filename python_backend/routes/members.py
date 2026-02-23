@@ -7,6 +7,7 @@ from models.tenant import Member, Transaction, OrganizationSettings, LoanApplica
 from schemas.tenant import MemberCreate, MemberUpdate, MemberResponse
 from routes.auth import get_current_user
 from routes.common import generate_code, generate_account_number, get_tenant_session_context, require_permission, require_role
+from middleware.demo_guard import require_not_demo
 
 def try_send_sms(tenant_session, template_type: str, phone: str, name: str, context: dict, member_id=None, loan_id=None):
     """Try to send SMS, fail silently if SMS not configured"""
@@ -392,7 +393,7 @@ async def suspend_member(
         tenant_session.close()
         tenant_ctx.close()
 
-@router.delete("/{org_id}/members/{member_id}")
+@router.delete("/{org_id}/members/{member_id}", dependencies=[Depends(require_not_demo)])
 async def delete_member(
     org_id: str,
     member_id: str,

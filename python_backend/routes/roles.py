@@ -5,6 +5,7 @@ from models.tenant import Role, RolePermission
 from schemas.tenant import RoleCreate, RoleUpdate, RoleResponse
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_role, invalidate_permissions_cache
+from middleware.demo_guard import require_not_demo
 
 router = APIRouter()
 
@@ -303,7 +304,7 @@ async def update_role(
         tenant_session.close()
         tenant_ctx.close()
 
-@router.delete("/{org_id}/roles/{role_id}")
+@router.delete("/{org_id}/roles/{role_id}", dependencies=[Depends(require_not_demo)])
 async def delete_role(
     org_id: str,
     role_id: str,

@@ -5,6 +5,7 @@ from models.tenant import Branch
 from schemas.tenant import BranchCreate, BranchUpdate, BranchResponse
 from routes.auth import get_current_user
 from routes.common import generate_code, get_tenant_session_context, require_permission, require_role
+from middleware.demo_guard import require_not_demo
 
 router = APIRouter()
 
@@ -84,7 +85,7 @@ async def update_branch(
         tenant_session.close()
         tenant_ctx.close()
 
-@router.delete("/{org_id}/branches/{branch_id}")
+@router.delete("/{org_id}/branches/{branch_id}", dependencies=[Depends(require_not_demo)])
 async def delete_branch(
     org_id: str,
     branch_id: str,

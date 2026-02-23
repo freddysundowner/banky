@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from models.database import get_db
 from routes.auth import get_current_user
+from middleware.demo_guard import require_not_demo
 from routes.common import get_tenant_session_context, require_permission
 from models.tenant import ExpenseCategory, Expense, Staff, Branch
 
@@ -153,7 +154,7 @@ async def update_expense_category(org_id: str, category_id: str, data: ExpenseCa
         session.close()
         tenant_ctx.close()
 
-@router.delete("/organizations/{org_id}/expenses/categories/{category_id}")
+@router.delete("/organizations/{org_id}/expenses/categories/{category_id}", dependencies=[Depends(require_not_demo)])
 async def delete_expense_category(org_id: str, category_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
     require_permission(membership, "expenses:write", db)
@@ -329,7 +330,7 @@ async def update_expense(org_id: str, expense_id: str, data: ExpenseUpdate, user
         session.close()
         tenant_ctx.close()
 
-@router.delete("/organizations/{org_id}/expenses/{expense_id}")
+@router.delete("/organizations/{org_id}/expenses/{expense_id}", dependencies=[Depends(require_not_demo)])
 async def delete_expense(org_id: str, expense_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
     require_permission(membership, "expenses:write", db)

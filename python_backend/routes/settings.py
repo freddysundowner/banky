@@ -8,6 +8,7 @@ from models.tenant import OrganizationSettings, WorkingHours
 from schemas.tenant import OrganizationSettingCreate, OrganizationSettingResponse, WorkingHoursCreate, WorkingHoursResponse
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_role
+from middleware.demo_guard import block_critical_settings, mask_if_demo, SENSITIVE_KEYS
 from models.master import Organization
 
 router = APIRouter()
@@ -136,6 +137,17 @@ async def list_settings(org_id: str, user=Depends(get_current_user), db: Session
                     else:
                         result.append({"setting_key": field_key, "setting_value": formatted, "setting_type": field_type})
         
+        from middleware.demo_guard import is_demo_mode
+        if is_demo_mode():
+            for item in result:
+                if isinstance(item, dict):
+                    k = item.get('setting_key', '')
+                    if k in SENSITIVE_KEYS and item.get('setting_value'):
+                        item['setting_value'] = '••••••••••••'
+                else:
+                    k = getattr(item, 'setting_key', '')
+                    if k in SENSITIVE_KEYS and getattr(item, 'setting_value', None):
+                        item.setting_value = '••••••••••••'
         return result
     finally:
         tenant_session.close()
@@ -144,6 +156,7 @@ async def list_settings(org_id: str, user=Depends(get_current_user), db: Session
 @router.put("/{org_id}/settings")
 async def update_settings_bulk(org_id: str, updates: dict, user=Depends(get_current_user), db: Session = Depends(get_db)):
     from models.master import Organization
+    block_critical_settings(updates)
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
     require_role(membership, ["owner", "admin"])
     tenant_session = tenant_ctx.create_session()
@@ -247,6 +260,7 @@ async def update_setting(org_id: str, key: str, data: OrganizationSettingCreate,
 
 @router.post("/{org_id}/settings/batch")
 async def update_settings_batch(org_id: str, settings: List[OrganizationSettingCreate], user=Depends(get_current_user), db: Session = Depends(get_db)):
+    block_critical_settings({s.setting_key: s.setting_value for s in settings})
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
     require_role(membership, ["owner", "admin"])
     tenant_session = tenant_ctx.create_session()

@@ -7,6 +7,7 @@ from models.database import get_db
 from models.master import Organization, OrganizationMember, OrganizationSubscription, SubscriptionPlan, User, Session as UserSession, PasswordResetToken, EmailVerificationToken
 from schemas.organization import OrganizationCreate, OrganizationUpdate, OrganizationResponse, OrganizationMemberResponse
 from routes.auth import get_current_user
+from middleware.demo_guard import require_not_demo
 from services.neon_tenant import neon_tenant_service
 from services.tenant_context import TenantContext
 from services.feature_flags import get_deployment_mode
@@ -238,7 +239,7 @@ async def update_organization(org_id: str, data: OrganizationUpdate, user = Depe
     
     return sanitize_org(org)
 
-@router.delete("/{org_id}")
+@router.delete("/{org_id}", dependencies=[Depends(require_not_demo)])
 async def delete_organization(org_id: str, user = Depends(get_current_user), db: Session = Depends(get_db)):
     membership = db.query(OrganizationMember).filter(
         OrganizationMember.organization_id == org_id,

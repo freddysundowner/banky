@@ -8,6 +8,7 @@ from models.database import get_db
 from models.tenant import SMSNotification, SMSTemplate, Member, LoanApplication, Branch, OrganizationSettings, Transaction
 from schemas.tenant import SMSNotificationCreate, SMSNotificationResponse, SMSTemplateCreate, SMSTemplateResponse, BulkSMSCreate
 from routes.auth import get_current_user
+from middleware.demo_guard import require_not_demo
 from routes.common import get_tenant_session_context, require_permission
 from services.feature_flags import check_org_feature
 
@@ -97,7 +98,7 @@ async def list_sms_notifications(org_id: str, status: str = None, notification_t
         tenant_session.close()
         tenant_ctx.close()
 
-@router.post("/{org_id}/sms")
+@router.post("/{org_id}/sms", dependencies=[Depends(require_not_demo)])
 async def send_sms_notification(org_id: str, data: SMSNotificationCreate, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
     require_permission(membership, "sms:write", db)
@@ -138,7 +139,7 @@ async def send_sms_notification(org_id: str, data: SMSNotificationCreate, user=D
         tenant_session.close()
         tenant_ctx.close()
 
-@router.post("/{org_id}/sms/bulk")
+@router.post("/{org_id}/sms/bulk", dependencies=[Depends(require_not_demo)])
 async def send_bulk_sms(org_id: str, data: BulkSMSCreate, user=Depends(get_current_user), db: Session = Depends(get_db)):
     if not check_org_feature(org_id, "bulk_sms", db):
         raise HTTPException(status_code=403, detail="Bulk SMS is not available in your subscription plan")
@@ -303,7 +304,7 @@ async def update_sms_template(org_id: str, template_id: str, data: SMSTemplateCr
         tenant_session.close()
         tenant_ctx.close()
 
-@router.delete("/{org_id}/sms/templates/{template_id}")
+@router.delete("/{org_id}/sms/templates/{template_id}", dependencies=[Depends(require_not_demo)])
 async def delete_sms_template(org_id: str, template_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
     require_permission(membership, "sms:write", db)

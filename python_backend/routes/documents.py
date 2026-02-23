@@ -8,6 +8,7 @@ from typing import List, Optional
 from datetime import datetime
 from models.database import get_db
 from models.tenant import Member, MemberDocument, Staff, StaffDocument
+from middleware.demo_guard import require_not_demo
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission
 
@@ -169,7 +170,7 @@ async def get_document_file(org_id: str, member_id: str, document_id: str, downl
         tenant_session.close()
         tenant_ctx.close()
 
-@router.delete("/{org_id}/members/{member_id}/documents/{document_id}")
+@router.delete("/{org_id}/members/{member_id}/documents/{document_id}", dependencies=[Depends(require_not_demo)])
 async def delete_member_document(org_id: str, member_id: str, document_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
     require_permission(membership, "members:write", db)
@@ -372,7 +373,7 @@ async def get_staff_document_file(org_id: str, staff_id: str, document_id: str, 
         tenant_session.close()
         tenant_ctx.close()
 
-@router.delete("/{org_id}/staff/{staff_id}/documents/{document_id}")
+@router.delete("/{org_id}/staff/{staff_id}/documents/{document_id}", dependencies=[Depends(require_not_demo)])
 async def delete_staff_document(org_id: str, staff_id: str, document_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
     require_permission(membership, "staff:write", db)

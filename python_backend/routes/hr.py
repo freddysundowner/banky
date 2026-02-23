@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from middleware.demo_guard import require_not_demo
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
 from typing import List
@@ -199,7 +200,7 @@ async def get_performance_review(org_id: str, review_id: str, user=Depends(get_c
         tenant_session.close()
         tenant_ctx.close()
 
-@router.put("/{org_id}/hr/staff/{staff_id}/lock")
+@router.put("/{org_id}/hr/staff/{staff_id}/lock", dependencies=[Depends(require_not_demo)])
 async def lock_staff_account(org_id: str, staff_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
     require_role(membership, ["owner", "admin", "hr"])
@@ -233,7 +234,7 @@ async def unlock_staff_account(org_id: str, staff_id: str, user=Depends(get_curr
         tenant_session.close()
         tenant_ctx.close()
 
-@router.put("/{org_id}/hr/staff/{staff_id}/deactivate")
+@router.put("/{org_id}/hr/staff/{staff_id}/deactivate", dependencies=[Depends(require_not_demo)])
 async def deactivate_staff(org_id: str, staff_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
     require_role(membership, ["owner", "admin", "hr"])
@@ -270,7 +271,7 @@ async def activate_staff(org_id: str, staff_id: str, user=Depends(get_current_us
 class ResetPasswordRequest(BaseModel):
     new_password: str
 
-@router.put("/{org_id}/hr/staff/{staff_id}/reset-password")
+@router.put("/{org_id}/hr/staff/{staff_id}/reset-password", dependencies=[Depends(require_not_demo)])
 async def reset_staff_password(org_id: str, staff_id: str, request: ResetPasswordRequest, user=Depends(get_current_user), db: Session = Depends(get_db)):
     from services.auth import hash_password
     

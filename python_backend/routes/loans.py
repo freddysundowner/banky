@@ -8,6 +8,7 @@ from models.database import get_db
 from models.tenant import LoanApplication, LoanProduct, Member, LoanGuarantor, LoanExtraCharge, Transaction, Staff, LoanInstalment
 from schemas.tenant import LoanApplicationCreate, LoanApplicationUpdate, LoanApplicationResponse, LoanApplicationAction, LoanDisbursement, LoanGuarantorCreate
 from routes.auth import get_current_user
+from middleware.demo_guard import require_not_demo
 from routes.common import get_tenant_session_context, require_permission, require_any_permission, require_role
 from services.code_generator import generate_txn_code
 
@@ -1082,7 +1083,7 @@ async def get_loan_instalments(org_id: str, loan_id: str, user=Depends(get_curre
         tenant_session.close()
         tenant_ctx.close()
 
-@router.delete("/{org_id}/loans/{loan_id}")
+@router.delete("/{org_id}/loans/{loan_id}", dependencies=[Depends(require_not_demo)])
 async def delete_loan(org_id: str, loan_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
     require_role(membership, ["owner", "admin"])

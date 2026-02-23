@@ -5,6 +5,7 @@ from models.tenant import LoanProduct, LoanApplication
 from schemas.tenant import LoanProductCreate, LoanProductUpdate, LoanProductResponse
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission, require_role
+from middleware.demo_guard import require_not_demo
 from sqlalchemy import func
 
 router = APIRouter()
@@ -80,7 +81,7 @@ async def update_loan_product(
         tenant_session.close()
         tenant_ctx.close()
 
-@router.delete("/{org_id}/loan-products/{product_id}")
+@router.delete("/{org_id}/loan-products/{product_id}", dependencies=[Depends(require_not_demo)])
 async def delete_loan_product(
     org_id: str,
     product_id: str,

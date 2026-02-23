@@ -6,6 +6,7 @@ import httpx
 import os
 
 from models.database import get_db
+from middleware.demo_guard import require_not_demo
 from models.master import (
     Organization, OrganizationSubscription, SubscriptionPlan,
     SubscriptionPayment, PlatformSettings, OrganizationMember
@@ -27,7 +28,7 @@ def get_platform_sunpay_key(db: Session) -> str:
     return setting.setting_value
 
 
-@router.post("/{organization_id}/subscription/pay-mpesa")
+@router.post("/{organization_id}/subscription/pay-mpesa", dependencies=[Depends(require_not_demo)])
 async def initiate_subscription_payment(organization_id: str, data: dict, auth=Depends(get_current_user), db: Session = Depends(get_db)):
     org = db.query(Organization).filter(Organization.id == organization_id).first()
     if not org:
@@ -276,7 +277,7 @@ async def check_payment_status_endpoint(organization_id: str, payment_id: str, a
     }
 
 
-@router.post("/{organization_id}/subscription/pay-stripe")
+@router.post("/{organization_id}/subscription/pay-stripe", dependencies=[Depends(require_not_demo)])
 async def initiate_stripe_payment(organization_id: str, data: dict, auth=Depends(get_current_user), db: Session = Depends(get_db)):
     org = db.query(Organization).filter(Organization.id == organization_id).first()
     if not org:
@@ -370,7 +371,7 @@ async def initiate_stripe_payment(organization_id: str, data: dict, auth=Depends
         raise HTTPException(status_code=500, detail="Failed to create Stripe checkout session")
 
 
-@router.post("/{organization_id}/subscription/pay-paystack")
+@router.post("/{organization_id}/subscription/pay-paystack", dependencies=[Depends(require_not_demo)])
 async def initiate_paystack_payment(organization_id: str, data: dict, auth=Depends(get_current_user), db: Session = Depends(get_db)):
     org = db.query(Organization).filter(Organization.id == organization_id).first()
     if not org:

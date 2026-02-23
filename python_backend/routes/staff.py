@@ -7,6 +7,7 @@ from models.tenant import Staff, Branch, Member
 from schemas.tenant import StaffCreate, StaffUpdate, StaffResponse
 from routes.auth import get_current_user
 from routes.common import generate_code, generate_account_number, get_tenant_session_context, require_permission, require_role, invalidate_permissions_cache
+from middleware.demo_guard import require_not_demo
 
 router = APIRouter()
 
@@ -242,7 +243,7 @@ async def update_my_profile(
         tenant_session.close()
         tenant_ctx.close()
 
-@router.put("/{org_id}/staff/me/password")
+@router.put("/{org_id}/staff/me/password", dependencies=[Depends(require_not_demo)])
 async def change_my_password(
     org_id: str,
     data: dict,
@@ -462,7 +463,7 @@ async def update_staff(
         tenant_session.close()
         tenant_ctx.close()
 
-@router.delete("/{org_id}/staff/{staff_id}")
+@router.delete("/{org_id}/staff/{staff_id}", dependencies=[Depends(require_not_demo)])
 async def delete_staff(
     org_id: str,
     staff_id: str,
