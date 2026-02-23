@@ -228,28 +228,36 @@ if [ -d "venv" ] && [ -n "$VENV_PYTHON" ]; then
         print_ok "Virtual environment recreated ($($PYTHON_CMD --version))"
     fi
 else
-    # Ensure python venv module is available before creating the environment
-    if ! $PYTHON_CMD -m venv --help >/dev/null 2>&1; then
-        print_warn "python venv module not available — attempting to install it..."
-        _py_minor=$($PYTHON_CMD -c "import sys; print(sys.version_info.minor)" 2>/dev/null || echo "")
-        _py_major=$($PYTHON_CMD -c "import sys; print(sys.version_info.major)" 2>/dev/null || echo "3")
+    _py_major=$($PYTHON_CMD -c "import sys; print(sys.version_info.major)" 2>/dev/null || echo "3")
+    _py_minor=$($PYTHON_CMD -c "import sys; print(sys.version_info.minor)" 2>/dev/null || echo "")
+
+    _install_venv_pkg() {
         if command -v apt-get >/dev/null 2>&1; then
             sudo apt-get install -y "python${_py_major}.${_py_minor}-venv" >/dev/null 2>&1 || \
             sudo apt-get install -y python3-venv >/dev/null 2>&1 || true
         elif command -v dnf >/dev/null 2>&1; then
+            sudo dnf install -y "python${_py_major}-venv" >/dev/null 2>&1 || \
             sudo dnf install -y python3-venv >/dev/null 2>&1 || true
         elif command -v yum >/dev/null 2>&1; then
+            sudo yum install -y "python${_py_major}-venv" >/dev/null 2>&1 || \
             sudo yum install -y python3-venv >/dev/null 2>&1 || true
         fi
-        if ! $PYTHON_CMD -m venv --help >/dev/null 2>&1; then
-            print_err "Could not install python venv module."
+    }
+
+    if $PYTHON_CMD -m venv venv 2>/dev/null; then
+        print_ok "Python virtual environment created ($($PYTHON_CMD --version))"
+    else
+        print_warn "venv creation failed — installing python${_py_major}.${_py_minor}-venv package..."
+        _install_venv_pkg
+        rm -rf venv
+        if $PYTHON_CMD -m venv venv 2>&1; then
+            print_ok "Python virtual environment created ($($PYTHON_CMD --version))"
+        else
+            print_err "Could not create Python virtual environment."
             echo "  Run manually: sudo apt install python${_py_major}.${_py_minor}-venv"
             exit 1
         fi
-        print_ok "python venv module installed"
     fi
-    $PYTHON_CMD -m venv venv
-    print_ok "Python virtual environment created ($($PYTHON_CMD --version))"
 fi
 
 if [ -f "venv/bin/activate" ]; then
