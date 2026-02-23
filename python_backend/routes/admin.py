@@ -892,7 +892,7 @@ def delete_plan(plan_id: str, admin: AdminUser = Depends(require_admin), db: Ses
     return {"message": "Plan deleted"}
 
 import re as _re
-HERO_PLACEHOLDERS_DIR = os.path.join(os.path.dirname(__file__), "..", "uploads", "hero_placeholders")
+HERO_PLACEHOLDERS_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "uploads", "hero_placeholders")
 _VALID_SLUG = _re.compile(r'^[a-zA-Z0-9_-]{1,64}$')
 _IMAGE_EXTS = [".png", ".jpg", ".jpeg", ".webp"]
 
