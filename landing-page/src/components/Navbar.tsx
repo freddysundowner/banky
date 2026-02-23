@@ -12,6 +12,7 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
   const { platform_name, theme_primary_color } = useBranding();
   const [ctaUrl, setCtaUrl] = useState('/register');
   const [ctaText, setCtaText] = useState('Start Free Trial');
+  const [signInUrl, setSignInUrl] = useState('/login');
 
   useEffect(() => {
     fetch('/api/public/landing-settings')
@@ -19,6 +20,7 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
       .then(data => {
         if (data.cta_primary_url) setCtaUrl(data.cta_primary_url);
         if (data.cta_primary_text) setCtaText(data.cta_primary_text);
+        if (data.app_url) setSignInUrl(data.app_url);
       })
       .catch(() => {});
   }, []);
@@ -47,7 +49,7 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
             </div>
             
             <div className="hidden md:flex items-center gap-4">
-              <a href="/login" className="px-4 py-2 text-gray-700 hover:text-gray-900 transition">Sign In</a>
+              <a href={signInUrl} className="px-4 py-2 text-gray-700 hover:text-gray-900 transition">Sign In</a>
               <a 
                 href={ctaUrl} 
                 className="px-4 py-2 text-white rounded-lg transition"
@@ -77,7 +79,7 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
             <Link href="/contact" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
             <a href="/#faq" className="py-3 text-lg text-gray-700" onClick={() => setMobileMenuOpen(false)}>FAQ</a>
             <hr className="my-2" />
-            <a href="/login" className="py-3 text-center border border-gray-300 rounded-lg" onClick={() => setMobileMenuOpen(false)}>Sign In</a>
+            <a href={signInUrl} className="py-3 text-center border border-gray-300 rounded-lg" onClick={() => setMobileMenuOpen(false)}>Sign In</a>
             <a 
               href={ctaUrl} 
               className="py-3 text-center text-white rounded-lg" 
