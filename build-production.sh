@@ -588,10 +588,8 @@ http.createServer((req, res) => {
     req.pipe(proxy);
     return;
   }
-  const BASE = '/admin';
   const urlPath = req.url.split('?')[0].split('#')[0];
-  const filePath = urlPath.startsWith(BASE) ? (urlPath.slice(BASE.length) || '/') : urlPath;
-  let file = path.join(DIST_DIR, filePath === '/' ? 'index.html' : filePath);
+  let file = path.join(DIST_DIR, urlPath === '/' ? 'index.html' : urlPath);
   if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) {
     file = path.join(DIST_DIR, 'index.html');
   }
@@ -682,7 +680,7 @@ npm install
 print_ok "Dependencies installed"
 
 print_step "Step 2/2: Building admin panel..."
-npm run build
+npx vite build --base=/
 print_ok "Admin panel built to dist/"
 
 print_step "Starting admin panel..."
@@ -751,7 +749,7 @@ npm install
 print_ok "Dependencies installed"
 
 print_step "Step 2/2: Building admin panel..."
-npm run build
+npx vite build --base=/
 print_ok "Admin panel built to dist/"
 
 print_step "Starting admin panel (demo)..."
