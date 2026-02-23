@@ -20,7 +20,7 @@ DB_NAME="bankykit"
 
 echo ""
 echo -e "${BLUE}================================================================${NC}"
-echo -e "${BLUE}  BANKYKIT - Bank & Sacco Management System${NC}"
+echo -e "${BLUE}  BankyKit - Bank & Sacco Management System${NC}"
 echo -e "${BLUE}  Installer${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
@@ -295,8 +295,19 @@ if ! command -v psql >/dev/null 2>&1; then
             exit 1
         fi
     elif [ "$PLATFORM" = "linux" ]; then
-        sudo apt-get update -q
-        sudo apt-get install -y postgresql postgresql-contrib -q
+        if command -v apt-get >/dev/null 2>&1; then
+            sudo apt-get update -q
+            sudo apt-get install -y postgresql postgresql-contrib -q
+        elif command -v dnf >/dev/null 2>&1; then
+            sudo dnf install -y postgresql-server postgresql-contrib
+            sudo postgresql-setup --initdb 2>/dev/null || true
+        elif command -v yum >/dev/null 2>&1; then
+            sudo yum install -y postgresql-server postgresql-contrib
+            sudo postgresql-setup initdb 2>/dev/null || true
+        else
+            print_err "No supported package manager found (apt/dnf/yum). Install PostgreSQL manually."
+            exit 1
+        fi
         sudo systemctl enable postgresql
         sudo systemctl start postgresql
         print_ok "PostgreSQL installed and started"
@@ -425,7 +436,7 @@ echo -e "${BLUE}================================================================
 echo -e "${GREEN}  Installation Complete!${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
-echo "  To start BANKYKIT:"
+echo "  To start BankyKit:"
 echo ""
 echo "    ./start.sh"
 echo ""
