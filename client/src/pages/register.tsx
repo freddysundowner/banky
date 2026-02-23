@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Landmark, Eye, EyeOff } from "lucide-react";
+import { Landmark, Eye, EyeOff, ShieldCheck, Users, CreditCard, BarChart3, Lock } from "lucide-react";
 import { useBranding } from "@/context/BrandingContext";
 
 const registerSchema = z.object({
@@ -35,6 +35,13 @@ const registerSchema = z.object({
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
+
+const FEATURES = [
+  { icon: Users, text: "Member & account management" },
+  { icon: CreditCard, text: "Loan processing & repayments" },
+  { icon: BarChart3, text: "Real-time reports & analytics" },
+  { icon: ShieldCheck, text: "Role-based access control" },
+];
 
 export default function Register() {
   const [, navigate] = useLocation();
@@ -78,17 +85,63 @@ export default function Register() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-background to-blue-50/30 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg">
-        <div className="flex flex-col items-center mb-6">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary mb-3">
-            <Landmark className="h-6 w-6 text-primary-foreground" />
+    <div className="min-h-screen flex">
+      <div className="hidden lg:flex lg:w-[52%] bg-primary flex-col justify-between p-12 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-blue-800 opacity-100" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
+
+        <div className="relative z-10">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm border border-white/20">
+              <Landmark className="h-6 w-6 text-white" />
+            </div>
+            <span className="text-white font-bold text-xl tracking-tight">{platform_name}</span>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
-          <p className="text-muted-foreground text-sm mt-1">Get started with {platform_name} in minutes</p>
         </div>
 
-        <div className="bg-card border border-border rounded-xl shadow-sm p-6 sm:p-8">
+        <div className="relative z-10 flex-1 flex flex-col justify-center">
+          <h2 className="text-white text-4xl font-bold leading-tight mb-4">
+            Get started in<br />minutes
+          </h2>
+          <p className="text-blue-100 text-base mb-10 leading-relaxed max-w-sm">
+            Set up your organization and start managing members, loans, and finances — all from one powerful platform.
+          </p>
+
+          <div className="space-y-4">
+            {FEATURES.map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 shrink-0">
+                  <Icon className="h-4 w-4 text-white" />
+                </div>
+                <span className="text-blue-50 text-sm font-medium">{text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative z-10">
+          <div className="flex items-center gap-2 text-blue-200 text-xs">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            <span>Bank-grade security · Multi-tenant architecture · Role-based access</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col items-center justify-center p-6 sm:p-10 bg-background overflow-y-auto">
+        <div className="w-full max-w-[440px] py-8">
+          <div className="lg:hidden flex items-center gap-2.5 mb-8">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+              <Landmark className="h-5 w-5 text-primary-foreground" />
+            </div>
+            <span className="font-bold text-lg">{platform_name}</span>
+          </div>
+
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-foreground mb-1">Create your account</h1>
+            <p className="text-muted-foreground text-sm">Get started with {platform_name} in minutes</p>
+          </div>
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit((data) => registerMutation.mutate(data))} className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-2">
@@ -97,9 +150,9 @@ export default function Register() {
                   name="firstName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>First Name</FormLabel>
+                      <FormLabel className="text-sm font-medium">First Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="John" {...field} data-testid="input-firstname" />
+                        <Input className="h-11" placeholder="John" {...field} data-testid="input-firstname" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -110,9 +163,9 @@ export default function Register() {
                   name="lastName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Last Name</FormLabel>
+                      <FormLabel className="text-sm font-medium">Last Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Doe" {...field} data-testid="input-lastname" />
+                        <Input className="h-11" placeholder="Doe" {...field} data-testid="input-lastname" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -125,9 +178,9 @@ export default function Register() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel className="text-sm font-medium">Email address</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="you@example.com" {...field} data-testid="input-email" />
+                      <Input className="h-11" type="email" placeholder="you@example.com" {...field} data-testid="input-email" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -139,9 +192,11 @@ export default function Register() {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone <span className="text-muted-foreground font-normal">(optional)</span></FormLabel>
+                    <FormLabel className="text-sm font-medium">
+                      Phone <span className="text-muted-foreground font-normal">(optional)</span>
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="+254 700 000 000" {...field} data-testid="input-phone" />
+                      <Input className="h-11" placeholder="+254 700 000 000" {...field} data-testid="input-phone" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -154,13 +209,13 @@ export default function Register() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Password</FormLabel>
+                      <FormLabel className="text-sm font-medium">Password</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
                             type={showPassword ? "text" : "password"}
                             placeholder="Min. 8 characters"
-                            className="pr-10"
+                            className="h-11 pr-10"
                             {...field}
                             data-testid="input-password"
                           />
@@ -184,13 +239,13 @@ export default function Register() {
                   name="confirmPassword"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Confirm Password</FormLabel>
+                      <FormLabel className="text-sm font-medium">Confirm Password</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Input
                             type={showConfirmPassword ? "text" : "password"}
                             placeholder="Repeat password"
-                            className="pr-10"
+                            className="h-11 pr-10"
                             {...field}
                             data-testid="input-confirm-password"
                           />
@@ -215,31 +270,23 @@ export default function Register() {
                 name="acceptTerms"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="flex items-center gap-2 pt-1">
+                    <div className="flex items-start gap-2.5 pt-1">
                       <FormControl>
                         <input
                           type="checkbox"
                           checked={field.value}
                           onChange={field.onChange}
-                          className="h-4 w-4 rounded border-border accent-primary cursor-pointer shrink-0"
+                          className="h-4 w-4 mt-0.5 rounded border-border accent-primary cursor-pointer shrink-0"
                           data-testid="checkbox-accept-terms"
                         />
                       </FormControl>
-                      <FormLabel className="text-sm font-normal leading-none cursor-pointer">
+                      <FormLabel className="text-sm font-normal leading-snug cursor-pointer">
                         I agree to the{" "}
-                        <Link
-                          href="/terms"
-                          className="text-primary hover:underline font-medium"
-                          data-testid="link-terms"
-                        >
+                        <Link href="/terms" className="text-primary hover:underline font-medium" data-testid="link-terms">
                           Terms of Service
                         </Link>{" "}
                         and{" "}
-                        <Link
-                          href="/privacy"
-                          className="text-primary hover:underline font-medium"
-                          data-testid="link-privacy"
-                        >
+                        <Link href="/privacy" className="text-primary hover:underline font-medium" data-testid="link-privacy">
                           Privacy Policy
                         </Link>
                       </FormLabel>
@@ -251,7 +298,7 @@ export default function Register() {
 
               <Button
                 type="submit"
-                className="w-full mt-2"
+                className="w-full h-11 font-semibold"
                 disabled={registerMutation.isPending}
                 data-testid="button-register"
               >
@@ -260,21 +307,31 @@ export default function Register() {
             </form>
           </Form>
 
-          <div className="mt-5 pt-5 border-t border-border text-center text-sm">
-            <span className="text-muted-foreground">Already have an account? </span>
-            <Link href="/login" className="text-primary hover:underline font-medium" data-testid="link-login">
+          <p className="mt-5 text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link href="/login" className="text-primary font-medium hover:underline" data-testid="link-login">
               Sign in
             </Link>
+          </p>
+
+          <div className="mt-8 flex flex-col items-center gap-3">
+            <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
+              <Lock className="h-3 w-3" />
+              <span>Secured with end-to-end encryption</span>
+            </div>
+            {guide_url && (
+              <a
+                href={guide_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-primary hover:underline"
+                data-testid="link-view-guide"
+              >
+                View Documentation Guide
+              </a>
+            )}
           </div>
         </div>
-
-        <p className="mt-4 text-center">
-          {guide_url && (
-            <a href={guide_url} target="_blank" rel="noopener noreferrer" className="text-xs text-muted-foreground hover:underline" data-testid="link-view-guide">
-              View Guide
-            </a>
-          )}
-        </p>
       </div>
     </div>
   );
