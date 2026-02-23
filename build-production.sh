@@ -373,7 +373,7 @@ module.exports = {
       name: "bankykit-api",
       cwd: path.join(rootDir, "python_backend"),
       script: path.join(rootDir, "venv", "bin", "python3"),
-      args: "-m uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2",
+      args: `-m uvicorn main:app --host 0.0.0.0 --port ${envVars.PORT || 8000} --workers 2`,
       interpreter: "none",
       env: { ...envVars, NODE_ENV: "production" },
       max_memory_restart: "500M",
