@@ -454,6 +454,9 @@ module.exports = {
   // ─── Local preview port (access at http://localhost:PORT) ───
   port: 5002,
 
+  // ─── Port your BankyKit backend is running on ───
+  backend_port: 8000,
+
   apps: [
     {
       name: "bankykit-admin",
@@ -522,7 +525,11 @@ if [ -z "$ADMIN_DOMAIN" ] || [ "$ADMIN_DOMAIN" = "admin.yourdomain.com" ]; then
     print_err "Please set your domain in ecosystem.config.js before running install.sh"
 fi
 
-echo -e "  Domain: ${GREEN}${ADMIN_DOMAIN}${NC}"
+BACKEND_PORT=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.backend_port || 8000);")
+PREVIEW_PORT=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.port || 5002);")
+
+echo -e "  Domain:       ${GREEN}${ADMIN_DOMAIN}${NC}"
+echo -e "  Backend port: ${GREEN}${BACKEND_PORT}${NC}"
 echo ""
 
 print_step "Step 1/3: Installing dependencies..."
@@ -549,7 +556,7 @@ server {
     }
 
     location /api/ {
-        proxy_pass http://127.0.0.1:8000/;
+        proxy_pass http://127.0.0.1:${BACKEND_PORT}/;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -559,7 +566,7 @@ NGINXEOF
 
 sudo ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/bankykit-admin
 sudo nginx -t && sudo nginx -s reload
-print_ok "Nginx configured for ${ADMIN_DOMAIN}"
+print_ok "Nginx configured for ${ADMIN_DOMAIN} → backend :${BACKEND_PORT}"
 
 echo ""
 echo -e "${BLUE}================================================================${NC}"
@@ -567,7 +574,7 @@ echo -e "${GREEN}  Admin Panel installed!${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
 echo "  Live (Nginx):   http://${ADMIN_DOMAIN}"
-echo "  Local preview:  ./start.sh  →  http://localhost:5002"
+echo "  Local preview:  ./start.sh  →  http://localhost:${PREVIEW_PORT}"
 echo "  Add SSL:        sudo certbot --nginx -d ${ADMIN_DOMAIN}"
 echo ""
 INSTALLEOF
@@ -611,6 +618,9 @@ module.exports = {
 
   // ─── Local preview port (access at http://localhost:PORT) ───
   port: 5003,
+
+  // ─── Port your BankyKit backend is running on ───
+  backend_port: 8000,
 
   apps: [
     {
@@ -680,7 +690,11 @@ if [ -z "$DOMAIN" ] || [ "$DOMAIN" = "yourdomain.com" ]; then
     print_err "Please set your domain in ecosystem.config.js before running install.sh"
 fi
 
-echo -e "  Domain: ${GREEN}${DOMAIN}${NC}"
+BACKEND_PORT=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.backend_port || 8000);")
+PREVIEW_PORT=$(node -e "const c = require('./ecosystem.config.js'); console.log(c.port || 5003);")
+
+echo -e "  Domain:       ${GREEN}${DOMAIN}${NC}"
+echo -e "  Backend port: ${GREEN}${BACKEND_PORT}${NC}"
 echo ""
 
 print_step "Step 1/3: Installing dependencies..."
@@ -707,7 +721,7 @@ server {
     }
 
     location /api/ {
-        proxy_pass http://127.0.0.1:8000/;
+        proxy_pass http://127.0.0.1:${BACKEND_PORT}/;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -717,7 +731,7 @@ NGINXEOF
 
 sudo ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/bankykit-landing
 sudo nginx -t && sudo nginx -s reload
-print_ok "Nginx configured for ${DOMAIN} and www.${DOMAIN}"
+print_ok "Nginx configured for ${DOMAIN} → backend :${BACKEND_PORT}"
 
 echo ""
 echo -e "${BLUE}================================================================${NC}"
@@ -725,7 +739,7 @@ echo -e "${GREEN}  Landing Page installed!${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
 echo "  Live (Nginx):   http://${DOMAIN}"
-echo "  Local preview:  ./start.sh  →  http://localhost:5003"
+echo "  Local preview:  ./start.sh  →  http://localhost:${PREVIEW_PORT}"
 echo "  Add SSL:        sudo certbot --nginx -d ${DOMAIN} -d www.${DOMAIN}"
 echo ""
 INSTALLEOF
