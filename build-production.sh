@@ -461,8 +461,8 @@ module.exports = {
     {
       name: "bankykit-admin",
       cwd: rootDir,
-      script: "npx",
-      args: `vite preview --port 5002 --host 0.0.0.0`,
+      script: "node",
+      args: "server.js",
       interpreter: "none",
       env: { NODE_ENV: "production" },
       autorestart: true,
@@ -471,6 +471,56 @@ module.exports = {
 };
 ECOEOF
 
+        cat > packages/admin-panel/bankykit-admin/server.js << 'SERVEREOF'
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const config = require('./ecosystem.config.cjs');
+
+const PORT = config.port || 5002;
+const BACKEND_PORT = config.backend_port || 8000;
+const DIST_DIR = path.join(__dirname, 'dist');
+
+const MIME = {
+  '.html': 'text/html', '.js': 'application/javascript',
+  '.css': 'text/css', '.json': 'application/json',
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+  '.svg': 'image/svg+xml', '.ico': 'image/x-icon',
+  '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf',
+};
+
+http.createServer((req, res) => {
+  if (req.url.startsWith('/api/')) {
+    const opts = {
+      hostname: '127.0.0.1', port: BACKEND_PORT,
+      path: req.url, method: req.method, headers: req.headers,
+    };
+    const proxy = http.request(opts, (back) => {
+      res.writeHead(back.statusCode, back.headers);
+      back.pipe(res);
+    });
+    proxy.on('error', () => {
+      res.writeHead(502, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Backend not reachable on port ' + BACKEND_PORT }));
+    });
+    req.pipe(proxy);
+    return;
+  }
+  let file = path.join(DIST_DIR, req.url === '/' ? 'index.html' : req.url);
+  if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) {
+    file = path.join(DIST_DIR, 'index.html');
+  }
+  fs.readFile(file, (err, data) => {
+    if (err) { res.writeHead(404); res.end('Not found'); return; }
+    res.writeHead(200, { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream' });
+    res.end(data);
+  });
+}).listen(PORT, '0.0.0.0', () => {
+  console.log('BankyKit Admin Panel running at http://localhost:' + PORT);
+  console.log('Proxying /api/ -> http://127.0.0.1:' + BACKEND_PORT);
+});
+SERVEREOF
+
         cat > packages/admin-panel/bankykit-admin/start.sh << 'STARTEOF'
 #!/bin/bash
 set -e
@@ -478,16 +528,20 @@ set -e
 GREEN='\033[0;32m'; BLUE='\033[0;34m'; NC='\033[0m'
 
 PORT=$(node --input-type=commonjs -e "const c = require('./ecosystem.config.cjs'); console.log(c.port || 5002);" 2>/dev/null || echo "5002")
+BACKEND_PORT=$(node --input-type=commonjs -e "const c = require('./ecosystem.config.cjs'); console.log(c.backend_port || 8000);" 2>/dev/null || echo "8000")
 
 echo ""
 echo -e "${BLUE}================================================================${NC}"
 echo -e "${BLUE}  BankyKit Admin Panel - Starting${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
+echo "  Preview port:   ${PORT}"
+echo "  Backend port:   ${BACKEND_PORT}"
+echo ""
 
 if ! command -v pm2 &>/dev/null; then
-    echo -e "${GREEN}>>> Starting with Vite preview (no PM2 found)...${NC}"
-    npx vite preview --port "$PORT" --host 0.0.0.0
+    echo -e "${GREEN}>>> Starting server (no PM2 found)...${NC}"
+    node server.js
 else
     echo -e "${GREEN}>>> Starting with PM2...${NC}"
     pm2 start ecosystem.config.cjs
@@ -632,8 +686,8 @@ module.exports = {
     {
       name: "bankykit-landing",
       cwd: rootDir,
-      script: "npx",
-      args: `vite preview --port 5003 --host 0.0.0.0`,
+      script: "node",
+      args: "server.js",
       interpreter: "none",
       env: { NODE_ENV: "production" },
       autorestart: true,
@@ -642,6 +696,56 @@ module.exports = {
 };
 ECOEOF
 
+        cat > packages/landing-page/bankykit-landing/server.js << 'SERVEREOF'
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const config = require('./ecosystem.config.cjs');
+
+const PORT = config.port || 5003;
+const BACKEND_PORT = config.backend_port || 8000;
+const DIST_DIR = path.join(__dirname, 'dist');
+
+const MIME = {
+  '.html': 'text/html', '.js': 'application/javascript',
+  '.css': 'text/css', '.json': 'application/json',
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+  '.svg': 'image/svg+xml', '.ico': 'image/x-icon',
+  '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf',
+};
+
+http.createServer((req, res) => {
+  if (req.url.startsWith('/api/')) {
+    const opts = {
+      hostname: '127.0.0.1', port: BACKEND_PORT,
+      path: req.url, method: req.method, headers: req.headers,
+    };
+    const proxy = http.request(opts, (back) => {
+      res.writeHead(back.statusCode, back.headers);
+      back.pipe(res);
+    });
+    proxy.on('error', () => {
+      res.writeHead(502, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Backend not reachable on port ' + BACKEND_PORT }));
+    });
+    req.pipe(proxy);
+    return;
+  }
+  let file = path.join(DIST_DIR, req.url === '/' ? 'index.html' : req.url);
+  if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) {
+    file = path.join(DIST_DIR, 'index.html');
+  }
+  fs.readFile(file, (err, data) => {
+    if (err) { res.writeHead(404); res.end('Not found'); return; }
+    res.writeHead(200, { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream' });
+    res.end(data);
+  });
+}).listen(PORT, '0.0.0.0', () => {
+  console.log('BankyKit Landing Page running at http://localhost:' + PORT);
+  console.log('Proxying /api/ -> http://127.0.0.1:' + BACKEND_PORT);
+});
+SERVEREOF
+
         cat > packages/landing-page/bankykit-landing/start.sh << 'STARTEOF'
 #!/bin/bash
 set -e
@@ -649,16 +753,20 @@ set -e
 GREEN='\033[0;32m'; BLUE='\033[0;34m'; NC='\033[0m'
 
 PORT=$(node --input-type=commonjs -e "const c = require('./ecosystem.config.cjs'); console.log(c.port || 5003);" 2>/dev/null || echo "5003")
+BACKEND_PORT=$(node --input-type=commonjs -e "const c = require('./ecosystem.config.cjs'); console.log(c.backend_port || 8000);" 2>/dev/null || echo "8000")
 
 echo ""
 echo -e "${BLUE}================================================================${NC}"
 echo -e "${BLUE}  BankyKit Landing Page - Starting${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
+echo "  Preview port:   ${PORT}"
+echo "  Backend port:   ${BACKEND_PORT}"
+echo ""
 
 if ! command -v pm2 &>/dev/null; then
-    echo -e "${GREEN}>>> Starting with Vite preview (no PM2 found)...${NC}"
-    npx vite preview --port "$PORT" --host 0.0.0.0
+    echo -e "${GREEN}>>> Starting server (no PM2 found)...${NC}"
+    node server.js
 else
     echo -e "${GREEN}>>> Starting with PM2...${NC}"
     pm2 start ecosystem.config.cjs
