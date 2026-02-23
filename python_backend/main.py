@@ -288,7 +288,7 @@ def run_master_migrations():
             ("working_hours_start", "TIME"),
             ("working_hours_end", "TIME"),
             ("working_days", "JSONB"),
-            ("currency", "VARCHAR(10) DEFAULT 'KES'"),
+            ("currency", "VARCHAR(10) DEFAULT 'USD'"),
             ("financial_year_start", "VARCHAR(10)"),
             ("enforce_working_hours", "BOOLEAN DEFAULT FALSE"),
             ("require_clock_in", "BOOLEAN DEFAULT FALSE"),

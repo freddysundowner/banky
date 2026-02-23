@@ -135,7 +135,7 @@ const createOrgSchema = z.object({
   address: z.string().optional(),
   staffEmailDomain: z.string().min(3, "Staff email domain is required (e.g. mysacco.co.ke)"),
   deploymentMode: z.enum(["saas", "standalone"]),
-  currency: z.string().default("KES"),
+  currency: z.string().default("USD"),
 });
 
 const updateOrgSchema = z.object({
@@ -386,7 +386,7 @@ export default function Home() {
       const isSpecialSection = specialSections.includes(activeSection);
       const currentSectionAllowed = isSpecialSection || filteredNavItems.some(item => item.value === activeSection);
       if (!currentSectionAllowed) {
-        const preferredItem = filteredNavItems.find(item => item.value === "dashboard") || filteredNavItems.find(item => item.value !== "my-account") || filteredNavItems[0];
+        const preferredItem = filteredNavItems.find(item => item.value !== "my-account") || filteredNavItems[0];
         setActiveSection(preferredItem.value);
       }
       setIsSectionInitialized(true);
@@ -407,7 +407,7 @@ export default function Home() {
       phone: "",
       address: "",
       deploymentMode: "saas",
-      currency: "KES",
+      currency: "USD",
     },
   });
 

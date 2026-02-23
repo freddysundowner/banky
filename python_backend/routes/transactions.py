@@ -469,7 +469,7 @@ async def create_transaction(org_id: str, data: TransactionCreate, request: Requ
             currency_setting = tenant_session.query(OrganizationSettings).filter(
                 OrganizationSettings.setting_key == "currency"
             ).first()
-            currency = currency_setting.setting_value if currency_setting else "KES"
+            currency = currency_setting.setting_value if currency_setting else "USD"
             sms_template = "deposit_received" if data.transaction_type == "deposit" else "withdrawal_processed"
             try_send_sms(
                 tenant_session,
@@ -570,7 +570,7 @@ async def get_member_statement_pdf(
         currency_setting = tenant_session.query(OrganizationSettings).filter(
             OrganizationSettings.setting_key == "currency_symbol"
         ).first()
-        symbol = currency_setting.setting_value if currency_setting else "KES"
+        symbol = currency_setting.setting_value if currency_setting else "USD"
 
         org_name_setting = tenant_session.query(OrganizationSettings).filter(
             OrganizationSettings.setting_key == "organization_name"

@@ -9,7 +9,7 @@ class OrganizationCreate(BaseModel):
     phone: Optional[str] = None
     address: Optional[str] = None
     staffEmailDomain: Optional[str] = None
-    currency: Optional[str] = "KES"
+    currency: Optional[str] = "USD"
 
 class OrganizationUpdate(BaseModel):
     name: Optional[str] = None
@@ -27,7 +27,7 @@ class OrganizationResponse(BaseModel):
     email: Optional[str] = None
     phone: Optional[str] = None
     address: Optional[str] = None
-    currency: Optional[str] = "KES"
+    currency: Optional[str] = "USD"
     is_active: Optional[bool] = True
     created_at: datetime
     

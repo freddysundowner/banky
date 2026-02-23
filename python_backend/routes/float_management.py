@@ -18,9 +18,9 @@ def get_org_currency(session):
     from models.tenant import OrganizationSettings
     try:
         setting = session.query(OrganizationSettings).filter(OrganizationSettings.setting_key == "currency").first()
-        return setting.setting_value if setting else "KES"
+        return setting.setting_value if setting else "USD"
     except:
-        return "KES"
+        return "USD"
 
 def post_float_allocation_to_gl(tenant_session, staff_name: str, amount: Decimal, txn_type: str, branch_name: str = ""):
     """Post float allocation/return to General Ledger. Returns error message if failed, None if successful."""

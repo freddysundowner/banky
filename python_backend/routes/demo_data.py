@@ -13,7 +13,7 @@ from models.master import (
 )
 from models.tenant import (
     TenantBase, Branch, Staff, Member, LoanProduct, LoanApplication,
-    LoanRepayment, Transaction
+    LoanRepayment, Transaction, OrganizationSettings
 )
 from routes.admin import require_admin
 from models.master import AdminUser
@@ -353,6 +353,14 @@ def _seed_tenant(conn_str: str):
                         payment_date=disbursed_at + timedelta(days=30 * (mo + 1)),
                         received_by_id=teller_id,
                     ))
+
+        # Organization settings — currency and timezone
+        for key, value in [("currency", "USD"), ("currency_symbol", "$"), ("timezone", "UTC")]:
+            existing = tdb.query(OrganizationSettings).filter(OrganizationSettings.setting_key == key).first()
+            if existing:
+                existing.setting_value = value
+            else:
+                tdb.add(OrganizationSettings(setting_key=key, setting_value=value))
 
         tdb.commit()
 

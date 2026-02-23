@@ -22,9 +22,9 @@ def get_org_currency(session):
     from models.tenant import OrganizationSettings
     try:
         setting = session.query(OrganizationSettings).filter(OrganizationSettings.setting_key == "currency").first()
-        return setting.setting_value if setting else "KES"
+        return setting.setting_value if setting else "USD"
     except:
-        return "KES"
+        return "USD"
 
 router = APIRouter()
 

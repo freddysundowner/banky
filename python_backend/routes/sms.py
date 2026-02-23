@@ -417,7 +417,7 @@ def send_sms_with_template(tenant_session, template_type: str, recipient_phone: 
             currency_setting = tenant_session.query(OrganizationSettings).filter(
                 OrganizationSettings.setting_key == "currency"
             ).first()
-            context["currency"] = currency_setting.setting_value if currency_setting else "KES"
+            context["currency"] = currency_setting.setting_value if currency_setting else "USD"
         message = process_template(template.message_template, context)
     else:
         return {"success": False, "error": f"Template {template_type} not found"}
