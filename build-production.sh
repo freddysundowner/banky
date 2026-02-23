@@ -599,46 +599,28 @@ print_step "Step 1/3: Installing dependencies..."
 npm install
 print_ok "Dependencies installed"
 
-print_step "Step 2/3: Building admin panel..."
+print_step "Step 2/2: Building admin panel..."
 npm run build
 print_ok "Admin panel built to dist/"
 
-print_step "Step 3/3: Configuring Nginx..."
-NGINX_CONF="/etc/nginx/sites-available/bankykit-admin"
-APP_DIR=$(pwd)
-
-sudo tee "$NGINX_CONF" > /dev/null << NGINXEOF
-server {
-    listen 80;
-    server_name ${ADMIN_DOMAIN};
-    root ${APP_DIR}/dist;
-    index index.html;
-
-    location / {
-        try_files \$uri \$uri/ /index.html;
-    }
-
-    location /api/ {
-        proxy_pass http://127.0.0.1:${BACKEND_PORT};
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-    }
-}
-NGINXEOF
-
-sudo ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/bankykit-admin
-sudo nginx -t && sudo nginx -s reload
-print_ok "Nginx configured for ${ADMIN_DOMAIN} → backend :${BACKEND_PORT}"
+print_step "Starting admin panel..."
+if command -v pm2 &>/dev/null; then
+    pm2 start ecosystem.config.cjs
+    pm2 save
+    print_ok "Admin panel running via PM2 on port ${PREVIEW_PORT}"
+else
+    node server.js &
+    print_ok "Admin panel running on port ${PREVIEW_PORT}"
+fi
 
 echo ""
 echo -e "${BLUE}================================================================${NC}"
 echo -e "${GREEN}  Admin Panel installed!${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
-echo "  Live (Nginx):   http://${ADMIN_DOMAIN}"
-echo "  Local preview:  ./start.sh  →  http://localhost:${PREVIEW_PORT}"
-echo "  Add SSL:        sudo certbot --nginx -d ${ADMIN_DOMAIN}"
+echo "  Running on:   http://localhost:${PREVIEW_PORT}"
+echo "  Stop:         pm2 stop bankykit-admin"
+echo "  Logs:         pm2 logs bankykit-admin"
 echo ""
 INSTALLEOF
         chmod +x packages/admin-panel/bankykit-admin/install.sh
@@ -824,46 +806,28 @@ print_step "Step 1/3: Installing dependencies..."
 npm install
 print_ok "Dependencies installed"
 
-print_step "Step 2/3: Building landing page..."
+print_step "Step 2/2: Building landing page..."
 npm run build
 print_ok "Landing page built to dist/"
 
-print_step "Step 3/3: Configuring Nginx..."
-NGINX_CONF="/etc/nginx/sites-available/bankykit-landing"
-APP_DIR=$(pwd)
-
-sudo tee "$NGINX_CONF" > /dev/null << NGINXEOF
-server {
-    listen 80;
-    server_name ${DOMAIN} www.${DOMAIN};
-    root ${APP_DIR}/dist;
-    index index.html;
-
-    location / {
-        try_files \$uri \$uri/ /index.html;
-    }
-
-    location /api/ {
-        proxy_pass http://127.0.0.1:${BACKEND_PORT};
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-    }
-}
-NGINXEOF
-
-sudo ln -sf "$NGINX_CONF" /etc/nginx/sites-enabled/bankykit-landing
-sudo nginx -t && sudo nginx -s reload
-print_ok "Nginx configured for ${DOMAIN} → backend :${BACKEND_PORT}"
+print_step "Starting landing page..."
+if command -v pm2 &>/dev/null; then
+    pm2 start ecosystem.config.cjs
+    pm2 save
+    print_ok "Landing page running via PM2 on port ${PREVIEW_PORT}"
+else
+    node server.js &
+    print_ok "Landing page running on port ${PREVIEW_PORT}"
+fi
 
 echo ""
 echo -e "${BLUE}================================================================${NC}"
 echo -e "${GREEN}  Landing Page installed!${NC}"
 echo -e "${BLUE}================================================================${NC}"
 echo ""
-echo "  Live (Nginx):   http://${DOMAIN}"
-echo "  Local preview:  ./start.sh  →  http://localhost:${PREVIEW_PORT}"
-echo "  Add SSL:        sudo certbot --nginx -d ${DOMAIN} -d www.${DOMAIN}"
+echo "  Running on:   http://localhost:${PREVIEW_PORT}"
+echo "  Stop:         pm2 stop bankykit-landing"
+echo "  Logs:         pm2 logs bankykit-landing"
 echo ""
 INSTALLEOF
         chmod +x packages/landing-page/bankykit-landing/install.sh
