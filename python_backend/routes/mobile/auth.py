@@ -318,6 +318,12 @@ async def activate_complete(
         member.otp_code = None
         member.otp_expires_at = None
 
+        # Revoke all previous sessions (device replacement / re-activation).
+        tenant_session.query(MobileSession).filter(
+            MobileSession.member_id == member.id,
+            MobileSession.is_active == True,
+        ).update({"is_active": False, "logout_at": datetime.utcnow()})
+
         ip = _get_client_ip(request)
         mobile_session = MobileSession(
             id=str(uuid.uuid4()),
@@ -399,6 +405,11 @@ async def mobile_login(data: LoginRequest, request: Request, db: Session = Depen
 
         if not member.pin_hash or not _verify_pin(data.password, member.pin_hash):
             raise HTTPException(status_code=401, detail="Invalid password. Please try again.")
+
+        # Upgrade legacy plain SHA-256 hash to PBKDF2 on successful login.
+        if ":" not in member.pin_hash:
+            member.pin_hash = _hash_pin(data.password)
+            tenant_session.commit()
 
         otp = _generate_otp()
         member.otp_code = otp
@@ -532,7 +543,8 @@ async def resend_otp(data: ResendOtpRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Account not found.")
 
     try:
-        is_login_flow = bool(data.device_id)
+        # account_number presence means activation flow; device_id alone means login flow.
+        is_login_flow = not bool(data.account_number)
         expiry_minutes = LOGIN_OTP_EXPIRY_MINUTES if is_login_flow else OTP_EXPIRY_MINUTES
 
         otp = _generate_otp()
@@ -582,10 +594,27 @@ async def mobile_logout(request: Request, response: Response, db: Session = Depe
                 session_token = parts[3]
 
     if session_token:
-        organizations = db.query(Organization).filter(
-            Organization.connection_string.isnot(None)
-        ).all()
-        for org in organizations:
+        # The cookie encodes org_id, so we can go straight to the right tenant.
+        # Fall back to scanning all orgs only when using a raw Bearer token
+        # (where we don't have org_id embedded).
+        org_id_hint = None
+        cookie = request.cookies.get(MOBILE_SESSION_COOKIE)
+        if cookie:
+            parts = cookie.split(":", 3)
+            if len(parts) == 4 and parts[0] == "mobile":
+                org_id_hint = parts[1]
+
+        orgs_to_check = []
+        if org_id_hint:
+            org = db.query(Organization).filter(Organization.id == org_id_hint).first()
+            if org:
+                orgs_to_check = [org]
+        if not orgs_to_check:
+            orgs_to_check = db.query(Organization).filter(
+                Organization.connection_string.isnot(None)
+            ).all()
+
+        for org in orgs_to_check:
             tenant_ctx = get_tenant_context_simple(org.id, db)
             if not tenant_ctx:
                 continue
