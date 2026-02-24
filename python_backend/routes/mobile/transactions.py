@@ -26,11 +26,11 @@ def _require_mpesa_available(org, tenant_session):
     ).first()
     mpesa_enabled = setting and setting.setting_value.lower() == "true" if setting else False
     if not mpesa_enabled:
-        raise HTTPException(status_code=400, detail="M-Pesa is not enabled for this organization")
+        raise HTTPException(status_code=400, detail="M-Pesa payments are not available at this time. Please contact your administrator.")
     if not is_demo_mode():
         currency = getattr(org, "currency", None) or "USD"
         if currency != "KES":
-            raise HTTPException(status_code=400, detail="M-Pesa is only available for organizations using KES currency")
+            raise HTTPException(status_code=400, detail="M-Pesa payments are not available for your organization. Please contact your administrator.")
 
 router = APIRouter()
 
