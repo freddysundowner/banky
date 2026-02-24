@@ -161,7 +161,7 @@ class DashboardView extends GetView<DashboardController> {
       ];
 
       return SizedBox(
-        height: 150,
+        height: 120,
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           itemCount: cards.length,
@@ -178,8 +178,8 @@ class DashboardView extends GetView<DashboardController> {
 
   Widget _buildBalanceCard(_BalanceCardData card) {
     return Container(
-      width: 190,
-      padding: const EdgeInsets.all(18),
+      width: 230,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
