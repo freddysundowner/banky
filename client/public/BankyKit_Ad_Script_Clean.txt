@@ -1,0 +1,51 @@
+BANKYKIT -- 60 SECOND AD SCRIPT
+================================
+
+
+"Meet BankyKit -- the all-in-one system built to run your
+SACCO or bank branch, from day one."
+
+
+"Register members, manage savings and shares, issue loans,
+and track every repayment -- automatically."
+
+
+"Give every teller their own station -- fast deposits,
+withdrawals, and loan payments with a full cash log."
+
+
+"Run payroll, manage staff, and get real-time reports on
+your portfolio, revenue, and member growth."
+
+
+"Your data stays on your server. No monthly fees.
+No subscriptions. Pay once and own it forever."
+
+
+"Contact us today for a free demo."
+
+
+================================
+ON-SCREEN TEXT (in order)
+================================
+
+1.  BANKYKIT
+    Your Bank. Your Data. Your Control.
+
+2.  Members  |  Loans  |  Savings
+
+3.  Teller Station  |  Cash Float
+
+4.  HR & Payroll  |  Reports & Analytics
+
+5.  Self-hosted -- your data, your control
+    Multi-branch ready
+    80+ currencies supported
+    One-time purchase
+
+6.  Phone / WhatsApp: [YOUR NUMBER]
+    Website: bankykit.com
+    Free Demo Available
+
+7.  Your Bank. Your Data. Your Control.
+================================
