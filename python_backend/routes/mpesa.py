@@ -7,6 +7,7 @@ import httpx
 import base64
 import json
 import os
+import re
 import asyncio
 import random
 import string
@@ -20,6 +21,13 @@ from routes.common import get_tenant_session_context, require_permission
 from services.feature_flags import check_org_feature
 from services.mpesa_loan_service import apply_mpesa_payment_to_loan, find_loan_from_reference
 from services.code_generator import generate_txn_code
+
+
+def validate_phone_number(phone: str) -> bool:
+    if not phone:
+        return False
+    cleaned = phone.replace("+", "").replace(" ", "").replace("-", "")
+    return bool(re.match(r'^\d{10,15}$', cleaned))
 
 SANDBOX_SHORTCODE = "174379"
 SANDBOX_PASSKEY = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
@@ -144,7 +152,7 @@ async def mpesa_confirmation(org_id: str, request: Request, db: Session = Depend
             # Always log the M-Pesa payment first
             existing_mpesa = tenant_session.query(MpesaPayment).filter(
                 MpesaPayment.trans_id == trans_id
-            ).first()
+            ).with_for_update(skip_locked=True).first()
             
             if existing_mpesa:
                 return {"ResultCode": "0", "ResultDesc": "Duplicate transaction"}
@@ -194,6 +202,7 @@ async def mpesa_confirmation(org_id: str, request: Request, db: Session = Depend
             loan = loan_for_repayment or find_loan_from_reference(tenant_session, account_reference)
 
             if loan and loan.member_id == member.id:
+                member = tenant_session.query(Member).filter(Member.id == member.id).with_for_update().first()
                 repayment, error = apply_mpesa_payment_to_loan(
                     tenant_session, loan, member, amount, trans_id, "Daraja"
                 )
@@ -209,6 +218,7 @@ async def mpesa_confirmation(org_id: str, request: Request, db: Session = Depend
                 tenant_session.commit()
                 return {"ResultCode": "0", "ResultDesc": "Accepted - loan repayment"}
 
+            member = tenant_session.query(Member).filter(Member.id == member.id).with_for_update().first()
             current_balance = member.savings_balance or Decimal("0")
             new_balance = current_balance + amount
             
@@ -450,20 +460,19 @@ async def credit_mpesa_payment(
     require_permission(membership, "transactions:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
-        payment = tenant_session.query(MpesaPayment).filter(MpesaPayment.id == payment_id).first()
+        payment = tenant_session.query(MpesaPayment).filter(MpesaPayment.id == payment_id).with_for_update().first()
         if not payment:
             raise HTTPException(status_code=404, detail="M-Pesa payment not found")
         
         if payment.status == "credited":
             raise HTTPException(status_code=400, detail="Payment already credited")
         
-        member = tenant_session.query(Member).filter(Member.id == member_id).first()
+        member = tenant_session.query(Member).filter(Member.id == member_id).with_for_update().first()
         if not member:
             raise HTTPException(status_code=404, detail="Member not found")
         
         staff = tenant_session.query(Staff).filter(Staff.email == user.email).first()
         
-        # Create transaction
         balance_field = f"{account_type}_balance"
         current_balance = getattr(member, balance_field) or Decimal("0")
         new_balance = current_balance + payment.amount
@@ -717,7 +726,7 @@ async def check_stk_push_status(org_id: str, request: Request, user=Depends(get_
         
         pending_record = tenant_session.query(MpesaPayment).filter(
             MpesaPayment.bill_ref_number == checkout_request_id
-        ).first()
+        ).with_for_update().first()
         
         if not pending_record:
             raise HTTPException(status_code=404, detail="No STK Push record found for this checkout request")
@@ -779,7 +788,7 @@ async def check_stk_push_status(org_id: str, request: Request, user=Depends(get_
         if not member_id:
             return {"status": "completed", "message": "Payment completed but no member linked"}
         
-        member = tenant_session.query(Member).filter(Member.id == member_id).first()
+        member = tenant_session.query(Member).filter(Member.id == member_id).with_for_update().first()
         if not member:
             return {"status": "completed", "message": "Payment completed but member not found"}
         
@@ -896,6 +905,8 @@ async def trigger_stk_push(org_id: str, request: Request, user=Depends(get_curre
         
         if not phone:
             raise HTTPException(status_code=400, detail="Phone number is required")
+        if not validate_phone_number(phone):
+            raise HTTPException(status_code=400, detail="Invalid phone number format. Must be 10-15 digits.")
         if amount <= 0:
             raise HTTPException(status_code=400, detail="Amount must be positive")
         
@@ -1071,7 +1082,7 @@ async def mpesa_stk_callback(org_id: str, request: Request, db: Session = Depend
         try:
             existing = tenant_session.query(MpesaPayment).filter(
                 MpesaPayment.trans_id == mpesa_receipt
-            ).first()
+            ).with_for_update(skip_locked=True).first()
             if existing:
                 print(f"[STK Callback] Duplicate receipt: {mpesa_receipt}")
                 return {"ResultCode": 0, "ResultDesc": "Accepted"}
@@ -1079,7 +1090,7 @@ async def mpesa_stk_callback(org_id: str, request: Request, db: Session = Depend
             pending_record = tenant_session.query(MpesaPayment).filter(
                 MpesaPayment.bill_ref_number == checkout_request_id,
                 MpesaPayment.status == "credited"
-            ).first()
+            ).with_for_update().first()
             if pending_record:
                 print(f"[STK Callback] Already credited via query for {checkout_request_id}")
                 return {"ResultCode": 0, "ResultDesc": "Accepted"}
@@ -1094,7 +1105,7 @@ async def mpesa_stk_callback(org_id: str, request: Request, db: Session = Depend
             pending_stk = tenant_session.query(MpesaPayment).filter(
                 MpesaPayment.bill_ref_number == checkout_request_id,
                 MpesaPayment.status == "pending"
-            ).first()
+            ).with_for_update().first()
 
             if pending_stk:
                 pending_stk.trans_id = mpesa_receipt
@@ -1137,6 +1148,9 @@ async def mpesa_stk_callback(org_id: str, request: Request, db: Session = Depend
                 member = tenant_session.query(Member).filter(
                     Member.phone.like(f"%{phone_search}")
                 ).first()
+
+            if member:
+                member = tenant_session.query(Member).filter(Member.id == member.id).with_for_update().first()
 
             if member and payment_type == "loan_repayment" and loan_id:
                 from models.tenant import LoanApplication
@@ -1214,5 +1228,7 @@ async def mpesa_stk_callback(org_id: str, request: Request, db: Session = Depend
             tenant_ctx.close()
 
     except Exception as e:
-        print(f"[STK Callback] Error: {e}")
+        import traceback
+        print(f"[STK Callback] CRITICAL ERROR: {e}")
+        traceback.print_exc()
         return {"ResultCode": 0, "ResultDesc": "Accepted"}

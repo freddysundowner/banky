@@ -44,7 +44,7 @@ def apply_mpesa_payment_to_loan(tenant_session, loan, member, amount: Decimal, m
     existing_repayment = tenant_session.query(LoanRepayment).filter(
         LoanRepayment.reference == mpesa_ref,
         LoanRepayment.loan_id == str(loan.id)
-    ).first()
+    ).with_for_update().first()
     if existing_repayment:
         return existing_repayment, None
 

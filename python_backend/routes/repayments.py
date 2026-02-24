@@ -223,7 +223,7 @@ async def create_repayment(org_id: str, data: LoanRepaymentCreate, user=Depends(
         tenant_session.add(repayment)
         tenant_session.add(transaction)
         
-        member = tenant_session.query(Member).filter(Member.id == loan.member_id).first()
+        member = tenant_session.query(Member).filter(Member.id == loan.member_id).with_for_update().first()
         
         if overpayment > 0 and member:
             balance_before = member.savings_balance or Decimal("0")

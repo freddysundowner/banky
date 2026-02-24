@@ -205,6 +205,11 @@ async def initiate_deposit(data: DepositRequest, ctx: dict = Depends(get_current
     if not phone:
         raise HTTPException(status_code=400, detail="No phone number on file. Please provide a phone number.")
 
+    import re
+    cleaned_phone = phone.replace("+", "").replace(" ", "").replace("-", "")
+    if not re.match(r'^\d{10,15}$', cleaned_phone):
+        raise HTTPException(status_code=400, detail="Invalid phone number format. Must be 10-15 digits.")
+
     amount = Decimal(str(data.amount))
     account_label = ACCOUNT_LABELS.get(data.account_type, data.account_type.title())
 
@@ -285,6 +290,9 @@ def request_withdrawal(data: WithdrawRequest, ctx: dict = Depends(get_current_me
 
     amount = Decimal(str(data.amount))
     account_label = ACCOUNT_LABELS.get(data.account_type, data.account_type.title())
+
+    from models.tenant import Member as MemberModel
+    member = ts.query(MemberModel).filter(MemberModel.id == member.id).with_for_update().first()
 
     if data.account_type == "savings":
         current_balance = member.savings_balance or Decimal("0")
@@ -369,6 +377,11 @@ async def mobile_mpesa_pay(data: MpesaPayRequest, ctx: dict = Depends(get_curren
 
     if not data.phone_number:
         raise HTTPException(status_code=400, detail="Phone number is required")
+
+    import re
+    cleaned_pay_phone = data.phone_number.replace("+", "").replace(" ", "").replace("-", "")
+    if not re.match(r'^\d{10,15}$', cleaned_pay_phone):
+        raise HTTPException(status_code=400, detail="Invalid phone number format. Must be 10-15 digits.")
 
     loan = None
     if data.loan_id:

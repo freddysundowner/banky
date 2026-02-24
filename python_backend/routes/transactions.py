@@ -238,6 +238,9 @@ async def create_transaction(org_id: str, data: TransactionCreate, request: Requ
         if not member:
             raise HTTPException(status_code=404, detail="Member not found")
         
+        if data.amount <= 0:
+            raise HTTPException(status_code=400, detail="Amount must be greater than zero")
+        
         if data.account_type not in ["savings", "shares", "deposits"]:
             raise HTTPException(status_code=400, detail="Invalid account type")
         
@@ -365,6 +368,7 @@ async def create_transaction(org_id: str, data: TransactionCreate, request: Requ
                     if data.amount > current_float_balance:
                         raise HTTPException(status_code=400, detail=f"Insufficient cash float balance. Available: {float(current_float_balance)}, Required: {float(data.amount)}")
         
+        member = tenant_session.query(Member).filter(Member.id == data.member_id).with_for_update().first()
         balance_field = f"{data.account_type}_balance"
         current_balance = getattr(member, balance_field) or Decimal("0")
         

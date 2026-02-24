@@ -25,7 +25,7 @@ The frontend uses React 18 and TypeScript with Shadcn UI components and Tailwind
     - **Fixed Deposits & Dividends**: Management of fixed deposit products, interest calculation, and dividend handling.
     - **Accounting**: Double-entry bookkeeping, Chart of Accounts, journal entries, General Ledger, and automated reports.
     - **Payroll Integration**: Automatic journal entries for payroll and statutory deductions, including automatic loan deductions from payroll.
-- **M-Pesa Payment Gateways**: Direct Safaricom Daraja API integration and simplified SunPay for STK Push, C2B, B2C, reversals, loan repayment, and disbursement. Secure deposit mechanism with dual confirmation.
+- **M-Pesa Payment Gateways**: Direct Safaricom Daraja API integration and simplified SunPay for STK Push, C2B, B2C, reversals, loan repayment, and disbursement. Secure deposit mechanism with dual confirmation. Production-hardened with row-level locking (`SELECT FOR UPDATE`) on all balance-modifying paths to prevent race conditions and double-crediting. Phone number validation (10-15 digit regex) on all STK push endpoints.
 - **Subscription Payments**: Multi-gateway support via M-Pesa (SunPay), Stripe, and Paystack, with USD-only pricing and dynamic currency conversion.
 - **Operations**: SMS notifications, analytics dashboards, HR management, audit logs, configurable organization settings (with redesigned UI).
 - **Automation**: Cron-based scripts for matured fixed deposits, loan auto-deduction, and automated loan notifications. Subscription renewal reminders.
