@@ -17,6 +17,21 @@ from sqlalchemy import desc
 from typing import Optional
 from .deps import get_current_member
 
+
+def _require_mpesa_available(org, tenant_session):
+    from middleware.demo_guard import is_demo_mode
+    from models.tenant import OrganizationSettings
+    setting = tenant_session.query(OrganizationSettings).filter(
+        OrganizationSettings.setting_key == "mpesa_enabled"
+    ).first()
+    mpesa_enabled = setting and setting.setting_value.lower() == "true" if setting else False
+    if not mpesa_enabled:
+        raise HTTPException(status_code=400, detail="M-Pesa is not enabled for this organization")
+    if not is_demo_mode():
+        currency = getattr(org, "currency", None) or "USD"
+        if currency != "KES":
+            raise HTTPException(status_code=400, detail="M-Pesa is only available for organizations using KES currency")
+
 router = APIRouter()
 
 
@@ -195,6 +210,8 @@ async def initiate_deposit(data: DepositRequest, ctx: dict = Depends(get_current
     org = ctx["org"]
     ts = ctx["session"]
 
+    _require_mpesa_available(org, ts)
+
     if data.amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than zero")
 
@@ -371,6 +388,8 @@ async def mobile_mpesa_pay(data: MpesaPayRequest, ctx: dict = Depends(get_curren
     member = ctx["member"]
     org = ctx["org"]
     ts = ctx["session"]
+
+    _require_mpesa_available(org, ts)
 
     if data.amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than zero")

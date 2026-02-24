@@ -5,6 +5,7 @@ from typing import List, Optional
 from decimal import Decimal
 from datetime import datetime, timedelta
 from models.database import get_db
+from models.master import Organization
 from models.tenant import LoanApplication, LoanProduct, Member, LoanGuarantor, LoanExtraCharge, Transaction, Staff, LoanInstalment
 from schemas.tenant import LoanApplicationCreate, LoanApplicationUpdate, LoanApplicationResponse, LoanApplicationAction, LoanDisbursement, LoanGuarantorCreate
 from routes.auth import get_current_user
@@ -776,8 +777,14 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
                         detail=f"Cannot disburse: Loan amount exceeds eligible limit. Maximum ({member_shares:,.2f} × {shares_multiplier}x): {max_eligible_amount:,.2f}"
                     )
         
-        if data.disbursement_method == "mpesa" and not data.disbursement_phone:
-            raise HTTPException(status_code=400, detail="Phone number required for M-Pesa disbursement")
+        if data.disbursement_method == "mpesa":
+            if not data.disbursement_phone:
+                raise HTTPException(status_code=400, detail="Phone number required for M-Pesa disbursement")
+            from middleware.demo_guard import is_demo_mode as _is_demo
+            if not _is_demo():
+                org = db.query(Organization).filter(Organization.id == org_id).first()
+                if not org or (getattr(org, "currency", None) or "USD") != "KES":
+                    raise HTTPException(status_code=400, detail="M-Pesa disbursement is only available for organizations using KES currency")
         
         if data.disbursement_method == "bank" and not data.disbursement_account:
             raise HTTPException(status_code=400, detail="Account number required for bank disbursement")

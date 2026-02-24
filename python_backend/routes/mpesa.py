@@ -78,6 +78,14 @@ def get_org_setting(tenant_session, key: str, default=None):
         return setting.setting_value
     return default
 
+
+def require_kes_currency(org):
+    """In production, M-Pesa only works with KES. In demo mode, allow any currency."""
+    if not is_demo_mode():
+        currency = getattr(org, "currency", None) or "USD"
+        if currency != "KES":
+            raise HTTPException(status_code=400, detail="M-Pesa is only available for organizations using KES currency")
+
 @router.post("/mpesa/c2b/validation/{org_id}")
 async def mpesa_validation(org_id: str, request: Request, db: Session = Depends(get_db)):
     """
@@ -715,6 +723,9 @@ def query_stk_push_status(tenant_session, checkout_request_id: str) -> dict:
 @router.post("/organizations/{org_id}/mpesa/stk-query")
 async def check_stk_push_status(org_id: str, request: Request, user=Depends(get_current_user), db: Session = Depends(get_db)):
     """Query STK Push status and auto-credit member account if payment succeeded"""
+    org = db.query(Organization).filter(Organization.id == org_id).first()
+    require_kes_currency(org)
+    
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
     tenant_session = tenant_ctx.create_session()
     try:
@@ -891,6 +902,9 @@ async def trigger_stk_push(org_id: str, request: Request, user=Depends(get_curre
     """Trigger M-Pesa STK Push for payment"""
     if not check_org_feature(org_id, "mpesa_integration", db):
         raise HTTPException(status_code=403, detail="M-Pesa integration is not available in your subscription plan")
+    
+    org = db.query(Organization).filter(Organization.id == org_id).first()
+    require_kes_currency(org)
     
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
     require_permission(membership, "repayments:write", db)
