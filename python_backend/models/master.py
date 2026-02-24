@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Time, JSON, Integer, Numeric, Enum as SQLEnum
+from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Text, Time, JSON, Integer, Numeric, Enum as SQLEnum, UniqueConstraint
 from sqlalchemy.orm import relationship
 from models.database import Base
 import enum
@@ -256,10 +256,15 @@ class MobileDeviceRegistry(Base):
     __tablename__ = "mobile_device_registry"
 
     id = Column(String, primary_key=True, default=generate_uuid)
-    account_number = Column(String(50), unique=True, nullable=False, index=True)
+    # account_number is unique only within an org, not globally — use (account_number, org_id) composite unique
+    account_number = Column(String(50), nullable=False, index=True)
     device_id = Column(String(255), nullable=True, index=True)
     org_id = Column(String, ForeignKey("organizations.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     organization = relationship("Organization")
+
+    __table_args__ = (
+        UniqueConstraint('account_number', 'org_id', name='uq_mobile_registry_account_org'),
+    )

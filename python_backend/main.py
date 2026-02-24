@@ -215,7 +215,7 @@ def run_pending_migrations_sync():
         db.close()
     print("All tenant migrations complete")
 
-_MASTER_SCHEMA_VERSION = 3
+_MASTER_SCHEMA_VERSION = 4
 
 def _get_master_migration_version():
     """Check the migration version stored in the master database"""
@@ -324,8 +324,41 @@ def run_master_migrations():
         ]
         for col_name, col_type in platform_columns:
             _add_master_column_if_not_exists(conn, "platform_settings", col_name, col_type)
-    
+
     _set_master_migration_version(_MASTER_SCHEMA_VERSION)
+
+    # v4: Fix mobile_device_registry unique constraint in its own transaction.
+    # Account numbers are per-org, not globally unique. In SaaS mode two different
+    # SACCOs may share the same account number string. Replace UNIQUE(account_number)
+    # with UNIQUE(account_number, org_id).
+    try:
+        with engine.begin() as conn2:
+            table_exists = conn2.execute(text("""
+                SELECT EXISTS (
+                    SELECT FROM information_schema.tables
+                    WHERE table_name = 'mobile_device_registry'
+                )
+            """)).scalar()
+            if table_exists:
+                conn2.execute(text("""
+                    ALTER TABLE mobile_device_registry
+                    DROP CONSTRAINT IF EXISTS mobile_device_registry_account_number_key
+                """))
+                constraint_exists = conn2.execute(text("""
+                    SELECT EXISTS (
+                        SELECT FROM pg_constraint
+                        WHERE conname = 'uq_mobile_registry_account_org'
+                    )
+                """)).scalar()
+                if not constraint_exists:
+                    conn2.execute(text("""
+                        ALTER TABLE mobile_device_registry
+                        ADD CONSTRAINT uq_mobile_registry_account_org
+                        UNIQUE (account_number, org_id)
+                    """))
+                    print("Master migration v4: Added composite unique (account_number, org_id) on mobile_device_registry")
+    except Exception as e:
+        print(f"Master migration v4 warning (non-fatal): {e}")
     print(f"Master DB migrations complete (now at v{_MASTER_SCHEMA_VERSION})")
 
 @asynccontextmanager

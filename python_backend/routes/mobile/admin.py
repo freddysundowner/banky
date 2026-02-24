@@ -82,10 +82,10 @@ async def staff_activate_mobile(
         try:
             from models.master import MobileDeviceRegistry
             registry_entry = db.query(MobileDeviceRegistry).filter(
-                MobileDeviceRegistry.account_number == member.member_number
+                MobileDeviceRegistry.account_number == member.member_number,
+                MobileDeviceRegistry.org_id == org_id,
             ).first()
             if registry_entry:
-                registry_entry.org_id = org_id
                 registry_entry.updated_at = datetime.utcnow()
             else:
                 db.add(MobileDeviceRegistry(

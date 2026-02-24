@@ -337,7 +337,8 @@ async def activate_complete(
         try:
             from models.master import MobileDeviceRegistry
             reg = db.query(MobileDeviceRegistry).filter(
-                MobileDeviceRegistry.account_number == data.account_number.upper().strip()
+                MobileDeviceRegistry.account_number == data.account_number.upper().strip(),
+                MobileDeviceRegistry.org_id == org.id,
             ).first()
             if reg:
                 reg.device_id = data.device_id
