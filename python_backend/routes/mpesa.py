@@ -601,7 +601,11 @@ def initiate_stk_push(tenant_session, phone: str, amount: Decimal, account_refer
     phone = phone.replace("+", "").replace(" ", "")
     if phone.startswith("0"):
         phone = "254" + phone[1:]
-    
+
+    if "sandbox" in base_url:
+        phone = "254708374149"
+        print(f"[STK Push] Sandbox mode — phone overridden to test number {phone}")
+
     payload = {
         "BusinessShortCode": shortcode,
         "Password": password,
