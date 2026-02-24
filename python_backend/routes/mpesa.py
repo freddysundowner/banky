@@ -7,6 +7,9 @@ import httpx
 import base64
 import json
 import os
+import asyncio
+import random
+import string
 from models.database import get_db
 from models.tenant import Member, Transaction, OrganizationSettings, MpesaPayment, Staff, LoanApplication
 from middleware.demo_guard import require_not_demo, is_demo_mode
@@ -564,6 +567,43 @@ def initiate_b2c_disbursement(tenant_session, phone: str, amount: Decimal, remar
         return {"success": False, **result}
 
 
+async def simulate_sandbox_callback(org_id: str, checkout_request_id: str, merchant_request_id: str, amount: float):
+    """
+    In sandbox/demo mode, auto-fire a successful STK callback after a short delay
+    to mimic M-Pesa completing the payment — no real phone interaction needed.
+    """
+    await asyncio.sleep(4)
+    receipt = "SB" + "".join(random.choices(string.ascii_uppercase + string.digits, k=8))
+    payload = {
+        "Body": {
+            "stkCallback": {
+                "MerchantRequestID": merchant_request_id,
+                "CheckoutRequestID": checkout_request_id,
+                "ResultCode": 0,
+                "ResultDesc": "The service request is processed successfully.",
+                "CallbackMetadata": {
+                    "Item": [
+                        {"Name": "Amount", "Value": int(amount)},
+                        {"Name": "MpesaReceiptNumber", "Value": receipt},
+                        {"Name": "Balance"},
+                        {"Name": "TransactionDate", "Value": int(datetime.now().strftime("%Y%m%d%H%M%S"))},
+                        {"Name": "PhoneNumber", "Value": 254708374149}
+                    ]
+                }
+            }
+        }
+    }
+    public_domain = os.environ.get("REPLIT_DEV_DOMAIN", "") or os.environ.get("REPLIT_DOMAINS", "")
+    callback_url = f"https://{public_domain}/api/mpesa/stk-callback/{org_id}"
+    print(f"[Sandbox Simulation] Firing auto-callback to {callback_url} with receipt {receipt}")
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        try:
+            response = await client.post(callback_url, json=payload)
+            print(f"[Sandbox Simulation] Callback response: {response.status_code}")
+        except Exception as e:
+            print(f"[Sandbox Simulation] Error: {e}")
+
+
 def initiate_stk_push(tenant_session, phone: str, amount: Decimal, account_reference: str, description: str, org_id: str = "", base_url_override: str = "") -> dict:
     """Initiate M-Pesa STK Push. In demo mode uses sandbox credentials automatically."""
     access_token = get_mpesa_access_token(tenant_session)
@@ -865,6 +905,13 @@ async def trigger_stk_push(org_id: str, request: Request, user=Depends(get_curre
         result = initiate_stk_push(tenant_session, phone, amount, account_reference, description, org_id=org_id, base_url_override=request_base)
         
         if result.get("ResponseCode") == "0":
+            if demo:
+                asyncio.create_task(simulate_sandbox_callback(
+                    org_id,
+                    result.get("CheckoutRequestID", ""),
+                    result.get("MerchantRequestID", ""),
+                    float(amount)
+                ))
             return {
                 "success": True,
                 "message": "STK push sent successfully. Please check your phone.",

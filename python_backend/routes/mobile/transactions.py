@@ -163,10 +163,12 @@ class WithdrawRequest(BaseModel):
 
 
 @router.post("/me/deposit")
-def initiate_deposit(data: DepositRequest, ctx: dict = Depends(get_current_member)):
+async def initiate_deposit(data: DepositRequest, ctx: dict = Depends(get_current_member)):
     """Initiate a deposit via M-Pesa STK push to savings or shares."""
+    import asyncio
     from models.tenant import Transaction
-    from routes.mpesa import initiate_stk_push
+    from routes.mpesa import initiate_stk_push, simulate_sandbox_callback
+    from middleware.demo_guard import is_demo_mode
     from services.code_generator import generate_txn_code
 
     member = ctx["member"]
@@ -203,6 +205,14 @@ def initiate_deposit(data: DepositRequest, ctx: dict = Depends(get_current_membe
         if response_code != "0":
             error_msg = result.get("CustomerMessage") or result.get("errorMessage") or "STK push failed"
             raise HTTPException(status_code=502, detail=error_msg)
+
+        if is_demo_mode():
+            asyncio.create_task(simulate_sandbox_callback(
+                org.id,
+                checkout_request_id or "",
+                merchant_request_id or "",
+                float(amount)
+            ))
 
         return {
             "success": True,
