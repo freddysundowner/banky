@@ -204,7 +204,9 @@ async def initiate_deposit(data: DepositRequest, ctx: dict = Depends(get_current
     from models.tenant import Transaction, MpesaPayment
     from routes.mpesa import initiate_stk_push, simulate_sandbox_callback
     from middleware.demo_guard import is_demo_mode
-    from services.code_generator import generate_txn_code, generate_uuid
+    from services.code_generator import generate_txn_code
+    import uuid as _uuid
+    generate_uuid = lambda: str(_uuid.uuid4())
 
     member = ctx["member"]
     org = ctx["org"]
@@ -383,7 +385,8 @@ async def mobile_mpesa_pay(data: MpesaPayRequest, ctx: dict = Depends(get_curren
     from routes.mpesa import initiate_stk_push, simulate_sandbox_callback
     from middleware.demo_guard import is_demo_mode
     from models.tenant import LoanApplication, MpesaPayment
-    from services.code_generator import generate_uuid
+    import uuid as _uuid
+    generate_uuid = lambda: str(_uuid.uuid4())
 
     member = ctx["member"]
     org = ctx["org"]
