@@ -745,15 +745,14 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
     require_permission(membership, "loans:process")
     tenant_session = tenant_ctx.create_session()
     try:
-        loan = tenant_session.query(LoanApplication).filter(LoanApplication.id == loan_id).first()
+        loan = tenant_session.query(LoanApplication).filter(LoanApplication.id == loan_id).with_for_update().first()
         if not loan:
             raise HTTPException(status_code=404, detail="Loan not found")
         
         if loan.status != "approved":
             raise HTTPException(status_code=400, detail="Loan must be approved before disbursement")
         
-        # Shares-based eligibility check - BLOCK disbursement if conditions not met
-        member = tenant_session.query(Member).filter(Member.id == loan.member_id).first()
+        member = tenant_session.query(Member).filter(Member.id == loan.member_id).with_for_update().first()
         product = tenant_session.query(LoanProduct).filter(LoanProduct.id == loan.loan_product_id).first()
         
         if member and product:
@@ -836,16 +835,17 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
         tenant_session.add(transaction)
         
         if data.disbursement_method == "savings" and member:
-            member.savings_balance = (member.savings_balance or Decimal("0")) + net_amount
+            balance_before_disbursement = member.savings_balance or Decimal("0")
+            member.savings_balance = balance_before_disbursement + net_amount
             savings_txn = Transaction(
                 transaction_number=generate_txn_code(),
                 member_id=loan.member_id,
                 transaction_type="deposit",
                 account_type="savings",
                 amount=net_amount,
+                balance_before=balance_before_disbursement,
                 balance_after=member.savings_balance,
-                description=f"Loan disbursement to savings - {loan.application_number}",
-                processed_by_id=current_staff.id if current_staff else None
+                description=f"Loan disbursement to savings - {loan.application_number}"
             )
             tenant_session.add(savings_txn)
         

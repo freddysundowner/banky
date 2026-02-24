@@ -91,8 +91,7 @@ def check_working_hours(org_id: str, role: str, db: Session) -> dict:
     return {"allowed": True, "message": ""}
 
 SESSION_COOKIE_NAME = "session_token"
-# Always use secure=False in development to ensure cookies work
-IS_PRODUCTION = False
+IS_PRODUCTION = os.environ.get("REPLIT_DEPLOYMENT", "") == "1" or os.environ.get("ENVIRONMENT", "").lower() == "production"
 
 class AuthContext:
     """Unified auth context for both master users and tenant staff"""

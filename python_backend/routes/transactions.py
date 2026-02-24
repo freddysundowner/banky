@@ -358,7 +358,7 @@ async def create_transaction(org_id: str, data: TransactionCreate, request: Requ
                         TellerFloat.date == today,
                         TellerFloat.status == "open"
                     )
-                ).first()
+                ).with_for_update().first()
                 
                 if not teller_float:
                     raise HTTPException(status_code=400, detail="Your teller station is closed for the day. You cannot process transactions until a new float is allocated.")
