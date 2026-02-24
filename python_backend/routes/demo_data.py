@@ -532,89 +532,8 @@ def _table_exists(conn, table: str) -> bool:
     ).scalar()
 
 
-def _truncate_tenant(conn_str: str):
-    """Delete only demo-specific records — safe on shared and dedicated databases."""
-    from sqlalchemy import create_engine
-
-    engine = create_engine(conn_str, pool_pre_ping=True)
-
-    with engine.connect() as conn:
-        with conn.begin():
-            # 1. Find demo members
-            member_rows = conn.execute(
-                text(f"SELECT id FROM members WHERE member_number LIKE '{DEMO_MEMBER_PREFIX}%'")
-            ).fetchall()
-            if not member_rows:
-                _delete_demo_branches(conn)
-                prod_codes = ",".join(f"'{c}'" for c in DEMO_PROD_CODES)
-                conn.execute(text(f"DELETE FROM loan_products WHERE code IN ({prod_codes})"))
-                return
-
-            member_ids = [r[0] for r in member_rows]
-            mc = "'" + "','".join(member_ids) + "'"
-
-            # 2. Delete all loans for those members and their dependents
-            loan_rows = conn.execute(
-                text(f"SELECT id FROM loan_applications WHERE member_id IN ({mc})")
-            ).fetchall()
-            if loan_rows:
-                lc = "'" + "','".join(r[0] for r in loan_rows) + "'"
-                for t in ("loan_repayments", "loan_instalments", "loan_extra_charges", "loan_guarantors"):
-                    if _table_exists(conn, t):
-                        conn.execute(text(f"DELETE FROM {t} WHERE loan_id IN ({lc})"))
-                conn.execute(text(f"DELETE FROM loan_applications WHERE member_id IN ({mc})"))
-
-            # 3. Delete member-level dependents, then members
-            for t in ("transactions", "fixed_deposits", "dividends", "mobile_sessions"):
-                if _table_exists(conn, t):
-                    conn.execute(text(f"DELETE FROM {t} WHERE member_id IN ({mc})"))
-            conn.execute(text(f"DELETE FROM members WHERE id IN ({mc})"))
-
-            # 4. Delete demo staff and their dependents
-            staff_rows = conn.execute(
-                text(f"SELECT id FROM staff WHERE staff_number LIKE '{DEMO_STAFF_PREFIX}%'")
-            ).fetchall()
-            if staff_rows:
-                sc = "'" + "','".join(r[0] for r in staff_rows) + "'"
-                # Dynamically resolve all FK references to staff.id
-                fk_refs = conn.execute(text("""
-                    SELECT DISTINCT tc.table_name, kcu.column_name, c.is_nullable
-                    FROM information_schema.table_constraints tc
-                    JOIN information_schema.key_column_usage kcu
-                        ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
-                    JOIN information_schema.referential_constraints rc
-                        ON tc.constraint_name = rc.constraint_name AND tc.table_schema = rc.constraint_schema
-                    JOIN information_schema.key_column_usage kcu2
-                        ON rc.unique_constraint_name = kcu2.constraint_name AND rc.unique_constraint_schema = kcu2.constraint_schema
-                    JOIN information_schema.columns c
-                        ON c.table_schema = tc.table_schema AND c.table_name = tc.table_name AND c.column_name = kcu.column_name
-                    WHERE tc.constraint_type = 'FOREIGN KEY'
-                        AND kcu2.table_name = 'staff'
-                        AND kcu2.column_name = 'id'
-                        AND tc.table_schema = 'public'
-                """)).fetchall()
-                for ref_table, ref_col, is_nullable in fk_refs:
-                    if _table_exists(conn, ref_table):
-                        if is_nullable == 'YES':
-                            conn.execute(text(f"UPDATE {ref_table} SET {ref_col} = NULL WHERE {ref_col} IN ({sc})"))
-                        else:
-                            conn.execute(text(f"DELETE FROM {ref_table} WHERE {ref_col} IN ({sc})"))
-                conn.execute(text(f"DELETE FROM staff WHERE id IN ({sc})"))
-
-            # 5. Delete demo branch and loan products
-            _delete_demo_branches(conn)
-            prod_codes = ",".join(f"'{c}'" for c in DEMO_PROD_CODES)
-            conn.execute(text(f"DELETE FROM loan_products WHERE code IN ({prod_codes})"))
-
-
-def _delete_demo_branches(conn):
-    branch_rows = conn.execute(
-        text(f"SELECT id FROM branches WHERE code = '{DEMO_BRANCH_CODE}'")
-    ).fetchall()
-    if not branch_rows:
-        return
-    bc = "'" + "','".join(r[0] for r in branch_rows) + "'"
-    fk_refs = conn.execute(text("""
+def _resolve_fk_refs(conn, parent_table: str, parent_col: str = "id"):
+    return conn.execute(text(f"""
         SELECT DISTINCT tc.table_name, kcu.column_name, c.is_nullable
         FROM information_schema.table_constraints tc
         JOIN information_schema.key_column_usage kcu
@@ -626,17 +545,43 @@ def _delete_demo_branches(conn):
         JOIN information_schema.columns c
             ON c.table_schema = tc.table_schema AND c.table_name = tc.table_name AND c.column_name = kcu.column_name
         WHERE tc.constraint_type = 'FOREIGN KEY'
-            AND kcu2.table_name = 'branches'
-            AND kcu2.column_name = 'id'
+            AND kcu2.table_name = '{parent_table}'
+            AND kcu2.column_name = '{parent_col}'
             AND tc.table_schema = 'public'
     """)).fetchall()
+
+
+def _cascade_delete(conn, table: str, where_clause: str, skip_tables=None):
+    skip_tables = skip_tables or set()
+    rows = conn.execute(text(f"SELECT id FROM {table} WHERE {where_clause}")).fetchall()
+    if not rows:
+        return
+    ids = "'" + "','".join(r[0] for r in rows) + "'"
+    fk_refs = _resolve_fk_refs(conn, table)
     for ref_table, ref_col, is_nullable in fk_refs:
+        if ref_table in skip_tables:
+            continue
         if _table_exists(conn, ref_table):
             if is_nullable == 'YES':
-                conn.execute(text(f"UPDATE {ref_table} SET {ref_col} = NULL WHERE {ref_col} IN ({bc})"))
+                conn.execute(text(f"UPDATE {ref_table} SET {ref_col} = NULL WHERE {ref_col} IN ({ids})"))
             else:
-                conn.execute(text(f"DELETE FROM {ref_table} WHERE {ref_col} IN ({bc})"))
-    conn.execute(text(f"DELETE FROM branches WHERE id IN ({bc})"))
+                _cascade_delete(conn, ref_table, f"{ref_col} IN ({ids})", skip_tables)
+    conn.execute(text(f"DELETE FROM {table} WHERE id IN ({ids})"))
+
+
+def _truncate_tenant(conn_str: str):
+    """Delete only demo-specific records — safe on shared and dedicated databases."""
+    from sqlalchemy import create_engine
+
+    engine = create_engine(conn_str, pool_pre_ping=True)
+
+    with engine.connect() as conn:
+        with conn.begin():
+            _cascade_delete(conn, "members", f"member_number LIKE '{DEMO_MEMBER_PREFIX}%'")
+            _cascade_delete(conn, "staff", f"staff_number LIKE '{DEMO_STAFF_PREFIX}%'")
+            _cascade_delete(conn, "branches", f"code = '{DEMO_BRANCH_CODE}'")
+            prod_codes = ",".join(f"'{c}'" for c in DEMO_PROD_CODES)
+            _cascade_delete(conn, "loan_products", f"code IN ({prod_codes})")
 
 
 @router.get("/status")
