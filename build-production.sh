@@ -9,268 +9,13 @@ echo ""
 
 show_menu() {
     echo "Select build type:"
-    echo "  1) SaaS Build         (for your cloud deployment)"
-    echo "  2) Enterprise Build   (end-user self-hosting)"
-    echo "  3) CodeCanyon Package (source code + installer for buyers)"
-    echo "  4) Admin Panel        (source code + installer, like CodeCanyon)"
-    echo "  5) Landing Page       (source code + installer, like CodeCanyon)"
-    echo "  6) Build All"
-    echo "  7) Exit"
+    echo "  1) CodeCanyon Package (source code + installer for buyers)"
+    echo "  2) Admin Panel        (source code + installer)"
+    echo "  3) Landing Page       (source code + installer)"
+    echo "  4) Build All"
+    echo "  5) Exit"
     echo ""
-    read -p "Enter choice [1-7]: " choice
-}
-
-build_frontend() {
-    echo ""
-    echo ">>> Installing frontend dependencies..."
-    npm install --silent 2>/dev/null || npm install
-    echo ""
-    echo ">>> Building Frontend..."
-    npx vite build
-    echo ">>> Frontend built to dist/public/"
-}
-
-build_admin() {
-    echo ""
-    echo ">>> Building Admin Panel..."
-    cd admin-client
-    npm install --silent 2>/dev/null || npm install
-    npm run build
-    cd ..
-    echo ">>> Admin panel built to admin-client/dist/"
-}
-
-build_landing() {
-    echo ""
-    echo ">>> Building Landing Page..."
-    cd landing-page
-    npm install --silent 2>/dev/null || npm install
-    npm run build
-    cd ..
-    echo ">>> Landing page built to landing-page/dist/"
-}
-
-build_saas() {
-    echo ""
-    echo "========================================"
-    echo "  Building SaaS Version"
-    echo "========================================"
-    
-    build_frontend
-    build_admin
-    build_landing
-    
-    echo ""
-    echo ">>> Creating SaaS deployment package..."
-    
-    rm -rf packages/saas
-    mkdir -p packages/saas
-    
-    cp -r dist/public packages/saas/frontend
-    cp -r admin-client/dist packages/saas/admin
-    cp -r landing-page/dist packages/saas/landing
-    cp -r python_backend packages/saas/backend
-    cp -r shared packages/saas/shared 2>/dev/null || true
-    
-    rm -rf packages/saas/backend/__pycache__
-    find packages/saas/backend -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-    find packages/saas/backend -type f -name "*.pyc" -delete 2>/dev/null || true
-    rm -rf packages/saas/backend/uploads 2>/dev/null || true
-    rm -rf packages/saas/backend/tests 2>/dev/null || true
-    
-    cat > packages/saas/.env.example << 'EOF'
-# Database connection
-DATABASE_URL=postgresql://user:password@host:5432/bankykit_master
-
-# Deployment mode (saas = multi-tenant platform)
-DEPLOYMENT_MODE=saas
-
-# Neon API key (required for SaaS - provisions databases for each organization)
-NEON_API_KEY=your-neon-api-key
-EOF
-
-    cat > packages/saas/ecosystem.config.js << 'PMEOF'
-const path = require("path");
-const fs = require("fs");
-
-const rootDir = __dirname;
-const envPath = path.join(rootDir, ".env");
-const envVars = {};
-
-if (fs.existsSync(envPath)) {
-  const lines = fs.readFileSync(envPath, "utf-8").split("\n");
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith("#")) {
-      const eqIdx = trimmed.indexOf("=");
-      if (eqIdx > 0) {
-        envVars[trimmed.substring(0, eqIdx).trim()] = trimmed.substring(eqIdx + 1).trim();
-      }
-    }
-  }
-}
-
-module.exports = {
-  apps: [
-    {
-      name: "bankykit-api",
-      cwd: path.join(rootDir, "backend"),
-      script: path.join(rootDir, "venv", "bin", "python3"),
-      args: "-m uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2",
-      interpreter: "none",
-      env: { ...envVars, NODE_ENV: "production" },
-      max_memory_restart: "500M",
-      autorestart: true,
-    },
-    {
-      name: "bankykit-scheduler",
-      cwd: path.join(rootDir, "backend"),
-      script: path.join(rootDir, "venv", "bin", "python3"),
-      args: "scheduler.py",
-      interpreter: "none",
-      env: { ...envVars, NODE_ENV: "production" },
-      max_memory_restart: "200M",
-      autorestart: true,
-      cron_restart: "0 */6 * * *",
-    }
-  ],
-};
-PMEOF
-
-    cp docs/README-saas.md packages/saas/README.md
-
-    echo ">>> SaaS build complete: packages/saas/"
-}
-
-build_compiled() {
-    echo ""
-    echo "========================================"
-    echo "  Building Enterprise Version"
-    echo "========================================"
-    echo ""
-    echo "Note: Enterprise is an end-user package (no admin panel, no landing page)."
-    echo "      License key must be generated from your SaaS admin panel."
-    
-    build_frontend
-    
-    echo ""
-    echo ">>> Creating Enterprise source package..."
-    
-    rm -rf packages/enterprise
-    mkdir -p packages/enterprise/bankykit
-    
-    # Copy only end-user source code (no admin-client, no landing-page)
-    cp -r client packages/enterprise/bankykit/
-    cp -r python_backend packages/enterprise/bankykit/
-    cp -r server packages/enterprise/bankykit/
-    cp -r shared packages/enterprise/bankykit/ 2>/dev/null || true
-    cp package.json packages/enterprise/bankykit/
-    cp package-lock.json packages/enterprise/bankykit/ 2>/dev/null || true
-    cp vite.config.ts packages/enterprise/bankykit/
-    cp tsconfig.json packages/enterprise/bankykit/
-    cp tailwind.config.ts packages/enterprise/bankykit/ 2>/dev/null || true
-    cp postcss.config.js packages/enterprise/bankykit/ 2>/dev/null || true
-    
-    # Clean up unnecessary files
-    find packages/enterprise/bankykit -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
-    find packages/enterprise/bankykit -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-    find packages/enterprise/bankykit -type d -name ".git" -exec rm -rf {} + 2>/dev/null || true
-    find packages/enterprise/bankykit -type f -name "*.pyc" -delete 2>/dev/null || true
-    find packages/enterprise/bankykit -type f -name ".env" -delete 2>/dev/null || true
-    find packages/enterprise/bankykit -type d -name "dist" -exec rm -rf {} + 2>/dev/null || true
-    find packages/enterprise/bankykit -name ".DS_Store" -delete 2>/dev/null || true
-    rm -rf packages/enterprise/bankykit/python_backend/tests 2>/dev/null || true
-    rm -rf packages/enterprise/bankykit/python_backend/uploads 2>/dev/null || true
-    rm -f packages/enterprise/bankykit/drizzle.config.ts 2>/dev/null || true
-    rm -f packages/enterprise/bankykit/components.json 2>/dev/null || true
-    
-    cat > packages/enterprise/bankykit/.env.example << 'EOF'
-# ═══════════════════════════════════════════════════════════════════
-#  BankyKit - Bank & Sacco Management System
-#  Environment Configuration
-# ═══════════════════════════════════════════════════════════════════
-
-# PostgreSQL connection string (auto-configured by install.sh)
-# Local:  postgresql:///bankykit
-# Remote: postgresql://user:pass@host:5432/dbname?sslmode=require
-DATABASE_URL=postgresql:///bankykit
-
-# Deployment mode (do not change)
-DEPLOYMENT_MODE=enterprise
-
-# Production mode: "demo" prefills login with demo credentials
-# Set to blank or remove for normal production use
-VITE_PRODUCTION_MODE=
-
-# Random secret for session encryption (minimum 32 characters)
-# Generate with: openssl rand -hex 32
-SESSION_SECRET=change-this-to-a-random-string-at-least-32-characters
-
-# Your domain (set by install.sh)
-DOMAIN=localhost
-
-# Application port (default: 5000)
-PORT=5000
-EOF
-
-    # Use the repo install.sh so updates are always reflected in the package
-    cp install.sh packages/enterprise/bankykit/install.sh
-    chmod +x packages/enterprise/bankykit/install.sh
-
-    # Create start script (development mode)
-    cp start.sh packages/enterprise/bankykit/start.sh
-    chmod +x packages/enterprise/bankykit/start.sh
-
-    # Create ecosystem.config.cjs for production (PM2)
-    cat > packages/enterprise/bankykit/ecosystem.config.cjs << 'PMEOF'
-const path = require("path");
-const fs = require("fs");
-
-const rootDir = __dirname;
-const envPath = path.join(rootDir, ".env");
-const envVars = {};
-
-if (fs.existsSync(envPath)) {
-  const lines = fs.readFileSync(envPath, "utf-8").split("\n");
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (trimmed && !trimmed.startsWith("#")) {
-      const eqIdx = trimmed.indexOf("=");
-      if (eqIdx > 0) {
-        envVars[trimmed.substring(0, eqIdx).trim()] = trimmed.substring(eqIdx + 1).trim();
-      }
-    }
-  }
-}
-
-module.exports = {
-  apps: [
-    {
-      name: "bankykit-api",
-      cwd: path.join(rootDir, "python_backend"),
-      script: path.join(rootDir, "venv", "bin", "python3"),
-      args: "-m uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2",
-      interpreter: "none",
-      env: { ...envVars, NODE_ENV: "production" },
-      max_memory_restart: "500M",
-      autorestart: true,
-    },
-    {
-      name: "bankykit-scheduler",
-      cwd: path.join(rootDir, "python_backend"),
-      script: path.join(rootDir, "venv", "bin", "python3"),
-      args: "scheduler.py",
-      interpreter: "none",
-      env: { ...envVars, NODE_ENV: "production" },
-      max_memory_restart: "200M",
-      autorestart: true,
-      cron_restart: "0 */6 * * *",
-    }
-  ],
-};
-PMEOF
-
-    echo ">>> Enterprise build complete: packages/enterprise/"
+    read -p "Enter choice [1-5]: " choice
 }
 
 build_codecanyon() {
@@ -337,19 +82,15 @@ DOMAIN=localhost
 PORT=5000
 EOF
 
-    # Original install.sh — uses DB_NAME="bankykit"
     cp install.sh packages/codecanyon/bankykit/install.sh
     chmod +x packages/codecanyon/bankykit/install.sh
 
-    # Demo variant — every "bankykit" identifier becomes "bankykit-demo" (DB, URLs, names)
     sed 's/bankykit/bankykit-demo/g' install.sh > packages/codecanyon/bankykit/install-demo.sh
     chmod +x packages/codecanyon/bankykit/install-demo.sh
 
-    # ── start.sh: copied from root so it's always up to date ──
     cp start.sh packages/codecanyon/bankykit/start.sh
     chmod +x packages/codecanyon/bankykit/start.sh
 
-    # ── ecosystem.config.cjs for PM2 production setup ──
     cat > packages/codecanyon/bankykit/ecosystem.config.cjs << 'PMEOF'
 const path = require("path");
 const fs = require("fs");
@@ -398,7 +139,6 @@ module.exports = {
 };
 PMEOF
 
-    # ── ecosystem-demo.config.cjs — demo environment, ports from 6000, -demo PM2 names ──
     cat > packages/codecanyon/bankykit/ecosystem-demo.config.cjs << 'PMEOF'
 const path = require("path");
 const fs = require("fs");
@@ -449,7 +189,6 @@ PMEOF
 
     echo ">>> CodeCanyon build complete: packages/codecanyon/"
 
-    # Zip the package
     cd packages/codecanyon
     zip -r bankykit-v1.0.0.zip bankykit
     cd ../..
@@ -457,60 +196,36 @@ PMEOF
     echo ">>> ZIP package: packages/codecanyon/bankykit-v1.0.0.zip"
 }
 
-cleanup() {
+build_admin_panel() {
     echo ""
-    echo ">>> Cleaning up temporary files..."
-    rm -rf python_backend/build python_backend/dist python_backend/*.spec 2>/dev/null || true
-    rm -f python_backend/bankykit_server.py 2>/dev/null || true
-}
+    echo "========================================"
+    echo "  Packaging Admin Panel (source code)"
+    echo "========================================"
+    echo "    (No build needed - run install.sh on your server)"
 
-show_menu
+    rm -rf packages/admin-panel
+    mkdir -p packages/admin-panel/bankykit-admin
 
-case $choice in
-    1)
-        build_saas
-        ;;
-    2)
-        build_compiled
-        ;;
-    3)
-        build_codecanyon
-        ;;
-    4)
-        echo ""
-        echo "========================================"
-        echo "  Packaging Admin Panel (source code)"
-        echo "========================================"
-        echo "    (No build needed - run install.sh on your server)"
+    cp -r admin-client/src       packages/admin-panel/bankykit-admin/
+    cp    admin-client/index.html packages/admin-panel/bankykit-admin/
+    cp    admin-client/package.json packages/admin-panel/bankykit-admin/
+    cp    admin-client/package-lock.json packages/admin-panel/bankykit-admin/ 2>/dev/null || true
+    cp    admin-client/vite.config.ts packages/admin-panel/bankykit-admin/
+    cp    admin-client/tsconfig.json packages/admin-panel/bankykit-admin/
+    cp    admin-client/tsconfig.node.json packages/admin-panel/bankykit-admin/ 2>/dev/null || true
+    cp    admin-client/tailwind.config.js packages/admin-panel/bankykit-admin/ 2>/dev/null || true
+    cp    admin-client/postcss.config.js packages/admin-panel/bankykit-admin/ 2>/dev/null || true
 
-        rm -rf packages/admin-panel
-        mkdir -p packages/admin-panel/bankykit-admin
+    find packages/admin-panel/bankykit-admin -name ".DS_Store" -delete 2>/dev/null || true
 
-        cp -r admin-client/src       packages/admin-panel/bankykit-admin/
-        cp    admin-client/index.html packages/admin-panel/bankykit-admin/
-        cp    admin-client/package.json packages/admin-panel/bankykit-admin/
-        cp    admin-client/package-lock.json packages/admin-panel/bankykit-admin/ 2>/dev/null || true
-        cp    admin-client/vite.config.ts packages/admin-panel/bankykit-admin/
-        cp    admin-client/tsconfig.json packages/admin-panel/bankykit-admin/
-        cp    admin-client/tsconfig.node.json packages/admin-panel/bankykit-admin/ 2>/dev/null || true
-        cp    admin-client/tailwind.config.js packages/admin-panel/bankykit-admin/ 2>/dev/null || true
-        cp    admin-client/postcss.config.js packages/admin-panel/bankykit-admin/ 2>/dev/null || true
-
-        find packages/admin-panel/bankykit-admin -name ".DS_Store" -delete 2>/dev/null || true
-
-        cat > packages/admin-panel/bankykit-admin/ecosystem.config.cjs << 'ECOEOF'
+    cat > packages/admin-panel/bankykit-admin/ecosystem.config.cjs << 'ECOEOF'
 const path = require("path");
 
 const rootDir = __dirname;
 
 module.exports = {
-  // ─── Set your domain here before running install.sh ───
   domain: "admin.bankykit.com",
-
-  // ─── Local preview port (access at http://localhost:PORT) ───
   port: 5002,
-
-  // ─── Port your BankyKit backend is running on ───
   backend_port: 5000,
 
   apps: [
@@ -525,20 +240,14 @@ module.exports = {
 };
 ECOEOF
 
-        # ── ecosystem-demo.config.cjs — demo environment, ports from 6000, -demo PM2 names ──
-        cat > packages/admin-panel/bankykit-admin/ecosystem-demo.config.cjs << 'ECOEOF'
+    cat > packages/admin-panel/bankykit-admin/ecosystem-demo.config.cjs << 'ECOEOF'
 const path = require("path");
 
 const rootDir = __dirname;
 
 module.exports = {
-  // ─── Set your domain here before running install.sh ───
   domain: "demoadmin.bankykit.com",
-
-  // ─── Local preview port (access at http://localhost:PORT) ───
   port: 6002,
-
-  // ─── Port your BankyKit demo backend is running on ───
   backend_port: 6000,
 
   apps: [
@@ -553,7 +262,7 @@ module.exports = {
 };
 ECOEOF
 
-        cat > packages/admin-panel/bankykit-admin/server.cjs << 'SERVEREOF'
+    cat > packages/admin-panel/bankykit-admin/server.cjs << 'SERVEREOF'
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -610,7 +319,7 @@ http.createServer((req, res) => {
 });
 SERVEREOF
 
-        cat > packages/admin-panel/bankykit-admin/start.sh << 'STARTEOF'
+    cat > packages/admin-panel/bankykit-admin/start.sh << 'STARTEOF'
 #!/bin/bash
 set -e
 
@@ -642,9 +351,9 @@ else
 fi
 echo ""
 STARTEOF
-        chmod +x packages/admin-panel/bankykit-admin/start.sh
+    chmod +x packages/admin-panel/bankykit-admin/start.sh
 
-        cat > packages/admin-panel/bankykit-admin/install.sh << 'INSTALLEOF'
+    cat > packages/admin-panel/bankykit-admin/install.sh << 'INSTALLEOF'
 #!/bin/bash
 set -e
 
@@ -709,10 +418,9 @@ echo "  Stop:         pm2 stop bankykit-admin"
 echo "  Logs:         pm2 logs bankykit-admin"
 echo ""
 INSTALLEOF
-        chmod +x packages/admin-panel/bankykit-admin/install.sh
+    chmod +x packages/admin-panel/bankykit-admin/install.sh
 
-        # ── install-demo.sh — uses ecosystem-demo.config.cjs, port 6002, -demo PM2 name ──
-        cat > packages/admin-panel/bankykit-admin/install-demo.sh << 'INSTALLEOF'
+    cat > packages/admin-panel/bankykit-admin/install-demo.sh << 'INSTALLEOF'
 #!/bin/bash
 set -e
 
@@ -778,48 +486,45 @@ echo "  Stop:         pm2 stop bankykit-demo-admin"
 echo "  Logs:         pm2 logs bankykit-demo-admin"
 echo ""
 INSTALLEOF
-        chmod +x packages/admin-panel/bankykit-admin/install-demo.sh
+    chmod +x packages/admin-panel/bankykit-admin/install-demo.sh
 
-        cd packages/admin-panel
-        zip -r bankykit-admin-v1.0.0.zip bankykit-admin
-        cd ../..
-        echo ">>> Admin Panel package: packages/admin-panel/bankykit-admin-v1.0.0.zip"
-        ;;
-    5)
-        echo ""
-        echo "========================================"
-        echo "  Packaging Landing Page (source code)"
-        echo "========================================"
-        echo "    (No build needed - run install.sh on your server)"
+    cd packages/admin-panel
+    zip -r bankykit-admin-v1.0.0.zip bankykit-admin
+    cd ../..
+    echo ">>> Admin Panel package: packages/admin-panel/bankykit-admin-v1.0.0.zip"
+}
 
-        rm -rf packages/landing-page
-        mkdir -p packages/landing-page/bankykit-landing
+build_landing_page() {
+    echo ""
+    echo "========================================"
+    echo "  Packaging Landing Page (source code)"
+    echo "========================================"
+    echo "    (No build needed - run install.sh on your server)"
 
-        cp -r landing-page/src        packages/landing-page/bankykit-landing/
-        cp    landing-page/index.html  packages/landing-page/bankykit-landing/
-        cp    landing-page/package.json packages/landing-page/bankykit-landing/
-        cp    landing-page/package-lock.json packages/landing-page/bankykit-landing/ 2>/dev/null || true
-        cp    landing-page/vite.config.ts packages/landing-page/bankykit-landing/
-        cp    landing-page/tsconfig.json packages/landing-page/bankykit-landing/ 2>/dev/null || true
-        cp    landing-page/tsconfig.node.json packages/landing-page/bankykit-landing/ 2>/dev/null || true
-        cp    landing-page/tailwind.config.js packages/landing-page/bankykit-landing/ 2>/dev/null || true
-        cp    landing-page/postcss.config.js packages/landing-page/bankykit-landing/ 2>/dev/null || true
+    rm -rf packages/landing-page
+    mkdir -p packages/landing-page/bankykit-landing
 
-        find packages/landing-page/bankykit-landing -name ".DS_Store" -delete 2>/dev/null || true
+    cp -r landing-page/src        packages/landing-page/bankykit-landing/
+    cp -r landing-page/public     packages/landing-page/bankykit-landing/
+    cp    landing-page/index.html  packages/landing-page/bankykit-landing/
+    cp    landing-page/package.json packages/landing-page/bankykit-landing/
+    cp    landing-page/package-lock.json packages/landing-page/bankykit-landing/ 2>/dev/null || true
+    cp    landing-page/vite.config.ts packages/landing-page/bankykit-landing/
+    cp    landing-page/tsconfig.json packages/landing-page/bankykit-landing/ 2>/dev/null || true
+    cp    landing-page/tsconfig.node.json packages/landing-page/bankykit-landing/ 2>/dev/null || true
+    cp    landing-page/tailwind.config.js packages/landing-page/bankykit-landing/ 2>/dev/null || true
+    cp    landing-page/postcss.config.js packages/landing-page/bankykit-landing/ 2>/dev/null || true
 
-        cat > packages/landing-page/bankykit-landing/ecosystem.config.cjs << 'ECOEOF'
+    find packages/landing-page/bankykit-landing -name ".DS_Store" -delete 2>/dev/null || true
+
+    cat > packages/landing-page/bankykit-landing/ecosystem.config.cjs << 'ECOEOF'
 const path = require("path");
 
 const rootDir = __dirname;
 
 module.exports = {
-  // ─── Set your domain here before running install.sh ───
   domain: "bankykit.com",
-
-  // ─── Local preview port (access at http://localhost:PORT) ───
   port: 5003,
-
-  // ─── Port your BankyKit backend is running on ───
   backend_port: 5000,
 
   apps: [
@@ -834,20 +539,14 @@ module.exports = {
 };
 ECOEOF
 
-        # ── ecosystem-demo.config.cjs — demo environment, ports from 6000, -demo PM2 names ──
-        cat > packages/landing-page/bankykit-landing/ecosystem-demo.config.cjs << 'ECOEOF'
+    cat > packages/landing-page/bankykit-landing/ecosystem-demo.config.cjs << 'ECOEOF'
 const path = require("path");
 
 const rootDir = __dirname;
 
 module.exports = {
-  // ─── Set your domain here before running install.sh ───
   domain: "doc.bankykit.com",
-
-  // ─── Local preview port (access at http://localhost:PORT) ───
   port: 6003,
-
-  // ─── Port your BankyKit demo backend is running on ───
   backend_port: 6000,
 
   apps: [
@@ -862,7 +561,7 @@ module.exports = {
 };
 ECOEOF
 
-        cat > packages/landing-page/bankykit-landing/server.cjs << 'SERVEREOF'
+    cat > packages/landing-page/bankykit-landing/server.cjs << 'SERVEREOF'
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -913,7 +612,7 @@ http.createServer((req, res) => {
 });
 SERVEREOF
 
-        cat > packages/landing-page/bankykit-landing/start.sh << 'STARTEOF'
+    cat > packages/landing-page/bankykit-landing/start.sh << 'STARTEOF'
 #!/bin/bash
 set -e
 
@@ -945,9 +644,9 @@ else
 fi
 echo ""
 STARTEOF
-        chmod +x packages/landing-page/bankykit-landing/start.sh
+    chmod +x packages/landing-page/bankykit-landing/start.sh
 
-        cat > packages/landing-page/bankykit-landing/install.sh << 'INSTALLEOF'
+    cat > packages/landing-page/bankykit-landing/install.sh << 'INSTALLEOF'
 #!/bin/bash
 set -e
 
@@ -1012,10 +711,9 @@ echo "  Stop:         pm2 stop bankykit-landing"
 echo "  Logs:         pm2 logs bankykit-landing"
 echo ""
 INSTALLEOF
-        chmod +x packages/landing-page/bankykit-landing/install.sh
+    chmod +x packages/landing-page/bankykit-landing/install.sh
 
-        # ── install-demo.sh — uses ecosystem-demo.config.cjs, port 6003, -demo PM2 name ──
-        cat > packages/landing-page/bankykit-landing/install-demo.sh << 'INSTALLEOF'
+    cat > packages/landing-page/bankykit-landing/install-demo.sh << 'INSTALLEOF'
 #!/bin/bash
 set -e
 
@@ -1081,19 +779,39 @@ echo "  Stop:         pm2 stop bankykit-demo-landing"
 echo "  Logs:         pm2 logs bankykit-demo-landing"
 echo ""
 INSTALLEOF
-        chmod +x packages/landing-page/bankykit-landing/install-demo.sh
+    chmod +x packages/landing-page/bankykit-landing/install-demo.sh
 
-        cd packages/landing-page
-        zip -r bankykit-landing-v1.0.0.zip bankykit-landing
-        cd ../..
-        echo ">>> Landing Page package: packages/landing-page/bankykit-landing-v1.0.0.zip"
-        ;;
-    6)
-        build_saas
-        build_compiled
+    cd packages/landing-page
+    zip -r bankykit-landing-v1.0.0.zip bankykit-landing
+    cd ../..
+    echo ">>> Landing Page package: packages/landing-page/bankykit-landing-v1.0.0.zip"
+}
+
+cleanup() {
+    echo ""
+    echo ">>> Cleaning up temporary files..."
+    rm -rf python_backend/build python_backend/dist python_backend/*.spec 2>/dev/null || true
+    rm -f python_backend/bankykit_server.py 2>/dev/null || true
+}
+
+show_menu
+
+case $choice in
+    1)
         build_codecanyon
         ;;
-    7)
+    2)
+        build_admin_panel
+        ;;
+    3)
+        build_landing_page
+        ;;
+    4)
+        build_codecanyon
+        build_admin_panel
+        build_landing_page
+        ;;
+    5)
         echo "Exiting..."
         exit 0
         ;;
@@ -1111,8 +829,6 @@ echo "  Build Complete!"
 echo "========================================"
 echo ""
 echo "Build outputs:"
-[ -d "packages/saas" ]          && echo "  - SaaS:         packages/saas/"
-[ -d "packages/enterprise" ]    && echo "  - Enterprise:   packages/enterprise/"
 [ -d "packages/codecanyon" ]    && echo "  - CodeCanyon:   packages/codecanyon/"
 [ -f "packages/codecanyon/bankykit-v1.0.0.zip" ]         && echo "                  packages/codecanyon/bankykit-v1.0.0.zip"
 [ -f "packages/admin-panel/bankykit-admin-v1.0.0.zip" ]  && echo "  - Admin Panel:  packages/admin-panel/bankykit-admin-v1.0.0.zip"
