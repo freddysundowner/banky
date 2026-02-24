@@ -17,6 +17,10 @@ def try_send_sms(tenant_session, template_type: str, phone: str, name: str, cont
             send_sms_with_template(tenant_session, template_type, phone, name, context, member_id=member_id, loan_id=loan_id)
     except Exception as e:
         print(f"[SMS] Failed to send {template_type}: {e}")
+        try:
+            tenant_session.rollback()
+        except Exception:
+            pass
 
 def create_audit_log(tenant_session, staff_id, action, entity_type, entity_id, old_values=None, new_values=None):
     audit_log = AuditLog(

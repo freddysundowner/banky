@@ -398,8 +398,9 @@ async def mobile_login(data: LoginRequest, request: Request, db: Session = Depen
         )
 
     try:
+        print(f"[MOBILE LOGIN] Member {member.member_number} status='{member.status}' mobile_banking_active={member.mobile_banking_active} is_active={member.is_active}")
         if member.status != "active":
-            raise HTTPException(status_code=403, detail="Account is not active. Contact your administrator.")
+            raise HTTPException(status_code=403, detail=f"Account is not active (status: {member.status}). Contact your administrator.")
 
         if not member.mobile_banking_active:
             raise HTTPException(status_code=403, detail="Mobile banking is not active for this account.")

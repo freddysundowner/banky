@@ -446,6 +446,10 @@ def send_sms_with_template(tenant_session, template_type: str, recipient_phone: 
         tenant_session.commit()
     except Exception as e:
         print(f"[SMS] Failed to save notification: {e}")
+        try:
+            tenant_session.rollback()
+        except Exception:
+            pass
     
     return result
 
