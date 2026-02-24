@@ -150,7 +150,7 @@ class NotificationService extends GetxService {
   }) async {
     await _showLocalNotification(
       title: 'Payment Reminder',
-      body: 'Your $loanName payment of KSh ${amount.toStringAsFixed(0)} is due on ${dueDate.day}/${dueDate.month}/${dueDate.year}',
+      body: 'Your $loanName payment of ${amount.toStringAsFixed(0)} is due on ${dueDate.day}/${dueDate.month}/${dueDate.year}',
     );
   }
 
@@ -159,7 +159,7 @@ class NotificationService extends GetxService {
   }) async {
     await _showLocalNotification(
       title: 'Payment Successful',
-      body: 'Your payment of KSh ${amount.toStringAsFixed(0)} has been received. Thank you!',
+      body: 'Your payment of ${amount.toStringAsFixed(0)} has been received. Thank you!',
     );
   }
 

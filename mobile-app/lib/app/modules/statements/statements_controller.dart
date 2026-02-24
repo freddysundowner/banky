@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../data/models/transaction_model.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../data/repositories/statement_repository.dart';
+import '../home/home_controller.dart';
 
 class StatementsController extends GetxController {
   final StatementRepository _statementRepo = Get.find<StatementRepository>();
@@ -199,7 +200,7 @@ class StatementsController extends GetxController {
             children: [
               if (data['balance'] != null)
                 Text(
-                  'Current Balance: KSh ${data['balance']}',
+                  'Current Balance: ${Get.find<HomeController>().currencySymbol} ${data['balance']}',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               const SizedBox(height: 16),
@@ -229,7 +230,7 @@ class StatementsController extends GetxController {
                             ),
                           ),
                           Text(
-                            'KSh ${tx['amount']}',
+                            '${Get.find<HomeController>().currencySymbol} ${tx['amount']}',
                             style: TextStyle(
                               color: tx['is_credit'] == true
                                   ? Colors.green

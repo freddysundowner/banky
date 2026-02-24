@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../routes/app_pages.dart';
+import '../home/home_controller.dart';
 import 'profile_controller.dart';
 
 class ProfileView extends GetView<ProfileController> {
@@ -178,7 +179,7 @@ class ProfileView extends GetView<ProfileController> {
                 Expanded(
                   child: _buildStatCard(
                     label: 'Savings',
-                    value: 'KSh ${member.savingsBalance.toStringAsFixed(0)}',
+                    value: '${Get.find<HomeController>().currencySymbol} ${member.savingsBalance.toStringAsFixed(0)}',
                     color: AppColors.success,
                   ),
                 ),
@@ -186,7 +187,7 @@ class ProfileView extends GetView<ProfileController> {
                 Expanded(
                   child: _buildStatCard(
                     label: 'Shares',
-                    value: 'KSh ${member.sharesBalance.toStringAsFixed(0)}',
+                    value: '${Get.find<HomeController>().currencySymbol} ${member.sharesBalance.toStringAsFixed(0)}',
                     color: AppColors.primary,
                   ),
                 ),
@@ -196,7 +197,7 @@ class ProfileView extends GetView<ProfileController> {
               const SizedBox(height: 12),
               _buildStatCard(
                 label: 'Loan Balance',
-                value: 'KSh ${member.loanBalance.toStringAsFixed(0)}',
+                value: '${Get.find<HomeController>().currencySymbol} ${member.loanBalance.toStringAsFixed(0)}',
                 color: AppColors.warning,
               ),
             ],

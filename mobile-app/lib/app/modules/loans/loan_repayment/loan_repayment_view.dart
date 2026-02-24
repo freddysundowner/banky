@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../home/home_controller.dart';
 import 'loan_repayment_controller.dart';
 
 class LoanRepaymentView extends GetView<LoanRepaymentController> {
@@ -101,8 +102,8 @@ class LoanRepaymentView extends GetView<LoanRepaymentController> {
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
-                  decoration: const InputDecoration(
-                    prefixText: 'KSh ',
+                  decoration: InputDecoration(
+                    prefixText: '${Get.find<HomeController>().currencySymbol} ',
                     hintText: '0',
                   ),
                 ),

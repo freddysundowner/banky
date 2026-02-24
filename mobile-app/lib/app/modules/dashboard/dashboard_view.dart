@@ -335,8 +335,8 @@ class DashboardView extends GetView<DashboardController> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))],
               decoration: InputDecoration(
-                labelText: 'Amount (KES)',
-                prefixText: 'KES ',
+                labelText: 'Amount (${controller.homeController.currencySymbol})',
+                prefixText: '${controller.homeController.currencySymbol} ',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
@@ -498,8 +498,8 @@ class DashboardView extends GetView<DashboardController> {
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))],
               decoration: InputDecoration(
-                labelText: 'Amount (KES)',
-                prefixText: 'KES ',
+                labelText: 'Amount (${controller.homeController.currencySymbol})',
+                prefixText: '${controller.homeController.currencySymbol} ',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
