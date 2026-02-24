@@ -1048,6 +1048,9 @@ async def mpesa_stk_callback(org_id: str, request: Request, db: Session = Depend
 
         if result_code != 0:
             print(f"[STK Callback] Payment failed/cancelled: {result_desc}")
+            if is_demo_mode():
+                print(f"[STK Callback] Demo mode — ignoring sandbox failure, simulated success will follow")
+                return {"ResultCode": 0, "ResultDesc": "Accepted"}
             if checkout_request_id:
                 org = db.query(Organization).filter(Organization.id == org_id).first()
                 if org and org.connection_string:
