@@ -5,6 +5,7 @@ GET  /api/mobile/me/mini-statement
 GET  /api/mobile/me/payments
 POST /api/mobile/me/deposit
 POST /api/mobile/me/withdraw
+POST /api/mobile/me/mpesa-pay
 """
 
 import math
@@ -320,5 +321,87 @@ def request_withdrawal(data: WithdrawRequest, ctx: dict = Depends(get_current_me
     except Exception as e:
         ts.rollback()
         raise HTTPException(status_code=500, detail=f"Withdrawal failed: {str(e)}")
+    finally:
+        ts.close()
+
+
+class MpesaPayRequest(BaseModel):
+    phone_number: str
+    amount: float
+    loan_id: Optional[str] = None
+    description: Optional[str] = None
+    payment_type: Optional[str] = "loan_repayment"
+
+
+@router.post("/me/mpesa-pay")
+async def mobile_mpesa_pay(data: MpesaPayRequest, ctx: dict = Depends(get_current_member)):
+    """Initiate M-Pesa STK push for loan repayment from the mobile app."""
+    import asyncio
+    from routes.mpesa import initiate_stk_push, simulate_sandbox_callback
+    from middleware.demo_guard import is_demo_mode
+    from models.tenant import LoanApplication
+
+    member = ctx["member"]
+    org = ctx["org"]
+    ts = ctx["session"]
+
+    if data.amount <= 0:
+        raise HTTPException(status_code=400, detail="Amount must be greater than zero")
+
+    if not data.phone_number:
+        raise HTTPException(status_code=400, detail="Phone number is required")
+
+    if data.loan_id:
+        loan = ts.query(LoanApplication).filter(
+            LoanApplication.id == data.loan_id,
+            LoanApplication.member_id == member.id,
+        ).first()
+        if not loan:
+            raise HTTPException(status_code=404, detail="Loan not found")
+        if loan.status not in ("disbursed", "active"):
+            raise HTTPException(status_code=400, detail="Loan is not active")
+
+    amount = Decimal(str(data.amount))
+    account_ref = member.member_number or member.id[:8]
+    description = data.description or "Loan Repayment"
+
+    try:
+        result = initiate_stk_push(
+            tenant_session=ts,
+            phone=data.phone_number,
+            amount=amount,
+            account_reference=account_ref,
+            description=description,
+            org_id=org.id,
+        )
+
+        checkout_request_id = result.get("CheckoutRequestID")
+        merchant_request_id = result.get("MerchantRequestID")
+        response_code = result.get("ResponseCode", "")
+
+        if response_code != "0":
+            error_msg = result.get("CustomerMessage") or result.get("errorMessage") or "STK push failed"
+            raise HTTPException(status_code=502, detail=error_msg)
+
+        if is_demo_mode():
+            asyncio.create_task(simulate_sandbox_callback(
+                org.id,
+                checkout_request_id or "",
+                merchant_request_id or "",
+                float(amount)
+            ))
+
+        return {
+            "success": True,
+            "message": "M-Pesa prompt sent. Enter your PIN to complete the payment.",
+            "checkout_request_id": checkout_request_id,
+            "merchant_request_id": merchant_request_id,
+            "phone": data.phone_number,
+            "amount": float(amount),
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Payment failed: {str(e)}")
     finally:
         ts.close()

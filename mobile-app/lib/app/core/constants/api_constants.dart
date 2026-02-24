@@ -20,14 +20,13 @@ class ApiConstants {
   static const String mobileDemoStatus = '$_auth/demo-status';
   static const String mobileDemoLogin = '$_auth/demo-login';
 
-  // M-Pesa (unchanged — existing backend routes)
-  static const String mpesaPayment = '/api/mpesa/stk-push';
-  static const String mpesaStatusBase = '/api/mpesa/stk-push'; // append /{id}/status
-
   // Mobile Member API — all served from /api/mobile/
   static const String _m = '/api/mobile';
 
   static const String memberMe = '$_m/me';
+
+  // M-Pesa — mobile-facing endpoint
+  static const String mpesaPayment = '$_m/me/mpesa-pay';
 
   // Shorthand aliases used across repositories
   static const String loans = '$_m/me/loans';
@@ -52,7 +51,6 @@ class ApiConstants {
   static String memberLoanDetail(String loanId) => '$_m/me/loans/$loanId';
   static String memberLoanSchedule(String loanId) => '$_m/me/loans/$loanId/schedule';
   static String memberLoanRepayment(String loanId) => '$_m/me/loans/$loanId/repayments';
-  static String mpesaStatus(String transactionId) => '/api/mpesa/stk-push/$transactionId/status';
 
   static const Duration connectionTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
