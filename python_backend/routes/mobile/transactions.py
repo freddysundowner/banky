@@ -267,7 +267,10 @@ async def initiate_deposit(data: DepositRequest, ctx: dict = Depends(get_current
         ts.add(pending_payment)
         ts.commit()
 
-        if is_demo_mode():
+        from services.tenant_context import get_org_setting
+        mpesa_env = get_org_setting(ts, "mpesa_environment", "sandbox") if not is_demo_mode() else "sandbox"
+        use_sandbox = is_demo_mode() or mpesa_env == "sandbox"
+        if use_sandbox:
             asyncio.create_task(simulate_sandbox_callback(
                 org.id,
                 checkout_request_id or "",
@@ -277,7 +280,7 @@ async def initiate_deposit(data: DepositRequest, ctx: dict = Depends(get_current
 
         return {
             "success": True,
-            "message": "M-Pesa prompt sent. Enter your PIN to complete the deposit.",
+            "message": "M-Pesa prompt sent. Enter your PIN to complete the deposit." if not use_sandbox else "M-Pesa deposit initiated. Funds will be credited shortly.",
             "checkout_request_id": checkout_request_id,
             "merchant_request_id": merchant_request_id,
             "phone": phone,
@@ -466,7 +469,10 @@ async def mobile_mpesa_pay(data: MpesaPayRequest, ctx: dict = Depends(get_curren
         ts.add(pending_payment)
         ts.commit()
 
-        if is_demo_mode():
+        from services.tenant_context import get_org_setting as _get_setting
+        mpesa_env_pay = _get_setting(ts, "mpesa_environment", "sandbox") if not is_demo_mode() else "sandbox"
+        use_sandbox_pay = is_demo_mode() or mpesa_env_pay == "sandbox"
+        if use_sandbox_pay:
             asyncio.create_task(simulate_sandbox_callback(
                 org.id,
                 checkout_request_id or "",
@@ -476,7 +482,7 @@ async def mobile_mpesa_pay(data: MpesaPayRequest, ctx: dict = Depends(get_curren
 
         return {
             "success": True,
-            "message": "M-Pesa prompt sent. Enter your PIN to complete the payment.",
+            "message": "M-Pesa prompt sent. Enter your PIN to complete the payment." if not use_sandbox_pay else "M-Pesa payment initiated. Funds will be credited shortly.",
             "checkout_request_id": checkout_request_id,
             "merchant_request_id": merchant_request_id,
             "phone": data.phone_number,
