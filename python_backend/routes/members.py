@@ -168,17 +168,19 @@ async def create_member(
         member_data['status'] = 'pending'
         
         id_number = member_data.get('id_number')
-        if id_number:
-            inactive_statuses = ['suspended', 'dormant', 'deceased', 'closed']
-            existing = tenant_session.query(Member).filter(
-                Member.id_number == id_number,
-                ~Member.status.in_(inactive_statuses)
-            ).first()
-            if existing:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"A member with ID number '{id_number}' already exists (Member No: {existing.member_number})"
-                )
+        if not id_number or not id_number.strip():
+            raise HTTPException(status_code=400, detail="ID number is required")
+        
+        inactive_statuses = ['suspended', 'dormant', 'deceased', 'closed']
+        existing = tenant_session.query(Member).filter(
+            Member.id_number == id_number,
+            ~Member.status.in_(inactive_statuses)
+        ).first()
+        if existing:
+            raise HTTPException(
+                status_code=400,
+                detail=f"A member with ID number '{id_number}' already exists (Member No: {existing.member_number})"
+            )
         
         # Server-side branch enforcement: override branch_id for restricted users
         staff_branch_id = get_branch_filter(user)
