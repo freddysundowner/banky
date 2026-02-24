@@ -101,21 +101,9 @@ class ProfileView extends GetView<ProfileController> {
             ),
             const SizedBox(height: 16),
             _buildInfoRow(
-              icon: Icons.email,
-              label: 'Email',
-              value: member.email ?? 'Not set',
-            ),
-            const Divider(height: 24),
-            _buildInfoRow(
               icon: Icons.phone,
               label: 'Phone',
               value: member.phone ?? 'Not set',
-            ),
-            const Divider(height: 24),
-            _buildInfoRow(
-              icon: Icons.location_on,
-              label: 'Address',
-              value: member.address ?? 'Not set',
             ),
             if (member.idNumber != null) ...[
               const Divider(height: 24),
