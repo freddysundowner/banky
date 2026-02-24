@@ -98,9 +98,8 @@ class StorageService extends GetxService {
 
   /// Returns the real hardware device ID.
   /// On Android: Android ID (stable per device + app signing key).
-  /// On iOS: identifierForVendor (stable per vendor, resets on reinstall).
-  /// The value is cached in secure storage after the first read so subsequent
-  /// calls are fast and the ID survives app updates.
+  /// On iOS: identifierForVendor (stable per vendor, persists through updates).
+  /// Cached in secure storage after the first read so subsequent calls are fast.
   Future<String> getOrCreateDeviceId() async {
     final cached = await _secureStorage.read(key: deviceIdKey);
     if (cached != null && cached.isNotEmpty) return cached;
@@ -110,7 +109,7 @@ class StorageService extends GetxService {
       final deviceInfo = DeviceInfoPlugin();
       if (Platform.isAndroid) {
         final info = await deviceInfo.androidInfo;
-        id = info.id; // Android ID — hex string, unique per device + signing key
+        id = info.id;
       } else if (Platform.isIOS) {
         final info = await deviceInfo.iosInfo;
         id = info.identifierForVendor ?? '';
@@ -118,12 +117,27 @@ class StorageService extends GetxService {
     } catch (_) {}
 
     if (id.isEmpty) {
-      // Fallback: generate a stable random ID and persist it
       id = DateTime.now().microsecondsSinceEpoch.toRadixString(16);
     }
 
     await _secureStorage.write(key: deviceIdKey, value: id);
     return id;
+  }
+
+  /// Returns a human-readable device name, e.g. "Samsung Galaxy S21" or "iPhone 13".
+  Future<String> getDeviceName() async {
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      if (Platform.isAndroid) {
+        final info = await deviceInfo.androidInfo;
+        final brand = info.brand[0].toUpperCase() + info.brand.substring(1);
+        return '$brand ${info.model}';
+      } else if (Platform.isIOS) {
+        final info = await deviceInfo.iosInfo;
+        return '${info.name} (${info.model})';
+      }
+    } catch (_) {}
+    return 'Unknown Device';
   }
 
   Future<void> clearAll() async {

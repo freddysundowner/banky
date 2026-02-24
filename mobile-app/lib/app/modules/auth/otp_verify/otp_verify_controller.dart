@@ -27,8 +27,9 @@ class OtpVerifyController extends GetxController {
   String memberName = '';
   String organizationName = '';
 
-  // Shared device id (both flows)
+  // Shared device args (both flows)
   String deviceId = '';
+  String deviceName = '';
 
   Timer? _resendTimer;
 
@@ -42,6 +43,7 @@ class OtpVerifyController extends GetxController {
     memberName = args['member_name'] ?? '';
     organizationName = args['organization_name'] ?? '';
     deviceId = args['device_id'] ?? '';
+    deviceName = args['device_name'] ?? '';
     _startResendTimer();
   }
 
@@ -103,6 +105,7 @@ class OtpVerifyController extends GetxController {
             'account_number': accountNumber,
             'otp': otp,
             'device_id': deviceId,
+            'device_name': deviceName,
           },
         );
         return;

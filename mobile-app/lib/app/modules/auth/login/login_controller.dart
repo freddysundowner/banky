@@ -36,12 +36,14 @@ class LoginController extends GetxController {
 
     try {
       final deviceId = await _storage.getOrCreateDeviceId();
+      final deviceName = await _storage.getDeviceName();
 
       final response = await _api.post(
         ApiConstants.mobileLogin,
         data: {
           'device_id': deviceId,
           'password': pinController.text,
+          'device_name': deviceName,
         },
       );
 
@@ -51,6 +53,7 @@ class LoginController extends GetxController {
           Routes.otpVerify,
           arguments: {
             'device_id': deviceId,
+            'device_name': deviceName,
             'masked_phone': data['masked_phone'],
             'flow': 'login',
           },

@@ -48,6 +48,7 @@ class ActivateController extends GetxController {
 
     try {
       final deviceId = await _storage.getOrCreateDeviceId();
+      final deviceName = await _storage.getDeviceName();
 
       final response = await _api.post(
         ApiConstants.mobileActivateInit,
@@ -55,6 +56,7 @@ class ActivateController extends GetxController {
           'account_number': accountNumberController.text.trim().toUpperCase(),
           'activation_code': activationCodeController.text.trim().toUpperCase(),
           'device_id': deviceId,
+          'device_name': deviceName,
         },
       );
 
@@ -69,6 +71,7 @@ class ActivateController extends GetxController {
             'organization_name': data['organization_name'],
             'flow': 'activation',
             'device_id': deviceId,
+            'device_name': deviceName,
           },
         );
       }

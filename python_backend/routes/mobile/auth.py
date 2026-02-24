@@ -27,6 +27,17 @@ MOBILE_SESSION_COOKIE = "mobile_session"
 OTP_EXPIRY_MINUTES = 5
 
 
+def _get_client_ip(request: Request) -> str:
+    """Extract the real client IP, respecting X-Forwarded-For from reverse proxies."""
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    real_ip = request.headers.get("X-Real-IP")
+    if real_ip:
+        return real_ip.strip()
+    return request.client.host if request.client else "unknown"
+
+
 def _generate_otp() -> str:
     return str(random.randint(100000, 999999))
 
@@ -131,11 +142,13 @@ class ActivateCompleteRequest(BaseModel):
 class LoginRequest(BaseModel):
     device_id: str
     password: str
+    device_name: Optional[str] = None
 
 
 class LoginVerifyRequest(BaseModel):
     device_id: str
     otp: str
+    device_name: Optional[str] = None
 
 
 @router.post("/activate/init")
@@ -235,7 +248,7 @@ async def activate_complete(
         member.otp_code = None
         member.otp_expires_at = None
 
-        ip = request.client.host if request.client else None
+        ip = _get_client_ip(request)
         mobile_session = MobileSession(
             id=str(uuid.uuid4()),
             member_id=member.id,
@@ -351,7 +364,7 @@ async def mobile_login_verify(
         member.otp_expires_at = None
 
         session_token = secrets.token_urlsafe(32)
-        ip = request.client.host if request.client else None
+        ip = _get_client_ip(request)
 
         existing_session = tenant_session.query(MobileSession).filter(
             MobileSession.member_id == member.id,
@@ -363,11 +376,14 @@ async def mobile_login_verify(
             existing_session.session_token = session_token
             existing_session.last_active = datetime.utcnow()
             existing_session.ip_address = ip
+            if data.device_name:
+                existing_session.device_name = data.device_name
         else:
             mobile_session = MobileSession(
                 id=str(uuid.uuid4()),
                 member_id=member.id,
                 device_id=data.device_id,
+                device_name=data.device_name,
                 ip_address=ip,
                 session_token=session_token,
                 login_at=datetime.utcnow(),
