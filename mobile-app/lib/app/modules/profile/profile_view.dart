@@ -275,8 +275,6 @@ class ProfileView extends GetView<ProfileController> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Version 1.0.0'),
-                      SizedBox(height: 8),
-                      Text('Member Portal for Sacco & Bank Management'),
                     ],
                   ),
                   actions: [

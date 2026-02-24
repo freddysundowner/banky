@@ -48,14 +48,6 @@ class SplashView extends GetView<SplashController> {
                 letterSpacing: 2,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Member Portal',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.white.withOpacity(0.8),
-              ),
-            ),
             const SizedBox(height: 48),
             const SizedBox(
               width: 24,
