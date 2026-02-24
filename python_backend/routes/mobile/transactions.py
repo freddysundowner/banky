@@ -339,7 +339,8 @@ async def mobile_mpesa_pay(data: MpesaPayRequest, ctx: dict = Depends(get_curren
     import asyncio
     from routes.mpesa import initiate_stk_push, simulate_sandbox_callback
     from middleware.demo_guard import is_demo_mode
-    from models.tenant import LoanApplication
+    from models.tenant import LoanApplication, MpesaPayment
+    from services.code_generator import generate_uuid
 
     member = ctx["member"]
     org = ctx["org"]
@@ -351,6 +352,7 @@ async def mobile_mpesa_pay(data: MpesaPayRequest, ctx: dict = Depends(get_curren
     if not data.phone_number:
         raise HTTPException(status_code=400, detail="Phone number is required")
 
+    loan = None
     if data.loan_id:
         loan = ts.query(LoanApplication).filter(
             LoanApplication.id == data.loan_id,
@@ -383,6 +385,31 @@ async def mobile_mpesa_pay(data: MpesaPayRequest, ctx: dict = Depends(get_curren
             error_msg = result.get("CustomerMessage") or result.get("errorMessage") or "STK push failed"
             raise HTTPException(status_code=502, detail=error_msg)
 
+        notes_parts = []
+        if data.loan_id:
+            notes_parts.append(f"payment_type:loan_repayment")
+            notes_parts.append(f"loan_id:{data.loan_id}")
+        else:
+            notes_parts.append(f"payment_type:deposit")
+            notes_parts.append(f"account_type:savings")
+
+        pending_payment = MpesaPayment(
+            id=generate_uuid(),
+            trans_id=f"PENDING-{checkout_request_id}",
+            trans_time=datetime.utcnow().strftime("%Y%m%d%H%M%S"),
+            amount=amount,
+            phone_number=data.phone_number,
+            bill_ref_number=checkout_request_id,
+            first_name=member.first_name or "Mobile",
+            last_name=member.last_name or "",
+            transaction_type="STK",
+            member_id=member.id,
+            status="pending",
+            notes=" | ".join(notes_parts),
+        )
+        ts.add(pending_payment)
+        ts.commit()
+
         if is_demo_mode():
             asyncio.create_task(simulate_sandbox_callback(
                 org.id,
@@ -402,6 +429,7 @@ async def mobile_mpesa_pay(data: MpesaPayRequest, ctx: dict = Depends(get_curren
     except HTTPException:
         raise
     except Exception as e:
+        ts.rollback()
         raise HTTPException(status_code=500, detail=f"Payment failed: {str(e)}")
     finally:
         ts.close()

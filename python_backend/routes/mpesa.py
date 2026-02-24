@@ -1032,10 +1032,16 @@ async def mpesa_stk_callback(org_id: str, request: Request, db: Session = Depend
                 pending_stk.raw_payload = data
                 mpesa_payment = pending_stk
                 member = tenant_session.query(Member).filter(Member.id == pending_stk.member_id).first() if pending_stk.member_id else None
-                account_type_note = pending_stk.notes or ""
+                notes_str = pending_stk.notes or ""
+                payment_type = "deposit"
                 account_type = "savings"
-                if "account_type:" in account_type_note:
-                    account_type = account_type_note.split("account_type:")[1].split("|")[0].strip()
+                loan_id = None
+                if "payment_type:loan_repayment" in notes_str:
+                    payment_type = "loan_repayment"
+                if "loan_id:" in notes_str:
+                    loan_id = notes_str.split("loan_id:")[1].split("|")[0].strip()
+                if "account_type:" in notes_str:
+                    account_type = notes_str.split("account_type:")[1].split("|")[0].strip()
             else:
                 mpesa_payment = MpesaPayment(
                     trans_id=mpesa_receipt,
@@ -1050,7 +1056,9 @@ async def mpesa_stk_callback(org_id: str, request: Request, db: Session = Depend
                     raw_payload=data
                 )
                 tenant_session.add(mpesa_payment)
+                payment_type = "deposit"
                 account_type = "savings"
+                loan_id = None
 
             if not member and phone:
                 phone_search = phone[-9:] if len(phone) > 9 else phone
@@ -1058,7 +1066,118 @@ async def mpesa_stk_callback(org_id: str, request: Request, db: Session = Depend
                     Member.phone.like(f"%{phone_search}")
                 ).first()
 
-            if member:
+            if member and payment_type == "loan_repayment" and loan_id:
+                from models.tenant import LoanApplication, LoanRepayment, LoanInstalment, LoanProduct, LoanDefault
+                from routes.repayments import calculate_payment_allocation, post_repayment_to_gl
+                loan = tenant_session.query(LoanApplication).filter(
+                    LoanApplication.id == loan_id,
+                    LoanApplication.member_id == member.id,
+                ).first()
+
+                if loan and loan.status in ("disbursed", "active"):
+                    has_instalments = tenant_session.query(LoanInstalment).filter(
+                        LoanInstalment.loan_id == str(loan.id)
+                    ).count() > 0
+
+                    overpayment = Decimal("0")
+                    if has_instalments:
+                        from services.instalment_service import allocate_payment_to_instalments
+                        principal_amount, interest_amount, penalty_amount, insurance_amount, overpayment = allocate_payment_to_instalments(
+                            tenant_session, loan, amount
+                        )
+                    else:
+                        principal_amount, interest_amount, penalty_amount = calculate_payment_allocation(loan, amount, tenant_session)
+                        insurance_amount = Decimal("0")
+                        outstanding = loan.outstanding_balance or Decimal("0")
+                        total_allocated = principal_amount + interest_amount + penalty_amount
+                        if total_allocated > outstanding and outstanding > 0:
+                            overpayment = total_allocated - outstanding
+                            principal_amount = principal_amount - overpayment
+
+                    actual_loan_payment = amount - overpayment
+
+                    repayment = LoanRepayment(
+                        repayment_number=f"MPESA-{mpesa_receipt}",
+                        loan_id=loan.id,
+                        amount=amount,
+                        principal_amount=principal_amount,
+                        interest_amount=interest_amount,
+                        penalty_amount=penalty_amount,
+                        payment_method="mpesa",
+                        reference=mpesa_receipt,
+                        notes=f"M-Pesa STK Push loan repayment from {phone}",
+                        payment_date=datetime.utcnow(),
+                    )
+                    tenant_session.add(repayment)
+
+                    loan.amount_repaid = (loan.amount_repaid or Decimal("0")) + actual_loan_payment
+                    loan.outstanding_balance = (loan.outstanding_balance or Decimal("0")) - actual_loan_payment
+                    loan.last_payment_date = datetime.utcnow().date()
+
+                    if has_instalments:
+                        next_inst = tenant_session.query(LoanInstalment).filter(
+                            LoanInstalment.loan_id == str(loan.id),
+                            LoanInstalment.status.in_(["pending", "partial", "overdue"])
+                        ).order_by(LoanInstalment.instalment_number).first()
+                        if next_inst:
+                            loan.next_payment_date = next_inst.due_date
+
+                    if loan.outstanding_balance <= 0:
+                        loan.status = "paid"
+                        loan.closed_at = datetime.utcnow()
+                        loan.outstanding_balance = Decimal("0")
+                        tenant_session.query(LoanDefault).filter(
+                            LoanDefault.loan_id == str(loan.id),
+                            LoanDefault.status.in_(["overdue", "in_collection"])
+                        ).update({"status": "resolved", "resolved_at": datetime.utcnow()}, synchronize_session="fetch")
+
+                    txn_code = generate_txn_code()
+                    transaction = Transaction(
+                        transaction_number=txn_code,
+                        member_id=member.id,
+                        transaction_type="loan_repayment",
+                        account_type="loan",
+                        amount=actual_loan_payment,
+                        payment_method="mpesa",
+                        reference=mpesa_receipt,
+                        description=f"M-Pesa loan repayment for {loan.application_number}"
+                    )
+                    tenant_session.add(transaction)
+
+                    if overpayment > 0:
+                        balance_before = member.savings_balance or Decimal("0")
+                        member.savings_balance = balance_before + overpayment
+                        overpay_txn = Transaction(
+                            transaction_number=generate_txn_code(),
+                            member_id=member.id,
+                            transaction_type="deposit",
+                            account_type="savings",
+                            amount=overpayment,
+                            balance_before=balance_before,
+                            balance_after=member.savings_balance,
+                            reference=mpesa_receipt,
+                            description=f"Overpayment from loan {loan.application_number} credited to savings"
+                        )
+                        tenant_session.add(overpay_txn)
+
+                    tenant_session.flush()
+
+                    mpesa_payment.status = "credited"
+                    mpesa_payment.member_id = member.id
+                    mpesa_payment.credited_at = datetime.utcnow()
+
+                    try:
+                        post_repayment_to_gl(tenant_session, repayment, loan, member)
+                    except Exception as gl_err:
+                        print(f"[STK Callback] GL posting warning: {gl_err}")
+
+                    print(f"[STK Callback] Loan repayment {amount} applied to loan {loan.application_number} for member {member.member_number} (P:{principal_amount} I:{interest_amount} Pen:{penalty_amount} Over:{overpayment})")
+                else:
+                    mpesa_payment.status = "unmatched"
+                    mpesa_payment.notes = (mpesa_payment.notes or "") + f" | Loan {loan_id} not found or not active"
+                    print(f"[STK Callback] Loan {loan_id} not found/active for member {member.member_number}")
+
+            elif member:
                 if account_type == "savings":
                     current_balance = member.savings_balance or Decimal("0")
                 elif account_type == "shares":
