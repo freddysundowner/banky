@@ -331,6 +331,8 @@ async def simulate_mpesa_deposit(
     if not org or not org.connection_string:
         raise HTTPException(status_code=404, detail="Organization not found")
     
+    require_kes_currency(org)
+    
     tenant_ctx = TenantContext(org.connection_string)
     tenant_session = tenant_ctx.create_session()
     
@@ -729,6 +731,10 @@ async def check_stk_push_status(org_id: str, request: Request, user=Depends(get_
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
     tenant_session = tenant_ctx.create_session()
     try:
+        mpesa_enabled = get_org_setting(tenant_session, "mpesa_enabled", False)
+        if not mpesa_enabled:
+            raise HTTPException(status_code=400, detail="M-Pesa is not enabled for this organization")
+
         data = await request.json()
         checkout_request_id = data.get("checkout_request_id", "")
         

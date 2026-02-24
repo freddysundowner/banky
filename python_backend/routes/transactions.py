@@ -247,7 +247,7 @@ async def create_transaction(org_id: str, data: TransactionCreate, request: Requ
         if data.transaction_type not in ["deposit", "withdrawal", "transfer", "fee", "interest"]:
             raise HTTPException(status_code=400, detail="Invalid transaction type")
         
-        if data.payment_method == "mpesa" and data.transaction_type == "deposit":
+        if data.payment_method == "mpesa":
             from services.feature_flags import check_org_feature
             has_mpesa = check_org_feature(org_id, "mpesa_integration", db)
             if not has_mpesa:
@@ -256,6 +256,12 @@ async def create_transaction(org_id: str, data: TransactionCreate, request: Requ
             mpesa_enabled = get_org_setting(tenant_session, "mpesa_enabled", False)
             if not mpesa_enabled:
                 raise HTTPException(status_code=400, detail="M-Pesa is not enabled. Go to Settings > M-Pesa to enable it.")
+            
+            from routes.mpesa import require_kes_currency
+            org_obj = db.query(Organization).filter(Organization.id == org_id).first()
+            require_kes_currency(org_obj)
+
+        if data.payment_method == "mpesa" and data.transaction_type == "deposit":
             
             phone = member.phone
             if not phone:
