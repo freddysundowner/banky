@@ -69,17 +69,15 @@ class MemberRepository {
 
   Future<List<LoanModel>> getLoans({bool activeOnly = false}) async {
     try {
-      final queryParams = <String, dynamic>{};
-      if (activeOnly) queryParams['status'] = 'active';
-
-      final response = await _api.get(
-        '${ApiConstants.memberMe}/loans',
-        queryParameters: queryParams,
-      );
+      final response = await _api.get('${ApiConstants.memberMe}/loans');
       
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['items'] ?? response.data;
-        return data.map((json) => LoanModel.fromJson(json)).toList();
+        final all = data.map((json) => LoanModel.fromJson(json)).toList();
+        if (activeOnly) {
+          return all.where((l) => l.isActive).toList();
+        }
+        return all;
       }
     } catch (e) {
       print('Error getting loans: $e');

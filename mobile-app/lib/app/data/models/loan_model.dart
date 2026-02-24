@@ -71,26 +71,31 @@ class LoanModel {
   }
 
   factory LoanModel.fromJson(Map<String, dynamic> json) {
+    DateTime? _tryParse(String? s) {
+      if (s == null) return null;
+      try { return DateTime.parse(s); } catch (_) { return null; }
+    }
+
     return LoanModel(
       id: json['id']?.toString() ?? '',
-      loanNumber: json['loan_number'] ?? json['loanNumber'],
+      loanNumber: json['loan_number'] ?? json['loanNumber'] ?? json['application_number'],
       loanProductId: json['loan_product_id']?.toString() ?? json['loanProductId']?.toString() ?? '',
-      loanProductName: json['loan_product_name'] ?? json['loanProductName'] ?? json['product']?['name'],
-      principalAmount: (json['principal_amount'] ?? json['principalAmount'] ?? json['principal'] ?? 0).toDouble(),
+      loanProductName: json['loan_product_name'] ?? json['loanProductName'] ?? json['product_name'] ?? json['product']?['name'],
+      principalAmount: (json['principal_amount'] ?? json['principalAmount'] ?? json['principal'] ?? json['amount'] ?? 0).toDouble(),
       interestRate: (json['interest_rate'] ?? json['interestRate'] ?? 0).toDouble(),
       termMonths: json['term_months'] ?? json['termMonths'] ?? json['term'] ?? 0,
-      totalAmount: (json['total_amount'] ?? json['totalAmount'] ?? 0).toDouble(),
-      amountPaid: (json['amount_paid'] ?? json['amountPaid'] ?? json['paid_amount'] ?? 0).toDouble(),
+      totalAmount: (json['total_amount'] ?? json['totalAmount'] ?? json['total_repayment'] ?? 0).toDouble(),
+      amountPaid: (json['amount_paid'] ?? json['amountPaid'] ?? json['paid_amount'] ?? json['amount_repaid'] ?? 0).toDouble(),
       outstandingBalance: (json['outstanding_balance'] ?? json['outstandingBalance'] ?? json['balance'] ?? 0).toDouble(),
-      monthlyPayment: json['monthly_payment']?.toDouble() ?? json['monthlyPayment']?.toDouble(),
+      monthlyPayment: (json['monthly_payment'] ?? json['monthlyPayment'] ?? json['monthly_repayment'])?.toDouble(),
       status: _parseLoanStatus(json['status']),
-      applicationDate: json['application_date'] != null ? DateTime.parse(json['application_date']) : null,
-      approvalDate: json['approval_date'] != null ? DateTime.parse(json['approval_date']) : null,
-      disbursementDate: json['disbursement_date'] != null ? DateTime.parse(json['disbursement_date']) : null,
-      maturityDate: json['maturity_date'] != null ? DateTime.parse(json['maturity_date']) : null,
-      nextPaymentDate: json['next_payment_date'] != null ? DateTime.parse(json['next_payment_date']) : null,
+      applicationDate: _tryParse(json['application_date'] ?? json['applied_at']),
+      approvalDate: _tryParse(json['approval_date'] ?? json['approved_at']),
+      disbursementDate: _tryParse(json['disbursement_date'] ?? json['disbursed_at']),
+      maturityDate: _tryParse(json['maturity_date'] ?? json['maturity_date']),
+      nextPaymentDate: _tryParse(json['next_payment_date']),
       daysOverdue: json['days_overdue'] ?? json['daysOverdue'],
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      createdAt: _tryParse(json['created_at']),
       repaymentSchedule: (json['repayment_schedule'] as List<dynamic>?)
           ?.map((e) => LoanRepaymentSchedule.fromJson(e))
           .toList() ?? [],

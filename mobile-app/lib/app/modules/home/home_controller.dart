@@ -8,6 +8,7 @@ import '../../data/repositories/member_repository.dart';
 import '../../routes/app_pages.dart';
 import '../transactions/transactions_controller.dart';
 import '../statements/statements_controller.dart';
+import '../loans/loans_controller.dart';
 
 class HomeController extends GetxController {
   final AuthRepository _authRepo = Get.find<AuthRepository>();
@@ -60,7 +61,7 @@ class HomeController extends GetxController {
       try { Get.find<TransactionsController>().loadTransactions(refresh: true); } catch (_) {}
     }
     if (index == 2) {
-      try { Get.find<StatementsController>().loadStatements(); } catch (_) {}
+      try { Get.find<LoansController>().loadLoans(); } catch (_) {}
     }
   }
 
