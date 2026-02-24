@@ -577,7 +577,7 @@ def _truncate_tenant(conn_str: str):
 
     with engine.connect() as conn:
         with conn.begin():
-            _cascade_delete(conn, "members", f"member_number LIKE '{DEMO_MEMBER_PREFIX}%'")
+            _cascade_delete(conn, "members", f"member_number LIKE '{DEMO_MEMBER_PREFIX}%' OR member_number LIKE 'DEMO-MOBILE-%' OR id_number = '{DEMO_MOBILE_ID_NUMBER}'")
             _cascade_delete(conn, "staff", f"staff_number LIKE '{DEMO_STAFF_PREFIX}%'")
             _cascade_delete(conn, "branches", f"code = '{DEMO_BRANCH_CODE}'")
             prod_codes = ",".join(f"'{c}'" for c in DEMO_PROD_CODES)
