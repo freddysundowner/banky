@@ -16,6 +16,7 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends, Request
 from sqlalchemy.orm import Session
 from models.database import get_db
+from routes.common import get_tenant_session_context, require_role
 
 router = APIRouter(prefix="/admin")
 
@@ -43,19 +44,14 @@ async def staff_activate_mobile(
     from routes.auth import get_current_user
     from models.tenant import Member
     from models.master import Organization
-    from services.tenant_context import get_tenant_context_simple
 
-    auth = get_current_user(request, db)
-    if not auth.is_staff or auth.organization_id != org_id:
-        raise HTTPException(status_code=403, detail="Not authorized")
+    user = get_current_user(request, db)
+    tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
+    require_role(membership, ["owner", "admin", "staff"])
 
     org = db.query(Organization).filter(Organization.id == org_id).first()
     if not org:
         raise HTTPException(status_code=404, detail="Organization not found")
-
-    tenant_ctx = get_tenant_context_simple(org_id, db)
-    if not tenant_ctx:
-        raise HTTPException(status_code=404, detail="Tenant not found")
 
     tenant_session = tenant_ctx.create_session()
     try:
@@ -133,15 +129,10 @@ async def get_member_mobile_activity(
     """
     from routes.auth import get_current_user
     from models.tenant import Member, MobileSession
-    from services.tenant_context import get_tenant_context_simple
 
-    auth = get_current_user(request, db)
-    if not auth.is_staff or auth.organization_id != org_id:
-        raise HTTPException(status_code=403, detail="Not authorized")
-
-    tenant_ctx = get_tenant_context_simple(org_id, db)
-    if not tenant_ctx:
-        raise HTTPException(status_code=404, detail="Tenant not found")
+    user = get_current_user(request, db)
+    tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
+    require_role(membership, ["owner", "admin", "staff"])
 
     tenant_session = tenant_ctx.create_session()
     try:
@@ -157,31 +148,18 @@ async def get_member_mobile_activity(
             .all()
         )
 
-        activation_pending = bool(
-            member.mobile_activation_code
-            and member.mobile_activation_expires_at
-            and datetime.utcnow() < member.mobile_activation_expires_at
-        )
-
         return {
-            "mobile_banking_active": bool(member.mobile_banking_active),
-            "mobile_device_id": member.mobile_device_id,
-            "activation_pending": activation_pending,
-            "activation_expires_at": (
-                member.mobile_activation_expires_at.isoformat()
-                if member.mobile_activation_expires_at
-                else None
-            ),
+            "member_id": member_id,
+            "mobile_banking_active": member.mobile_banking_active or False,
+            "has_activation_code": bool(member.mobile_activation_code),
+            "activation_expires_at": member.mobile_activation_expires_at.isoformat() if member.mobile_activation_expires_at else None,
             "sessions": [
                 {
                     "id": s.id,
-                    "device_id": s.device_id,
                     "device_name": s.device_name,
-                    "ip_address": s.ip_address,
                     "login_at": s.login_at.isoformat() if s.login_at else None,
-                    "last_active": s.last_active.isoformat() if s.last_active else None,
-                    "is_active": s.is_active,
                     "logout_at": s.logout_at.isoformat() if s.logout_at else None,
+                    "is_active": s.is_active,
                 }
                 for s in sessions
             ],
@@ -205,15 +183,10 @@ async def staff_deactivate_mobile(
     """
     from routes.auth import get_current_user
     from models.tenant import Member, MobileSession
-    from services.tenant_context import get_tenant_context_simple
 
-    auth = get_current_user(request, db)
-    if not auth.is_staff or auth.organization_id != org_id:
-        raise HTTPException(status_code=403, detail="Not authorized")
-
-    tenant_ctx = get_tenant_context_simple(org_id, db)
-    if not tenant_ctx:
-        raise HTTPException(status_code=404, detail="Tenant not found")
+    user = get_current_user(request, db)
+    tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
+    require_role(membership, ["owner", "admin", "staff"])
 
     tenant_session = tenant_ctx.create_session()
     try:
