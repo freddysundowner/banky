@@ -525,6 +525,7 @@ export default function MemberManagement({ organizationId }: MemberManagementPro
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [memberPage, setMemberPage] = useState(1);
   const MEMBERS_PER_PAGE = 20;
+  const [showMobileSessions, setShowMobileSessions] = useState(false);
   const [showMobileActivateDialog, setShowMobileActivateDialog] = useState(false);
   const [mobileActivateResult, setMobileActivateResult] = useState<{
     activation_code: string;
@@ -2124,38 +2125,46 @@ export default function MemberManagement({ organizationId }: MemberManagementPro
 
                 {mobileActivity && mobileActivity.sessions.length > 0 && (
                   <div>
-                    <div className="text-sm font-medium flex items-center gap-1 mb-2">
+                    <button
+                      className="text-sm font-medium flex items-center gap-1 w-full text-left hover:text-foreground/80 transition-colors"
+                      onClick={() => setShowMobileSessions(!showMobileSessions)}
+                      data-testid="button-toggle-mobile-sessions"
+                    >
                       <Activity className="h-4 w-4" />
                       Recent Activity
-                    </div>
-                    <div className="space-y-2">
-                      {mobileActivity.sessions.map((session) => (
-                        <div
-                          key={session.id}
-                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2 bg-muted/50 rounded-lg text-sm"
-                          data-testid={`mobile-session-${session.id}`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Smartphone className={`h-3 w-3 ${session.is_active ? "text-green-500" : "text-muted-foreground"}`} />
-                            <div>
-                              <span className="font-medium">{session.device_name || "Mobile Device"}</span>
-                              {session.ip_address && (
-                                <span className="text-muted-foreground"> · {session.ip_address}</span>
+                      <span className="ml-1 text-muted-foreground text-xs">({mobileActivity.sessions.length})</span>
+                      <span className="ml-auto text-muted-foreground text-xs">{showMobileSessions ? "Hide" : "Show"}</span>
+                    </button>
+                    {showMobileSessions && (
+                      <div className="space-y-2 mt-2">
+                        {mobileActivity.sessions.map((session) => (
+                          <div
+                            key={session.id}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2 bg-muted/50 rounded-lg text-sm"
+                            data-testid={`mobile-session-${session.id}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Smartphone className={`h-3 w-3 ${session.is_active ? "text-green-500" : "text-muted-foreground"}`} />
+                              <div>
+                                <span className="font-medium">{session.device_name || "Mobile Device"}</span>
+                                {session.ip_address && (
+                                  <span className="text-muted-foreground"> · {session.ip_address}</span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-muted-foreground text-xs flex items-center gap-1 ml-5 sm:ml-0">
+                              <Clock className="h-3 w-3" />
+                              {session.login_at
+                                ? new Date(session.login_at).toLocaleString()
+                                : "—"}
+                              {session.is_active && (
+                                <Badge variant="outline" className="ml-1 text-xs border-green-400 text-green-600 py-0">Active</Badge>
                               )}
                             </div>
                           </div>
-                          <div className="text-muted-foreground text-xs flex items-center gap-1 ml-5 sm:ml-0">
-                            <Clock className="h-3 w-3" />
-                            {session.login_at
-                              ? new Date(session.login_at).toLocaleString()
-                              : "—"}
-                            {session.is_active && (
-                              <Badge variant="outline" className="ml-1 text-xs border-green-400 text-green-600 py-0">Active</Badge>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
                 {mobileActivity && mobileActivity.sessions.length === 0 && mobileActivity.mobile_banking_active && (
