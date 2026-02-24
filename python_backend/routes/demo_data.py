@@ -631,8 +631,6 @@ def _delete_demo_branches(conn):
             AND tc.table_schema = 'public'
     """)).fetchall()
     for ref_table, ref_col, is_nullable in fk_refs:
-        if ref_table in ('members', 'staff'):
-            continue
         if _table_exists(conn, ref_table):
             if is_nullable == 'YES':
                 conn.execute(text(f"UPDATE {ref_table} SET {ref_col} = NULL WHERE {ref_col} IN ({bc})"))
