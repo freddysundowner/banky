@@ -23,12 +23,16 @@ class DashboardView extends GetView<DashboardController> {
           child: CustomScrollView(
             slivers: [
               _buildAppBar(context),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 0, 0),
+                  child: _buildBalanceCarousel(),
+                ),
+              ),
               SliverPadding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
                 sliver: SliverList(
                   delegate: SliverChildListDelegate([
-                    _buildBalanceCard(),
-                    const SizedBox(height: 16),
                     _buildQuickActions(),
                     const SizedBox(height: 24),
                     _buildAccountsSection(),
@@ -116,102 +120,136 @@ class DashboardView extends GetView<DashboardController> {
     );
   }
 
-  Widget _buildBalanceCard() {
+  Widget _buildBalanceCarousel() {
+    return Obx(() {
+      final cards = [
+        _BalanceCardData(
+          label: 'Total Balance',
+          amount: controller.totalBalance,
+          icon: Icons.account_balance_outlined,
+          gradient: [AppColors.primary, AppColors.primaryDark],
+          visible: controller.showTotal,
+        ),
+        _BalanceCardData(
+          label: 'Savings',
+          amount: controller.savingsBalance.value,
+          icon: Icons.savings_outlined,
+          gradient: [const Color(0xFF43A047), const Color(0xFF2E7D32)],
+          visible: controller.showSavings,
+        ),
+        _BalanceCardData(
+          label: 'Share Capital',
+          amount: controller.sharesBalance.value,
+          icon: Icons.pie_chart_outline,
+          gradient: [const Color(0xFF7B1FA2), const Color(0xFF4A148C)],
+          visible: controller.showShares,
+        ),
+        _BalanceCardData(
+          label: 'Fixed Deposits',
+          amount: controller.fixedDepositBalance.value,
+          icon: Icons.lock_clock_outlined,
+          gradient: [const Color(0xFF0277BD), const Color(0xFF01579B)],
+          visible: controller.showFixedDeposits,
+        ),
+        _BalanceCardData(
+          label: 'Loan Balance',
+          amount: controller.loanBalance.value,
+          icon: Icons.account_balance_wallet_outlined,
+          gradient: [const Color(0xFFE65100), const Color(0xFFBF360C)],
+          visible: controller.showLoans,
+        ),
+      ];
+
+      return SizedBox(
+        height: 150,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: cards.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          padding: const EdgeInsets.only(right: 16),
+          itemBuilder: (context, index) {
+            final card = cards[index];
+            return _buildBalanceCard(card);
+          },
+        ),
+      );
+    });
+  }
+
+  Widget _buildBalanceCard(_BalanceCardData card) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      width: 190,
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.primary, AppColors.primaryDark],
+          colors: card.gradient,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+            color: card.gradient.first.withOpacity(0.35),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Total Balance',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Obx(() => Text(
-            controller.formatCurrency(controller.totalBalance),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-            ),
-          )),
-          const SizedBox(height: 16),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: _buildMiniStat(
-                  'Savings',
-                  controller.savingsBalance.value,
-                  Icons.savings_outlined,
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(10),
                 ),
+                child: Icon(card.icon, color: Colors.white, size: 20),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildMiniStat(
-                  'Shares',
-                  controller.sharesBalance.value,
-                  Icons.pie_chart_outline,
+              Obx(() => GestureDetector(
+                onTap: () => card.visible.value = !card.visible.value,
+                child: Icon(
+                  card.visible.value
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined,
+                  color: Colors.white.withOpacity(0.8),
+                  size: 20,
                 ),
-              ),
+              )),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMiniStat(String label, double amount, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.white, size: 20),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 12,
-                  ),
-                ),
-                Text(
-                  controller.formatCurrency(amount),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+          const Spacer(),
+          Text(
+            card.label,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
           ),
+          const SizedBox(height: 4),
+          Obx(() => card.visible.value
+              ? Text(
+                  controller.formatCurrency(card.amount),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                )
+              : const Text(
+                  '••••••',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 4,
+                  ),
+                )),
         ],
       ),
     );
@@ -616,4 +654,20 @@ class DashboardView extends GetView<DashboardController> {
       ],
     );
   }
+}
+
+class _BalanceCardData {
+  final String label;
+  final double amount;
+  final IconData icon;
+  final List<Color> gradient;
+  final RxBool visible;
+
+  _BalanceCardData({
+    required this.label,
+    required this.amount,
+    required this.icon,
+    required this.gradient,
+    required this.visible,
+  });
 }
