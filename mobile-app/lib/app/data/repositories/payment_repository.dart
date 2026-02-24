@@ -115,6 +115,46 @@ class PaymentRepository {
     }
   }
 
+  Future<Map<String, dynamic>> initiateDeposit({
+    required double amount,
+    String? phoneNumber,
+    String? description,
+  }) async {
+    try {
+      final body = <String, dynamic>{'amount': amount};
+      if (phoneNumber != null) body['phone_number'] = phoneNumber;
+      if (description != null) body['description'] = description;
+
+      final response = await _api.post(ApiConstants.memberDeposit, data: body);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {'success': true, 'data': response.data, 'message': response.data['message'] ?? 'M-Pesa prompt sent'};
+      }
+      return {'success': false, 'message': response.data['detail'] ?? 'Deposit failed'};
+    } catch (e) {
+      return {'success': false, 'message': _getErrorMessage(e)};
+    }
+  }
+
+  Future<Map<String, dynamic>> requestWithdrawal({
+    required double amount,
+    String? description,
+  }) async {
+    try {
+      final response = await _api.post(
+        ApiConstants.memberWithdraw,
+        data: {'amount': amount, if (description != null) 'description': description},
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {'success': true, 'data': response.data, 'message': response.data['message'] ?? 'Withdrawal successful'};
+      }
+      return {'success': false, 'message': response.data['detail'] ?? 'Withdrawal failed'};
+    } catch (e) {
+      return {'success': false, 'message': _getErrorMessage(e)};
+    }
+  }
+
   Future<List<Map<String, dynamic>>> getPaymentHistory({
     int page = 1,
     int limit = 20,

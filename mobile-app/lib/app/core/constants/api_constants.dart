@@ -43,6 +43,8 @@ class ApiConstants {
   static const String memberLoanApplications = '$_m/me/loan-applications';
   static const String memberNotifications = '$_m/me/notifications';
   static const String memberPayments = '$_m/me/payments';
+  static const String memberDeposit = '$_m/me/deposit';
+  static const String memberWithdraw = '$_m/me/withdraw';
 
   // Dynamic paths — use helper methods below
   static String memberLoanDetail(String loanId) => '$_m/me/loans/$loanId';

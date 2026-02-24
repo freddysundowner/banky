@@ -5,12 +5,14 @@ import '../../data/models/transaction_model.dart';
 import '../../data/models/loan_model.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/member_repository.dart';
+import '../../data/repositories/payment_repository.dart';
 import '../home/home_controller.dart';
 
 class DashboardController extends GetxController {
   final AuthRepository _authRepo = Get.find<AuthRepository>();
   final MemberRepository _memberRepo = Get.find<MemberRepository>();
-  
+  final PaymentRepository _paymentRepo = Get.find<PaymentRepository>();
+
   HomeController get homeController => Get.find<HomeController>();
 
   final isLoading = false.obs;
@@ -81,5 +83,21 @@ class DashboardController extends GetxController {
 
   String formatCurrency(double amount) {
     return homeController.formatCurrency(amount);
+  }
+
+  Future<Map<String, dynamic>> deposit({required double amount, String? phone}) async {
+    final result = await _paymentRepo.initiateDeposit(amount: amount, phoneNumber: phone);
+    if (result['success'] == true) {
+      await refreshDashboard();
+    }
+    return result;
+  }
+
+  Future<Map<String, dynamic>> withdraw({required double amount}) async {
+    final result = await _paymentRepo.requestWithdrawal(amount: amount);
+    if (result['success'] == true) {
+      await refreshDashboard();
+    }
+    return result;
   }
 }

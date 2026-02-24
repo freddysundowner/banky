@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
@@ -263,14 +264,14 @@ class DashboardView extends GetView<DashboardController> {
           onTap: () => Get.toNamed(Routes.statements),
         ),
         _buildActionButton(
-          icon: Icons.payment,
-          label: 'Pay Loan',
-          onTap: () => Get.toNamed(Routes.loans),
+          icon: Icons.add_circle_outline,
+          label: 'Deposit',
+          onTap: () => _showDepositSheet(context: Get.context!),
         ),
         _buildActionButton(
-          icon: Icons.history,
-          label: 'History',
-          onTap: () => Get.toNamed(Routes.transactions),
+          icon: Icons.remove_circle_outline,
+          label: 'Withdraw',
+          onTap: () => _showWithdrawSheet(context: Get.context!),
         ),
         _buildActionButton(
           icon: Icons.help_outline,
@@ -278,6 +279,234 @@ class DashboardView extends GetView<DashboardController> {
           onTap: () {},
         ),
       ],
+    );
+  }
+
+  void _showDepositSheet({required BuildContext context}) {
+    final amountController = TextEditingController();
+    final phoneController = TextEditingController(
+      text: controller.member.value?.phone ?? '',
+    );
+    final isLoading = false.obs;
+    final errorMsg = ''.obs;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          left: 24, right: 24, top: 24,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.add_circle_outline, color: AppColors.primary),
+                ),
+                const SizedBox(width: 12),
+                const Text('Deposit via M-Pesa',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Obx(() => controller.savingsBalance.value > 0
+                ? Text('Current savings: ${controller.formatCurrency(controller.savingsBalance.value)}',
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13))
+                : const SizedBox.shrink()),
+            const SizedBox(height: 20),
+            TextField(
+              controller: amountController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))],
+              decoration: InputDecoration(
+                labelText: 'Amount (KES)',
+                prefixText: 'KES ',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: phoneController,
+              keyboardType: TextInputType.phone,
+              decoration: InputDecoration(
+                labelText: 'M-Pesa Phone Number',
+                hintText: '07XXXXXXXX',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Obx(() => errorMsg.value.isNotEmpty
+                ? Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(errorMsg.value,
+                        style: const TextStyle(color: AppColors.error, fontSize: 13)),
+                  )
+                : const SizedBox.shrink()),
+            const SizedBox(height: 8),
+            Obx(() => SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: isLoading.value
+                    ? null
+                    : () async {
+                        final amount = double.tryParse(amountController.text.trim());
+                        if (amount == null || amount <= 0) {
+                          errorMsg.value = 'Enter a valid amount';
+                          return;
+                        }
+                        errorMsg.value = '';
+                        isLoading.value = true;
+                        final result = await controller.deposit(
+                          amount: amount,
+                          phone: phoneController.text.trim().isNotEmpty
+                              ? phoneController.text.trim()
+                              : null,
+                        );
+                        isLoading.value = false;
+                        if (result['success'] == true) {
+                          Navigator.pop(ctx);
+                          Get.snackbar('Deposit Initiated', result['message'] ?? 'Check your phone for M-Pesa prompt',
+                              backgroundColor: AppColors.success,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 5));
+                        } else {
+                          errorMsg.value = result['message'] ?? 'Deposit failed';
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: isLoading.value
+                    ? const SizedBox(height: 20, width: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Send M-Pesa Prompt', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showWithdrawSheet({required BuildContext context}) {
+    final amountController = TextEditingController();
+    final isLoading = false.obs;
+    final errorMsg = ''.obs;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          left: 24, right: 24, top: 24,
+          bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.warning.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(Icons.remove_circle_outline, color: AppColors.warning),
+                ),
+                const SizedBox(width: 12),
+                const Text('Withdraw from Savings',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Obx(() => Text(
+              'Available: ${controller.formatCurrency(controller.savingsBalance.value)}',
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            )),
+            const SizedBox(height: 20),
+            TextField(
+              controller: amountController,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[\d.]'))],
+              decoration: InputDecoration(
+                labelText: 'Amount (KES)',
+                prefixText: 'KES ',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Obx(() => errorMsg.value.isNotEmpty
+                ? Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(errorMsg.value,
+                        style: const TextStyle(color: AppColors.error, fontSize: 13)),
+                  )
+                : const SizedBox.shrink()),
+            const SizedBox(height: 8),
+            Obx(() => SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: isLoading.value
+                    ? null
+                    : () async {
+                        final amount = double.tryParse(amountController.text.trim());
+                        if (amount == null || amount <= 0) {
+                          errorMsg.value = 'Enter a valid amount';
+                          return;
+                        }
+                        if (amount > controller.savingsBalance.value) {
+                          errorMsg.value = 'Amount exceeds available balance';
+                          return;
+                        }
+                        errorMsg.value = '';
+                        isLoading.value = true;
+                        final result = await controller.withdraw(amount: amount);
+                        isLoading.value = false;
+                        if (result['success'] == true) {
+                          Navigator.pop(ctx);
+                          Get.snackbar('Withdrawal Successful', result['message'] ?? 'Your withdrawal has been processed',
+                              backgroundColor: AppColors.success,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 4));
+                        } else {
+                          errorMsg.value = result['message'] ?? 'Withdrawal failed';
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.warning,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: isLoading.value
+                    ? const SizedBox(height: 20, width: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Text('Confirm Withdrawal', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            )),
+          ],
+        ),
+      ),
     );
   }
 
