@@ -1,5 +1,5 @@
 class ApiConstants {
-  static const String baseUrl = 'https://4e554371-078a-4f91-884a-cbad8c1e5080-00-min0a6uk6fsg.janeway.replit.dev';
+  static const String baseUrl = 'https://3e13bd8b-1f7f-48c5-bf2b-75718b4cb073-00-3fpjxxho3njqf.kirk.replit.dev';
   
   // Legacy auth endpoints (kept for backward compatibility)
   static const String memberLogin = '/api/auth/member/login';
