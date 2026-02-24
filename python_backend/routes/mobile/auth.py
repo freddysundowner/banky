@@ -102,7 +102,7 @@ def _find_member_by_account(account_number: str, db: Session):
         org = db.query(Organization).filter(Organization.id == entry.org_id).first()
         if org:
             tenant_session, tenant_ctx = _open_tenant(org, db)
-            if tenant_session:
+            if tenant_session is not None and tenant_ctx is not None:
                 member = None
                 try:
                     member = tenant_session.query(Member).filter(
@@ -119,14 +119,14 @@ def _find_member_by_account(account_number: str, db: Session):
 
     # --- Fallback: scan all tenants (backward compat / stale registry) ---
     skip_org_id = entry.org_id if entry else None
-    _filters = [Organization.connection_string.isnot(None)]
-    if skip_org_id:
-        _filters.append(Organization.id != skip_org_id)
-    organizations = db.query(Organization).filter(*_filters).all()
+    orgs_query = db.query(Organization).filter(Organization.connection_string.isnot(None))
+    if skip_org_id is not None:
+        orgs_query = orgs_query.filter(Organization.id != skip_org_id)
+    organizations = orgs_query.all()
 
     for org in organizations:
         tenant_session, tenant_ctx = _open_tenant(org, db)
-        if not tenant_session:
+        if tenant_session is None or tenant_ctx is None:
             continue
         try:
             member = tenant_session.query(Member).filter(
@@ -166,7 +166,7 @@ def _find_member_by_device(device_id: str, db: Session):
         return None, None, None, None
 
     tenant_session, tenant_ctx = _open_tenant(org, db)
-    if not tenant_session:
+    if tenant_session is None or tenant_ctx is None:
         return None, None, None, None
 
     try:
@@ -225,7 +225,7 @@ async def activate_init(data: ActivateInitRequest, request: Request, db: Session
     """
     member, org, tenant_session, tenant_ctx = _find_member_by_account(data.account_number, db)
 
-    if not member:
+    if member is None or org is None or tenant_session is None or tenant_ctx is None:
         raise HTTPException(status_code=404, detail="Account number not found. Please check and try again.")
 
     try:
@@ -293,7 +293,7 @@ async def activate_complete(
 
     member, org, tenant_session, tenant_ctx = _find_member_by_account(data.account_number, db)
 
-    if not member:
+    if member is None or org is None or tenant_session is None or tenant_ctx is None:
         raise HTTPException(status_code=404, detail="Account not found. Please restart activation.")
 
     try:
@@ -347,8 +347,8 @@ async def activate_complete(
                 MobileDeviceRegistry.org_id == org.id,
             ).first()
             if reg:
-                reg.device_id = data.device_id
-                reg.updated_at = datetime.utcnow()
+                reg.device_id = data.device_id  # type: ignore[assignment]
+                reg.updated_at = datetime.utcnow()  # type: ignore[assignment]
             else:
                 db.add(MobileDeviceRegistry(
                     account_number=data.account_number.upper().strip(),
@@ -391,7 +391,7 @@ async def mobile_login(data: LoginRequest, request: Request, db: Session = Depen
     """
     member, org, tenant_session, tenant_ctx = _find_member_by_device(data.device_id, db)
 
-    if not member:
+    if member is None or org is None or tenant_session is None or tenant_ctx is None:
         raise HTTPException(
             status_code=404,
             detail="Device not registered. Please activate mobile banking first."
@@ -452,7 +452,7 @@ async def mobile_login_verify(
 
     member, org, tenant_session, tenant_ctx = _find_member_by_device(data.device_id, db)
 
-    if not member:
+    if member is None or org is None or tenant_session is None or tenant_ctx is None:
         raise HTTPException(status_code=404, detail="Device not registered. Please activate mobile banking first.")
 
     try:
@@ -539,9 +539,10 @@ async def resend_otp(data: ResendOtpRequest, db: Session = Depends(get_db)):
     if data.account_number:
         member, org, tenant_session, tenant_ctx = _find_member_by_account(data.account_number, db)
     else:
+        assert data.device_id is not None
         member, org, tenant_session, tenant_ctx = _find_member_by_device(data.device_id, db)
 
-    if not member:
+    if member is None or org is None or tenant_session is None or tenant_ctx is None:
         raise HTTPException(status_code=404, detail="Account not found.")
 
     try:
@@ -627,7 +628,7 @@ async def mobile_logout(request: Request, response: Response, db: Session = Depe
             ).all()
 
         for org in orgs_to_check:
-            tenant_ctx = get_tenant_context_simple(org.id, db)
+            tenant_ctx = get_tenant_context_simple(str(org.id), db)
             if not tenant_ctx:
                 continue
             tenant_session = tenant_ctx.create_session()

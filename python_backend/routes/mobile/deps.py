@@ -85,7 +85,7 @@ def get_current_member(request: Request, db: Session = Depends(get_db)):
 
         for org in orgs_to_check:
             member, tenant_session, session = _find_session_in_org(org, bearer, db)
-            if member is None:
+            if member is None or tenant_session is None or session is None:
                 continue
 
             if member.status != "active":
