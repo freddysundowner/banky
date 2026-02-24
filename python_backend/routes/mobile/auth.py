@@ -668,14 +668,13 @@ async def demo_status():
 
 
 DEMO_MEMBER_ID_NUMBER = "DEMO000001"
-DEMO_MEMBER_PIN = "123456"
 
 
 @router.post("/demo-login")
 async def demo_login(request: Request, response: Response, db: Session = Depends(get_db)):
     """
     Instant demo login. Only works when platform demo mode is on.
-    Finds (or creates) a demo member with mobile banking pre-activated,
+    Finds the seeded demo member (created by demo data populate/reset),
     creates a session, and returns the auth token directly — no OTP.
     """
     from middleware.demo_guard import is_demo_mode
@@ -699,44 +698,14 @@ async def demo_login(request: Request, response: Response, db: Session = Depends
         ).first()
 
         if not member:
-            from models.tenant import Branch
-            branch = tenant_session.query(Branch).first()
-            branch_id = branch.id if branch else None
-
-            member = Member(
-                id=str(uuid.uuid4()),
-                member_number="DEMO-MOBILE-001",
-                first_name="Demo",
-                last_name="User",
-                email="demo.mobile@demo.bankykit",
-                phone="+254700000000",
-                id_number=DEMO_MEMBER_ID_NUMBER,
-                id_type="national_id",
-                gender="male",
-                date_of_birth=None,
-                nationality="KE",
-                address="Demo Address",
-                city="Nairobi",
-                country="Kenya",
-                employment_status="employed",
-                monthly_income=50000,
-                branch_id=branch_id,
-                membership_type="ordinary",
-                savings_balance=25000,
-                shares_balance=10000,
-                deposits_balance=5000,
-                status="active",
-                is_active=True,
-                mobile_banking_active=True,
-                pin_hash=_hash_pin(DEMO_MEMBER_PIN),
-                mobile_device_id="demo-device",
+            raise HTTPException(
+                status_code=404,
+                detail="Demo mobile member not found. Please reset demo data from the admin panel first."
             )
-            tenant_session.add(member)
-            tenant_session.flush()
 
         if not member.mobile_banking_active:
             member.mobile_banking_active = True
-            member.pin_hash = _hash_pin(DEMO_MEMBER_PIN)
+            member.pin_hash = _hash_pin("123456")
             member.status = "active"
             member.is_active = True
 

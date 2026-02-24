@@ -13,8 +13,10 @@ from models.master import (
 )
 from models.tenant import (
     TenantBase, Branch, Staff, Member, LoanProduct, LoanApplication,
-    LoanRepayment, Transaction, OrganizationSettings
+    LoanRepayment, Transaction, OrganizationSettings, MobileSession
 )
+import hashlib
+import secrets as sec_mod
 from routes.admin import require_admin
 from models.master import AdminUser
 
@@ -49,6 +51,17 @@ DEMO_LOAN_PREFIX  = "DLN"
 DEMO_REP_PREFIX   = "DREP"
 DEMO_PROD_CODES   = ("DDEV", "DEMG")
 DEMO_EMAIL_DOMAIN = "@demo.bankykit"
+DEMO_MOBILE_ID_NUMBER = "DEMO000001"
+DEMO_MOBILE_PIN = "123456"
+
+_PBKDF2_ITERATIONS = 260000
+_PBKDF2_HASH = "sha256"
+
+
+def _hash_pin(pin: str) -> str:
+    salt = sec_mod.token_hex(16)
+    dk = hashlib.pbkdf2_hmac(_PBKDF2_HASH, pin.encode(), salt.encode(), _PBKDF2_ITERATIONS)
+    return f"{salt}:{dk.hex()}"
 
 
 def _seed_tenant(conn_str: str):
@@ -250,6 +263,45 @@ def _seed_tenant(conn_str: str):
 
         tdb.flush()
 
+        demo_mobile_id = _uid()
+        demo_mobile_savings = 25000
+        demo_mobile_shares = 10000
+        demo_mobile_deposits = 5000
+        demo_mobile = Member(
+            id=demo_mobile_id,
+            member_number=f"{DEMO_MEMBER_PREFIX}016",
+            first_name="Demo",
+            last_name="User",
+            email=f"demo.user{DEMO_EMAIL_DOMAIN}",
+            phone="+254700000000",
+            id_number=DEMO_MOBILE_ID_NUMBER,
+            id_type="national_id",
+            gender="male",
+            date_of_birth=date(1990, 1, 15),
+            nationality="KE",
+            address="456 Kenyatta Avenue",
+            city="Nairobi",
+            country="Kenya",
+            employment_status="employed",
+            monthly_income=75000,
+            branch_id=branch_id,
+            membership_type="ordinary",
+            savings_balance=demo_mobile_savings,
+            shares_balance=demo_mobile_shares,
+            deposits_balance=demo_mobile_deposits,
+            status="active",
+            is_active=True,
+            mobile_banking_active=True,
+            pin_hash=_hash_pin(DEMO_MOBILE_PIN),
+            mobile_device_id="demo-device",
+            joined_at=datetime.utcnow() - timedelta(days=400),
+            created_by_id=manager_id,
+        )
+        tdb.add(demo_mobile)
+        member_ids.append(demo_mobile_id)
+        member_data.append(("Demo", "User", demo_mobile_savings, demo_mobile_shares))
+        tdb.flush()
+
         # Transactions — savings deposits for each member
         for idx, (mid, (fn, ln, savings, shares)) in enumerate(zip(member_ids, member_data)):
             tdb.add(Transaction(
@@ -356,6 +408,106 @@ def _seed_tenant(conn_str: str):
                         received_by_id=teller_id,
                     ))
 
+        # Extra transactions for demo mobile user (realistic history)
+        demo_txn_base = 200
+        demo_txn_history = [
+            ("deposit",    "savings",  5000,  0,     5000,  "cash",   "Initial savings deposit",    350),
+            ("deposit",    "savings",  3000,  5000,  8000,  "mpesa",  "M-Pesa savings top-up",      320),
+            ("withdrawal", "savings",  2000,  8000,  6000,  "cash",   "Cash withdrawal",            290),
+            ("deposit",    "savings",  7000,  6000,  13000, "bank",   "Bank transfer deposit",      260),
+            ("deposit",    "shares",   4000,  0,     4000,  "cash",   "Shares purchase",            340),
+            ("deposit",    "shares",   3000,  4000,  7000,  "mpesa",  "M-Pesa shares purchase",     280),
+            ("deposit",    "shares",   3000,  7000,  10000, "bank",   "Additional shares",          200),
+            ("deposit",    "savings",  5000,  13000, 18000, "mpesa",  "Monthly savings",            180),
+            ("withdrawal", "savings",  3000,  18000, 15000, "mpesa",  "M-Pesa withdrawal",          150),
+            ("deposit",    "savings",  8000,  15000, 23000, "bank",   "Salary deposit",             120),
+            ("deposit",    "deposits", 5000,  0,     5000,  "cash",   "Fixed deposit placement",    300),
+            ("deposit",    "savings",  2000,  23000, 25000, "mpesa",  "Monthly savings",            60),
+        ]
+        for t_idx, (t_type, acct, amt, bal_before, bal_after, method, desc, days_ago) in enumerate(demo_txn_history):
+            tdb.add(Transaction(
+                id=_uid(),
+                transaction_number=f"{DEMO_TXN_PREFIX}{str(demo_txn_base + t_idx).zfill(4)}",
+                member_id=demo_mobile_id,
+                transaction_type=t_type,
+                account_type=acct,
+                amount=amt,
+                balance_before=bal_before,
+                balance_after=bal_after,
+                payment_method=method,
+                reference=f"DEMO-MOB-{t_idx+1}",
+                description=desc,
+                processed_by_id=teller_id,
+                created_at=datetime.utcnow() - timedelta(days=days_ago),
+            ))
+        tdb.flush()
+
+        # Loans for demo mobile user
+        demo_mobile_idx = len(member_ids) - 1
+        demo_loan_scenarios = [
+            (demo_mobile_idx, prod1_id, 15000, 12, "disbursed", 6),
+            (demo_mobile_idx, prod2_id,  3000,  6, "closed",     9),
+        ]
+        for di, (midx, prod_id, amt, term, status, months_ago) in enumerate(demo_loan_scenarios):
+            loan_id = _uid()
+            li = len(loan_scenarios) + di
+            applied = datetime.utcnow() - timedelta(days=months_ago * 30)
+            disbursed_at = applied + timedelta(days=3) if status in ("disbursed", "closed") else None
+            approved_at = applied + timedelta(days=1) if status in ("approved", "disbursed", "closed") else None
+
+            monthly_payment = round((amt * 0.015 * (1.015 ** term)) / ((1.015 ** term) - 1), 2)
+            months_paid = months_ago if status == "disbursed" else term if status == "closed" else 0
+            amount_repaid = round(monthly_payment * months_paid, 2)
+            outstanding = max(0, round(amt - amount_repaid, 2))
+
+            loan = LoanApplication(
+                id=loan_id,
+                application_number=f"{DEMO_LOAN_PREFIX}{str(li+1).zfill(4)}",
+                member_id=member_ids[midx],
+                loan_product_id=prod_id,
+                amount=amt,
+                term_months=term,
+                interest_rate=1.5,
+                total_interest=round(amt * 0.015 * term, 2),
+                total_repayment=round(amt + amt * 0.015 * term, 2),
+                monthly_repayment=monthly_payment,
+                processing_fee=round(amt * 0.02, 2),
+                status=status,
+                purpose="Business expansion" if di % 2 == 0 else "Emergency medical expenses",
+                disbursement_method="bank" if status in ("disbursed", "closed") else None,
+                amount_disbursed=amt if status in ("disbursed", "closed") else None,
+                amount_repaid=amount_repaid,
+                outstanding_balance=outstanding,
+                next_payment_date=date.today() + timedelta(days=15) if status == "disbursed" else None,
+                last_payment_date=date.today() - timedelta(days=15) if amount_repaid > 0 else None,
+                created_by_id=officer_id,
+                reviewed_by_id=manager_id,
+                applied_at=applied,
+                approved_at=approved_at,
+                disbursed_at=disbursed_at,
+                closed_at=applied + timedelta(days=term * 30) if status == "closed" else None,
+            )
+            tdb.add(loan)
+            tdb.flush()
+
+            if status in ("disbursed", "closed") and months_paid > 0:
+                for mo in range(min(months_paid, 6)):
+                    tdb.add(LoanRepayment(
+                        id=_uid(),
+                        repayment_number=f"{DEMO_REP_PREFIX}-M{di+1}-{mo+1}",
+                        loan_id=loan_id,
+                        amount=monthly_payment,
+                        principal_amount=round(monthly_payment * 0.7, 2),
+                        interest_amount=round(monthly_payment * 0.3, 2),
+                        penalty_amount=0,
+                        payment_method="cash" if mo % 2 == 0 else "mpesa",
+                        reference=f"DEMO-MREP-{di+1}-{mo+1}",
+                        notes="Monthly repayment",
+                        payment_date=disbursed_at + timedelta(days=30 * (mo + 1)),
+                        received_by_id=teller_id,
+                    ))
+        tdb.flush()
+
         # Organization settings — currency and timezone
         for key, value in [("currency", "USD"), ("currency_symbol", "$"), ("timezone", "UTC")]:
             existing = tdb.query(OrganizationSettings).filter(OrganizationSettings.setting_key == key).first()
@@ -414,7 +566,7 @@ def _truncate_tenant(conn_str: str):
                 conn.execute(text(f"DELETE FROM loan_applications WHERE member_id IN ({mc})"))
 
             # 3. Delete member-level dependents, then members
-            for t in ("transactions", "fixed_deposits", "dividends"):
+            for t in ("transactions", "fixed_deposits", "dividends", "mobile_sessions"):
                 if _table_exists(conn, t):
                     conn.execute(text(f"DELETE FROM {t} WHERE member_id IN ({mc})"))
             conn.execute(text(f"DELETE FROM members WHERE id IN ({mc})"))
