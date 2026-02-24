@@ -320,19 +320,19 @@ export default function Settings() {
                       </div>
                     </div>
 
-                    <div className="bg-green-50 rounded-lg p-5 border border-green-100">
+                    <div className="bg-blue-50 rounded-lg p-5 border border-blue-100">
                       <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                          <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                         </div>
                         <div className="flex-1">
-                          <h4 className="text-sm font-medium text-green-900">About SunPay</h4>
-                          <p className="text-sm text-green-700 mt-1">
-                            SunPay provides a simplified M-Pesa integration for processing subscription payments. 
-                            This is a <strong>platform-level</strong> API key, separate from individual organization M-Pesa settings.
-                            Get your API key at <a href="https://sunpay.co.ke" target="_blank" rel="noopener noreferrer" className="underline font-medium">sunpay.co.ke</a>
+                          <h4 className="text-sm font-medium text-blue-900">Daraja API Integration</h4>
+                          <p className="text-sm text-blue-700 mt-1">
+                            M-Pesa subscription payments use Safaricom's Daraja API directly. 
+                            This is a <strong>platform-level</strong> configuration, separate from individual organization M-Pesa settings.
+                            Get your credentials at <a href="https://developer.safaricom.co.ke" target="_blank" rel="noopener noreferrer" className="underline font-medium">developer.safaricom.co.ke</a>
                           </p>
                         </div>
                       </div>
@@ -340,27 +340,45 @@ export default function Settings() {
 
                     <div className="grid gap-6">
                       <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">SunPay API Key</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Consumer Key</label>
                         <input
                           type="password"
-                          value={getValue('subscription_sunpay_api_key')}
-                          onChange={(e) => handleChange('subscription_sunpay_api_key', e.target.value)}
-                          placeholder="Enter your SunPay API key..."
+                          value={getValue('subscription_mpesa_consumer_key')}
+                          onChange={(e) => handleChange('subscription_mpesa_consumer_key', e.target.value)}
+                          placeholder="Daraja API consumer key..."
                           className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-mono text-sm"
                         />
-                        <p className="text-sm text-gray-500 mt-2">Used to process M-Pesa STK Push payments when organizations subscribe or upgrade their plans</p>
                       </div>
-
                       <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">M-Pesa Paybill / Till Number</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Consumer Secret</label>
+                        <input
+                          type="password"
+                          value={getValue('subscription_mpesa_consumer_secret')}
+                          onChange={(e) => handleChange('subscription_mpesa_consumer_secret', e.target.value)}
+                          placeholder="Daraja API consumer secret..."
+                          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-mono text-sm"
+                        />
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Passkey</label>
+                        <input
+                          type="password"
+                          value={getValue('subscription_mpesa_passkey')}
+                          onChange={(e) => handleChange('subscription_mpesa_passkey', e.target.value)}
+                          placeholder="Daraja API passkey..."
+                          className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white font-mono text-sm"
+                        />
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Shortcode (Paybill / Till)</label>
                         <input
                           type="text"
-                          value={getValue('subscription_mpesa_paybill')}
-                          onChange={(e) => handleChange('subscription_mpesa_paybill', e.target.value)}
+                          value={getValue('subscription_mpesa_shortcode')}
+                          onChange={(e) => handleChange('subscription_mpesa_shortcode', e.target.value)}
                           placeholder="e.g. 174379"
                           className="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white"
                         />
-                        <p className="text-sm text-gray-500 mt-2">Displayed to customers on payment receipts (optional)</p>
+                        <p className="text-sm text-gray-500 mt-2">Used for processing STK Push payments and displayed on receipts</p>
                       </div>
                     </div>
 
@@ -369,8 +387,8 @@ export default function Settings() {
                       <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600">
                         <li>An organization owner goes to <strong>Subscription Plans</strong> and selects a plan</li>
                         <li>They choose <strong>M-Pesa</strong> as payment method and enter their phone number</li>
-                        <li>An STK Push prompt is sent to their phone via SunPay</li>
-                        <li>After entering their M-Pesa PIN, a webhook confirms the payment</li>
+                        <li>An STK Push prompt is sent to their phone via Daraja API</li>
+                        <li>After entering their M-Pesa PIN, a callback confirms the payment</li>
                         <li>The subscription is automatically activated for the plan's billing period</li>
                       </ol>
                     </div>

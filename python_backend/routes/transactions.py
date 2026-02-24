@@ -267,7 +267,6 @@ async def create_transaction(org_id: str, data: TransactionCreate, request: Requ
             if not phone:
                 raise HTTPException(status_code=400, detail="Member does not have a phone number for M-Pesa")
             
-            gateway = get_org_setting(tenant_session, "mpesa_gateway", "daraja")
             account_ref = member.member_number or f"DEP-{member.id[:8]}"
             description = f"Deposit to {data.account_type} for {member.first_name} {member.last_name}"
             import os
@@ -277,24 +276,15 @@ async def create_transaction(org_id: str, data: TransactionCreate, request: Requ
             else:
                 request_base = str(request.base_url).rstrip("/")
             
-            print(f"[M-Pesa Deposit] Gateway: {gateway}, Phone: {phone}, Amount: {data.amount}, Base URL: {request_base}")
+            print(f"[M-Pesa Deposit] Phone: {phone}, Amount: {data.amount}, Base URL: {request_base}")
             
             try:
-                if gateway == "sunpay":
-                    from services.sunpay import stk_push as sunpay_stk_push
-                    callback_url = f"{request_base}/api/webhooks/sunpay/{org_id}"
-                    print(f"[M-Pesa Deposit] SunPay callback URL: {callback_url}")
-                    result = await sunpay_stk_push(tenant_session, phone, data.amount, account_ref, callback_url)
-                    print(f"[M-Pesa Deposit] SunPay result: {result}")
-                    success = isinstance(result, dict) and (result.get("success") or result.get("ResponseCode") == "0")
-                    message = result.get("message", "STK Push sent") if isinstance(result, dict) else "STK Push sent"
-                else:
-                    from routes.mpesa import initiate_stk_push
-                    print(f"[M-Pesa Deposit] Daraja callback base: {request_base}")
-                    result = initiate_stk_push(tenant_session, phone, data.amount, account_ref, description, org_id=org_id, base_url_override=request_base)
-                    print(f"[M-Pesa Deposit] Daraja result: {result}")
-                    success = result.get("ResponseCode") == "0"
-                    message = "STK Push sent successfully. Please check member's phone to complete payment."
+                from routes.mpesa import initiate_stk_push
+                print(f"[M-Pesa Deposit] Daraja callback base: {request_base}")
+                result = initiate_stk_push(tenant_session, phone, data.amount, account_ref, description, org_id=org_id, base_url_override=request_base)
+                print(f"[M-Pesa Deposit] Daraja result: {result}")
+                success = result.get("ResponseCode") == "0"
+                message = "STK Push sent successfully. Please check member's phone to complete payment."
                 
                 if success:
                     checkout_id = result.get("CheckoutRequestID", "")

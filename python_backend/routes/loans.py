@@ -878,45 +878,23 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
         mpesa_b2c_result = None
         if is_mpesa:
             try:
-                from models.tenant import OrganizationSettings
-                gateway_setting = tenant_session.query(OrganizationSettings).filter(
-                    OrganizationSettings.setting_key == "mpesa_gateway"
-                ).first()
-                gateway = gateway_setting.setting_value if gateway_setting else "daraja"
-
                 phone = data.disbursement_phone.replace("+", "").replace(" ", "")
                 if phone.startswith("0"):
                     phone = "254" + phone[1:]
 
-                import os
-                public_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
-                if public_domain:
-                    callback_url = f"https://{public_domain}/api/webhooks/sunpay/{org_id}"
-                else:
-                    callback_url = ""
-
-                if gateway == "sunpay":
-                    from services.sunpay import b2c_payment
-                    mpesa_b2c_result = await b2c_payment(
-                        tenant_session, phone, net_amount,
-                        remarks=f"Loan disbursement {loan.application_number}",
-                        occasion=f"DISBURSE:{loan.id}",
-                        callback_url=callback_url
-                    )
-                else:
-                    from routes.mpesa import initiate_b2c_disbursement
-                    mpesa_b2c_result = initiate_b2c_disbursement(
-                        tenant_session, phone, net_amount,
-                        remarks=f"Loan disbursement {loan.application_number}",
-                        occasion=loan.application_number
-                    )
-                    if mpesa_b2c_result and mpesa_b2c_result.get("success"):
-                        loan.status = "disbursed"
-                        loan.disbursed_at = datetime.utcnow()
-                        transaction.description = f"Loan disbursement for {loan.application_number}"
-                        tenant_session.commit()
-                        if member:
-                            post_disbursement_to_gl(tenant_session, loan, member, data.disbursement_method, deduct_interest_upfront)
+                from routes.mpesa import initiate_b2c_disbursement
+                mpesa_b2c_result = initiate_b2c_disbursement(
+                    tenant_session, phone, net_amount,
+                    remarks=f"Loan disbursement {loan.application_number}",
+                    occasion=loan.application_number
+                )
+                if mpesa_b2c_result and mpesa_b2c_result.get("success"):
+                    loan.status = "disbursed"
+                    loan.disbursed_at = datetime.utcnow()
+                    transaction.description = f"Loan disbursement for {loan.application_number}"
+                    tenant_session.commit()
+                    if member:
+                        post_disbursement_to_gl(tenant_session, loan, member, data.disbursement_method, deduct_interest_upfront)
                     
                 print(f"[M-Pesa B2C] Disbursement for {loan.application_number}: {mpesa_b2c_result}")
                 

@@ -532,7 +532,6 @@ function EmailSection({ getBoolValue, updateSetting, getValue }: any) {
 }
 
 function MpesaSection({ getBoolValue, updateSetting, getValue, organizationId, toast }: any) {
-  const gateway = getValue("mpesa_gateway") || "daraja";
   const mpesaEnv = getValue("mpesa_environment") || "sandbox";
 
   return (
@@ -542,27 +541,15 @@ function MpesaSection({ getBoolValue, updateSetting, getValue, organizationId, t
         <ToggleRow label="Enable M-Pesa" description="Allow members to deposit via M-Pesa" checked={getBoolValue("mpesa_enabled")} onChange={(v) => updateSetting("mpesa_enabled", String(v))} testId="switch-mpesa-enabled" />
 
         <SettingRow>
-          <div className="grid gap-4 sm:grid-cols-2 max-w-xl">
-            <div className="space-y-1.5">
-              <Label>Payment Gateway</Label>
-              <Select value={gateway} onValueChange={(value) => updateSetting("mpesa_gateway", value)}>
-                <SelectTrigger data-testid="select-mpesa-gateway"><SelectValue placeholder="Select payment gateway" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daraja">Direct Daraja API</SelectItem>
-                  <SelectItem value="sunpay">SunPay (Managed Gateway)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="mpesa_environment">Environment</Label>
-              <Select value={mpesaEnv} onValueChange={(value) => updateSetting("mpesa_environment", value)}>
-                <SelectTrigger id="mpesa_environment" data-testid="select-mpesa-env"><SelectValue placeholder="Select environment" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="sandbox">Sandbox (Testing)</SelectItem>
-                  <SelectItem value="production">Production (Live)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="max-w-xs space-y-1.5">
+            <Label htmlFor="mpesa_environment">Environment</Label>
+            <Select value={mpesaEnv} onValueChange={(value) => updateSetting("mpesa_environment", value)}>
+              <SelectTrigger id="mpesa_environment" data-testid="select-mpesa-env"><SelectValue placeholder="Select environment" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="sandbox">Sandbox (Testing)</SelectItem>
+                <SelectItem value="production">Production (Live)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </SettingRow>
 
@@ -587,7 +574,7 @@ function MpesaSection({ getBoolValue, updateSetting, getValue, organizationId, t
                 <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
                 <div className="text-sm">
                   <p className="font-medium text-green-800 dark:text-green-300">Production Mode — Live Payments Active</p>
-                  <p className="text-green-700 dark:text-green-400 mt-1">M-Pesa is configured for live transactions. Make sure your {gateway === "daraja" ? "Daraja API" : "SunPay"} credentials below are your production keys.</p>
+                  <p className="text-green-700 dark:text-green-400 mt-1">M-Pesa is configured for live transactions. Make sure your Daraja API credentials below are your production keys.</p>
                 </div>
               </div>
             </div>
@@ -599,25 +586,15 @@ function MpesaSection({ getBoolValue, updateSetting, getValue, organizationId, t
             <div className="flex gap-2">
               <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 shrink-0" />
               <div className="text-sm">
-                {gateway === "daraja" ? (
-                  <div>
-                    <p className="font-medium text-blue-800 dark:text-blue-300 mb-1">Direct Daraja API</p>
-                    <p className="text-blue-700 dark:text-blue-400">Connect directly to Safaricom's Daraja API. You need your Consumer Key, Consumer Secret, and Passkey from the Safaricom Developer Portal.</p>
-                  </div>
-                ) : (
-                  <div>
-                    <p className="font-medium text-blue-800 dark:text-blue-300 mb-1">SunPay — Managed M-Pesa Gateway</p>
-                    <p className="text-blue-700 dark:text-blue-400">SunPay handles all the Safaricom setup. Create a free account at <a href="https://sunpay.co.ke" target="_blank" rel="noopener noreferrer" className="underline font-medium">sunpay.co.ke</a>, get your API key, and start accepting payments. 1.5% per transaction, no monthly fees.</p>
-                  </div>
-                )}
+                <p className="font-medium text-blue-800 dark:text-blue-300 mb-1">Safaricom Daraja API</p>
+                <p className="text-blue-700 dark:text-blue-400">Connect directly to Safaricom's Daraja API. You need your Consumer Key, Consumer Secret, and Passkey from the <a href="https://developer.safaricom.co.ke" target="_blank" rel="noopener noreferrer" className="underline font-medium">Safaricom Developer Portal</a>.</p>
               </div>
             </div>
           </div>
         </SettingRow>
       </SettingGroup>
 
-      {gateway === "daraja" ? (
-        <SettingGroup title="Daraja API Credentials">
+      <SettingGroup title="Daraja API Credentials">
           <SettingRow>
             <div className="space-y-4">
               <div className="space-y-1.5">
@@ -667,42 +644,6 @@ function MpesaSection({ getBoolValue, updateSetting, getValue, organizationId, t
             </div>
           </SettingRow>
         </SettingGroup>
-      ) : (
-        <SettingGroup title="SunPay Configuration">
-          <SettingRow>
-            <div className="space-y-4 max-w-lg">
-              <div className="space-y-1.5">
-                <Label htmlFor="sunpay_api_key">SunPay API Key</Label>
-                <Input id="sunpay_api_key" type="password" value={getValue("sunpay_api_key")} onChange={(e) => updateSetting("sunpay_api_key", e.target.value)} placeholder="sp_your_api_key_here" data-testid="input-sunpay-api-key" />
-                <p className="text-xs text-muted-foreground">
-                  Get your API key from your <a href="https://sunpay.co.ke/dashboard" target="_blank" rel="noopener noreferrer" className="underline text-foreground hover:no-underline" data-testid="link-sunpay-dashboard">SunPay Dashboard</a>
-                </p>
-              </div>
-              <div className="space-y-1.5">
-                <Label>Webhook URL</Label>
-                <p className="text-xs text-muted-foreground mb-1.5">Copy this and set it as your webhook URL in SunPay dashboard</p>
-                <div className="flex items-center gap-2">
-                  <Input readOnly value={`${window.location.origin}/api/webhooks/sunpay/${organizationId}`} className="font-mono text-xs" data-testid="input-sunpay-webhook-url" />
-                  <Button type="button" variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/api/webhooks/sunpay/${organizationId}`); toast({ title: "Copied!", description: "Webhook URL copied to clipboard" }); }} className="shrink-0">
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </SettingRow>
-          <SettingRow>
-            <div className="rounded-lg bg-muted p-4">
-              <h4 className="font-medium mb-3 text-sm flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-green-600" /> Supported Payment Flows</h4>
-              <div className="grid gap-3 sm:grid-cols-2 text-sm">
-                <div><p className="font-medium">STK Push</p><p className="text-muted-foreground text-xs">Send payment prompt to customer's phone</p></div>
-                <div><p className="font-medium">C2B (Paybill)</p><p className="text-muted-foreground text-xs">Customers pay via M-Pesa Paybill</p></div>
-                <div><p className="font-medium">B2C (Disbursements)</p><p className="text-muted-foreground text-xs">Send money to member's M-Pesa</p></div>
-                <div><p className="font-medium">Transaction Reversal</p><p className="text-muted-foreground text-xs">Reverse completed M-Pesa transactions</p></div>
-              </div>
-            </div>
-          </SettingRow>
-        </SettingGroup>
-      )}
     </div>
   );
 }

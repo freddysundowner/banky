@@ -754,12 +754,6 @@ async def check_stk_push_status(org_id: str, request: Request, user=Depends(get_
         if pending_record.status in ("failed", "cancelled"):
             return {"status": pending_record.status, "message": f"Payment {pending_record.status}"}
         
-        settings = tenant_session.query(OrganizationSettings).first()
-        gateway = getattr(settings, "mpesa_gateway", "daraja") if settings else "daraja"
-        
-        if gateway == "sunpay":
-            return {"status": "pending", "message": "SunPay payments are confirmed via webhook"}
-        
         result = query_stk_push_status(tenant_session, checkout_request_id)
         print(f"[STK Query] Result for {checkout_request_id}: {result}")
         
@@ -947,29 +941,10 @@ async def trigger_stk_push(org_id: str, request: Request, user=Depends(get_curre
             if not mpesa_enabled:
                 raise HTTPException(status_code=400, detail="M-Pesa is not enabled for this organization")
 
-        gateway = "daraja" if demo else get_org_setting(tenant_session, "mpesa_gateway", "daraja")
-
         phone = phone.replace("+", "").replace(" ", "")
         if phone.startswith("0"):
             phone = "254" + phone[1:]
 
-        if gateway == "sunpay":
-            from services.sunpay import stk_push as sunpay_stk_push
-            import os
-            public_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
-            if public_domain:
-                callback_url = f"https://{public_domain}/api/webhooks/sunpay/{org_id}"
-            else:
-                callback_url = f"{str(request.base_url).rstrip('/')}/api/webhooks/sunpay/{org_id}"
-            result = await sunpay_stk_push(tenant_session, phone, amount, account_reference, callback_url)
-            if isinstance(result, dict) and result.get("success") is not None:
-                return result
-            return {
-                "success": True if not (isinstance(result, dict) and result.get("error")) else False,
-                "message": result.get("message", "STK push sent successfully. Please check your phone.") if isinstance(result, dict) else "STK push sent",
-                **(result if isinstance(result, dict) else {})
-            }
-        
         request_base = str(request.base_url).rstrip("/")
         result = initiate_stk_push(tenant_session, phone, amount, account_reference, description, org_id=org_id, base_url_override=request_base)
         

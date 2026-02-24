@@ -20,7 +20,9 @@ SENSITIVE_KEYS = {
     "stripe_publishable_key",
     "paystack_secret_key",
     "paystack_public_key",
-    "subscription_sunpay_api_key",
+    "subscription_mpesa_consumer_key",
+    "subscription_mpesa_consumer_secret",
+    "subscription_mpesa_passkey",
 }
 
 CRITICAL_SETTINGS_KEYS = SENSITIVE_KEYS | {

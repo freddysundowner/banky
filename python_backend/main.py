@@ -30,7 +30,7 @@ from routes.hr import router as hr_router
 from routes.audit import router as audit_router
 from routes.settings import router as settings_router
 from routes.mpesa import router as mpesa_router
-from routes.sunpay import router as sunpay_router
+
 from routes.documents import router as documents_router
 from routes.roles import router as roles_router
 from routes.float_management import router as float_router
@@ -448,7 +448,7 @@ app.include_router(hr_router, prefix="/api/organizations", tags=["HR"])
 app.include_router(audit_router, prefix="/api/organizations", tags=["Audit"])
 app.include_router(settings_router, prefix="/api/organizations", tags=["Settings"])
 app.include_router(mpesa_router, prefix="/api", tags=["M-Pesa"])
-app.include_router(sunpay_router, prefix="/api", tags=["SunPay"])
+
 app.include_router(documents_router, prefix="/api/organizations", tags=["Documents"])
 app.include_router(roles_router, prefix="/api/organizations", tags=["Roles"])
 app.include_router(float_router, prefix="/api", tags=["Float Management"])

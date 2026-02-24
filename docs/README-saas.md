@@ -43,7 +43,7 @@ Copy `.env.example` to `.env` and configure:
 | `SMS_API_KEY` | No | For SMS notifications |
 | `STRIPE_SECRET_KEY` | No | For Stripe subscription payments |
 | `PAYSTACK_SECRET_KEY` | No | For Paystack subscription payments |
-| `SUNPAY_API_KEY` | No | SunPay managed M-Pesa gateway key |
+
 | `EXCHANGE_RATE_API_KEY` | No | For currency conversion (exchangerate-api.com) |
 | `SESSION_SECRET` | Recommended | Secret for session encryption (min 32 characters) |
 
@@ -195,7 +195,7 @@ sudo ufw enable
 - Dividend declaration and distribution to members
 - Expense tracking and recurring expense automation
 - M-Pesa integration (STK Push deposits, B2C disbursements, C2B payments)
-- Dual M-Pesa gateway support (direct Safaricom Daraja API or SunPay managed)
+- Direct Safaricom Daraja API integration
 
 **Accounting**
 - Full double-entry bookkeeping system
@@ -247,7 +247,7 @@ sudo ufw enable
 
 ### Subscription & Billing
 
-- Multi-gateway support: Stripe, Paystack, M-Pesa (SunPay)
+- Multi-gateway support: Stripe, Paystack, M-Pesa (Daraja API)
 - USD-only pricing with dynamic currency conversion
 - Monthly and annual billing cycles
 - Configurable trial period for new organizations

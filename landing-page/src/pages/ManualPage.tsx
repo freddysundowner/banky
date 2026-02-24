@@ -1586,12 +1586,6 @@ function MpesaSection() {
           <p className="text-sm text-gray-600 mb-2">Connect directly to Safaricom's payment platform.</p>
           <p className="text-sm text-gray-600"><strong>You'll need:</strong> Consumer Key, Consumer Secret, Shortcode, Passkey, and a registered M-Pesa app at developer.safaricom.co.ke</p>
         </div>
-        <div className="bg-green-50 rounded-lg p-4 border border-green-200">
-          <h4 className="font-medium text-gray-900 mb-2">SunPay Managed Gateway</h4>
-          <p className="text-sm text-gray-600 mb-2">Simplified setup. SunPay handles Safaricom compliance. Create a free account at <a href="https://sunpay.co.ke" target="_blank" rel="noopener noreferrer" className="underline font-medium text-green-700">sunpay.co.ke</a>.</p>
-          <p className="text-sm text-gray-600 mb-2"><strong>You'll need:</strong> Just a single API key from your <a href="https://sunpay.co.ke/dashboard" target="_blank" rel="noopener noreferrer" className="underline font-medium text-green-700">SunPay Dashboard</a>.</p>
-          <p className="text-sm text-gray-600"><strong>Note:</strong> SunPay operates under the trade name <strong>"Sunpay Ventures 2"</strong> -- this is the name that will appear on M-Pesa payment messages and transaction logs.</p>
-        </div>
       </div>
       <h3 className="font-semibold text-gray-900 mt-6">M-Pesa Features</h3>
       <div className="grid sm:grid-cols-2 gap-3">
@@ -1615,7 +1609,7 @@ function MpesaSection() {
           <p>Open Settings and click the M-Pesa tab.</p>
         </Step>
         <Step n={2} title="Choose Gateway & Enter Credentials">
-          <p>Select Daraja or SunPay. Enter the required API credentials.</p>
+          <p>Enter your Daraja API credentials (Consumer Key, Consumer Secret, Passkey, and Shortcode).</p>
         </Step>
         <Step n={3} title="Set Callback URL">
           <p>Enter your publicly accessible HTTPS callback URL (e.g., https://yourdomain.com/api/mpesa/callback). Safaricom sends payment confirmations here.</p>
@@ -1697,10 +1691,8 @@ function SettingsMpesaSection() {
       <p className="text-gray-600">Configure M-Pesa payment integration. See the <strong>M-Pesa Integration</strong> section above for a full guide.</p>
       <h3 className="font-semibold text-gray-900">Fields</h3>
       <FeatureList items={[
-        'Gateway type: Daraja (direct Safaricom) or SunPay (managed)',
-        'Consumer Key and Consumer Secret (Daraja)',
-        'Shortcode and Passkey (Daraja)',
-        'SunPay API Key (SunPay)',
+        'Consumer Key and Consumer Secret',
+        'Shortcode and Passkey',
         'Callback URL',
         'Environment: Sandbox or Production',
       ]} />

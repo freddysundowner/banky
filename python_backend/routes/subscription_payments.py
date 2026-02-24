@@ -16,16 +16,64 @@ from services.exchange_rate import fetch_exchange_rates, convert_usd_to
 
 router = APIRouter()
 
-SUNPAY_BASE_URL = "https://sunpay.co.ke/api/v1"
+DARAJA_SANDBOX_URL = "https://sandbox.safaricom.co.ke"
+DARAJA_PRODUCTION_URL = "https://api.safaricom.co.ke"
 
 
-def get_platform_sunpay_key(db: Session) -> str:
-    setting = db.query(PlatformSettings).filter(
-        PlatformSettings.setting_key == "subscription_sunpay_api_key"
-    ).first()
-    if not setting or not setting.setting_value:
+def get_platform_mpesa_config(db: Session) -> dict:
+    keys = ["subscription_mpesa_consumer_key", "subscription_mpesa_consumer_secret",
+            "subscription_mpesa_passkey", "subscription_mpesa_shortcode"]
+    settings = db.query(PlatformSettings).filter(
+        PlatformSettings.setting_key.in_(keys)
+    ).all()
+    config = {s.setting_key: s.setting_value for s in settings if s.setting_value}
+    if not config.get("subscription_mpesa_consumer_key") or not config.get("subscription_mpesa_consumer_secret"):
         raise HTTPException(status_code=400, detail="Platform M-Pesa payments not configured. Contact admin.")
-    return setting.setting_value
+    return config
+
+
+async def get_daraja_token(consumer_key: str, consumer_secret: str, is_production: bool = False) -> str:
+    base_url = DARAJA_PRODUCTION_URL if is_production else DARAJA_SANDBOX_URL
+    import base64
+    credentials = base64.b64encode(f"{consumer_key}:{consumer_secret}".encode()).decode()
+    async with httpx.AsyncClient(timeout=15.0) as client:
+        resp = await client.get(
+            f"{base_url}/oauth/v1/generate?grant_type=client_credentials",
+            headers={"Authorization": f"Basic {credentials}"}
+        )
+        if resp.status_code != 200:
+            raise HTTPException(status_code=400, detail="Failed to authenticate with M-Pesa")
+        return resp.json()["access_token"]
+
+
+async def daraja_stk_push(config: dict, phone: str, amount: float, account_ref: str, callback_url: str, is_production: bool = False) -> dict:
+    from datetime import datetime as dt
+    import base64
+    base_url = DARAJA_PRODUCTION_URL if is_production else DARAJA_SANDBOX_URL
+    shortcode = config.get("subscription_mpesa_shortcode", "174379")
+    passkey = config.get("subscription_mpesa_passkey", "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919")
+    timestamp = dt.now().strftime("%Y%m%d%H%M%S")
+    password = base64.b64encode(f"{shortcode}{passkey}{timestamp}".encode()).decode()
+    token = await get_daraja_token(config["subscription_mpesa_consumer_key"], config["subscription_mpesa_consumer_secret"], is_production)
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        resp = await client.post(
+            f"{base_url}/mpesa/stkpush/v1/processrequest",
+            json={
+                "BusinessShortCode": shortcode,
+                "Password": password,
+                "Timestamp": timestamp,
+                "TransactionType": "CustomerPayBillOnline",
+                "Amount": int(amount),
+                "PartyA": phone,
+                "PartyB": shortcode,
+                "PhoneNumber": phone,
+                "CallBackURL": callback_url,
+                "AccountReference": account_ref,
+                "TransactionDesc": "Subscription Payment"
+            },
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+        )
+        return resp.json()
 
 
 @router.post("/{organization_id}/subscription/pay-mpesa", dependencies=[Depends(require_not_demo)])
@@ -76,7 +124,7 @@ async def initiate_subscription_payment(organization_id: str, data: dict, auth=D
     if amount <= 0:
         raise HTTPException(status_code=400, detail="Currency conversion error. Contact admin.")
 
-    api_key = get_platform_sunpay_key(db)
+    mpesa_config = get_platform_mpesa_config(db)
 
     payment = SubscriptionPayment(
         organization_id=organization_id,
@@ -97,44 +145,29 @@ async def initiate_subscription_payment(organization_id: str, data: dict, auth=D
     else:
         callback_url = f"{public_domain}/api/webhooks/subscription-payment" if public_domain else ""
 
-    external_ref = f"SUB:{payment.id}"
+    account_ref = f"SUB:{payment.id}"
 
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                f"{SUNPAY_BASE_URL}/payments/stk-push",
-                json={
-                    "phoneNumber": phone,
-                    "amount": amount,
-                    "externalRef": external_ref,
-                    "callbackUrl": callback_url
-                },
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json"
-                }
-            )
+        result = await daraja_stk_push(mpesa_config, phone, amount, account_ref, callback_url)
 
-            if response.status_code >= 400:
-                payment.status = "failed"
-                db.commit()
-                error_data = response.json() if "json" in response.headers.get("content-type", "") else {"error": response.text}
-                print(f"[Subscription] STK Push failed: {error_data}")
-                raise HTTPException(status_code=400, detail="Failed to initiate M-Pesa payment. Please try again.")
-
-            result = response.json()
-            payment.mpesa_checkout_id = result.get("checkoutRequestId", result.get("CheckoutRequestID", ""))
-            payment.status = "awaiting_payment"
+        if result.get("ResponseCode") != "0" and not result.get("CheckoutRequestID"):
+            payment.status = "failed"
             db.commit()
+            print(f"[Subscription] STK Push failed: {result}")
+            raise HTTPException(status_code=400, detail="Failed to initiate M-Pesa payment. Please try again.")
 
-            print(f"[Subscription] STK Push sent for org {org.name}, plan {plan.name}, amount {amount}, phone {phone}")
+        payment.mpesa_checkout_id = result.get("CheckoutRequestID", "")
+        payment.status = "awaiting_payment"
+        db.commit()
 
-            return {
-                "success": True,
-                "message": "M-Pesa payment prompt sent to your phone. Enter your PIN to complete payment.",
-                "payment_id": payment.id,
-                "checkout_id": payment.mpesa_checkout_id
-            }
+        print(f"[Subscription] STK Push sent for org {org.name}, plan {plan.name}, amount {amount}, phone {phone}")
+
+        return {
+            "success": True,
+            "message": "M-Pesa payment prompt sent to your phone. Enter your PIN to complete payment.",
+            "payment_id": payment.id,
+            "checkout_id": payment.mpesa_checkout_id
+        }
 
     except HTTPException:
         raise
@@ -217,31 +250,40 @@ async def check_payment_status_endpoint(organization_id: str, payment_id: str, a
 
     if payment.status == "awaiting_payment" and payment.mpesa_checkout_id:
         try:
-            api_key = get_platform_sunpay_key(db)
+            mpesa_config = get_platform_mpesa_config(db)
+            import base64
+            from datetime import datetime as dt
+            shortcode = mpesa_config.get("subscription_mpesa_shortcode", "174379")
+            passkey = mpesa_config.get("subscription_mpesa_passkey", "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919")
+            timestamp = dt.now().strftime("%Y%m%d%H%M%S")
+            password = base64.b64encode(f"{shortcode}{passkey}{timestamp}".encode()).decode()
+            token = await get_daraja_token(mpesa_config["subscription_mpesa_consumer_key"], mpesa_config["subscription_mpesa_consumer_secret"])
+            base_url = DARAJA_SANDBOX_URL
             async with httpx.AsyncClient(timeout=15.0) as client:
-                resp = await client.get(
-                    f"{SUNPAY_BASE_URL}/payments/{payment.mpesa_checkout_id}",
-                    headers={
-                        "Authorization": f"Bearer {api_key}",
-                        "Content-Type": "application/json"
-                    }
+                resp = await client.post(
+                    f"{base_url}/mpesa/stkpushquery/v1/query",
+                    json={
+                        "BusinessShortCode": shortcode,
+                        "Password": password,
+                        "Timestamp": timestamp,
+                        "CheckoutRequestID": payment.mpesa_checkout_id
+                    },
+                    headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
                 )
                 if resp.status_code < 400:
                     data = resp.json()
-                    result_code = str(data.get("resultCode", data.get("ResultCode", "")))
-                    receipt = data.get("mpesaRef", data.get("MpesaRef", data.get("receipt", "")))
-                    status_field = str(data.get("status", "")).lower()
+                    result_code = str(data.get("ResultCode", ""))
+                    receipt = data.get("MpesaReceiptNumber", "")
 
-                    if result_code == "0" or status_field in ("completed", "success"):
+                    if result_code == "0":
                         activate_subscription(db, payment, receipt or "")
-                        print(f"[Subscription Poll] Payment {payment_id} confirmed via API query")
-                    elif result_code and result_code != "0" and result_code != "":
-                        if status_field in ("failed", "cancelled"):
-                            payment.status = "failed"
-                            db.commit()
-                            print(f"[Subscription Poll] Payment {payment_id} failed: {result_code}")
+                        print(f"[Subscription Poll] Payment {payment_id} confirmed via Daraja query")
+                    elif result_code in ("1032", "1037"):
+                        payment.status = "failed"
+                        db.commit()
+                        print(f"[Subscription Poll] Payment {payment_id} cancelled: {result_code}")
         except Exception as e:
-            print(f"[Subscription Poll] Error querying SunPay: {e}")
+            print(f"[Subscription Poll] Error querying Daraja: {e}")
 
     if payment.status == "awaiting_payment" and payment.stripe_session_id:
         try:
