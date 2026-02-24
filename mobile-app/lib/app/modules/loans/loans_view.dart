@@ -313,7 +313,7 @@ class LoansView extends GetView<LoansController> {
     if (loan.isOverdue) {
       bgColor = AppColors.error.withOpacity(0.1);
       textColor = AppColors.error;
-    } else if (loan.status.name == 'completed') {
+    } else if (loan.statusText.toLowerCase() == 'completed') {
       bgColor = AppColors.success.withOpacity(0.1);
       textColor = AppColors.success;
     } else if (loan.isActive) {
