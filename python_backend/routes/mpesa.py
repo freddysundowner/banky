@@ -828,11 +828,13 @@ async def trigger_stk_push(org_id: str, request: Request, user=Depends(get_curre
             else:
                 raise HTTPException(status_code=404, detail="Active loan not found")
         
-        mpesa_enabled = get_org_setting(tenant_session, "mpesa_enabled", False)
-        if not mpesa_enabled:
-            raise HTTPException(status_code=400, detail="M-Pesa is not enabled for this organization")
-        
-        gateway = get_org_setting(tenant_session, "mpesa_gateway", "daraja")
+        demo = is_demo_mode()
+        if not demo:
+            mpesa_enabled = get_org_setting(tenant_session, "mpesa_enabled", False)
+            if not mpesa_enabled:
+                raise HTTPException(status_code=400, detail="M-Pesa is not enabled for this organization")
+
+        gateway = "daraja" if demo else get_org_setting(tenant_session, "mpesa_gateway", "daraja")
 
         phone = phone.replace("+", "").replace(" ", "")
         if phone.startswith("0"):
