@@ -2,6 +2,7 @@ import Hero from '../components/Hero';
 import Stats from '../components/Stats';
 import Features from '../components/Features';
 import HowItWorks from '../components/HowItWorks';
+import MobileApp from '../components/MobileApp';
 import Testimonials from '../components/Testimonials';
 import Pricing from '../components/Pricing';
 import FAQ from '../components/FAQ';
@@ -17,6 +18,7 @@ export default function HomePage() {
       <Hero />
       <Stats />
       <Features />
+      <MobileApp />
       <HowItWorks />
       <Testimonials />
       {isSaaS && <Pricing />}
