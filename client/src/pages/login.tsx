@@ -147,7 +147,7 @@ export default function Login() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center bg-background overflow-y-auto px-5 sm:px-10 py-10 lg:py-0 lg:justify-center">
+      <div className="flex-1 flex flex-col items-center bg-background px-5 sm:px-10 py-10 lg:py-0 lg:justify-center lg:overflow-y-auto">
         <div className="w-full max-w-[440px] lg:max-w-[500px]">
           <div className="lg:hidden flex items-center gap-2.5 mb-6">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
