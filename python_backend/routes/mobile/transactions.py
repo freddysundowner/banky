@@ -140,7 +140,7 @@ def get_payment_history(
 
 
 VALID_DEPOSIT_ACCOUNTS = {"savings", "shares"}
-VALID_WITHDRAW_ACCOUNTS = {"savings", "shares"}
+VALID_WITHDRAW_ACCOUNTS = {"savings"}
 
 ACCOUNT_LABELS = {
     "savings": "Savings Account",

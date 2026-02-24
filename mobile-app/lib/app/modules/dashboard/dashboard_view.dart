@@ -423,14 +423,8 @@ class DashboardView extends GetView<DashboardController> {
 
   void _showWithdrawSheet({required BuildContext context}) {
     final amountController = TextEditingController();
-    final selectedAccount = 'savings'.obs;
     final isLoading = false.obs;
     final errorMsg = ''.obs;
-
-    const accounts = [
-      {'value': 'savings', 'label': 'Savings Account'},
-      {'value': 'shares', 'label': 'Share Capital'},
-    ];
 
     showModalBottomSheet(
       context: context,
@@ -458,29 +452,13 @@ class DashboardView extends GetView<DashboardController> {
                   child: const Icon(Icons.remove_circle_outline, color: AppColors.warning),
                 ),
                 const SizedBox(width: 12),
-                const Text('Withdraw Funds',
+                const Text('Withdraw from Savings',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
-            const SizedBox(height: 20),
-            Obx(() => DropdownButtonFormField<String>(
-              value: selectedAccount.value,
-              decoration: InputDecoration(
-                labelText: 'Withdraw from',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              items: accounts.map((a) => DropdownMenuItem(
-                value: a['value'],
-                child: Text(a['label']!),
-              )).toList(),
-              onChanged: (v) {
-                if (v != null) selectedAccount.value = v;
-                errorMsg.value = '';
-              },
-            )),
             const SizedBox(height: 8),
             Obx(() => Text(
-              'Available: ${controller.formatCurrency(controller.balanceForAccount(selectedAccount.value))}',
+              'Available: ${controller.formatCurrency(controller.savingsBalance.value)}',
               style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
             )),
             const SizedBox(height: 12),
@@ -514,16 +492,13 @@ class DashboardView extends GetView<DashboardController> {
                           errorMsg.value = 'Enter a valid amount';
                           return;
                         }
-                        if (amount > controller.balanceForAccount(selectedAccount.value)) {
+                        if (amount > controller.savingsBalance.value) {
                           errorMsg.value = 'Amount exceeds available balance';
                           return;
                         }
                         errorMsg.value = '';
                         isLoading.value = true;
-                        final result = await controller.withdraw(
-                          amount: amount,
-                          accountType: selectedAccount.value,
-                        );
+                        final result = await controller.withdraw(amount: amount);
                         isLoading.value = false;
                         if (result['success'] == true) {
                           Navigator.pop(ctx);
