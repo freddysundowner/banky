@@ -33,8 +33,6 @@ class ProfileView extends GetView<ProfileController> {
               const SizedBox(height: 24),
               _buildProfileDetails(member),
               const SizedBox(height: 24),
-              _buildAccountInfo(member),
-              const SizedBox(height: 24),
               _buildMenuItems(),
               const SizedBox(height: 24),
               _buildLogoutButton(),
