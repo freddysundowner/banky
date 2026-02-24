@@ -144,13 +144,6 @@ class DashboardView extends GetView<DashboardController> {
           gradient: [const Color(0xFF0277BD), const Color(0xFF01579B)],
           visible: controller.showFixedDeposits,
         ),
-        _BalanceCardData(
-          label: 'Loan Balance',
-          amount: controller.loanBalance.value,
-          icon: Icons.account_balance_wallet_outlined,
-          gradient: [const Color(0xFFE65100), const Color(0xFFBF360C)],
-          visible: controller.showLoans,
-        ),
       ];
 
       return SizedBox(
@@ -642,16 +635,6 @@ class DashboardView extends GetView<DashboardController> {
           icon: Icons.pie_chart,
           color: AppColors.primary,
         ),
-        if (controller.loanBalance.value > 0) ...[
-          const SizedBox(height: 8),
-          _buildAccountCard(
-            title: 'Loan Balance',
-            balance: controller.loanBalance.value,
-            icon: Icons.account_balance_wallet,
-            color: AppColors.warning,
-            isLoan: true,
-          ),
-        ],
       ],
     );
   }
