@@ -104,10 +104,12 @@ class DashboardController extends GetxController {
   Future<Map<String, dynamic>> withdraw({
     required double amount,
     String accountType = 'savings',
+    String? phone,
   }) async {
     final result = await _paymentRepo.requestWithdrawal(
       amount: amount,
       accountType: accountType,
+      phoneNumber: phone,
     );
     if (result['success'] == true) {
       await refreshDashboard();

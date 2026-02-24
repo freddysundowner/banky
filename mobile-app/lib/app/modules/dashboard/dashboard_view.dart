@@ -423,6 +423,9 @@ class DashboardView extends GetView<DashboardController> {
 
   void _showWithdrawSheet({required BuildContext context}) {
     final amountController = TextEditingController();
+    final phoneController = TextEditingController(
+      text: controller.member.value?.phone ?? '',
+    );
     final isLoading = false.obs;
     final errorMsg = ''.obs;
 
@@ -452,7 +455,7 @@ class DashboardView extends GetView<DashboardController> {
                   child: const Icon(Icons.remove_circle_outline, color: AppColors.warning),
                 ),
                 const SizedBox(width: 12),
-                const Text('Withdraw from Savings',
+                const Text('Withdraw via M-Pesa',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
@@ -461,7 +464,7 @@ class DashboardView extends GetView<DashboardController> {
               'Available: ${controller.formatCurrency(controller.savingsBalance.value)}',
               style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
             )),
-            const SizedBox(height: 12),
+            const SizedBox(height: 20),
             TextField(
               controller: amountController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -469,6 +472,16 @@ class DashboardView extends GetView<DashboardController> {
               decoration: InputDecoration(
                 labelText: 'Amount (KES)',
                 prefixText: 'KES ',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: phoneController,
+              keyboardType: TextInputType.phone,
+              decoration: InputDecoration(
+                labelText: 'M-Pesa Phone Number',
+                hintText: '07XXXXXXXX',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
@@ -498,7 +511,12 @@ class DashboardView extends GetView<DashboardController> {
                         }
                         errorMsg.value = '';
                         isLoading.value = true;
-                        final result = await controller.withdraw(amount: amount);
+                        final result = await controller.withdraw(
+                          amount: amount,
+                          phone: phoneController.text.trim().isNotEmpty
+                              ? phoneController.text.trim()
+                              : null,
+                        );
                         isLoading.value = false;
                         if (result['success'] == true) {
                           Navigator.pop(ctx);

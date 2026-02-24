@@ -140,12 +140,18 @@ class PaymentRepository {
   Future<Map<String, dynamic>> requestWithdrawal({
     required double amount,
     String accountType = 'savings',
+    String? phoneNumber,
     String? description,
   }) async {
     try {
       final response = await _api.post(
         ApiConstants.memberWithdraw,
-        data: {'amount': amount, 'account_type': accountType, if (description != null) 'description': description},
+        data: {
+          'amount': amount,
+          'account_type': accountType,
+          if (phoneNumber != null) 'phone_number': phoneNumber,
+          if (description != null) 'description': description,
+        },
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {

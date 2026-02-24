@@ -158,6 +158,7 @@ class DepositRequest(BaseModel):
 class WithdrawRequest(BaseModel):
     amount: float
     account_type: str = "savings"
+    phone_number: Optional[str] = None
     description: Optional[str] = None
 
 
@@ -252,6 +253,8 @@ def request_withdrawal(data: WithdrawRequest, ctx: dict = Depends(get_current_me
         new_balance = current_balance - amount
         txn_code = generate_txn_code()
 
+        phone = data.phone_number or member.phone
+
         txn = Transaction(
             transaction_number=txn_code,
             member_id=member.id,
@@ -260,8 +263,9 @@ def request_withdrawal(data: WithdrawRequest, ctx: dict = Depends(get_current_me
             amount=amount,
             balance_before=current_balance,
             balance_after=new_balance,
-            payment_method="mobile",
-            description=data.description or f"{account_label} self-service withdrawal",
+            payment_method="mpesa",
+            reference=phone,
+            description=data.description or f"{account_label} M-Pesa withdrawal",
             created_at=datetime.utcnow(),
         )
         ts.add(txn)
