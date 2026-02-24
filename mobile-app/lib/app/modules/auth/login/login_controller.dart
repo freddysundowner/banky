@@ -55,6 +55,7 @@ class LoginController extends GetxController {
             'device_id': deviceId,
             'device_name': deviceName,
             'masked_phone': data['masked_phone'],
+            'otp_expires_seconds': data['otp_expires_seconds'] ?? 180,
             'flow': 'login',
           },
         );

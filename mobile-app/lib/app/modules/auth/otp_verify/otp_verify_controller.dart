@@ -19,6 +19,10 @@ class OtpVerifyController extends GetxController {
   final errorMessage = ''.obs;
   final resendCountdown = 0.obs;
 
+  // Login OTP expiry countdown (only active for login flow)
+  final otpExpirySeconds = 0.obs;
+  final otpExpired = false.obs;
+
   late String maskedPhone;
   late String flow;
 
@@ -32,6 +36,7 @@ class OtpVerifyController extends GetxController {
   String deviceName = '';
 
   Timer? _resendTimer;
+  Timer? _expiryTimer;
 
   @override
   void onInit() {
@@ -45,6 +50,10 @@ class OtpVerifyController extends GetxController {
     deviceId = args['device_id'] ?? '';
     deviceName = args['device_name'] ?? '';
     _startResendTimer();
+    if (flow == 'login') {
+      final seconds = (args['otp_expires_seconds'] as num?)?.toInt() ?? 180;
+      _startExpiryTimer(seconds);
+    }
   }
 
   @override
@@ -56,6 +65,7 @@ class OtpVerifyController extends GetxController {
       f.dispose();
     }
     _resendTimer?.cancel();
+    _expiryTimer?.cancel();
     super.onClose();
   }
 
@@ -69,6 +79,27 @@ class OtpVerifyController extends GetxController {
         timer.cancel();
       }
     });
+  }
+
+  void _startExpiryTimer(int seconds) {
+    otpExpired.value = false;
+    otpExpirySeconds.value = seconds;
+    _expiryTimer?.cancel();
+    _expiryTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (otpExpirySeconds.value > 0) {
+        otpExpirySeconds.value--;
+      } else {
+        otpExpired.value = true;
+        timer.cancel();
+      }
+    });
+  }
+
+  String get expiryDisplay {
+    final s = otpExpirySeconds.value;
+    final m = s ~/ 60;
+    final secs = s % 60;
+    return '${m.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
   }
 
   String get otpValue => otpControllers.map((c) => c.text).join();
@@ -86,6 +117,18 @@ class OtpVerifyController extends GetxController {
   }
 
   Future<void> verifyOtp() async {
+    if (flow == 'login' && otpExpired.value) {
+      Get.snackbar(
+        'OTP Expired',
+        'Your OTP has expired. Please request a new one.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange.shade100,
+        colorText: Colors.orange.shade900,
+        margin: const EdgeInsets.all(16),
+      );
+      return;
+    }
+
     final otp = otpValue;
     if (otp.length != 6) {
       errorMessage.value = 'Please enter the complete 6-digit OTP';
@@ -148,7 +191,7 @@ class OtpVerifyController extends GetxController {
 
     isResending.value = true;
     try {
-      await _api.post(
+      final response = await _api.post(
         ApiConstants.mobileResendOtp,
         data: flow == 'activation'
             ? {'account_number': accountNumber}
@@ -156,6 +199,10 @@ class OtpVerifyController extends GetxController {
       );
       clearOtp();
       _startResendTimer();
+      if (flow == 'login') {
+        final newExpiry = (response.data['otp_expires_seconds'] as num?)?.toInt() ?? 180;
+        _startExpiryTimer(newExpiry);
+      }
       Get.snackbar(
         'OTP Resent',
         'A new OTP has been sent to $maskedPhone',

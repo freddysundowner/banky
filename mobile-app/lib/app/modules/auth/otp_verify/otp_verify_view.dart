@@ -68,7 +68,64 @@ class OtpVerifyView extends GetView<OtpVerifyController> {
                 textAlign: TextAlign.center,
               ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
+
+              // OTP expiry countdown — login flow only
+              if (controller.flow == 'login')
+                Obx(() {
+                  final expired = controller.otpExpired.value;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: expired
+                          ? Colors.red.shade50
+                          : controller.otpExpirySeconds.value <= 30
+                              ? Colors.orange.shade50
+                              : Colors.blue.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: expired
+                            ? Colors.red.shade200
+                            : controller.otpExpirySeconds.value <= 30
+                                ? Colors.orange.shade200
+                                : Colors.blue.shade200,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          expired ? Icons.timer_off_outlined : Icons.timer_outlined,
+                          size: 18,
+                          color: expired
+                              ? Colors.red.shade700
+                              : controller.otpExpirySeconds.value <= 30
+                                  ? Colors.orange.shade700
+                                  : Colors.blue.shade700,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          expired
+                              ? 'OTP expired — request a new one'
+                              : 'Expires in ${controller.expiryDisplay}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: expired
+                                ? Colors.red.shade700
+                                : controller.otpExpirySeconds.value <= 30
+                                    ? Colors.orange.shade700
+                                    : Colors.blue.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }),
+
+              const SizedBox(height: 24),
 
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -109,12 +166,15 @@ class OtpVerifyView extends GetView<OtpVerifyController> {
 
               const SizedBox(height: 32),
 
-              Obx(() => ElevatedButton(
-                onPressed: controller.isLoading.value ? null : controller.verifyOtp,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size.fromHeight(56),
-                ),
-                child: controller.isLoading.value
+              Obx(() {
+                final disabled = controller.isLoading.value ||
+                    (controller.flow == 'login' && controller.otpExpired.value);
+                return ElevatedButton(
+                  onPressed: disabled ? null : controller.verifyOtp,
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(56),
+                  ),
+                  child: controller.isLoading.value
                     ? const SizedBox(
                         height: 24,
                         width: 24,
@@ -127,7 +187,8 @@ class OtpVerifyView extends GetView<OtpVerifyController> {
                         'Verify',
                         style: TextStyle(fontSize: 16),
                       ),
-              )),
+                );
+              }),
 
               const SizedBox(height: 24),
 

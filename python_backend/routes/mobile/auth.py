@@ -24,7 +24,8 @@ from models.database import get_db
 router = APIRouter(prefix="/auth")
 
 MOBILE_SESSION_COOKIE = "mobile_session"
-OTP_EXPIRY_MINUTES = 5
+OTP_EXPIRY_MINUTES = 5          # Activation OTP (sent by staff)
+LOGIN_OTP_EXPIRY_MINUTES = 3    # Login OTP (sent by member themselves)
 
 
 def _get_client_ip(request: Request) -> str:
@@ -331,7 +332,7 @@ async def mobile_login(data: LoginRequest, request: Request, db: Session = Depen
 
         otp = _generate_otp()
         member.otp_code = otp
-        member.otp_expires_at = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
+        member.otp_expires_at = datetime.utcnow() + timedelta(minutes=LOGIN_OTP_EXPIRY_MINUTES)
         tenant_session.commit()
 
         _send_otp_sms(member.phone, otp, org.name, tenant_session)
@@ -342,6 +343,7 @@ async def mobile_login(data: LoginRequest, request: Request, db: Session = Depen
         return {
             "success": True,
             "masked_phone": masked,
+            "otp_expires_seconds": LOGIN_OTP_EXPIRY_MINUTES * 60,
             "message": f"OTP sent to {masked}",
         }
     finally:
@@ -455,9 +457,12 @@ async def resend_otp(data: ResendOtpRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Account not found.")
 
     try:
+        is_login_flow = bool(data.device_id)
+        expiry_minutes = LOGIN_OTP_EXPIRY_MINUTES if is_login_flow else OTP_EXPIRY_MINUTES
+
         otp = _generate_otp()
         member.otp_code = otp
-        member.otp_expires_at = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
+        member.otp_expires_at = datetime.utcnow() + timedelta(minutes=expiry_minutes)
         tenant_session.commit()
 
         _send_otp_sms(member.phone, otp, org.name, tenant_session)
@@ -465,7 +470,10 @@ async def resend_otp(data: ResendOtpRequest, db: Session = Depends(get_db)):
         phone = member.phone or ""
         masked = phone[:3] + "****" + phone[-3:] if len(phone) >= 7 else "****"
 
-        return {"success": True, "masked_phone": masked, "message": f"OTP resent to {masked}"}
+        result: dict = {"success": True, "masked_phone": masked, "message": f"OTP resent to {masked}"}
+        if is_login_flow:
+            result["otp_expires_seconds"] = expiry_minutes * 60
+        return result
     finally:
         tenant_session.close()
         tenant_ctx.close()
