@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
 
 import '../constants/api_constants.dart';
+import '../../routes/app_pages.dart';
 import 'storage_service.dart';
 
 class ApiService extends GetxService {
@@ -25,12 +26,12 @@ class ApiService extends GetxService {
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
-        
+
         final org = _storage.getOrganization();
         if (org != null && org['id'] != null) {
           options.headers['X-Organization-Id'] = org['id'];
         }
-        
+
         return handler.next(options);
       },
       onResponse: (response, handler) {
@@ -38,58 +39,17 @@ class ApiService extends GetxService {
       },
       onError: (error, handler) async {
         if (error.response?.statusCode == 401) {
-          final refreshed = await _refreshToken();
-          if (refreshed) {
-            final retryResponse = await _retry(error.requestOptions);
-            return handler.resolve(retryResponse);
-          }
+          // Mobile auth uses OTP-based sessions with no refresh token.
+          // On 401 (expired or revoked session), clear all local auth state
+          // and force the user back to the login screen.
+          await _storage.clearAll();
+          Get.offAllNamed(Routes.login);
         }
         return handler.next(error);
       },
     ));
 
     return this;
-  }
-
-  Future<bool> _refreshToken() async {
-    try {
-      final refreshToken = await _storage.getRefreshToken();
-      if (refreshToken == null) return false;
-
-      final response = await Dio().post(
-        '${ApiConstants.baseUrl}${ApiConstants.refreshToken}',
-        data: {'refresh_token': refreshToken},
-      );
-
-      if (response.statusCode == 200) {
-        await _storage.saveToken(response.data['access_token']);
-        if (response.data['refresh_token'] != null) {
-          await _storage.saveRefreshToken(response.data['refresh_token']);
-        }
-        return true;
-      }
-    } catch (e) {
-      await _storage.clearTokens();
-    }
-    return false;
-  }
-
-  Future<Response> _retry(RequestOptions requestOptions) async {
-    final token = await _storage.getToken();
-    final options = Options(
-      method: requestOptions.method,
-      headers: {
-        ...requestOptions.headers,
-        'Authorization': 'Bearer $token',
-      },
-    );
-
-    return _dio.request(
-      requestOptions.path,
-      data: requestOptions.data,
-      queryParameters: requestOptions.queryParameters,
-      options: options,
-    );
   }
 
   Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) async {
