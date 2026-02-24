@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../routes/app_pages.dart';
+import '../../widgets/transaction_receipt_sheet.dart';
 import 'dashboard_controller.dart';
 
 class DashboardView extends GetView<DashboardController> {
@@ -743,6 +744,7 @@ class DashboardView extends GetView<DashboardController> {
               itemBuilder: (context, index) {
                 final tx = controller.recentTransactions[index];
                 return ListTile(
+                  onTap: () => TransactionReceiptSheet.show(tx),
                   leading: Container(
                     width: 40,
                     height: 40,
@@ -763,12 +765,19 @@ class DashboardView extends GetView<DashboardController> {
                     DateFormat('MMM d, yyyy').format(tx.transactionDate),
                     style: const TextStyle(fontSize: 12),
                   ),
-                  trailing: Text(
-                    '${tx.isCredit ? '+' : '-'}${controller.formatCurrency(tx.amount)}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: tx.isCredit ? AppColors.success : AppColors.error,
-                    ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${tx.isCredit ? '+' : '-'}${controller.formatCurrency(tx.amount)}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: tx.isCredit ? AppColors.success : AppColors.error,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.chevron_right, size: 16, color: AppColors.textSecondary),
+                    ],
                   ),
                 );
               },

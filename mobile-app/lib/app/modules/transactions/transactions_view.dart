@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../widgets/transaction_receipt_sheet.dart';
 import 'transactions_controller.dart';
 
 class TransactionsView extends GetView<TransactionsController> {
@@ -146,6 +147,7 @@ class TransactionsView extends GetView<TransactionsController> {
                           Card(
                             margin: const EdgeInsets.only(bottom: 8),
                             child: ListTile(
+                              onTap: () => TransactionReceiptSheet.show(tx),
                               leading: Container(
                                 width: 48,
                                 height: 48,

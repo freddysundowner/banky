@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../data/models/transaction_model.dart';
+import '../../widgets/transaction_receipt_sheet.dart';
 import '../home/home_controller.dart';
 import 'statements_controller.dart';
 
@@ -217,6 +218,7 @@ class StatementsView extends GetView<StatementsController> {
                 Card(
                   margin: const EdgeInsets.only(bottom: 6),
                   child: ListTile(
+                    onTap: () => TransactionReceiptSheet.show(tx),
                     leading: Container(
                       width: 44,
                       height: 44,
