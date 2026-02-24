@@ -85,19 +85,40 @@ class DashboardController extends GetxController {
     return homeController.formatCurrency(amount);
   }
 
-  Future<Map<String, dynamic>> deposit({required double amount, String? phone}) async {
-    final result = await _paymentRepo.initiateDeposit(amount: amount, phoneNumber: phone);
+  Future<Map<String, dynamic>> deposit({
+    required double amount,
+    String accountType = 'savings',
+    String? phone,
+  }) async {
+    final result = await _paymentRepo.initiateDeposit(
+      amount: amount,
+      accountType: accountType,
+      phoneNumber: phone,
+    );
     if (result['success'] == true) {
       await refreshDashboard();
     }
     return result;
   }
 
-  Future<Map<String, dynamic>> withdraw({required double amount}) async {
-    final result = await _paymentRepo.requestWithdrawal(amount: amount);
+  Future<Map<String, dynamic>> withdraw({
+    required double amount,
+    String accountType = 'savings',
+  }) async {
+    final result = await _paymentRepo.requestWithdrawal(
+      amount: amount,
+      accountType: accountType,
+    );
     if (result['success'] == true) {
       await refreshDashboard();
     }
     return result;
+  }
+
+  double balanceForAccount(String accountType) {
+    switch (accountType) {
+      case 'shares': return sharesBalance.value;
+      default: return savingsBalance.value;
+    }
   }
 }

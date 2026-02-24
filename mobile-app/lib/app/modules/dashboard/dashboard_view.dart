@@ -287,8 +287,14 @@ class DashboardView extends GetView<DashboardController> {
     final phoneController = TextEditingController(
       text: controller.member.value?.phone ?? '',
     );
+    final selectedAccount = 'savings'.obs;
     final isLoading = false.obs;
     final errorMsg = ''.obs;
+
+    const accounts = [
+      {'value': 'savings', 'label': 'Savings Account'},
+      {'value': 'shares', 'label': 'Share Capital'},
+    ];
 
     showModalBottomSheet(
       context: context,
@@ -320,12 +326,23 @@ class DashboardView extends GetView<DashboardController> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
-            const SizedBox(height: 8),
-            Obx(() => controller.savingsBalance.value > 0
-                ? Text('Current savings: ${controller.formatCurrency(controller.savingsBalance.value)}',
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 13))
-                : const SizedBox.shrink()),
             const SizedBox(height: 20),
+            Obx(() => DropdownButtonFormField<String>(
+              value: selectedAccount.value,
+              decoration: InputDecoration(
+                labelText: 'Deposit to',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              items: accounts.map((a) => DropdownMenuItem(
+                value: a['value'],
+                child: Text(a['label']!),
+              )).toList(),
+              onChanged: (v) {
+                if (v != null) selectedAccount.value = v;
+                errorMsg.value = '';
+              },
+            )),
+            const SizedBox(height: 12),
             TextField(
               controller: amountController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -370,6 +387,7 @@ class DashboardView extends GetView<DashboardController> {
                         isLoading.value = true;
                         final result = await controller.deposit(
                           amount: amount,
+                          accountType: selectedAccount.value,
                           phone: phoneController.text.trim().isNotEmpty
                               ? phoneController.text.trim()
                               : null,
@@ -405,8 +423,14 @@ class DashboardView extends GetView<DashboardController> {
 
   void _showWithdrawSheet({required BuildContext context}) {
     final amountController = TextEditingController();
+    final selectedAccount = 'savings'.obs;
     final isLoading = false.obs;
     final errorMsg = ''.obs;
+
+    const accounts = [
+      {'value': 'savings', 'label': 'Savings Account'},
+      {'value': 'shares', 'label': 'Share Capital'},
+    ];
 
     showModalBottomSheet(
       context: context,
@@ -434,16 +458,32 @@ class DashboardView extends GetView<DashboardController> {
                   child: const Icon(Icons.remove_circle_outline, color: AppColors.warning),
                 ),
                 const SizedBox(width: 12),
-                const Text('Withdraw from Savings',
+                const Text('Withdraw Funds',
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               ],
             ),
+            const SizedBox(height: 20),
+            Obx(() => DropdownButtonFormField<String>(
+              value: selectedAccount.value,
+              decoration: InputDecoration(
+                labelText: 'Withdraw from',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              items: accounts.map((a) => DropdownMenuItem(
+                value: a['value'],
+                child: Text(a['label']!),
+              )).toList(),
+              onChanged: (v) {
+                if (v != null) selectedAccount.value = v;
+                errorMsg.value = '';
+              },
+            )),
             const SizedBox(height: 8),
             Obx(() => Text(
-              'Available: ${controller.formatCurrency(controller.savingsBalance.value)}',
+              'Available: ${controller.formatCurrency(controller.balanceForAccount(selectedAccount.value))}',
               style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
             )),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
             TextField(
               controller: amountController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -474,13 +514,16 @@ class DashboardView extends GetView<DashboardController> {
                           errorMsg.value = 'Enter a valid amount';
                           return;
                         }
-                        if (amount > controller.savingsBalance.value) {
+                        if (amount > controller.balanceForAccount(selectedAccount.value)) {
                           errorMsg.value = 'Amount exceeds available balance';
                           return;
                         }
                         errorMsg.value = '';
                         isLoading.value = true;
-                        final result = await controller.withdraw(amount: amount);
+                        final result = await controller.withdraw(
+                          amount: amount,
+                          accountType: selectedAccount.value,
+                        );
                         isLoading.value = false;
                         if (result['success'] == true) {
                           Navigator.pop(ctx);

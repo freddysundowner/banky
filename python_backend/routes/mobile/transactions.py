@@ -139,20 +139,31 @@ def get_payment_history(
         ts.close()
 
 
+VALID_DEPOSIT_ACCOUNTS = {"savings", "shares"}
+VALID_WITHDRAW_ACCOUNTS = {"savings", "shares"}
+
+ACCOUNT_LABELS = {
+    "savings": "Savings Account",
+    "shares": "Share Capital",
+}
+
+
 class DepositRequest(BaseModel):
     amount: float
+    account_type: str = "savings"
     phone_number: Optional[str] = None
     description: Optional[str] = None
 
 
 class WithdrawRequest(BaseModel):
     amount: float
+    account_type: str = "savings"
     description: Optional[str] = None
 
 
 @router.post("/me/deposit")
 def initiate_deposit(data: DepositRequest, ctx: dict = Depends(get_current_member)):
-    """Initiate a savings deposit via M-Pesa STK push."""
+    """Initiate a deposit via M-Pesa STK push to savings or shares."""
     from models.tenant import Transaction
     from routes.mpesa import initiate_stk_push
     from services.code_generator import generate_txn_code
@@ -164,11 +175,15 @@ def initiate_deposit(data: DepositRequest, ctx: dict = Depends(get_current_membe
     if data.amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than zero")
 
+    if data.account_type not in VALID_DEPOSIT_ACCOUNTS:
+        raise HTTPException(status_code=400, detail=f"Invalid account type. Choose from: {', '.join(VALID_DEPOSIT_ACCOUNTS)}")
+
     phone = data.phone_number or member.phone
     if not phone:
         raise HTTPException(status_code=400, detail="No phone number on file. Please provide a phone number.")
 
     amount = Decimal(str(data.amount))
+    account_label = ACCOUNT_LABELS.get(data.account_type, data.account_type.title())
 
     try:
         result = initiate_stk_push(
@@ -176,7 +191,7 @@ def initiate_deposit(data: DepositRequest, ctx: dict = Depends(get_current_membe
             phone=phone,
             amount=amount,
             account_reference=member.account_number or member.id[:8],
-            description=data.description or "Savings Deposit",
+            description=data.description or f"{account_label} Deposit",
             org_id=org.id,
         )
 
@@ -206,7 +221,7 @@ def initiate_deposit(data: DepositRequest, ctx: dict = Depends(get_current_membe
 
 @router.post("/me/withdraw")
 def request_withdrawal(data: WithdrawRequest, ctx: dict = Depends(get_current_member)):
-    """Withdraw from savings balance. Creates a pending withdrawal transaction."""
+    """Withdraw from savings or shares balance. Creates a withdrawal transaction."""
     from models.tenant import Transaction
     from services.code_generator import generate_txn_code
 
@@ -216,13 +231,21 @@ def request_withdrawal(data: WithdrawRequest, ctx: dict = Depends(get_current_me
     if data.amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than zero")
 
+    if data.account_type not in VALID_WITHDRAW_ACCOUNTS:
+        raise HTTPException(status_code=400, detail=f"Invalid account type. Choose from: {', '.join(VALID_WITHDRAW_ACCOUNTS)}")
+
     amount = Decimal(str(data.amount))
-    current_balance = member.savings_balance or Decimal("0")
+    account_label = ACCOUNT_LABELS.get(data.account_type, data.account_type.title())
+
+    if data.account_type == "savings":
+        current_balance = member.savings_balance or Decimal("0")
+    else:
+        current_balance = member.shares_balance or Decimal("0")
 
     if amount > current_balance:
         raise HTTPException(
             status_code=400,
-            detail=f"Insufficient balance. Available: {float(current_balance):.2f}"
+            detail=f"Insufficient {account_label} balance. Available: {float(current_balance):.2f}"
         )
 
     try:
@@ -233,16 +256,21 @@ def request_withdrawal(data: WithdrawRequest, ctx: dict = Depends(get_current_me
             transaction_number=txn_code,
             member_id=member.id,
             transaction_type="withdrawal",
-            account_type="savings",
+            account_type=data.account_type,
             amount=amount,
             balance_before=current_balance,
             balance_after=new_balance,
             payment_method="mobile",
-            description=data.description or "Member self-service withdrawal",
+            description=data.description or f"{account_label} self-service withdrawal",
             created_at=datetime.utcnow(),
         )
         ts.add(txn)
-        member.savings_balance = new_balance
+
+        if data.account_type == "savings":
+            member.savings_balance = new_balance
+        else:
+            member.shares_balance = new_balance
+
         ts.commit()
         ts.refresh(txn)
 
