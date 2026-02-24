@@ -104,7 +104,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col lg:flex-row">
       <div className="hidden lg:flex lg:w-[42%] bg-primary flex-col justify-between p-12 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-blue-800 opacity-100" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
@@ -147,9 +147,9 @@ export default function Login() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6 sm:px-10 py-8 bg-background overflow-y-auto">
-        <div className="w-full max-w-[500px]">
-          <div className="lg:hidden flex items-center gap-2.5 mb-8">
+      <div className="flex-1 flex flex-col items-center bg-background overflow-y-auto px-5 sm:px-10 py-10 lg:py-0 lg:justify-center">
+        <div className="w-full max-w-[440px] lg:max-w-[500px]">
+          <div className="lg:hidden flex items-center gap-2.5 mb-6">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
               <Landmark className="h-5 w-5 text-primary-foreground" />
             </div>
