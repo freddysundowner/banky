@@ -377,23 +377,64 @@ class DashboardView extends GetView<DashboardController> {
                           return;
                         }
                         errorMsg.value = '';
-                        isLoading.value = true;
-                        final result = await controller.deposit(
-                          amount: amount,
-                          accountType: selectedAccount.value,
-                          phone: phoneController.text.trim().isNotEmpty
-                              ? phoneController.text.trim()
-                              : null,
-                        );
-                        isLoading.value = false;
-                        if (result['success'] == true) {
-                          Navigator.pop(ctx);
-                          Get.snackbar('Deposit Initiated', result['message'] ?? 'Check your phone for M-Pesa prompt',
+
+                        Future<void> proceedWithDeposit() async {
+                          isLoading.value = true;
+                          final result = await controller.deposit(
+                            amount: amount,
+                            accountType: selectedAccount.value,
+                            phone: phoneController.text.trim().isNotEmpty
+                                ? phoneController.text.trim()
+                                : null,
+                          );
+                          isLoading.value = false;
+                          if (result['success'] == true) {
+                            Navigator.pop(ctx);
+                            Get.snackbar(
+                              controller.demoMode.value ? 'Demo Deposit Initiated' : 'Deposit Initiated',
+                              controller.demoMode.value
+                                  ? 'Demo mode: funds will be credited automatically in a few seconds.'
+                                  : (result['message'] ?? 'Check your phone for M-Pesa prompt'),
                               backgroundColor: AppColors.success,
                               colorText: Colors.white,
-                              duration: const Duration(seconds: 5));
+                              duration: const Duration(seconds: 5),
+                            );
+                          } else {
+                            errorMsg.value = result['message'] ?? 'Deposit failed';
+                          }
+                        }
+
+                        if (controller.demoMode.value) {
+                          showDialog(
+                            context: ctx,
+                            builder: (dialogCtx) => AlertDialog(
+                              title: const Row(
+                                children: [
+                                  Icon(Icons.info_outline, color: Colors.orange),
+                                  SizedBox(width: 8),
+                                  Text('Demo Mode'),
+                                ],
+                              ),
+                              content: const Text(
+                                'This platform is running in demo mode. No real M-Pesa prompt will be sent to your phone.\n\nThe deposit will be automatically credited to your account within a few seconds, simulating a completed M-Pesa payment.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(dialogCtx),
+                                  child: const Text('Cancel'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.pop(dialogCtx);
+                                    proceedWithDeposit();
+                                  },
+                                  child: const Text('Proceed'),
+                                ),
+                              ],
+                            ),
+                          );
                         } else {
-                          errorMsg.value = result['message'] ?? 'Deposit failed';
+                          await proceedWithDeposit();
                         }
                       },
                 style: ElevatedButton.styleFrom(

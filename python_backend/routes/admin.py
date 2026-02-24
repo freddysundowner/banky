@@ -44,8 +44,10 @@ def get_public_branding(db: Session = Depends(get_db)):
         result[s.setting_key] = s.setting_value or ""
     
     from services.feature_flags import get_deployment_mode
+    from middleware.demo_guard import is_demo_mode
     result["deployment_mode"] = get_deployment_mode()
-    
+    result["demo_mode"] = is_demo_mode()
+
     return result
 
 @router.get("/public/legal/{page_type}")

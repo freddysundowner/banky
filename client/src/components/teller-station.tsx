@@ -187,6 +187,12 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
   });
   const [counterInput, setCounterInput] = useState("");
   const [counterLoading, setCounterLoading] = useState(false);
+  const [showDemoDepositAlert, setShowDemoDepositAlert] = useState(false);
+
+  const { data: branding } = useQuery<{ demo_mode?: boolean }>({
+    queryKey: ["/api/public/branding"],
+  });
+  const isDemoMode = branding?.demo_mode === true;
 
   // Get current user's staff info for display
   const { data: myStaffInfo } = useQuery<Staff | null>({
@@ -456,15 +462,9 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
     },
   });
 
-  const handleSendStkPush = async () => {
+  const executeStkPush = async () => {
     const phone = depositForm.getValues("mpesa_phone");
     const amount = depositForm.getValues("amount");
-    
-    if (!phone || !amount) {
-      toast({ title: "Please enter phone number and amount", variant: "destructive" });
-      return;
-    }
-    
     setStkPushLoading(true);
     try {
       const res = await apiRequest("POST", `/api/organizations/${organizationId}/mpesa/stk-push`, {
@@ -473,10 +473,9 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
         account_reference: selectedMember?.member_number || "Deposit",
         description: `Deposit for ${selectedMember?.first_name || "Member"}`
       });
-      
       const data = await res.json();
       if (data.success || res.ok) {
-        toast({ title: "M-Pesa prompt sent! Deposit will reflect automatically once payment is confirmed." });
+        toast({ title: isDemoMode ? "Demo deposit initiated — funds will reflect in ~5 seconds." : "M-Pesa prompt sent! Deposit will reflect automatically once payment is confirmed." });
       } else {
         toast({ title: data.message || "Failed to send M-Pesa prompt", variant: "destructive" });
       }
@@ -485,6 +484,23 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
     } finally {
       setStkPushLoading(false);
     }
+  };
+
+  const handleSendStkPush = async () => {
+    const phone = depositForm.getValues("mpesa_phone");
+    const amount = depositForm.getValues("amount");
+    
+    if (!phone || !amount) {
+      toast({ title: "Please enter phone number and amount", variant: "destructive" });
+      return;
+    }
+
+    if (isDemoMode) {
+      setShowDemoDepositAlert(true);
+      return;
+    }
+
+    await executeStkPush();
   };
 
   const depositMutation = useMutation({
@@ -2407,6 +2423,29 @@ export default function TellerStation({ organizationId }: TellerStationProps) {
               }
             >
               {initiateHandoverMutation.isPending ? "Processing..." : "Initiate Handover"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDemoDepositAlert} onOpenChange={setShowDemoDepositAlert}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-yellow-500">⚠</span> Demo Mode — Simulated Deposit
+            </DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-3 pt-1">
+                <p>This platform is running in <strong>demo mode</strong>. No real M-Pesa prompt will be sent to the customer's phone.</p>
+                <p>Instead, the deposit will be <strong>automatically credited</strong> to the member's account within a few seconds, simulating a completed M-Pesa payment.</p>
+                <p className="text-muted-foreground text-sm">This is safe to use for demonstrations and testing.</p>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowDemoDepositAlert(false)}>Cancel</Button>
+            <Button onClick={() => { setShowDemoDepositAlert(false); executeStkPush(); }}>
+              Proceed with Demo Deposit
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -6,17 +6,20 @@ import '../../data/models/loan_model.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../data/repositories/payment_repository.dart';
+import '../../core/services/api_service.dart';
 import '../home/home_controller.dart';
 
 class DashboardController extends GetxController {
   final AuthRepository _authRepo = Get.find<AuthRepository>();
   final MemberRepository _memberRepo = Get.find<MemberRepository>();
   final PaymentRepository _paymentRepo = Get.find<PaymentRepository>();
+  final ApiService _api = Get.find<ApiService>();
 
   HomeController get homeController => Get.find<HomeController>();
 
   final isLoading = false.obs;
   final isRefreshing = false.obs;
+  final demoMode = false.obs;
   
   final Rx<MemberModel?> member = Rx<MemberModel?>(null);
   final recentTransactions = <TransactionModel>[].obs;
@@ -42,6 +45,13 @@ class DashboardController extends GetxController {
     isLoading.value = true;
     try {
       member.value = _authRepo.getCachedMember();
+
+      try {
+        final brandingRes = await _api.get('/api/public/branding');
+        if (brandingRes.statusCode == 200 && brandingRes.data is Map) {
+          demoMode.value = brandingRes.data['demo_mode'] == true;
+        }
+      } catch (_) {}
       
       final freshMember = await _memberRepo.getMemberDetails();
       if (freshMember != null) {
