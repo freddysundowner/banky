@@ -10,7 +10,7 @@ class ActivateController extends GetxController {
   ApiService get _api => Get.find<ApiService>();
   StorageService get _storage => Get.find<StorageService>();
 
-  final accountNumberController = TextEditingController();
+  final idNumberController = TextEditingController();
   final activationCodeController = TextEditingController();
   final formKey = GlobalKey<FormState>();
   final isLoading = false.obs;
@@ -18,14 +18,14 @@ class ActivateController extends GetxController {
 
   @override
   void onClose() {
-    accountNumberController.dispose();
+    idNumberController.dispose();
     activationCodeController.dispose();
     super.onClose();
   }
 
-  String? validateAccountNumber(String? value) {
+  String? validateIdNumber(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Please enter your account number';
+      return 'Please enter your ID number';
     }
     return null;
   }
@@ -53,7 +53,7 @@ class ActivateController extends GetxController {
       final response = await _api.post(
         ApiConstants.mobileActivateInit,
         data: {
-          'account_number': accountNumberController.text.trim().toUpperCase(),
+          'id_number': idNumberController.text.trim().toUpperCase(),
           'activation_code': activationCodeController.text.trim().toUpperCase(),
           'device_id': deviceId,
           'device_name': deviceName,
@@ -65,7 +65,7 @@ class ActivateController extends GetxController {
         Get.toNamed(
           Routes.otpVerify,
           arguments: {
-            'account_number': accountNumberController.text.trim().toUpperCase(),
+            'id_number': idNumberController.text.trim().toUpperCase(),
             'masked_phone': data['masked_phone'],
             'member_name': data['member_name'],
             'organization_name': data['organization_name'],
@@ -94,7 +94,7 @@ class ActivateController extends GetxController {
   String _getErrorMessage(dynamic error) {
     if (error is Exception) {
       final errorStr = error.toString();
-      if (errorStr.contains('404')) return 'Account number not found. Please check and try again.';
+      if (errorStr.contains('404')) return 'ID number not found. Please check and try again.';
       if (errorStr.contains('400')) {
         if (errorStr.contains('expired')) return 'Activation code has expired. Contact your branch for a new one.';
         if (errorStr.contains('not been activated')) return 'Mobile banking has not been activated for this account. Contact your branch.';

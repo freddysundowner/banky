@@ -53,7 +53,7 @@ class ActivateView extends GetView<ActivateController> {
                 const SizedBox(height: 8),
 
                 const Text(
-                  'Enter your account number and the activation code provided by your branch to get started.',
+                  'Enter your ID number and the activation code provided by your branch to get started.',
                   style: TextStyle(
                     fontSize: 15,
                     color: AppColors.textSecondary,
@@ -65,13 +65,12 @@ class ActivateView extends GetView<ActivateController> {
                 const SizedBox(height: 40),
 
                 TextFormField(
-                  controller: controller.accountNumberController,
-                  validator: controller.validateAccountNumber,
-                  keyboardType: TextInputType.text,
-                  textCapitalization: TextCapitalization.characters,
+                  controller: controller.idNumberController,
+                  validator: controller.validateIdNumber,
+                  keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
-                    labelText: 'Account Number',
-                    hintText: 'Enter your member account number',
+                    labelText: 'ID Number',
+                    hintText: 'Enter your national ID number',
                     prefixIcon: Icon(Icons.badge_outlined),
                   ),
                 ),

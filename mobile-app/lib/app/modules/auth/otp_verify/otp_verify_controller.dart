@@ -27,7 +27,7 @@ class OtpVerifyController extends GetxController {
   late String flow;
 
   // Activation-specific args
-  String accountNumber = '';
+  String idNumber = '';
   String memberName = '';
   String organizationName = '';
 
@@ -44,7 +44,7 @@ class OtpVerifyController extends GetxController {
     final args = Get.arguments as Map<String, dynamic>;
     maskedPhone = args['masked_phone'] ?? '';
     flow = args['flow'] ?? 'activation';
-    accountNumber = args['account_number'] ?? '';
+    idNumber = args['id_number'] ?? '';
     memberName = args['member_name'] ?? '';
     organizationName = args['organization_name'] ?? '';
     deviceId = args['device_id'] ?? '';
@@ -145,7 +145,7 @@ class OtpVerifyController extends GetxController {
         Get.toNamed(
           Routes.pinSetup,
           arguments: {
-            'account_number': accountNumber,
+            'id_number': idNumber,
             'otp': otp,
             'device_id': deviceId,
             'device_name': deviceName,
@@ -202,7 +202,7 @@ class OtpVerifyController extends GetxController {
       final response = await _api.post(
         ApiConstants.mobileResendOtp,
         data: flow == 'activation'
-            ? {'account_number': accountNumber}
+            ? {'id_number': idNumber}
             : {'device_id': deviceId},
       );
       clearOtp();

@@ -15,7 +15,7 @@ class PinSetupController extends GetxController {
   final obscurePin = true.obs;
   final obscureConfirmPin = true.obs;
 
-  late String accountNumber;
+  late String idNumber;
   late String otp;
   late String deviceId;
   String deviceName = '';
@@ -24,7 +24,7 @@ class PinSetupController extends GetxController {
   void onInit() {
     super.onInit();
     final args = Get.arguments as Map<String, dynamic>;
-    accountNumber = args['account_number'] ?? '';
+    idNumber = args['id_number'] ?? '';
     otp = args['otp'] ?? '';
     deviceId = args['device_id'] ?? '';
     deviceName = args['device_name'] ?? '';
@@ -69,7 +69,7 @@ class PinSetupController extends GetxController {
       final response = await _api.post(
         ApiConstants.mobileActivateComplete,
         data: {
-          'account_number': accountNumber,
+          'id_number': idNumber,
           'otp': otp,
           'password': pinController.text,
           'device_id': deviceId,

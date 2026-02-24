@@ -2,7 +2,7 @@
 Mobile Banking Authentication — /api/mobile/auth/*
 
 New activation and login flow (completely separate from existing auth.py):
-  POST /auth/activate/init     — member enters account_number + staff one-time code + device_id
+  POST /auth/activate/init     — member enters id_number + staff one-time code + device_id
   POST /auth/activate/complete — member enters OTP + sets 6-digit password, binds device
   POST /auth/login             — member logs in with device_id + 6-digit password
   POST /auth/login/verify      — member verifies OTP to receive session cookie
@@ -79,17 +79,19 @@ def _open_tenant(org, db: Session):
 
 def _find_member_by_account(account_number: str, db: Session):
     """
-    Find a member by account_number.
+    Find a member by account_number (member_number) OR id_number.
 
     Fast path: look up account_number in the master-DB MobileDeviceRegistry,
     which is written when staff generates the activation code. This avoids
     scanning every tenant database.
 
-    Fallback: if the registry has no entry (e.g., legacy data), scan all
-    tenant databases in sequence.
+    Fallback: if the registry has no entry (e.g., legacy data or ID number
+    lookup), scan all tenant databases in sequence, matching by member_number
+    or id_number.
     """
     from models.master import Organization, MobileDeviceRegistry
     from models.tenant import Member
+    from sqlalchemy import or_
 
     norm = account_number.upper().strip()
 
@@ -117,7 +119,7 @@ def _find_member_by_account(account_number: str, db: Session):
                         tenant_session.close()
                         tenant_ctx.close()
 
-    # --- Fallback: scan all tenants (backward compat / stale registry) ---
+    # --- Fallback: scan all tenants (backward compat / ID number lookup) ---
     skip_org_id = entry.org_id if entry else None
     orgs_query = db.query(Organization).filter(Organization.connection_string.isnot(None))
     if skip_org_id is not None:
@@ -130,7 +132,10 @@ def _find_member_by_account(account_number: str, db: Session):
             continue
         try:
             member = tenant_session.query(Member).filter(
-                Member.member_number == norm
+                or_(
+                    Member.member_number == norm,
+                    Member.id_number == norm,
+                )
             ).first()
             if member:
                 return member, org, tenant_session, tenant_ctx
@@ -185,14 +190,14 @@ def _find_member_by_device(device_id: str, db: Session):
 
 
 class ActivateInitRequest(BaseModel):
-    account_number: str
+    id_number: str
     activation_code: str
     device_id: str
     device_name: Optional[str] = None
 
 
 class ActivateCompleteRequest(BaseModel):
-    account_number: str
+    id_number: str
     otp: str
     password: str
     device_id: str
@@ -212,6 +217,7 @@ class LoginVerifyRequest(BaseModel):
 
 
 class ResendOtpRequest(BaseModel):
+    id_number: Optional[str] = None
     account_number: Optional[str] = None
     device_id: Optional[str] = None
 
@@ -220,13 +226,13 @@ class ResendOtpRequest(BaseModel):
 async def activate_init(data: ActivateInitRequest, request: Request, db: Session = Depends(get_db)):
     """
     Step 1 of activation:
-    Member enters account_number + staff one-time activation code + device_id.
+    Member enters id_number + staff one-time activation code + device_id.
     Returns masked phone and member name, sends OTP to member's phone.
     """
-    member, org, tenant_session, tenant_ctx = _find_member_by_account(data.account_number, db)
+    member, org, tenant_session, tenant_ctx = _find_member_by_account(data.id_number, db)
 
     if member is None or org is None or tenant_session is None or tenant_ctx is None:
-        raise HTTPException(status_code=404, detail="Account number not found. Please check and try again.")
+        raise HTTPException(status_code=404, detail="ID number not found. Please check and try again.")
 
     try:
         if member.status != "active":
@@ -291,7 +297,7 @@ async def activate_complete(
     if len(data.password) != 6 or not data.password.isdigit():
         raise HTTPException(status_code=400, detail="Password must be exactly 6 digits")
 
-    member, org, tenant_session, tenant_ctx = _find_member_by_account(data.account_number, db)
+    member, org, tenant_session, tenant_ctx = _find_member_by_account(data.id_number, db)
 
     if member is None or org is None or tenant_session is None or tenant_ctx is None:
         raise HTTPException(status_code=404, detail="Account not found. Please restart activation.")
@@ -343,7 +349,7 @@ async def activate_complete(
         try:
             from models.master import MobileDeviceRegistry
             reg = db.query(MobileDeviceRegistry).filter(
-                MobileDeviceRegistry.account_number == data.account_number.upper().strip(),
+                MobileDeviceRegistry.account_number == member.member_number,
                 MobileDeviceRegistry.org_id == org.id,
             ).first()
             if reg:
@@ -351,7 +357,7 @@ async def activate_complete(
                 reg.updated_at = datetime.utcnow()  # type: ignore[assignment]
             else:
                 db.add(MobileDeviceRegistry(
-                    account_number=data.account_number.upper().strip(),
+                    account_number=member.member_number,
                     device_id=data.device_id,
                     org_id=org.id,
                 ))
@@ -534,11 +540,12 @@ async def resend_otp(data: ResendOtpRequest, db: Session = Depends(get_db)):
     Login flow: provide device_id.
     Only works if there is an OTP that hasn't expired yet.
     """
-    if not data.account_number and not data.device_id:
-        raise HTTPException(status_code=400, detail="Provide account_number or device_id")
+    identifier = data.id_number or data.account_number
+    if not identifier and not data.device_id:
+        raise HTTPException(status_code=400, detail="Provide id_number or device_id")
 
-    if data.account_number:
-        member, org, tenant_session, tenant_ctx = _find_member_by_account(data.account_number, db)
+    if identifier:
+        member, org, tenant_session, tenant_ctx = _find_member_by_account(identifier, db)
     else:
         assert data.device_id is not None
         member, org, tenant_session, tenant_ctx = _find_member_by_device(data.device_id, db)
@@ -547,8 +554,7 @@ async def resend_otp(data: ResendOtpRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Account not found.")
 
     try:
-        # account_number presence means activation flow; device_id alone means login flow.
-        is_login_flow = not bool(data.account_number)
+        is_login_flow = not bool(identifier)
         expiry_minutes = LOGIN_OTP_EXPIRY_MINUTES if is_login_flow else OTP_EXPIRY_MINUTES
 
         # For activation flow, only resend if activate/init was already called.
