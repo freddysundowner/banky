@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
 import '../../core/constants/api_constants.dart';
@@ -183,13 +184,23 @@ class PaymentRepository {
   }
 
   String _getErrorMessage(dynamic error) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map) {
+        final detail = data['detail'] ?? data['message'];
+        if (detail != null && detail.toString().isNotEmpty) {
+          return detail.toString();
+        }
+      }
+      final statusCode = error.response?.statusCode;
+      if (statusCode == 402) return 'Insufficient funds';
+      if (error.type == DioExceptionType.connectionError ||
+          error.type == DioExceptionType.connectionTimeout) {
+        return 'No internet connection';
+      }
+    }
     if (error is Exception) {
-      final errorStr = error.toString();
-      if (errorStr.contains('400')) {
-        return 'Invalid payment details';
-      } else if (errorStr.contains('402')) {
-        return 'Insufficient funds';
-      } else if (errorStr.contains('SocketException')) {
+      if (error.toString().contains('SocketException')) {
         return 'No internet connection';
       }
     }
