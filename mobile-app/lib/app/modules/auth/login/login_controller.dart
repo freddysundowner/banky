@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/services/demo_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../routes/app_pages.dart';
 
@@ -33,47 +34,11 @@ class LoginController extends GetxController {
   }
 
   Future<void> _checkDemoStatus() async {
-    try {
-      final response = await _api.get(ApiConstants.mobileDemoStatus);
-      if (response.statusCode == 200) {
-        isDemoMode.value = response.data['demo'] == true;
-      }
-    } catch (_) {}
+    isDemoMode.value = await DemoService.checkDemoStatus();
   }
 
   Future<void> demoLogin() async {
-    isDemoLoading.value = true;
-    errorMessage.value = '';
-
-    try {
-      final response = await _api.post(ApiConstants.mobileDemoLogin, data: {});
-
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data['access_token'] != null) {
-          await _storage.saveToken(data['access_token'] as String);
-        }
-        if (data['org_id'] != null) {
-          _storage.saveOrganization({
-            'id': data['org_id'] as String,
-            'name': data['org_name'] ?? '',
-          });
-        }
-        Get.offAllNamed(Routes.home);
-      }
-    } catch (e) {
-      errorMessage.value = 'Demo login failed. Please try again.';
-      Get.snackbar(
-        'Error',
-        errorMessage.value,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade100,
-        colorText: Colors.red.shade900,
-        margin: const EdgeInsets.all(16),
-      );
-    } finally {
-      isDemoLoading.value = false;
-    }
+    await DemoService.demoLogin(isLoading: isDemoLoading);
   }
 
   void togglePinVisibility() {
