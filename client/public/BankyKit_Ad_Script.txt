@@ -1,0 +1,166 @@
+================================================================
+        BANKYKIT — LOCAL AD VIDEO SCRIPT
+        Duration: ~90 seconds | Format: Social / WhatsApp / TV
+================================================================
+
+PRODUCTION NOTES FOR EDITOR
+-----------------------------
+- Tone: Professional, confident, relatable — not salesy
+- Music: Upbeat corporate/afrobeat instrumental (low volume under VO)
+- Primary market: SACCOs, microfinance, community banks (East Africa)
+- Narration: English or Swahili VO (adapt as needed)
+- Show real app screens from the demo screenshots provided
+
+
+================================================================
+SCENE 1 — THE PROBLEM (0:00 – 0:15)
+================================================================
+
+[VISUAL]
+Split screen: Left — person manually writing ledger entries /
+Excel spreadsheet with messy rows. Right — pile of paper loan
+forms on a desk. Maybe a frustrated staff member on the phone.
+
+[VO / NARRATOR]
+"Are you still managing your SACCO or bank branch on Excel?
+Chasing loan repayments manually? Losing track of member accounts?
+There's a better way."
+
+[ON-SCREEN TEXT — bold, centre]
+❌ Manual records
+❌ Lost payments
+❌ No real-time data
+
+
+================================================================
+SCENE 2 — THE REVEAL (0:15 – 0:25)
+================================================================
+
+[VISUAL]
+Clean fade to the BankyKit logo on a white/blue background.
+Logo animates in. Name types out: "BankyKit"
+
+[VO]
+"Introducing BankyKit — the complete bank and SACCO management
+system built for your business."
+
+[ON-SCREEN TEXT]
+BANKYKIT
+Your Bank. Your Data. Your Control.
+
+
+================================================================
+SCENE 3 — FEATURE WALKTHROUGH (0:25 – 0:65)
+================================================================
+
+--- Beat 1: Members (0:25 – 0:33) ---
+[VISUAL] Screen recording or screenshot: Members list page.
+Quick zoom in on member profile with savings balance.
+
+[VO]
+"Register members, manage their savings accounts, shares,
+and fixed deposits — all in one place."
+
+[ON-SCREEN TEXT]  Member & KYC Management
+
+
+--- Beat 2: Loans (0:33 – 0:42) ---
+[VISUAL] Loan Applications screen — show the status cards:
+Approved 156, Active Loans 342, Overdue 14.
+
+[VO]
+"Issue loans, track repayments, flag overdue accounts —
+automatically. No more chasing payments by phone."
+
+[ON-SCREEN TEXT]  Loan Lifecycle Management
+
+
+--- Beat 3: Teller (0:42 – 0:50) ---
+[VISUAL] Teller Station screen — show cash float, deposit form.
+Maybe show the counter selection screen briefly.
+
+[VO]
+"Your tellers get their own station — fast deposits,
+withdrawals, and loan repayments, with a full cash float log."
+
+[ON-SCREEN TEXT]  Teller Station & Cash Float
+
+
+--- Beat 4: HR & Payroll (0:50 – 0:58) ---
+[VISUAL] HR Management screen — staff list, payroll periods table.
+
+[VO]
+"Manage staff attendance, leave, and run payroll — right from
+the same system. No extra software needed."
+
+[ON-SCREEN TEXT]  HR, Payroll & Leave Management
+
+
+--- Beat 5: Reports & Audit (0:58 – 1:05) ---
+[VISUAL] Analytics dashboard screen, then quick cut to Audit Logs.
+
+[VO]
+"Get real-time reports on your loan portfolio, revenue, and
+member growth. Every action is logged for compliance."
+
+[ON-SCREEN TEXT]  Reports, Analytics & Audit Trail
+
+
+================================================================
+SCENE 4 — TRUST & VALUE (1:05 – 1:20)
+================================================================
+
+[VISUAL]
+Clean blue/white background with icons or badges animating in.
+Could show a quick montage of all screens together.
+
+[VO]
+"BankyKit runs on your own server — your data stays with you.
+No monthly fees. No subscriptions. Pay once, own it forever."
+
+[ON-SCREEN TEXT — list appearing one by one]
+✅ Full source code included
+✅ Runs on your own server
+✅ Supports 80+ currencies
+✅ Multi-branch ready
+✅ One-time purchase
+
+
+================================================================
+SCENE 5 — CALL TO ACTION (1:20 – 1:30)
+================================================================
+
+[VISUAL]
+BankyKit logo centred on screen. Contact details below.
+Soft glow / clean branded look.
+
+[VO]
+"Get BankyKit today and transform how your institution operates.
+Contact us now for a free demo."
+
+[ON-SCREEN TEXT — large and clear]
+BANKYKIT
+📞 [Your Phone / WhatsApp Number]
+🌐 bankykit.com
+📧 [Your Email]
+
+"Free Demo Available"
+
+[MUSIC fades out]
+
+================================================================
+END CARD (hold 3 seconds)
+================================================================
+BankyKit logo + tagline:
+"Your Bank. Your Data. Your Control."
+
+================================================================
+DELIVERY NOTES
+===============
+- Provide editor with: screenshots folder (already zipped)
+- Logo file: bankykit_icon_80.png (transparent background)
+- Brand colour: #2F73DE (blue)
+- White text on blue always reads well on mobile
+- For WhatsApp/social: export at 1080×1080 (square) or 1080×1920 (story)
+- For TV/YouTube: export at 1920×1080 (landscape)
+================================================================
