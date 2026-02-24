@@ -135,7 +135,7 @@ const createOrgSchema = z.object({
   address: z.string().optional(),
   staffEmailDomain: z.string().min(3, "Staff email domain is required (e.g. mysacco.co.ke)"),
   deploymentMode: z.enum(["saas", "standalone"]),
-  currency: z.string().default("USD"),
+  currency: z.string().default("KES"),
 });
 
 const updateOrgSchema = z.object({
@@ -407,7 +407,7 @@ export default function Home() {
       phone: "",
       address: "",
       deploymentMode: "saas",
-      currency: "USD",
+      currency: "KES",
     },
   });
 

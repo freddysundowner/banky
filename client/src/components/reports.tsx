@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCurrency } from "@/hooks/use-currency";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BarChart3,
@@ -40,6 +41,7 @@ const fmt = (d: Date) => d.toISOString().split("T")[0];
 export default function Reports({ organizationId }: ReportsProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { formatAmount: formatCurrency } = useCurrency(organizationId);
 
   const [activeTab, setActiveTab] = useState("summary");
   const [filters, setFilters] = useState<ReportFilters>({
@@ -58,9 +60,6 @@ export default function Reports({ organizationId }: ReportsProps) {
     if (extra) Object.entries(extra).forEach(([k, v]) => p.append(k, v));
     return p.toString();
   }, [filters]);
-
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES" }).format(amount);
 
   const { data: branches = [] } = useQuery<Branch[]>({
     queryKey: ["/api/organizations", organizationId, "branches"],

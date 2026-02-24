@@ -4,6 +4,7 @@ import { RefreshButton } from "@/components/refresh-button";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useResourcePermissions, RESOURCES } from "@/hooks/use-resource-permissions";
+import { useCurrency } from "@/hooks/use-currency";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -224,12 +225,7 @@ export default function ChartOfAccounts({ organizationId }: ChartOfAccountsProps
     expense: "bg-orange-100 text-orange-800",
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-KE", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  };
+  const { formatAmount: formatCurrency } = useCurrency(organizationId);
 
   return (
     <div className="space-y-6">
