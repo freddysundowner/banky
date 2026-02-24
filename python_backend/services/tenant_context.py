@@ -4,7 +4,7 @@ from models.master import Organization, OrganizationMember
 from models.tenant import TenantBase
 
 _migrated_tenants = set()
-_migration_version = 25  # Increment to force re-migration
+_migration_version = 26  # Increment to force re-migration
 
 def _get_db_migration_version(engine):
     """Check the migration version stored in the tenant database"""
@@ -373,6 +373,7 @@ def run_tenant_schema_migration(engine):
             ("sent_at", "TIMESTAMP"),
             ("delivered_at", "TIMESTAMP"),
             ("error_message", "TEXT"),
+            ("is_read", "BOOLEAN DEFAULT FALSE"),
             ("created_at", "TIMESTAMP DEFAULT NOW()"),
         ]
         for col_name, col_type in sms_columns:
