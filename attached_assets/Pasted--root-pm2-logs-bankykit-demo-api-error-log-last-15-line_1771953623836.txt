@@ -1,0 +1,16 @@
+/root/.pm2/logs/bankykit-demo-api-error.log last 15 lines:
+7|bankykit | ent_name, member_id, loan_id, message, status, sent_at, delivered_at, error_message, is_read, created_at) VALUES (%(id)s, %(notification_type)s, %(recipient_phone)s, %(recipient_name)s, %(member_id)s, %(loan_id)s, %(message)s, %(status)s, %(sent_at)s, %(delivered_at)s, %(error_message)s, %(is_read)s, %(created_at)s)]
+7|bankykit | [parameters: {'id': '96e0d3f3-06f2-4b04-8b0a-b33a2f30754a', 'notification_type': 'welcome', 'recipient_phone': '0987654321', 'recipient_name': 'Fredrick Mundia', 'member_id': 'e6fc257a-8164-4599-ac1e-4167f9e9cdfa', 'loan_id': None, 'message': "Welcome to Demo Sacco, Fredrick! Your member number is 0100000026. We're excited to have you. For any assistance, please contact us.", 'status': 'failed', 'sent_at': None, 'delivered_at': None, 'error_message': 'SMS notifications are disabled', 'is_read': False, 'created_at': datetime.datetime(2026, 2, 24, 17, 18, 26, 172766)}]
+7|bankykit | (Background on this error at: https://sqlalche.me/e/20/f405) (Background on this error at: https://sqlalche.me/e/20/7s2a) [type=get_attribute_error, input_value=<models.tenant.Member object at 0x7c8ff4b7eb70>, input_type=Member]
+7|bankykit |     For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error
+7|bankykit | signature_url
+7|bankykit |   Error extracting attribute: PendingRollbackError: This Session's transaction has been rolled back due to a previous exception during flush. To begin a new transaction with this Session, first issue Session.rollback(). Original exception was: (psycopg2.errors.UndefinedColumn) column "is_read" of relation "sms_notifications" does not exist
+7|bankykit | LINE 1: ...ge, status, sent_at, delivered_at, error_message, is_read, c...
+7|bankykit |                                                              ^
+7|bankykit | 
+7|bankykit | [SQL: INSERT INTO sms_notifications (id, notification_type, recipient_phone, recipient_name, member_id, loan_id, message, status, sent_at, delivered_at, error_message, is_read, created_at) VALUES (%(id)s, %(notification_type)s, %(recipient_phone)s, %(recipient_name)s, %(member_id)s, %(loan_id)s, %(message)s, %(status)s, %(sent_at)s, %(delivered_at)s, %(error_message)s, %(is_read)s, %(created_at)s)]
+7|bankykit | [parameters: {'id': '96e0d3f3-06f2-4b04-8b0a-b33a2f30754a', 'notification_type': 'welcome', 'recipient_phone': '0987654321', 'recipient_name': 'Fredrick Mundia', 'member_id': 'e6fc257a-8164-4599-ac1e-4167f9e9cdfa', 'loan_id': None, 'message': "Welcome to Demo Sacco, Fredrick! Your member number is 0100000026. We're excited to have you. For any assistance, please contact us.", 'status': 'failed', 'sent_at': None, 'delivered_at': None, 'error_message': 'SMS notifications are disabled', 'is_read': False, 'created_at': datetime.datetime(2026, 2, 24, 17, 18, 26, 172766)}]
+7|bankykit | (Background on this error at: https://sqlalche.me/e/20/f405) (Background on this error at: https://sqlalche.me/e/20/7s2a) [type=get_attribute_error, input_value=<models.tenant.Member object at 0x7c8ff4b7eb70>, input_type=Member]
+7|bankykit |     For further information visit https://errors.pydantic.dev/2.12/v/get_attribute_error
+
+/root/.pm2/logs/bankykit-demo-api-out.log last 15 lines:
