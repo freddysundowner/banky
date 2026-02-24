@@ -765,10 +765,16 @@ async def check_stk_push_status(org_id: str, request: Request, user=Depends(get_
         
         amount = pending_record.amount
         member_id = pending_record.member_id
-        account_type_note = pending_record.notes or ""
+        notes_str = pending_record.notes or ""
+        payment_type = "deposit"
         account_type = "savings"
-        if "account_type:" in account_type_note:
-            account_type = account_type_note.split("account_type:")[1].split("|")[0].strip()
+        loan_id = None
+        if "payment_type:loan_repayment" in notes_str:
+            payment_type = "loan_repayment"
+        if "loan_id:" in notes_str:
+            loan_id = notes_str.split("loan_id:")[1].split("|")[0].strip()
+        if "account_type:" in notes_str:
+            account_type = notes_str.split("account_type:")[1].split("|")[0].strip()
         
         if not member_id:
             return {"status": "completed", "message": "Payment completed but no member linked"}
@@ -777,6 +783,39 @@ async def check_stk_push_status(org_id: str, request: Request, user=Depends(get_
         if not member:
             return {"status": "completed", "message": "Payment completed but member not found"}
         
+        mpesa_receipt = result.get("MpesaReceiptNumber") or result.get("mpesaReceiptNumber") or ""
+        ref = mpesa_receipt if mpesa_receipt else generate_txn_code()
+
+        if payment_type == "loan_repayment" and loan_id:
+            from services.mpesa_loan_service import apply_mpesa_payment_to_loan
+            loan = tenant_session.query(LoanApplication).filter(
+                LoanApplication.id == loan_id,
+                LoanApplication.member_id == member.id,
+                LoanApplication.status.in_(["disbursed", "active"])
+            ).first()
+            if loan:
+                repayment, error = apply_mpesa_payment_to_loan(tenant_session, loan, member, amount, ref)
+                if error:
+                    print(f"[STK Query] Loan repayment error: {error}")
+                    return {"status": "failed", "message": error}
+
+                pending_record.status = "credited"
+                pending_record.credited_at = datetime.utcnow()
+                pending_record.raw_payload = result
+                pending_record.first_name = "STK Push (Query Verified)"
+                if mpesa_receipt:
+                    pending_record.trans_id = mpesa_receipt
+
+                tenant_session.commit()
+                print(f"[STK Query] Loan repayment {amount} applied to loan {loan.application_number}")
+                return {
+                    "status": "credited",
+                    "message": f"Loan repayment of {amount} applied to {loan.application_number}",
+                    "outstanding_balance": str(loan.outstanding_balance or 0)
+                }
+            else:
+                return {"status": "completed", "message": "Loan not found or not active"}
+
         if account_type == "savings":
             current_balance = member.savings_balance or Decimal("0")
         elif account_type == "shares":
@@ -786,9 +825,6 @@ async def check_stk_push_status(org_id: str, request: Request, user=Depends(get_
         
         new_balance = current_balance + amount
         code = generate_txn_code()
-        
-        mpesa_receipt = result.get("MpesaReceiptNumber") or result.get("mpesaReceiptNumber") or ""
-        ref = mpesa_receipt if mpesa_receipt else code
         
         transaction = Transaction(
             transaction_number=code,
@@ -816,6 +852,8 @@ async def check_stk_push_status(org_id: str, request: Request, user=Depends(get_
         pending_record.credited_at = datetime.utcnow()
         pending_record.raw_payload = result
         pending_record.first_name = "STK Push (Query Verified)"
+        if mpesa_receipt:
+            pending_record.trans_id = mpesa_receipt
         
         post_mpesa_deposit_to_gl(tenant_session, member, amount, ref)
         
@@ -864,7 +902,7 @@ async def trigger_stk_push(org_id: str, request: Request, user=Depends(get_curre
         if loan_id:
             loan = tenant_session.query(LoanApplication).filter(
                 LoanApplication.id == loan_id,
-                LoanApplication.status == "disbursed"
+                LoanApplication.status.in_(["disbursed", "active"])
             ).first()
             if loan:
                 account_reference = f"LOAN:{loan_id}"
@@ -905,18 +943,51 @@ async def trigger_stk_push(org_id: str, request: Request, user=Depends(get_curre
         result = initiate_stk_push(tenant_session, phone, amount, account_reference, description, org_id=org_id, base_url_override=request_base)
         
         if result.get("ResponseCode") == "0":
+            checkout_id = result.get("CheckoutRequestID", "")
+            merchant_id = result.get("MerchantRequestID", "")
+
+            notes_parts = []
+            if loan_id:
+                notes_parts.append(f"payment_type:loan_repayment")
+                notes_parts.append(f"loan_id:{loan_id}")
+            else:
+                notes_parts.append(f"payment_type:deposit")
+                notes_parts.append(f"account_type:savings")
+
+            member = None
+            if phone:
+                phone_search = phone[-9:] if len(phone) > 9 else phone
+                member = tenant_session.query(Member).filter(
+                    Member.phone.like(f"%{phone_search}")
+                ).first()
+
+            pending_payment = MpesaPayment(
+                trans_id=f"PENDING-{checkout_id}",
+                trans_time=datetime.now().strftime("%Y%m%d%H%M%S"),
+                amount=amount,
+                phone_number=phone,
+                bill_ref_number=checkout_id,
+                first_name="STK Push",
+                transaction_type="STK",
+                member_id=member.id if member else None,
+                status="pending",
+                notes=" | ".join(notes_parts),
+            )
+            tenant_session.add(pending_payment)
+            tenant_session.commit()
+
             if demo:
                 asyncio.create_task(simulate_sandbox_callback(
                     org_id,
-                    result.get("CheckoutRequestID", ""),
-                    result.get("MerchantRequestID", ""),
+                    checkout_id,
+                    merchant_id,
                     float(amount)
                 ))
             return {
                 "success": True,
                 "message": "STK push sent successfully. Please check your phone.",
-                "checkout_request_id": result.get("CheckoutRequestID"),
-                "merchant_request_id": result.get("MerchantRequestID")
+                "checkout_request_id": checkout_id,
+                "merchant_request_id": merchant_id
             }
         else:
             return {
@@ -927,6 +998,7 @@ async def trigger_stk_push(org_id: str, request: Request, user=Depends(get_curre
     except HTTPException:
         raise
     except Exception as e:
+        tenant_session.rollback()
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         tenant_session.close()

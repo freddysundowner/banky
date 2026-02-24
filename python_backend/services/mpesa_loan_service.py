@@ -18,17 +18,27 @@ def calculate_payment_allocation(loan, amount, tenant_session=None):
     interest_type = getattr(product, 'interest_type', 'reducing_balance') if product else 'reducing_balance'
 
     if interest_type == "flat":
-        interest_per_period = (loan.total_interest or Decimal("0")) / loan.term_months if loan.term_months > 0 else Decimal("0")
+        from routes.loans import term_months_to_instalments
+        freq = getattr(product, 'repayment_frequency', 'monthly') or 'monthly'
+        n_inst = term_months_to_instalments(loan.term_months, freq)
+        interest_per_period = (loan.total_interest or Decimal("0")) / n_inst if n_inst > 0 else Decimal("0")
         interest_portion = min(amount, interest_per_period)
     else:
         periodic_rate = loan.interest_rate / Decimal("100")
-        interest_portion = min(amount, (loan.outstanding_balance or Decimal("0")) * periodic_rate)
+        remaining_principal = Decimal(str(loan.amount or 0)) - Decimal(str(loan.amount_repaid or 0))
+        if tenant_session:
+            from sqlalchemy import func as sqla_func
+            paid_p = tenant_session.query(
+                sqla_func.coalesce(sqla_func.sum(LoanInstalment.paid_principal), 0)
+            ).filter(LoanInstalment.loan_id == str(loan.id)).scalar()
+            remaining_principal = Decimal(str(loan.amount or 0)) - Decimal(str(paid_p or 0))
+        interest_portion = min(amount, remaining_principal * periodic_rate)
     principal_portion = amount - interest_portion
     return principal_portion, interest_portion, Decimal("0")
 
 
 def apply_mpesa_payment_to_loan(tenant_session, loan, member, amount: Decimal, mpesa_ref: str, payment_source: str = "mpesa"):
-    if loan.status != "disbursed":
+    if loan.status not in ("disbursed", "active"):
         return None, "Loan is not active for repayment"
 
     existing_repayment = tenant_session.query(LoanRepayment).filter(
@@ -51,6 +61,11 @@ def apply_mpesa_payment_to_loan(tenant_session, loan, member, amount: Decimal, m
     else:
         principal_amount, interest_amount, penalty_amount = calculate_payment_allocation(loan, amount, tenant_session)
         insurance_amount = Decimal("0")
+        outstanding = loan.outstanding_balance or Decimal("0")
+        total_allocated = principal_amount + interest_amount + penalty_amount
+        if total_allocated > outstanding and outstanding > 0:
+            overpayment = total_allocated - outstanding
+            principal_amount = principal_amount - overpayment
 
     actual_loan_payment = amount - overpayment
 
@@ -120,6 +135,8 @@ def apply_mpesa_payment_to_loan(tenant_session, loan, member, amount: Decimal, m
             transaction_type="deposit",
             account_type="savings",
             amount=overpayment,
+            balance_before=balance_before,
+            balance_after=member.savings_balance,
             reference=mpesa_ref,
             description=f"Overpayment from loan {loan.application_number} credited to savings"
         )
@@ -175,14 +192,14 @@ def find_loan_from_reference(tenant_session, account_ref: str, member=None):
         loan_id = ref_upper[5:]
         loan = tenant_session.query(LoanApplication).filter(
             LoanApplication.id == loan_id,
-            LoanApplication.status == "disbursed"
+            LoanApplication.status.in_(["disbursed", "active"])
         ).first()
         if loan:
             return loan
 
     loan = tenant_session.query(LoanApplication).filter(
         func.upper(LoanApplication.application_number) == ref_upper,
-        LoanApplication.status == "disbursed"
+        LoanApplication.status.in_(["disbursed", "active"])
     ).first()
     if loan:
         return loan
@@ -190,7 +207,7 @@ def find_loan_from_reference(tenant_session, account_ref: str, member=None):
     if member:
         loan = tenant_session.query(LoanApplication).filter(
             LoanApplication.member_id == member.id,
-            LoanApplication.status == "disbursed"
+            LoanApplication.status.in_(["disbursed", "active"])
         ).order_by(LoanApplication.created_at.desc()).first()
         return loan
 

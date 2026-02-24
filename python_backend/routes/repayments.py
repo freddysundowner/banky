@@ -139,7 +139,7 @@ async def create_repayment(org_id: str, data: LoanRepaymentCreate, user=Depends(
         if not loan:
             raise HTTPException(status_code=404, detail="Loan not found")
         
-        if loan.status != "disbursed":
+        if loan.status not in ("disbursed", "active"):
             raise HTTPException(status_code=400, detail="Loan is not active for repayment")
         
         if data.amount <= 0:
