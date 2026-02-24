@@ -24,9 +24,9 @@ SANDBOX_BASE_URL = "https://sandbox.safaricom.co.ke"
 
 
 def get_sandbox_consumer_credentials():
-    """Return sandbox consumer key/secret from env vars."""
-    key = os.environ.get("MPESA_SANDBOX_CONSUMER_KEY", "")
-    secret = os.environ.get("MPESA_SANDBOX_CONSUMER_SECRET", "")
+    """Return hardcoded sandbox consumer key/secret for demo mode."""
+    key = "8PJZwnucqO2LHPJNS9vqFUAveA5znWGJbdvivQA9IReGIBnZ"
+    secret = "gG5ZSVUtjmKjfTJAqV1tHa9h0qkJWCqSB7UJjGqLjQdHAOD1SAydF7W5Hju5jdwb"
     return key, secret
 
 router = APIRouter()
@@ -565,34 +565,42 @@ def initiate_b2c_disbursement(tenant_session, phone: str, amount: Decimal, remar
 
 
 def initiate_stk_push(tenant_session, phone: str, amount: Decimal, account_reference: str, description: str, org_id: str = "", base_url_override: str = "") -> dict:
-    """Initiate M-Pesa STK Push"""
+    """Initiate M-Pesa STK Push. In demo mode uses sandbox credentials automatically."""
     access_token = get_mpesa_access_token(tenant_session)
-    
-    shortcode = get_org_setting(tenant_session, "mpesa_paybill", "") or get_org_setting(tenant_session, "mpesa_shortcode", "")
-    passkey = get_org_setting(tenant_session, "mpesa_passkey", "")
-    callback_url = get_org_setting(tenant_session, "mpesa_stk_callback_url", "")
-    
-    if not callback_url and org_id:
-        import os
+
+    if is_demo_mode():
+        shortcode = SANDBOX_SHORTCODE
+        passkey = SANDBOX_PASSKEY
+        base_url = SANDBOX_BASE_URL
         public_domain = os.environ.get("REPLIT_DEV_DOMAIN", "") or os.environ.get("REPLIT_DOMAINS", "")
-        if public_domain:
+        if public_domain and org_id:
             callback_url = f"https://{public_domain}/api/mpesa/stk-callback/{org_id}"
-        elif base_url_override:
+        elif base_url_override and org_id:
             callback_url = f"{base_url_override.rstrip('/')}/api/mpesa/stk-callback/{org_id}"
-        print(f"[STK Push] Using auto-generated callback URL: {callback_url}")
-    
-    if not shortcode or not passkey:
-        raise HTTPException(status_code=400, detail="M-Pesa STK Push not configured")
-    
+        else:
+            callback_url = ""
+        print(f"[STK Push] Demo mode — using sandbox credentials, callback: {callback_url}")
+    else:
+        shortcode = get_org_setting(tenant_session, "mpesa_paybill", "") or get_org_setting(tenant_session, "mpesa_shortcode", "")
+        passkey = get_org_setting(tenant_session, "mpesa_passkey", "")
+        callback_url = get_org_setting(tenant_session, "mpesa_stk_callback_url", "")
+        if not callback_url and org_id:
+            public_domain = os.environ.get("REPLIT_DEV_DOMAIN", "") or os.environ.get("REPLIT_DOMAINS", "")
+            if public_domain:
+                callback_url = f"https://{public_domain}/api/mpesa/stk-callback/{org_id}"
+            elif base_url_override:
+                callback_url = f"{base_url_override.rstrip('/')}/api/mpesa/stk-callback/{org_id}"
+        if not shortcode or not passkey:
+            raise HTTPException(status_code=400, detail="M-Pesa STK Push not configured")
+        environment = get_org_setting(tenant_session, "mpesa_environment", "sandbox")
+        base_url = "https://api.safaricom.co.ke" if environment == "production" else "https://sandbox.safaricom.co.ke"
+
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     password = base64.b64encode(f"{shortcode}{passkey}{timestamp}".encode()).decode()
-    
+
     phone = phone.replace("+", "").replace(" ", "")
     if phone.startswith("0"):
         phone = "254" + phone[1:]
-    
-    environment = get_org_setting(tenant_session, "mpesa_environment", "sandbox")
-    base_url = "https://api.safaricom.co.ke" if environment == "production" else "https://sandbox.safaricom.co.ke"
     
     payload = {
         "BusinessShortCode": shortcode,
