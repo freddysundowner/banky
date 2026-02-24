@@ -1,0 +1,64 @@
+mac@macs-MacBook-Pro android % flutter build apk --release
+Changing current working directory to: /Users/mac/projects/projects/banky/mobile-app
+
+FAILURE: Build failed with an exception.
+
+* Where:
+Build file '/Users/mac/projects/projects/banky/mobile-app/android/build.gradle' line: 29
+
+* What went wrong:
+A problem occurred evaluating root project 'android'.
+> Cannot run Project.afterEvaluate(Closure) when the project is already evaluated.
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1s
+Running Gradle task 'assembleRelease'...                         1,656ms
+Gradle task assembleRelease failed with exit code 1
+mac@macs-MacBook-Pro android % flutter build apk --release
+Changing current working directory to: /Users/mac/projects/projects/banky/mobile-app
+Font asset "MaterialIcons-Regular.otf" was tree-shaken, reducing it from 1645184 to 8732 bytes (99.5% reduction). Tree-shaking can be disabled by providing the --no-tree-shake-icons flag when building your app.
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+warning: [options] source value 8 is obsolete and will be removed in a future release
+warning: [options] target value 8 is obsolete and will be removed in a future release
+warning: [options] To suppress warnings about obsolete options, use -Xlint:-options.
+3 warnings
+e: file:///Users/mac/.pub-cache/hosted/pub.dev/smart_auth-2.0.0/android/src/main/kotlin/fman/ge/smart_auth/AppSignatueHelper.kt:34:48 Initializer type mismatch: expected 'kotlin.Array<android.content.pm.Signature>', actual 'kotlin.Array<(out) android.content.pm.Signature!>?'.
+e: file:///Users/mac/.pub-cache/hosted/pub.dev/smart_auth-2.0.0/android/src/main/kotlin/fman/ge/smart_auth/AppSignatueHelper.kt:38:30 Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type 'android.content.pm.SigningInfo?'.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':smart_auth:compileReleaseKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 44s
+Running Gradle task 'assembleRelease'...                           44.5s
+Gradle task assembleRelease failed with exit code 1
+mac@macs-MacBook-Pro android % 

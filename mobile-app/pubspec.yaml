@@ -57,3 +57,6 @@ flutter:
           weight: 600
         - asset: assets/fonts/Inter-Bold.ttf
           weight: 700
+
+dependency_overrides:
+  smart_auth: ^2.2.0
