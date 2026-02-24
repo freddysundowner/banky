@@ -883,6 +883,10 @@ def run_tenant_schema_migration(engine):
             ("mobile_activation_code", "VARCHAR(20)"),
             ("mobile_activation_expires_at", "TIMESTAMP"),
             ("mobile_device_id", "VARCHAR(255)"),
+            # PIN hash (PBKDF2), OTP fields — added in later revision; must be here
+            ("pin_hash", "VARCHAR(255)"),
+            ("otp_code", "VARCHAR(10)"),
+            ("otp_expires_at", "TIMESTAMP"),
         ]
         for col_name, col_type in mobile_member_columns:
             add_column_if_not_exists(conn, "members", col_name, col_type)

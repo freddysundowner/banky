@@ -169,6 +169,14 @@ class OtpVerifyController extends GetxController {
         if (data['access_token'] != null) {
           await _storage.saveToken(data['access_token'] as String);
         }
+        // Persist org so the API interceptor sends X-Organization-Id on all requests,
+        // enabling O(1) tenant routing for logout and future member API calls.
+        if (data['org_id'] != null) {
+          _storage.saveOrganization({
+            'id': data['org_id'] as String,
+            'name': data['org_name'] ?? '',
+          });
+        }
         Get.offAllNamed(Routes.home);
       }
     } catch (e) {

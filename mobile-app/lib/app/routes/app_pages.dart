@@ -4,6 +4,12 @@ import '../modules/splash/splash_binding.dart';
 import '../modules/splash/splash_view.dart';
 import '../modules/auth/login/login_binding.dart';
 import '../modules/auth/login/login_view.dart';
+import '../modules/auth/activate/activate_binding.dart';
+import '../modules/auth/activate/activate_view.dart';
+import '../modules/auth/otp_verify/otp_verify_binding.dart';
+import '../modules/auth/otp_verify/otp_verify_view.dart';
+import '../modules/auth/pin_setup/pin_setup_binding.dart';
+import '../modules/auth/pin_setup/pin_setup_view.dart';
 import '../modules/home/home_binding.dart';
 import '../modules/home/home_view.dart';
 import '../modules/dashboard/dashboard_binding.dart';
@@ -40,6 +46,21 @@ class AppPages {
       name: Routes.login,
       page: () => const LoginView(),
       binding: LoginBinding(),
+    ),
+    GetPage(
+      name: Routes.activate,
+      page: () => const ActivateView(),
+      binding: ActivateBinding(),
+    ),
+    GetPage(
+      name: Routes.otpVerify,
+      page: () => const OtpVerifyView(),
+      binding: OtpVerifyBinding(),
+    ),
+    GetPage(
+      name: Routes.pinSetup,
+      page: () => const PinSetupView(),
+      binding: PinSetupBinding(),
     ),
     GetPage(
       name: Routes.home,

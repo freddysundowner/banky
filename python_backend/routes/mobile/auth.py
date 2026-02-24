@@ -375,6 +375,7 @@ async def activate_complete(
             "message": "Mobile banking activated successfully. You can now sign in.",
             "member_name": f"{member.first_name} {member.last_name}",
             "member_number": member.member_number,
+            "org_id": org.id,
             "org_name": org.name,
         }
     finally:
@@ -516,6 +517,7 @@ async def mobile_login_verify(
             "token_type": "bearer",
             "member_name": f"{member.first_name} {member.last_name}",
             "member_number": member.member_number,
+            "org_id": org.id,
             "org_name": org.name,
         }
     finally:
@@ -594,15 +596,17 @@ async def mobile_logout(request: Request, response: Response, db: Session = Depe
                 session_token = parts[3]
 
     if session_token:
-        # The cookie encodes org_id, so we can go straight to the right tenant.
-        # Fall back to scanning all orgs only when using a raw Bearer token
-        # (where we don't have org_id embedded).
-        org_id_hint = None
-        cookie = request.cookies.get(MOBILE_SESSION_COOKIE)
-        if cookie:
-            parts = cookie.split(":", 3)
-            if len(parts) == 4 and parts[0] == "mobile":
-                org_id_hint = parts[1]
+        # Resolve org_id using three sources in priority order:
+        # 1. X-Organization-Id header (set by the Flutter interceptor after login)
+        # 2. Session cookie (mobile:{org_id}:{member_id}:{token})
+        # 3. Full scan fallback (last resort)
+        org_id_hint = request.headers.get("X-Organization-Id")
+        if not org_id_hint:
+            cookie = request.cookies.get(MOBILE_SESSION_COOKIE)
+            if cookie:
+                parts = cookie.split(":", 3)
+                if len(parts) == 4 and parts[0] == "mobile":
+                    org_id_hint = parts[1]
 
         orgs_to_check = []
         if org_id_hint:

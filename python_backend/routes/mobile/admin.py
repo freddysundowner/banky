@@ -10,7 +10,6 @@ Does NOT modify any existing route files.
   DELETE /admin/{org_id}/members/{member_id}/deactivate-mobile — staff resets mobile access (lost phone, etc.)
 """
 
-import uuid
 import secrets
 import string
 from datetime import datetime, timedelta
@@ -28,11 +27,6 @@ def _generate_activation_code() -> str:
     chars = string.ascii_uppercase + string.digits
     chars = chars.replace("O", "").replace("0", "").replace("I", "").replace("1", "")
     return "".join(secrets.choice(chars) for _ in range(ACTIVATION_CODE_LENGTH))
-
-
-def _get_staff_auth(request: Request, db: Session = Depends(get_db)):
-    from routes.auth import get_current_user
-    return get_current_user(request, db)
 
 
 @router.post("/{org_id}/members/{member_id}/activate")

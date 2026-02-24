@@ -5,6 +5,9 @@ abstract class Routes {
   
   static const splash = '/splash';
   static const login = '/login';
+  static const activate = '/activate';
+  static const otpVerify = '/otp-verify';
+  static const pinSetup = '/pin-setup';
   static const home = '/home';
   static const dashboard = '/dashboard';
   static const transactions = '/transactions';

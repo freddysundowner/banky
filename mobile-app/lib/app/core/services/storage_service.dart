@@ -130,7 +130,10 @@ class StorageService extends GetxService {
       final deviceInfo = DeviceInfoPlugin();
       if (Platform.isAndroid) {
         final info = await deviceInfo.androidInfo;
-        final brand = info.brand[0].toUpperCase() + info.brand.substring(1);
+        final rawBrand = info.brand;
+        final brand = rawBrand.isNotEmpty
+            ? rawBrand[0].toUpperCase() + rawBrand.substring(1)
+            : 'Android';
         return '$brand ${info.model}';
       } else if (Platform.isIOS) {
         final info = await deviceInfo.iosInfo;
