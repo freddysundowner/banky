@@ -40,7 +40,7 @@ class MemberModel {
   factory MemberModel.fromJson(Map<String, dynamic> json) {
     return MemberModel(
       id: json['id']?.toString() ?? '',
-      memberId: json['member_id'] ?? json['memberId'] ?? '',
+      memberId: json['member_number'] ?? json['member_id'] ?? json['memberId'] ?? '',
       firstName: json['first_name'] ?? json['firstName'] ?? '',
       lastName: json['last_name'] ?? json['lastName'] ?? '',
       email: json['email'] ?? '',
