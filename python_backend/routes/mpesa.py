@@ -795,7 +795,7 @@ async def check_stk_push_status(org_id: str, request: Request, user=Depends(get_
         tenant_ctx.close()
 
 
-@router.post("/organizations/{org_id}/mpesa/stk-push", dependencies=[Depends(require_not_demo)])
+@router.post("/organizations/{org_id}/mpesa/stk-push")
 async def trigger_stk_push(org_id: str, request: Request, user=Depends(get_current_user), db: Session = Depends(get_db)):
     """Trigger M-Pesa STK Push for payment"""
     if not check_org_feature(org_id, "mpesa_integration", db):
