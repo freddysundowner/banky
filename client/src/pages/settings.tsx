@@ -533,24 +533,66 @@ function EmailSection({ getBoolValue, updateSetting, getValue }: any) {
 
 function MpesaSection({ getBoolValue, updateSetting, getValue, organizationId, toast }: any) {
   const gateway = getValue("mpesa_gateway") || "daraja";
+  const mpesaEnv = getValue("mpesa_environment") || "sandbox";
 
   return (
     <div className="space-y-6">
       <SectionHeader title="M-Pesa" description="Configure M-Pesa payment gateway for deposits, disbursements, and reversals" />
       <SettingGroup>
         <ToggleRow label="Enable M-Pesa" description="Allow members to deposit via M-Pesa" checked={getBoolValue("mpesa_enabled")} onChange={(v) => updateSetting("mpesa_enabled", String(v))} testId="switch-mpesa-enabled" />
+
         <SettingRow>
-          <div className="max-w-md space-y-1.5">
-            <Label>Payment Gateway</Label>
-            <Select value={gateway} onValueChange={(value) => updateSetting("mpesa_gateway", value)}>
-              <SelectTrigger data-testid="select-mpesa-gateway"><SelectValue placeholder="Select payment gateway" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="daraja">Direct Daraja API</SelectItem>
-                <SelectItem value="sunpay">SunPay (Managed Gateway)</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="grid gap-4 sm:grid-cols-2 max-w-xl">
+            <div className="space-y-1.5">
+              <Label>Payment Gateway</Label>
+              <Select value={gateway} onValueChange={(value) => updateSetting("mpesa_gateway", value)}>
+                <SelectTrigger data-testid="select-mpesa-gateway"><SelectValue placeholder="Select payment gateway" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daraja">Direct Daraja API</SelectItem>
+                  <SelectItem value="sunpay">SunPay (Managed Gateway)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="mpesa_environment">Environment</Label>
+              <Select value={mpesaEnv} onValueChange={(value) => updateSetting("mpesa_environment", value)}>
+                <SelectTrigger id="mpesa_environment" data-testid="select-mpesa-env"><SelectValue placeholder="Select environment" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sandbox">Sandbox (Testing)</SelectItem>
+                  <SelectItem value="production">Production (Live)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </SettingRow>
+
+        {mpesaEnv === "sandbox" && (
+          <SettingRow>
+            <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 p-4">
+              <div className="flex gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium text-amber-800 dark:text-amber-300">Sandbox Mode — Live Payments Disabled</p>
+                  <p className="text-amber-700 dark:text-amber-400 mt-1">M-Pesa is using Safaricom's Daraja sandbox credentials for testing. Members cannot make real deposits or payments from the mobile app. To go live, switch to <strong>Production</strong> and enter your live credentials from the <a href="https://developer.safaricom.co.ke" target="_blank" rel="noopener noreferrer" className="underline font-medium">Safaricom Developer Portal</a>.</p>
+                </div>
+              </div>
+            </div>
+          </SettingRow>
+        )}
+
+        {mpesaEnv === "production" && (
+          <SettingRow>
+            <div className="rounded-lg border border-green-300 bg-green-50 dark:bg-green-950/30 dark:border-green-700 p-4">
+              <div className="flex gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400 mt-0.5 shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium text-green-800 dark:text-green-300">Production Mode — Live Payments Active</p>
+                  <p className="text-green-700 dark:text-green-400 mt-1">M-Pesa is configured for live transactions. Make sure your {gateway === "daraja" ? "Daraja API" : "SunPay"} credentials below are your production keys.</p>
+                </div>
+              </div>
+            </div>
+          </SettingRow>
+        )}
 
         <SettingRow>
           <div className="rounded-lg border border-blue-200 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-800 p-4">
@@ -578,44 +620,21 @@ function MpesaSection({ getBoolValue, updateSetting, getValue, organizationId, t
         <SettingGroup title="Daraja API Credentials">
           <SettingRow>
             <div className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="mpesa_paybill">Paybill Number</Label>
-                  <Input id="mpesa_paybill" value={getValue("mpesa_paybill")} onChange={(e) => updateSetting("mpesa_paybill", e.target.value)} placeholder="e.g., 174379" data-testid="input-mpesa-paybill" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="mpesa_environment">Environment</Label>
-                  <Select value={getValue("mpesa_environment") || "sandbox"} onValueChange={(value) => updateSetting("mpesa_environment", value)}>
-                    <SelectTrigger id="mpesa_environment" data-testid="select-mpesa-env"><SelectValue placeholder="Select environment" /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="sandbox">Sandbox (Testing)</SelectItem>
-                      <SelectItem value="production">Production (Live)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="mpesa_paybill">Paybill Number</Label>
+                <Input id="mpesa_paybill" value={getValue("mpesa_paybill")} onChange={(e) => updateSetting("mpesa_paybill", e.target.value)} placeholder={mpesaEnv === "sandbox" ? "174379 (sandbox default)" : "Your live paybill number"} data-testid="input-mpesa-paybill" />
               </div>
-              {(getValue("mpesa_environment") || "sandbox") === "sandbox" && (
-                <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 p-4">
-                  <div className="flex gap-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
-                    <div className="text-sm">
-                      <p className="font-medium text-amber-800 dark:text-amber-300">Sandbox Mode — Live Payments Disabled</p>
-                      <p className="text-amber-700 dark:text-amber-400 mt-1">M-Pesa is in sandbox (testing) mode. Members cannot make real deposits or payments via the mobile app. To accept live M-Pesa payments, switch the environment to <strong>Production</strong> and enter your live Daraja API credentials from the <a href="https://developer.safaricom.co.ke" target="_blank" rel="noopener noreferrer" className="underline font-medium">Safaricom Developer Portal</a>.</p>
-                    </div>
-                  </div>
-                </div>
-              )}
               <div className="space-y-1.5">
                 <Label htmlFor="mpesa_consumer_key">Consumer Key</Label>
-                <Input id="mpesa_consumer_key" type="password" value={getValue("mpesa_consumer_key")} onChange={(e) => updateSetting("mpesa_consumer_key", e.target.value)} placeholder="Daraja API consumer key" data-testid="input-mpesa-consumer-key" />
+                <Input id="mpesa_consumer_key" type="password" value={getValue("mpesa_consumer_key")} onChange={(e) => updateSetting("mpesa_consumer_key", e.target.value)} placeholder={mpesaEnv === "sandbox" ? "Sandbox consumer key (pre-filled)" : "Your live Daraja API consumer key"} data-testid="input-mpesa-consumer-key" />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="mpesa_consumer_secret">Consumer Secret</Label>
-                <Input id="mpesa_consumer_secret" type="password" value={getValue("mpesa_consumer_secret")} onChange={(e) => updateSetting("mpesa_consumer_secret", e.target.value)} placeholder="Daraja API consumer secret" data-testid="input-mpesa-consumer-secret" />
+                <Input id="mpesa_consumer_secret" type="password" value={getValue("mpesa_consumer_secret")} onChange={(e) => updateSetting("mpesa_consumer_secret", e.target.value)} placeholder={mpesaEnv === "sandbox" ? "Sandbox consumer secret (pre-filled)" : "Your live Daraja API consumer secret"} data-testid="input-mpesa-consumer-secret" />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="mpesa_passkey">Online Passkey</Label>
-                <Input id="mpesa_passkey" type="password" value={getValue("mpesa_passkey")} onChange={(e) => updateSetting("mpesa_passkey", e.target.value)} placeholder="M-Pesa online passkey" data-testid="input-mpesa-passkey" />
+                <Input id="mpesa_passkey" type="password" value={getValue("mpesa_passkey")} onChange={(e) => updateSetting("mpesa_passkey", e.target.value)} placeholder={mpesaEnv === "sandbox" ? "Sandbox passkey (pre-filled)" : "Your live M-Pesa online passkey"} data-testid="input-mpesa-passkey" />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="mpesa_stk_callback_url">STK Push Callback URL</Label>
