@@ -909,6 +909,17 @@ def run_tenant_schema_migration(engine):
                 )
             """))
 
+        # Index for O(1) session token lookups (auth on every request and logout)
+        conn.execute(text("""
+            CREATE INDEX IF NOT EXISTS idx_mobile_sessions_token
+            ON mobile_sessions(session_token)
+        """))
+        # Index for per-member session management (admin deactivate, activity view)
+        conn.execute(text("""
+            CREATE INDEX IF NOT EXISTS idx_mobile_sessions_member
+            ON mobile_sessions(member_id)
+        """))
+
         conn.commit()
     
     try:

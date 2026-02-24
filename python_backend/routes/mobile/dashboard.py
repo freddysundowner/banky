@@ -76,7 +76,7 @@ def get_dashboard(ctx: dict = Depends(get_current_member)):
             "organization": {
                 "name": org.name,
                 "currency": getattr(org, "currency", "KES"),
-                "logo_url": getattr(org, "logo_url", None),
+                "logo_url": getattr(org, "logo", None),
             },
         }
     finally:

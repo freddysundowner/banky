@@ -8,6 +8,7 @@ GET  /api/mobile/me/loan-products
 POST /api/mobile/me/loan-applications
 """
 
+import secrets
 from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -236,8 +237,7 @@ def apply_for_loan(data: LoanApplicationRequest, ctx: dict = Depends(get_current
         if data.term_months <= 0:
             raise HTTPException(status_code=400, detail="Term must be greater than 0")
 
-        count = ts.query(LoanApplication).count()
-        app_number = f"LN-{(count + 1):05d}"
+        app_number = f"LN-{secrets.token_hex(4).upper()}"
 
         interest_rate = float(product.interest_rate)
         total_interest = round((data.amount * interest_rate / 100) * data.term_months, 2)

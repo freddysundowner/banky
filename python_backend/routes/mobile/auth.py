@@ -549,6 +549,14 @@ async def resend_otp(data: ResendOtpRequest, db: Session = Depends(get_db)):
         is_login_flow = not bool(data.account_number)
         expiry_minutes = LOGIN_OTP_EXPIRY_MINUTES if is_login_flow else OTP_EXPIRY_MINUTES
 
+        # For activation flow, only resend if activate/init was already called.
+        # This prevents strangers from triggering unsolicited OTPs using just an account number.
+        if not is_login_flow and not member.otp_code:
+            raise HTTPException(
+                status_code=400,
+                detail="No pending activation. Please start the activation process first."
+            )
+
         otp = _generate_otp()
         member.otp_code = otp
         member.otp_expires_at = datetime.utcnow() + timedelta(minutes=expiry_minutes)

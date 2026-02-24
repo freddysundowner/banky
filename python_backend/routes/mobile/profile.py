@@ -38,7 +38,7 @@ def _member_profile(member, org) -> dict:
             "name": org.name,
             "subdomain": getattr(org, "subdomain", None),
             "currency": getattr(org, "currency", "KES"),
-            "logo_url": getattr(org, "logo_url", None),
+            "logo_url": getattr(org, "logo", None),
         },
     }
 
