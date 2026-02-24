@@ -117,6 +117,7 @@ class OtpVerifyController extends GetxController {
         data: {
           'device_id': deviceId,
           'otp': otp,
+          if (deviceName.isNotEmpty) 'device_name': deviceName,
         },
       );
 
@@ -147,25 +148,13 @@ class OtpVerifyController extends GetxController {
 
     isResending.value = true;
     try {
-      // Resend is done by re-posting to the same init endpoint with same args
-      // The backend will re-generate and resend the OTP SMS
-      if (flow == 'activation') {
-        await _api.post(
-          ApiConstants.mobileActivateInit,
-          data: {
-            'account_number': accountNumber,
-            'device_id': deviceId,
-            'resend': true,
-          },
-        );
-      } else {
-        await _api.post(
-          ApiConstants.memberResendOtp,
-          data: {
-            'device_id': deviceId,
-          },
-        );
-      }
+      await _api.post(
+        ApiConstants.mobileResendOtp,
+        data: flow == 'activation'
+            ? {'account_number': accountNumber}
+            : {'device_id': deviceId},
+      );
+      clearOtp();
       _startResendTimer();
       Get.snackbar(
         'OTP Resent',

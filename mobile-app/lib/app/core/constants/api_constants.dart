@@ -15,6 +15,7 @@ class ApiConstants {
   static const String mobileActivateComplete = '$_auth/activate/complete';
   static const String mobileLogin = '$_auth/login';
   static const String mobileLoginVerify = '$_auth/login/verify';
+  static const String mobileResendOtp = '$_auth/resend-otp';
   static const String mobileLogout = '$_auth/logout';
 
   // M-Pesa (unchanged — existing backend routes)

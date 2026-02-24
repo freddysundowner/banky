@@ -12,8 +12,8 @@ No org_id is required from the client — members are found via cross-tenant sea
 """
 
 import uuid
-import random
 import secrets
+import hashlib
 from datetime import datetime, timedelta
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends, Request, Response
@@ -39,17 +39,31 @@ def _get_client_ip(request: Request) -> str:
 
 
 def _generate_otp() -> str:
-    return str(random.randint(100000, 999999))
+    """Cryptographically secure 6-digit OTP."""
+    return str(secrets.randbelow(900000) + 100000)
+
+
+_PBKDF2_ITERATIONS = 260000
+_PBKDF2_HASH = "sha256"
 
 
 def _hash_pin(pin: str) -> str:
-    import hashlib
-    return hashlib.sha256(pin.encode()).hexdigest()
+    """PBKDF2-HMAC-SHA256 with random salt. Returns salt:hash (hex)."""
+    salt = secrets.token_hex(16)
+    dk = hashlib.pbkdf2_hmac(_PBKDF2_HASH, pin.encode(), salt.encode(), _PBKDF2_ITERATIONS)
+    return f"{salt}:{dk.hex()}"
 
 
-def _verify_pin(pin: str, pin_hash: str) -> bool:
-    import hashlib
-    return hashlib.sha256(pin.encode()).hexdigest() == pin_hash
+def _verify_pin(pin: str, stored: str) -> bool:
+    """Constant-time comparison of PBKDF2 hashes. Handles legacy plain SHA-256 too."""
+    if ":" not in stored:
+        # Legacy plain SHA-256 (migrate on next login)
+        return secrets.compare_digest(
+            hashlib.sha256(pin.encode()).hexdigest(), stored
+        )
+    salt, dk_hex = stored.split(":", 1)
+    dk = hashlib.pbkdf2_hmac(_PBKDF2_HASH, pin.encode(), salt.encode(), _PBKDF2_ITERATIONS)
+    return secrets.compare_digest(dk.hex(), dk_hex)
 
 
 def _send_otp_sms(phone: str, otp: str, org_name: str, tenant_session: Session) -> None:
@@ -149,6 +163,11 @@ class LoginVerifyRequest(BaseModel):
     device_id: str
     otp: str
     device_name: Optional[str] = None
+
+
+class ResendOtpRequest(BaseModel):
+    account_number: Optional[str] = None
+    device_id: Optional[str] = None
 
 
 @router.post("/activate/init")
@@ -416,33 +435,90 @@ async def mobile_login_verify(
         tenant_ctx.close()
 
 
+@router.post("/resend-otp")
+async def resend_otp(data: ResendOtpRequest, db: Session = Depends(get_db)):
+    """
+    Resend OTP for an in-progress activation or login.
+    Activation flow: provide account_number.
+    Login flow: provide device_id.
+    Only works if there is an OTP that hasn't expired yet.
+    """
+    if not data.account_number and not data.device_id:
+        raise HTTPException(status_code=400, detail="Provide account_number or device_id")
+
+    if data.account_number:
+        member, org, tenant_session, tenant_ctx = _find_member_by_account(data.account_number, db)
+    else:
+        member, org, tenant_session, tenant_ctx = _find_member_by_device(data.device_id, db)
+
+    if not member:
+        raise HTTPException(status_code=404, detail="Account not found.")
+
+    try:
+        otp = _generate_otp()
+        member.otp_code = otp
+        member.otp_expires_at = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
+        tenant_session.commit()
+
+        _send_otp_sms(member.phone, otp, org.name, tenant_session)
+
+        phone = member.phone or ""
+        masked = phone[:3] + "****" + phone[-3:] if len(phone) >= 7 else "****"
+
+        return {"success": True, "masked_phone": masked, "message": f"OTP resent to {masked}"}
+    finally:
+        tenant_session.close()
+        tenant_ctx.close()
+
+
 @router.post("/logout")
 async def mobile_logout(request: Request, response: Response, db: Session = Depends(get_db)):
-    """Invalidate the current mobile session."""
+    """Invalidate the current mobile session. Supports both Bearer token and cookie."""
     from models.tenant import MobileSession
+    from models.master import Organization
     from services.tenant_context import get_tenant_context_simple
 
-    cookie = request.cookies.get(MOBILE_SESSION_COOKIE)
-    if cookie:
-        parts = cookie.split(":", 3)
-        if len(parts) == 4 and parts[0] == "mobile":
-            org_id = parts[1]
-            session_token = parts[3]
+    session_token = None
+
+    # 1. Try Bearer token
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        session_token = auth_header[7:].strip()
+
+    # 2. Fall back to cookie
+    if not session_token:
+        cookie = request.cookies.get(MOBILE_SESSION_COOKIE)
+        if cookie:
+            parts = cookie.split(":", 3)
+            if len(parts) == 4 and parts[0] == "mobile":
+                session_token = parts[3]
+
+    if session_token:
+        organizations = db.query(Organization).filter(
+            Organization.connection_string.isnot(None)
+        ).all()
+        for org in organizations:
+            tenant_ctx = get_tenant_context_simple(org.id, db)
+            if not tenant_ctx:
+                continue
+            tenant_session = tenant_ctx.create_session()
             try:
-                tenant_ctx = get_tenant_context_simple(org_id, db)
-                if tenant_ctx:
-                    tenant_session = tenant_ctx.create_session()
-                    sess = tenant_session.query(MobileSession).filter(
-                        MobileSession.session_token == session_token
-                    ).first()
-                    if sess:
-                        sess.is_active = False
-                        sess.logout_at = datetime.utcnow()
-                        tenant_session.commit()
+                sess = tenant_session.query(MobileSession).filter(
+                    MobileSession.session_token == session_token,
+                    MobileSession.is_active == True,
+                ).first()
+                if sess:
+                    sess.is_active = False
+                    sess.logout_at = datetime.utcnow()
+                    tenant_session.commit()
                     tenant_session.close()
                     tenant_ctx.close()
+                    break
+                tenant_session.close()
+                tenant_ctx.close()
             except Exception:
-                pass
+                tenant_session.close()
+                tenant_ctx.close()
 
     response.delete_cookie(MOBILE_SESSION_COOKIE)
     return {"success": True, "message": "Logged out"}

@@ -4,7 +4,7 @@ from models.master import Organization, OrganizationMember
 from models.tenant import TenantBase
 
 _migrated_tenants = set()
-_migration_version = 24  # Increment to force re-migration
+_migration_version = 25  # Increment to force re-migration
 
 def _get_db_migration_version(engine):
     """Check the migration version stored in the tenant database"""
@@ -879,6 +879,7 @@ def run_tenant_schema_migration(engine):
         
         # Mobile Banking columns
         mobile_member_columns = [
+            ("mobile_banking_active", "BOOLEAN DEFAULT FALSE"),
             ("mobile_activation_code", "VARCHAR(20)"),
             ("mobile_activation_expires_at", "TIMESTAMP"),
             ("mobile_device_id", "VARCHAR(255)"),
