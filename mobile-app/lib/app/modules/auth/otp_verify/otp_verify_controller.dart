@@ -19,11 +19,16 @@ class OtpVerifyController extends GetxController {
   final errorMessage = ''.obs;
   final resendCountdown = 0.obs;
 
-  late String accountNumber;
   late String maskedPhone;
   late String flow;
+
+  // Activation-specific args
+  String accountNumber = '';
   String memberName = '';
   String organizationName = '';
+
+  // Shared device id (both flows)
+  String deviceId = '';
 
   Timer? _resendTimer;
 
@@ -31,11 +36,12 @@ class OtpVerifyController extends GetxController {
   void onInit() {
     super.onInit();
     final args = Get.arguments as Map<String, dynamic>;
-    accountNumber = args['account_number'] ?? '';
     maskedPhone = args['masked_phone'] ?? '';
     flow = args['flow'] ?? 'activation';
+    accountNumber = args['account_number'] ?? '';
     memberName = args['member_name'] ?? '';
     organizationName = args['organization_name'] ?? '';
+    deviceId = args['device_id'] ?? '';
     _startResendTimer();
   }
 
@@ -89,33 +95,34 @@ class OtpVerifyController extends GetxController {
 
     try {
       if (flow == 'activation') {
+        // OTP is verified server-side at activate/complete — pass it forward
+        isLoading.value = false;
         Get.toNamed(
           Routes.pinSetup,
           arguments: {
             'account_number': accountNumber,
             'otp': otp,
+            'device_id': deviceId,
           },
         );
-      } else {
-        final response = await _api.post(
-          ApiConstants.memberLoginVerify,
-          data: {
-            'account_number': accountNumber,
-            'otp': otp,
-          },
-        );
+        return;
+      }
 
-        if (response.statusCode == 200) {
-          final data = response.data;
-          await _storage.saveToken(data['access_token']);
-          if (data['member'] != null) {
-            _storage.saveMember(data['member']);
-          }
-          if (data['organization'] != null) {
-            _storage.saveOrganization(data['organization']);
-          }
-          Get.offAllNamed(Routes.home);
+      // login flow
+      final response = await _api.post(
+        ApiConstants.mobileLoginVerify,
+        data: {
+          'device_id': deviceId,
+          'otp': otp,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['access_token'] != null) {
+          await _storage.saveToken(data['access_token'] as String);
         }
+        Get.offAllNamed(Routes.home);
       }
     } catch (e) {
       errorMessage.value = _getErrorMessage(e);
@@ -137,10 +144,25 @@ class OtpVerifyController extends GetxController {
 
     isResending.value = true;
     try {
-      await _api.post(
-        ApiConstants.memberResendOtp,
-        data: {'account_number': accountNumber},
-      );
+      // Resend is done by re-posting to the same init endpoint with same args
+      // The backend will re-generate and resend the OTP SMS
+      if (flow == 'activation') {
+        await _api.post(
+          ApiConstants.mobileActivateInit,
+          data: {
+            'account_number': accountNumber,
+            'device_id': deviceId,
+            'resend': true,
+          },
+        );
+      } else {
+        await _api.post(
+          ApiConstants.memberResendOtp,
+          data: {
+            'device_id': deviceId,
+          },
+        );
+      }
       _startResendTimer();
       Get.snackbar(
         'OTP Resent',
@@ -176,6 +198,7 @@ class OtpVerifyController extends GetxController {
       final errorStr = error.toString();
       if (errorStr.contains('expired')) return 'OTP has expired. Please request a new one.';
       if (errorStr.contains('Invalid OTP')) return 'Invalid OTP. Please try again.';
+      if (errorStr.contains('401')) return 'Invalid OTP. Please try again.';
       if (errorStr.contains('SocketException')) return 'No internet connection';
     }
     return 'Something went wrong. Please try again.';

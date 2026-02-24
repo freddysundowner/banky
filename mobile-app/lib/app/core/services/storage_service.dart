@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -14,6 +15,7 @@ class StorageService extends GetxService {
   static const String themeKey = 'theme_mode';
   static const String onboardingKey = 'onboarding_complete';
   static const String fcmTokenKey = 'fcm_token';
+  static const String deviceIdKey = 'device_id';
 
   Future<StorageService> init() async {
     _box = GetStorage();
@@ -91,6 +93,16 @@ class StorageService extends GetxService {
 
   String? getFcmToken() {
     return _box.read<String>(fcmTokenKey);
+  }
+
+  Future<String> getOrCreateDeviceId() async {
+    String? existing = await _secureStorage.read(key: deviceIdKey);
+    if (existing != null && existing.isNotEmpty) return existing;
+    final rng = Random.secure();
+    final id = List.generate(32, (_) => rng.nextInt(16).toRadixString(16)).join();
+    final formatted = '${id.substring(0, 8)}-${id.substring(8, 12)}-4${id.substring(13, 16)}-${id.substring(16, 20)}-${id.substring(20)}';
+    await _secureStorage.write(key: deviceIdKey, value: formatted);
+    return formatted;
   }
 
   Future<void> clearAll() async {

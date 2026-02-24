@@ -17,6 +17,8 @@ class PinSetupController extends GetxController {
 
   late String accountNumber;
   late String otp;
+  late String deviceId;
+  String deviceName = '';
 
   @override
   void onInit() {
@@ -24,6 +26,8 @@ class PinSetupController extends GetxController {
     final args = Get.arguments as Map<String, dynamic>;
     accountNumber = args['account_number'] ?? '';
     otp = args['otp'] ?? '';
+    deviceId = args['device_id'] ?? '';
+    deviceName = args['device_name'] ?? '';
   }
 
   @override
@@ -35,23 +39,23 @@ class PinSetupController extends GetxController {
 
   String? validatePin(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please enter a PIN';
+      return 'Please enter a 6-digit password';
     }
-    if (value.length != 4) {
-      return 'PIN must be exactly 4 digits';
+    if (value.length != 6) {
+      return 'Password must be exactly 6 digits';
     }
-    if (!RegExp(r'^\d{4}$').hasMatch(value)) {
-      return 'PIN must contain only digits';
+    if (!RegExp(r'^\d{6}$').hasMatch(value)) {
+      return 'Password must contain only digits';
     }
     return null;
   }
 
   String? validateConfirmPin(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please confirm your PIN';
+      return 'Please confirm your password';
     }
     if (value != pinController.text) {
-      return 'PINs do not match';
+      return 'Passwords do not match';
     }
     return null;
   }
@@ -63,12 +67,13 @@ class PinSetupController extends GetxController {
 
     try {
       final response = await _api.post(
-        ApiConstants.memberVerifyOtp,
+        ApiConstants.mobileActivateComplete,
         data: {
           'account_number': accountNumber,
           'otp': otp,
-          'pin': pinController.text,
-          'pin_confirm': confirmPinController.text,
+          'password': pinController.text,
+          'device_id': deviceId,
+          if (deviceName.isNotEmpty) 'device_name': deviceName,
         },
       );
 
@@ -105,7 +110,7 @@ class PinSetupController extends GetxController {
       final errorStr = error.toString();
       if (errorStr.contains('expired')) return 'OTP has expired. Please start activation again.';
       if (errorStr.contains('Invalid OTP')) return 'Invalid OTP. Please start activation again.';
-      if (errorStr.contains('do not match')) return 'PINs do not match.';
+      if (errorStr.contains('6 digits')) return 'Password must be exactly 6 digits.';
       if (errorStr.contains('SocketException')) return 'No internet connection';
     }
     return 'Something went wrong. Please try again.';

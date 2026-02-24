@@ -53,7 +53,7 @@ class ActivateView extends GetView<ActivateController> {
                 const SizedBox(height: 8),
 
                 const Text(
-                  'Enter your account number to get started.\nAn OTP will be sent to your registered phone.',
+                  'Enter your account number and the activation code provided by your branch to get started.',
                   style: TextStyle(
                     fontSize: 15,
                     color: AppColors.textSecondary,
@@ -62,7 +62,7 @@ class ActivateView extends GetView<ActivateController> {
                   textAlign: TextAlign.center,
                 ),
 
-                const SizedBox(height: 48),
+                const SizedBox(height: 40),
 
                 TextFormField(
                   controller: controller.accountNumberController,
@@ -73,6 +73,30 @@ class ActivateView extends GetView<ActivateController> {
                     labelText: 'Account Number',
                     hintText: 'Enter your member account number',
                     prefixIcon: Icon(Icons.badge_outlined),
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                TextFormField(
+                  controller: controller.activationCodeController,
+                  validator: controller.validateActivationCode,
+                  keyboardType: TextInputType.text,
+                  textCapitalization: TextCapitalization.characters,
+                  decoration: const InputDecoration(
+                    labelText: 'Activation Code',
+                    hintText: 'Enter the code from your branch (e.g. ABCD1234)',
+                    prefixIcon: Icon(Icons.vpn_key_outlined),
+                  ),
+                ),
+
+                const SizedBox(height: 8),
+
+                const Text(
+                  'Your branch staff will give you this code when they activate your mobile banking.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
                   ),
                 ),
 

@@ -168,6 +168,9 @@ class Member(TenantBase):
     pin_hash = Column(String(255))
     otp_code = Column(String(10))
     otp_expires_at = Column(DateTime)
+    mobile_activation_code = Column(String(20))
+    mobile_activation_expires_at = Column(DateTime)
+    mobile_device_id = Column(String(255))
     
     # Photo and Documents (store as file paths or URLs)
     photo_url = Column(String(500))
@@ -1345,4 +1348,23 @@ class InAppNotification(TenantBase):
     link = Column(String(500), nullable=True)
     is_read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class MobileSession(TenantBase):
+    """Tracks mobile app login sessions for device history and audit"""
+    __tablename__ = "mobile_sessions"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    member_id = Column(String, ForeignKey("members.id"), nullable=False)
+    device_id = Column(String(255), nullable=False)
+    device_name = Column(String(255))
+    ip_address = Column(String(100))
+    session_token = Column(String(255))
+    login_at = Column(DateTime, default=datetime.utcnow)
+    last_active = Column(DateTime, default=datetime.utcnow)
+    is_active = Column(Boolean, default=True)
+    logout_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    member = relationship("Member", foreign_keys=[member_id])
 

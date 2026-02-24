@@ -72,7 +72,12 @@ import {
   X,
   Search,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Smartphone,
+  Activity,
+  Clock,
+  WifiOff,
+  Loader2,
 } from "lucide-react";
 import {
   Dialog,
@@ -520,6 +525,13 @@ export default function MemberManagement({ organizationId }: MemberManagementPro
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [memberPage, setMemberPage] = useState(1);
   const MEMBERS_PER_PAGE = 20;
+  const [showMobileActivateDialog, setShowMobileActivateDialog] = useState(false);
+  const [mobileActivateResult, setMobileActivateResult] = useState<{
+    activation_code: string;
+    expires_hours: number;
+    sms_sent: boolean;
+    member_phone: string;
+  } | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -586,6 +598,34 @@ export default function MemberManagement({ organizationId }: MemberManagementPro
       if (!res.ok) throw new Error("Failed to fetch organization");
       return res.json();
     },
+  });
+
+  const { data: mobileActivity, isLoading: mobileActivityLoading } = useQuery<{
+    mobile_banking_active: boolean;
+    mobile_device_id: string | null;
+    activation_pending: boolean;
+    activation_expires_at: string | null;
+    sessions: Array<{
+      id: string;
+      device_id: string;
+      device_name: string | null;
+      ip_address: string | null;
+      login_at: string | null;
+      last_active: string | null;
+      is_active: boolean;
+      logout_at: string | null;
+    }>;
+  }>({
+    queryKey: ["/api/mobile/admin", organizationId, "members", selectedMember?.id, "activity"],
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/mobile/admin/${organizationId}/members/${selectedMember!.id}/activity`,
+        { credentials: "include" }
+      );
+      if (!res.ok) throw new Error("Failed to fetch mobile activity");
+      return res.json();
+    },
+    enabled: viewMode === "view" && !!selectedMember,
   });
 
   const form = useForm<MemberFormData>({
@@ -770,6 +810,37 @@ export default function MemberManagement({ organizationId }: MemberManagementPro
     },
     onError: (error: unknown) => {
       toast({ title: "Failed to suspend member", description: getErrorMessage(error), variant: "destructive" });
+    },
+  });
+
+  const activateMobileMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const res = await apiRequest("POST", `/api/mobile/admin/${organizationId}/members/${memberId}/activate`);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      setMobileActivateResult(data);
+      queryClient.invalidateQueries({ queryKey: ["/api/mobile/admin", organizationId, "members", selectedMember?.id, "activity"] });
+    },
+    onError: (error: unknown) => {
+      toast({ title: "Failed to activate mobile banking", description: getErrorMessage(error), variant: "destructive" });
+    },
+  });
+
+  const deactivateMobileMutation = useMutation({
+    mutationFn: async (memberId: string) => {
+      const res = await apiRequest("DELETE", `/api/mobile/admin/${organizationId}/members/${memberId}/deactivate-mobile`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/mobile/admin", organizationId, "members", selectedMember?.id, "activity"] });
+      if (selectedMember) {
+        setSelectedMember({ ...selectedMember, mobile_banking_active: false, mobile_device_id: null });
+      }
+      toast({ title: "Mobile banking deactivated", description: "Member will need to re-activate to use the app." });
+    },
+    onError: (error: unknown) => {
+      toast({ title: "Failed to deactivate mobile banking", description: getErrorMessage(error), variant: "destructive" });
     },
   });
 
@@ -1735,6 +1806,17 @@ export default function MemberManagement({ organizationId }: MemberManagementPro
             >
               {member.status}
             </Badge>
+            {mobileActivity?.mobile_banking_active ? (
+              <Badge variant="outline" className="gap-1 border-green-500 text-green-600 dark:text-green-400" data-testid="badge-mobile-active">
+                <Smartphone className="h-3 w-3" />
+                Mobile Active
+              </Badge>
+            ) : mobileActivity?.activation_pending ? (
+              <Badge variant="outline" className="gap-1 border-amber-500 text-amber-600 dark:text-amber-400" data-testid="badge-mobile-pending">
+                <Clock className="h-3 w-3" />
+                Mobile Pending
+              </Badge>
+            ) : null}
             {member.status === "pending" && canActivate && (
               <Button 
                 variant="default" 
@@ -1805,6 +1887,35 @@ export default function MemberManagement({ organizationId }: MemberManagementPro
               <Button variant="outline" onClick={() => handleEditMember(member)} data-testid="button-edit-view">
                 <Pencil className="h-4 w-4 mr-1" />
                 Edit
+              </Button>
+            )}
+            {canWrite && member.status === "active" && !mobileActivity?.mobile_banking_active && (
+              <Button
+                variant="outline"
+                onClick={() => { setMobileActivateResult(null); setShowMobileActivateDialog(true); }}
+                disabled={activateMobileMutation.isPending}
+                data-testid="button-activate-mobile"
+                className="border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950"
+              >
+                <Smartphone className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">Activate Mobile Banking</span>
+                <span className="sm:hidden">Mobile</span>
+              </Button>
+            )}
+            {canWrite && mobileActivity?.mobile_banking_active && (
+              <Button
+                variant="outline"
+                onClick={() => deactivateMobileMutation.mutate(member.id)}
+                disabled={deactivateMobileMutation.isPending}
+                data-testid="button-deactivate-mobile"
+                className="border-red-400 text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
+              >
+                {deactivateMobileMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                ) : (
+                  <WifiOff className="h-4 w-4 mr-1" />
+                )}
+                <span className="hidden sm:inline">Disable Mobile</span>
               </Button>
             )}
           </div>
@@ -1941,7 +2052,196 @@ export default function MemberManagement({ organizationId }: MemberManagementPro
           </Card>
         </div>
 
+        <Card data-testid="card-mobile-banking">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Smartphone className="h-4 w-4" />
+                Mobile Banking
+              </CardTitle>
+              {mobileActivity?.mobile_banking_active ? (
+                <Badge variant="outline" className="gap-1 border-green-500 text-green-600 dark:text-green-400">
+                  <Smartphone className="h-3 w-3" />
+                  Active
+                </Badge>
+              ) : mobileActivity?.activation_pending ? (
+                <Badge variant="outline" className="gap-1 border-amber-500 text-amber-600 dark:text-amber-400">
+                  <Clock className="h-3 w-3" />
+                  Activation Pending
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="gap-1 text-muted-foreground">
+                  <WifiOff className="h-3 w-3" />
+                  Not Activated
+                </Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            {mobileActivityLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {mobileActivity?.mobile_banking_active && (
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <div className="text-muted-foreground">Status</div>
+                      <div className="font-medium text-green-600">Active</div>
+                    </div>
+                    <div>
+                      <div className="text-muted-foreground">Device Bound</div>
+                      <div className="font-medium">{mobileActivity.mobile_device_id ? "Yes" : "No"}</div>
+                    </div>
+                  </div>
+                )}
+                {mobileActivity?.activation_pending && !mobileActivity.mobile_banking_active && (
+                  <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg text-sm">
+                    <div className="font-medium text-amber-700 dark:text-amber-400 mb-1">Activation code sent</div>
+                    <div className="text-muted-foreground">
+                      Member has an activation code valid until{" "}
+                      {mobileActivity.activation_expires_at
+                        ? new Date(mobileActivity.activation_expires_at).toLocaleString()
+                        : "—"}
+                      . Member should open the app and enter the code to complete setup.
+                    </div>
+                  </div>
+                )}
+                {!mobileActivity?.mobile_banking_active && !mobileActivity?.activation_pending && canWrite && (
+                  <div className="text-sm text-muted-foreground">
+                    Mobile banking is not enabled for this member. Click{" "}
+                    <button
+                      className="text-blue-600 underline cursor-pointer"
+                      onClick={() => { setMobileActivateResult(null); setShowMobileActivateDialog(true); }}
+                    >
+                      Activate Mobile Banking
+                    </button>{" "}
+                    to send the member an activation code.
+                  </div>
+                )}
+
+                {mobileActivity && mobileActivity.sessions.length > 0 && (
+                  <div>
+                    <div className="text-sm font-medium flex items-center gap-1 mb-2">
+                      <Activity className="h-4 w-4" />
+                      Recent Activity
+                    </div>
+                    <div className="space-y-2">
+                      {mobileActivity.sessions.map((session) => (
+                        <div
+                          key={session.id}
+                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2 bg-muted/50 rounded-lg text-sm"
+                          data-testid={`mobile-session-${session.id}`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Smartphone className={`h-3 w-3 ${session.is_active ? "text-green-500" : "text-muted-foreground"}`} />
+                            <div>
+                              <span className="font-medium">{session.device_name || "Mobile Device"}</span>
+                              {session.ip_address && (
+                                <span className="text-muted-foreground"> · {session.ip_address}</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-muted-foreground text-xs flex items-center gap-1 ml-5 sm:ml-0">
+                            <Clock className="h-3 w-3" />
+                            {session.login_at
+                              ? new Date(session.login_at).toLocaleString()
+                              : "—"}
+                            {session.is_active && (
+                              <Badge variant="outline" className="ml-1 text-xs border-green-400 text-green-600 py-0">Active</Badge>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {mobileActivity && mobileActivity.sessions.length === 0 && mobileActivity.mobile_banking_active && (
+                  <div className="text-sm text-muted-foreground">No login sessions recorded yet.</div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <MemberDocumentsSection organizationId={organizationId} memberId={member.id} />
+
+        <AlertDialog open={showMobileActivateDialog} onOpenChange={setShowMobileActivateDialog}>
+          <AlertDialogContent>
+            {!mobileActivateResult ? (
+              <>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <Smartphone className="h-5 w-5 text-blue-600" />
+                    Activate Mobile Banking
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will generate a one-time activation code for{" "}
+                    <strong>{member.first_name} {member.last_name}</strong> and send it to their registered phone number.
+                    The code will be valid for 12 hours. The member will use it to set up the mobile app.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel data-testid="button-cancel-mobile-activate">Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => activateMobileMutation.mutate(member.id)}
+                    disabled={activateMobileMutation.isPending}
+                    data-testid="button-confirm-mobile-activate"
+                  >
+                    {activateMobileMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      "Generate & Send Code"
+                    )}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </>
+            ) : (
+              <>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    Activation Code Ready
+                  </AlertDialogTitle>
+                  <AlertDialogDescription asChild>
+                    <div className="space-y-3">
+                      <p>
+                        {mobileActivateResult.sms_sent
+                          ? `An SMS with the activation code has been sent to ${mobileActivateResult.member_phone}.`
+                          : "SMS could not be sent. Please share the code below with the member manually."}
+                      </p>
+                      <div className="p-4 bg-muted rounded-lg text-center">
+                        <div className="text-xs text-muted-foreground mb-1">One-time activation code</div>
+                        <div className="text-3xl font-bold tracking-widest font-mono text-blue-600" data-testid="text-activation-code">
+                          {mobileActivateResult.activation_code}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-2">
+                          Valid for {mobileActivateResult.expires_hours} hours
+                        </div>
+                      </div>
+                      <p className="text-sm">
+                        The member should open the BankyKit app and enter this code along with their account number to complete setup.
+                      </p>
+                    </div>
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogAction
+                    onClick={() => { setShowMobileActivateDialog(false); setMobileActivateResult(null); }}
+                    data-testid="button-close-activation-result"
+                  >
+                    Done
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </>
+            )}
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     );
   }

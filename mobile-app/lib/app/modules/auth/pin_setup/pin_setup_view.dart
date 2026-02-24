@@ -49,7 +49,7 @@ class PinSetupView extends GetView<PinSetupController> {
                 const SizedBox(height: 24),
 
                 const Text(
-                  'Set Your PIN',
+                  'Set Your Password',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -61,7 +61,7 @@ class PinSetupView extends GetView<PinSetupController> {
                 const SizedBox(height: 8),
 
                 const Text(
-                  'Create a 4-digit PIN to secure\nyour mobile banking access.',
+                  'Create a 6-digit password to secure\nyour mobile banking access.',
                   style: TextStyle(
                     fontSize: 15,
                     color: AppColors.textSecondary,
@@ -77,14 +77,14 @@ class PinSetupView extends GetView<PinSetupController> {
                   validator: controller.validatePin,
                   keyboardType: TextInputType.number,
                   obscureText: controller.obscurePin.value,
-                  maxLength: 4,
+                  maxLength: 6,
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(4),
+                    LengthLimitingTextInputFormatter(6),
                   ],
                   decoration: InputDecoration(
-                    labelText: 'Enter PIN',
-                    hintText: '4-digit PIN',
+                    labelText: 'Enter 6-digit Password',
+                    hintText: '6-digit password',
                     prefixIcon: const Icon(Icons.lock_outline),
                     counterText: '',
                     suffixIcon: IconButton(
@@ -105,14 +105,14 @@ class PinSetupView extends GetView<PinSetupController> {
                   validator: controller.validateConfirmPin,
                   keyboardType: TextInputType.number,
                   obscureText: controller.obscureConfirmPin.value,
-                  maxLength: 4,
+                  maxLength: 6,
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(4),
+                    LengthLimitingTextInputFormatter(6),
                   ],
                   decoration: InputDecoration(
-                    labelText: 'Confirm PIN',
-                    hintText: 'Re-enter your PIN',
+                    labelText: 'Confirm Password',
+                    hintText: 'Re-enter your 6-digit password',
                     prefixIcon: const Icon(Icons.lock_outline),
                     counterText: '',
                     suffixIcon: IconButton(
@@ -143,7 +143,7 @@ class PinSetupView extends GetView<PinSetupController> {
                           ),
                         )
                       : const Text(
-                          'Activate',
+                          'Activate Mobile Banking',
                           style: TextStyle(fontSize: 16),
                         ),
                 )),
@@ -163,7 +163,7 @@ class PinSetupView extends GetView<PinSetupController> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Keep your PIN confidential. Never share it with anyone.',
+                          'Keep your 6-digit password confidential. Never share it with anyone, including staff.',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.amber.shade900,

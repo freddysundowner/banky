@@ -4,7 +4,7 @@ from models.master import Organization, OrganizationMember
 from models.tenant import TenantBase
 
 _migrated_tenants = set()
-_migration_version = 23  # Increment to force re-migration
+_migration_version = 24  # Increment to force re-migration
 
 def _get_db_migration_version(engine):
     """Check the migration version stored in the tenant database"""
@@ -877,6 +877,33 @@ def run_tenant_schema_migration(engine):
                 except:
                     pass
         
+        # Mobile Banking columns
+        mobile_member_columns = [
+            ("mobile_activation_code", "VARCHAR(20)"),
+            ("mobile_activation_expires_at", "TIMESTAMP"),
+            ("mobile_device_id", "VARCHAR(255)"),
+        ]
+        for col_name, col_type in mobile_member_columns:
+            add_column_if_not_exists(conn, "members", col_name, col_type)
+
+        # Mobile sessions table
+        if not table_exists(conn, "mobile_sessions"):
+            conn.execute(text("""
+                CREATE TABLE mobile_sessions (
+                    id VARCHAR(255) PRIMARY KEY,
+                    member_id VARCHAR(255) NOT NULL,
+                    device_id VARCHAR(255) NOT NULL,
+                    device_name VARCHAR(255),
+                    ip_address VARCHAR(100),
+                    session_token VARCHAR(255),
+                    login_at TIMESTAMP DEFAULT NOW(),
+                    last_active TIMESTAMP DEFAULT NOW(),
+                    is_active BOOLEAN DEFAULT TRUE,
+                    logout_at TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT NOW()
+                )
+            """))
+
         conn.commit()
     
     try:

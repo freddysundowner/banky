@@ -22,7 +22,7 @@ class LoginView extends GetView<LoginController> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 48),
-                
+
                 Center(
                   child: Container(
                     width: 80,
@@ -38,9 +38,9 @@ class LoginView extends GetView<LoginController> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 24),
-                
+
                 const Text(
                   'Welcome Back',
                   style: TextStyle(
@@ -50,47 +50,33 @@ class LoginView extends GetView<LoginController> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 8),
-                
+
                 const Text(
-                  'Sign in with your account number and PIN',
+                  'Enter your 6-digit password to sign in',
                   style: TextStyle(
                     fontSize: 16,
                     color: AppColors.textSecondary,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 const SizedBox(height: 48),
-                
-                TextFormField(
-                  controller: controller.accountNumberController,
-                  validator: controller.validateAccountNumber,
-                  keyboardType: TextInputType.text,
-                  textCapitalization: TextCapitalization.characters,
-                  decoration: const InputDecoration(
-                    labelText: 'Account Number',
-                    hintText: 'Enter your account number',
-                    prefixIcon: Icon(Icons.badge_outlined),
-                  ),
-                ),
-                
-                const SizedBox(height: 16),
-                
+
                 Obx(() => TextFormField(
                   controller: controller.pinController,
                   validator: controller.validatePin,
                   obscureText: controller.obscurePin.value,
                   keyboardType: TextInputType.number,
-                  maxLength: 4,
+                  maxLength: 6,
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
-                    LengthLimitingTextInputFormatter(4),
+                    LengthLimitingTextInputFormatter(6),
                   ],
                   decoration: InputDecoration(
-                    labelText: 'PIN',
-                    hintText: 'Enter your 4-digit PIN',
+                    labelText: 'Password',
+                    hintText: 'Enter your 6-digit password',
                     prefixIcon: const Icon(Icons.lock_outline),
                     counterText: '',
                     suffixIcon: IconButton(
@@ -103,9 +89,9 @@ class LoginView extends GetView<LoginController> {
                     ),
                   ),
                 )),
-                
+
                 const SizedBox(height: 24),
-                
+
                 Obx(() => ElevatedButton(
                   onPressed: controller.isLoading.value ? null : controller.login,
                   style: ElevatedButton.styleFrom(
@@ -125,14 +111,14 @@ class LoginView extends GetView<LoginController> {
                           style: TextStyle(fontSize: 16),
                         ),
                 )),
-                
+
                 const SizedBox(height: 24),
-                
+
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
-                      "Don't have mobile banking? ",
+                      "New to mobile banking? ",
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
                     TextButton(

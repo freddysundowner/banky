@@ -1,13 +1,21 @@
 class ApiConstants {
   static const String baseUrl = 'https://4e554371-078a-4f91-884a-cbad8c1e5080-00-min0a6uk6fsg.janeway.replit.dev';
   
-  // Auth (unchanged — existing backend routes)
+  // Legacy auth endpoints (kept for backward compatibility)
   static const String memberLogin = '/api/auth/member/login';
   static const String memberLoginVerify = '/api/auth/member/login-verify';
   static const String memberActivate = '/api/auth/member/activate';
   static const String memberVerifyOtp = '/api/auth/member/verify-otp';
   static const String memberResendOtp = '/api/auth/member/resend-otp';
   static const String logout = '/api/auth/logout';
+
+  // New Mobile Auth — /api/mobile/auth/*
+  static const String _auth = '/api/mobile/auth';
+  static const String mobileActivateInit = '$_auth/activate/init';
+  static const String mobileActivateComplete = '$_auth/activate/complete';
+  static const String mobileLogin = '$_auth/login';
+  static const String mobileLoginVerify = '$_auth/login/verify';
+  static const String mobileLogout = '$_auth/logout';
 
   // M-Pesa (unchanged — existing backend routes)
   static const String mpesaPayment = '/api/mpesa/stk-push';

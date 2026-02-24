@@ -3,12 +3,15 @@ import 'package:get/get.dart';
 
 import '../../../core/constants/api_constants.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/services/storage_service.dart';
 import '../../../routes/app_pages.dart';
 
 class ActivateController extends GetxController {
   ApiService get _api => Get.find<ApiService>();
+  StorageService get _storage => Get.find<StorageService>();
 
   final accountNumberController = TextEditingController();
+  final activationCodeController = TextEditingController();
   final formKey = GlobalKey<FormState>();
   final isLoading = false.obs;
   final errorMessage = ''.obs;
@@ -16,12 +19,23 @@ class ActivateController extends GetxController {
   @override
   void onClose() {
     accountNumberController.dispose();
+    activationCodeController.dispose();
     super.onClose();
   }
 
   String? validateAccountNumber(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'Please enter your account number';
+    }
+    return null;
+  }
+
+  String? validateActivationCode(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Please enter the activation code from your branch';
+    }
+    if (value.trim().length < 4) {
+      return 'Activation code is too short';
     }
     return null;
   }
@@ -33,9 +47,15 @@ class ActivateController extends GetxController {
     isLoading.value = true;
 
     try {
+      final deviceId = await _storage.getOrCreateDeviceId();
+
       final response = await _api.post(
-        ApiConstants.memberActivate,
-        data: {'account_number': accountNumberController.text.trim()},
+        ApiConstants.mobileActivateInit,
+        data: {
+          'account_number': accountNumberController.text.trim().toUpperCase(),
+          'activation_code': activationCodeController.text.trim().toUpperCase(),
+          'device_id': deviceId,
+        },
       );
 
       if (response.statusCode == 200) {
@@ -43,11 +63,12 @@ class ActivateController extends GetxController {
         Get.toNamed(
           Routes.otpVerify,
           arguments: {
-            'account_number': accountNumberController.text.trim(),
+            'account_number': accountNumberController.text.trim().toUpperCase(),
             'masked_phone': data['masked_phone'],
             'member_name': data['member_name'],
             'organization_name': data['organization_name'],
             'flow': 'activation',
+            'device_id': deviceId,
           },
         );
       }
@@ -70,10 +91,11 @@ class ActivateController extends GetxController {
   String _getErrorMessage(dynamic error) {
     if (error is Exception) {
       final errorStr = error.toString();
-      if (errorStr.contains('404')) return 'Account number not found';
+      if (errorStr.contains('404')) return 'Account number not found. Please check and try again.';
       if (errorStr.contains('400')) {
-        if (errorStr.contains('already activated')) return 'Mobile banking already activated. Please login.';
-        if (errorStr.contains('No phone')) return 'No phone number on file. Contact your Sacco.';
+        if (errorStr.contains('expired')) return 'Activation code has expired. Contact your branch for a new one.';
+        if (errorStr.contains('not been activated')) return 'Mobile banking has not been activated for this account. Contact your branch.';
+        if (errorStr.contains('Invalid activation')) return 'Invalid activation code. Please check and try again.';
       }
       if (errorStr.contains('403')) return 'Account is not active. Contact administrator.';
       if (errorStr.contains('SocketException')) return 'No internet connection';

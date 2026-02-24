@@ -126,6 +126,12 @@ export const memberSchema = z.object({
   photo_url: z.string().optional().nullable(),
   id_document_url: z.string().optional().nullable(),
   signature_url: z.string().optional().nullable(),
+
+  // Mobile Banking
+  mobile_banking_active: z.boolean().default(false).optional(),
+  mobile_device_id: z.string().optional().nullable(),
+  mobile_activation_code: z.string().optional().nullable(),
+  mobile_activation_expires_at: z.string().optional().nullable(),
 });
 
 export const insertMemberSchema = memberSchema.omit({ id: true, created_at: true, member_number: true });
