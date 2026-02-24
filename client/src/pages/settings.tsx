@@ -594,6 +594,17 @@ function MpesaSection({ getBoolValue, updateSetting, getValue, organizationId, t
                   </Select>
                 </div>
               </div>
+              {(getValue("mpesa_environment") || "sandbox") === "sandbox" && (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 p-4">
+                  <div className="flex gap-2">
+                    <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                    <div className="text-sm">
+                      <p className="font-medium text-amber-800 dark:text-amber-300">Sandbox Mode — Live Payments Disabled</p>
+                      <p className="text-amber-700 dark:text-amber-400 mt-1">M-Pesa is in sandbox (testing) mode. Members cannot make real deposits or payments via the mobile app. To accept live M-Pesa payments, switch the environment to <strong>Production</strong> and enter your live Daraja API credentials from the <a href="https://developer.safaricom.co.ke" target="_blank" rel="noopener noreferrer" className="underline font-medium">Safaricom Developer Portal</a>.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="space-y-1.5">
                 <Label htmlFor="mpesa_consumer_key">Consumer Key</Label>
                 <Input id="mpesa_consumer_key" type="password" value={getValue("mpesa_consumer_key")} onChange={(e) => updateSetting("mpesa_consumer_key", e.target.value)} placeholder="Daraja API consumer key" data-testid="input-mpesa-consumer-key" />
