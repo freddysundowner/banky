@@ -1,6 +1,6 @@
 ================================================================
         BANKYKIT -- LOCAL AD VIDEO SCRIPT
-        Duration: ~90 seconds | Format: Social / WhatsApp / TV
+        Duration: 60 seconds | Format: Social / WhatsApp / TV
 ================================================================
 
 PRODUCTION NOTES FOR EDITOR
@@ -13,36 +13,16 @@ PRODUCTION NOTES FOR EDITOR
 
 
 ================================================================
-SCENE 1 -- THE PROBLEM (0:00 - 0:15)
+SCENE 1 -- THE REVEAL (0:00 - 0:08)
 ================================================================
 
 [VISUAL]
-Split screen: Left -- person manually writing ledger entries /
-Excel spreadsheet with messy rows. Right -- pile of paper loan
-forms on a desk. Maybe a frustrated staff member on the phone.
-
-[VO / NARRATOR]
-"Are you still managing your SACCO or bank branch on Excel?
-Chasing loan repayments manually? Losing track of member accounts?
-There's a better way."
-
-[ON-SCREEN TEXT -- bold, centre]
-X  Manual records
-X  Lost payments
-X  No real-time data
-
-
-================================================================
-SCENE 2 -- THE REVEAL (0:15 - 0:25)
-================================================================
-
-[VISUAL]
-Clean fade to the BankyKit logo on a white/blue background.
-Logo animates in. Name types out: "BankyKit"
+BankyKit logo fades in on a clean blue background.
+Name types out: "BankyKit"
 
 [VO]
-"Introducing BankyKit -- the complete bank and SACCO management
-system built for your business."
+"Meet BankyKit -- the all-in-one system built to run your
+SACCO or bank branch, from day one."
 
 [ON-SCREEN TEXT]
 BANKYKIT
@@ -50,110 +30,89 @@ Your Bank. Your Data. Your Control.
 
 
 ================================================================
-SCENE 3 -- FEATURE WALKTHROUGH (0:25 - 1:05)
+SCENE 2 -- FEATURE WALKTHROUGH (0:08 - 0:38)
 ================================================================
 
---- Beat 1: Members (0:25 - 0:33) ---
-[VISUAL] Members list screen. Quick zoom in on member profile
-with savings balance.
+--- Beat 1: Members & Loans (0:08 - 0:18) ---
+[VISUAL] Members list screen, quick cut to Loan Applications.
+Zoom in on loan status cards -- Approved, Active, Overdue.
 
 [VO]
-"Register members, manage their savings accounts, shares,
-and fixed deposits -- all in one place."
+"Register members, manage savings and shares, issue loans,
+and track every repayment -- automatically."
 
-[ON-SCREEN TEXT]  Member & KYC Management
-
-
---- Beat 2: Loans (0:33 - 0:42) ---
-[VISUAL] Loan Applications screen -- show the status cards:
-Approved, Active Loans, Overdue counts.
-
-[VO]
-"Issue loans, track repayments, flag overdue accounts --
-automatically. No more chasing payments by phone."
-
-[ON-SCREEN TEXT]  Loan Lifecycle Management
+[ON-SCREEN TEXT]
+Members  |  Loans  |  Savings
 
 
---- Beat 3: Teller (0:42 - 0:50) ---
+--- Beat 2: Teller Station (0:18 - 0:28) ---
 [VISUAL] Teller Station screen -- cash float, deposit form.
-Show the counter selection screen briefly.
+Cut to the counter selection screen.
 
 [VO]
-"Your tellers get their own station -- fast deposits,
-withdrawals, and loan repayments, with a full cash float log."
+"Give every teller their own station -- fast deposits,
+withdrawals, and loan payments with a full cash log."
 
-[ON-SCREEN TEXT]  Teller Station & Cash Float
-
-
---- Beat 4: HR & Payroll (0:50 - 0:58) ---
-[VISUAL] HR Management screen -- staff list, payroll periods table.
-
-[VO]
-"Manage staff attendance, leave, and run payroll -- right from
-the same system. No extra software needed."
-
-[ON-SCREEN TEXT]  HR, Payroll & Leave Management
+[ON-SCREEN TEXT]
+Teller Station  |  Cash Float
 
 
---- Beat 5: Reports & Audit (0:58 - 1:05) ---
-[VISUAL] Analytics dashboard, then quick cut to Audit Logs.
+--- Beat 3: HR & Reports (0:28 - 0:38) ---
+[VISUAL] HR Management screen, then Analytics dashboard.
 
 [VO]
-"Get real-time reports on your loan portfolio, revenue, and
-member growth. Every action is logged for compliance."
+"Run payroll, manage staff, and get real-time reports on
+your portfolio, revenue, and member growth."
 
-[ON-SCREEN TEXT]  Reports, Analytics & Audit Trail
+[ON-SCREEN TEXT]
+HR & Payroll  |  Reports & Analytics
 
 
 ================================================================
-SCENE 4 -- TRUST & VALUE (1:05 - 1:20)
+SCENE 3 -- TRUST & VALUE (0:38 - 0:50)
 ================================================================
 
 [VISUAL]
-Clean blue/white background with feature badges animating in
-one by one. Quick montage of all screens together works well here.
+Clean blue/white background. Feature list animates in one by one.
 
 [VO]
-"BankyKit runs on your own server -- your data stays with you.
-No monthly fees. No subscriptions. Pay once, own it forever."
+"Your data stays on your server. No monthly fees.
+No subscriptions. Pay once and own it forever."
 
-[ON-SCREEN TEXT -- list appearing one by one]
-(tick)  Full source code included
-(tick)  Runs on your own server
-(tick)  Supports 80+ currencies
+[ON-SCREEN TEXT -- appearing one by one]
+(tick)  Self-hosted -- your data, your control
 (tick)  Multi-branch ready
+(tick)  80+ currencies supported
 (tick)  One-time purchase
 
 
 ================================================================
-SCENE 5 -- CALL TO ACTION (1:20 - 1:30)
+SCENE 4 -- CALL TO ACTION (0:50 - 0:57)
 ================================================================
 
 [VISUAL]
-BankyKit logo centred on screen. Contact details below.
-Soft glow / clean branded look.
+BankyKit logo centred. Contact details below. Clean branded look.
 
 [VO]
-"Get BankyKit today and transform how your institution operates.
-Contact us now for a free demo."
+"Contact us today for a free demo."
 
 [ON-SCREEN TEXT -- large and clear]
 BANKYKIT
 Phone / WhatsApp: [YOUR NUMBER]
 Website: bankykit.com
-Email: [YOUR EMAIL]
 
 "Free Demo Available"
 
 [MUSIC fades out]
 
+
 ================================================================
-END CARD (hold 3 seconds)
+END CARD (0:57 - 1:00, hold 3 seconds)
 ================================================================
 
 BankyKit logo + tagline:
 "Your Bank. Your Data. Your Control."
+
 
 ================================================================
 DELIVERY NOTES FOR EDITOR
