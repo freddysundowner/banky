@@ -15,13 +15,65 @@ class LoginController extends GetxController {
   final formKey = GlobalKey<FormState>();
 
   final isLoading = false.obs;
+  final isDemoLoading = false.obs;
   final obscurePin = true.obs;
   final errorMessage = ''.obs;
+  final isDemoMode = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _checkDemoStatus();
+  }
 
   @override
   void onClose() {
     pinController.dispose();
     super.onClose();
+  }
+
+  Future<void> _checkDemoStatus() async {
+    try {
+      final response = await _api.get(ApiConstants.mobileDemoStatus);
+      if (response.statusCode == 200) {
+        isDemoMode.value = response.data['demo'] == true;
+      }
+    } catch (_) {}
+  }
+
+  Future<void> demoLogin() async {
+    isDemoLoading.value = true;
+    errorMessage.value = '';
+
+    try {
+      final response = await _api.post(ApiConstants.mobileDemoLogin, data: {});
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data['access_token'] != null) {
+          await _storage.saveToken(data['access_token'] as String);
+        }
+        if (data['org_id'] != null) {
+          _storage.saveOrganization({
+            'id': data['org_id'] as String,
+            'name': data['org_name'] ?? '',
+          });
+        }
+        Get.offAllNamed(Routes.home);
+      }
+    } catch (e) {
+      errorMessage.value = 'Demo login failed. Please try again.';
+      Get.snackbar(
+        'Error',
+        errorMessage.value,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.red.shade900,
+        margin: const EdgeInsets.all(16),
+      );
+    } finally {
+      isDemoLoading.value = false;
+    }
   }
 
   void togglePinVisibility() {

@@ -136,6 +136,87 @@ class ActivateView extends GetView<ActivateController> {
                     ),
                   ],
                 ),
+
+                Obx(() => controller.isDemoMode.value
+                    ? Column(
+                        children: [
+                          const SizedBox(height: 16),
+                          const Divider(),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.amber.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.amber.shade200),
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.science_outlined,
+                                        color: Colors.amber.shade700, size: 20),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Demo Mode Active',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.amber.shade800,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Skip activation and explore the app instantly with a demo account.',
+                                  style: TextStyle(
+                                    color: Colors.amber.shade900,
+                                    fontSize: 13,
+                                    height: 1.4,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Obx(() => SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    onPressed: controller.isDemoLoading.value
+                                        ? null
+                                        : controller.demoLogin,
+                                    icon: controller.isDemoLoading.value
+                                        ? const SizedBox(
+                                            height: 18,
+                                            width: 18,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                      Colors.white),
+                                            ),
+                                          )
+                                        : const Icon(Icons.play_arrow_rounded),
+                                    label: Text(
+                                      controller.isDemoLoading.value
+                                          ? 'Loading...'
+                                          : 'Try Demo',
+                                      style: const TextStyle(fontSize: 15),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.amber.shade600,
+                                      foregroundColor: Colors.white,
+                                      minimumSize: const Size.fromHeight(48),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                  ),
+                                )),
+                              ],
+                            ),
+                          ),
+                        ],
+                      )
+                    : const SizedBox.shrink()),
               ],
             ),
           ),

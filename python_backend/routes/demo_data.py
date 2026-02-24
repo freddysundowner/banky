@@ -226,6 +226,8 @@ def _seed_tenant(conn_str: str):
                 last_name=ln,
                 email=f"{slug}{DEMO_EMAIL_DOMAIN}",
                 phone=f"+1 555 100 {str(idx+1).zfill(4)}",
+                id_number=f"DEMO{str(10000 + idx + 1)}",
+                id_type="national_id",
                 gender="male" if fn in ("James","David","Michael","Robert","William","Charles","Joseph","Thomas") else "female",
                 date_of_birth=date(1985, 6, 15),
                 nationality="US",

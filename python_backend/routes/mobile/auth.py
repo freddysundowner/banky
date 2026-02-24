@@ -659,3 +659,133 @@ async def mobile_logout(request: Request, response: Response, db: Session = Depe
 
     response.delete_cookie(MOBILE_SESSION_COOKIE)
     return {"success": True, "message": "Logged out"}
+
+
+@router.get("/demo-status")
+async def demo_status():
+    from middleware.demo_guard import is_demo_mode
+    return {"demo": is_demo_mode()}
+
+
+DEMO_MEMBER_ID_NUMBER = "DEMO000001"
+DEMO_MEMBER_PIN = "123456"
+
+
+@router.post("/demo-login")
+async def demo_login(request: Request, response: Response, db: Session = Depends(get_db)):
+    """
+    Instant demo login. Only works when platform demo mode is on.
+    Finds (or creates) a demo member with mobile banking pre-activated,
+    creates a session, and returns the auth token directly — no OTP.
+    """
+    from middleware.demo_guard import is_demo_mode
+    from models.master import Organization
+    from models.tenant import Member, MobileSession
+
+    if not is_demo_mode():
+        raise HTTPException(status_code=403, detail="Demo mode is not active.")
+
+    org = db.query(Organization).filter(Organization.code == "DEMO").first()
+    if not org or not org.connection_string:
+        raise HTTPException(status_code=404, detail="Demo organization not found.")
+
+    tenant_session, tenant_ctx = _open_tenant(org, db)
+    if tenant_session is None or tenant_ctx is None:
+        raise HTTPException(status_code=500, detail="Could not connect to demo database.")
+
+    try:
+        member = tenant_session.query(Member).filter(
+            Member.id_number == DEMO_MEMBER_ID_NUMBER
+        ).first()
+
+        if not member:
+            from models.tenant import Branch
+            branch = tenant_session.query(Branch).first()
+            branch_id = branch.id if branch else None
+
+            member = Member(
+                id=str(uuid.uuid4()),
+                member_number="DEMO-MOBILE-001",
+                first_name="Demo",
+                last_name="User",
+                email="demo.mobile@demo.bankykit",
+                phone="+254700000000",
+                id_number=DEMO_MEMBER_ID_NUMBER,
+                id_type="national_id",
+                gender="male",
+                date_of_birth=None,
+                nationality="KE",
+                address="Demo Address",
+                city="Nairobi",
+                country="Kenya",
+                employment_status="employed",
+                monthly_income=50000,
+                branch_id=branch_id,
+                membership_type="ordinary",
+                savings_balance=25000,
+                shares_balance=10000,
+                deposits_balance=5000,
+                status="active",
+                is_active=True,
+                mobile_banking_active=True,
+                pin_hash=_hash_pin(DEMO_MEMBER_PIN),
+                mobile_device_id="demo-device",
+            )
+            tenant_session.add(member)
+            tenant_session.flush()
+
+        if not member.mobile_banking_active:
+            member.mobile_banking_active = True
+            member.pin_hash = _hash_pin(DEMO_MEMBER_PIN)
+            member.status = "active"
+            member.is_active = True
+
+        tenant_session.query(MobileSession).filter(
+            MobileSession.member_id == member.id,
+            MobileSession.is_active == True,
+        ).update({"is_active": False, "logout_at": datetime.utcnow()})
+
+        session_token = secrets.token_urlsafe(32)
+        ip = _get_client_ip(request)
+        mobile_session = MobileSession(
+            id=str(uuid.uuid4()),
+            member_id=member.id,
+            device_id="demo-device",
+            device_name="Demo Device",
+            ip_address=ip,
+            session_token=session_token,
+            login_at=datetime.utcnow(),
+            last_active=datetime.utcnow(),
+            is_active=True,
+        )
+        tenant_session.add(mobile_session)
+        tenant_session.commit()
+
+        cookie_value = f"mobile:{org.id}:{member.id}:{session_token}"
+        response.set_cookie(
+            key=MOBILE_SESSION_COOKIE,
+            value=cookie_value,
+            httponly=True,
+            samesite="lax",
+            max_age=60 * 60 * 24 * 30,
+        )
+
+        return {
+            "success": True,
+            "access_token": session_token,
+            "token_type": "bearer",
+            "message": "Welcome to the demo! Explore all features freely.",
+            "member_name": f"{member.first_name} {member.last_name}",
+            "member_number": member.member_number,
+            "org_id": str(org.id),
+            "org_name": org.name,
+            "demo": True,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[DEMO LOGIN] Error: {e}")
+        raise HTTPException(status_code=500, detail="Demo login failed. Please try again.")
+    finally:
+        tenant_session.close()
+        tenant_ctx.close()
