@@ -598,7 +598,9 @@ def initiate_stk_push(tenant_session, phone: str, amount: Decimal, account_refer
             json=payload,
             headers={"Authorization": f"Bearer {access_token}"}
         )
-        return response.json()
+        result = response.json()
+        print(f"[STK Push] Response ({response.status_code}): {result}")
+        return result
 
 
 def query_stk_push_status(tenant_session, checkout_request_id: str) -> dict:
