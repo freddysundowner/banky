@@ -6,6 +6,7 @@ PATCH /api/mobile/me
 
 from fastapi import APIRouter, Depends, HTTPException
 from .deps import get_current_member
+from .dashboard import get_currency_symbol as _get_currency_symbol
 
 router = APIRouter()
 
@@ -37,7 +38,8 @@ def _member_profile(member, org) -> dict:
             "id": org.id,
             "name": org.name,
             "subdomain": getattr(org, "subdomain", None),
-            "currency": getattr(org, "currency", "KES"),
+            "currency": org.currency or "USD",
+            "currency_symbol": _get_currency_symbol(org.currency or "USD"),
             "logo_url": getattr(org, "logo", None),
         },
     }

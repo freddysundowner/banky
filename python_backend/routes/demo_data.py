@@ -509,7 +509,7 @@ def _seed_tenant(conn_str: str):
         tdb.flush()
 
         # Organization settings — currency and timezone
-        for key, value in [("currency", "KES"), ("currency_symbol", "KSh"), ("timezone", "Africa/Nairobi")]:
+        for key, value in [("currency", "USD"), ("currency_symbol", "$"), ("timezone", "Africa/Nairobi")]:
             existing = tdb.query(OrganizationSettings).filter(OrganizationSettings.setting_key == key).first()
             if existing:
                 existing.setting_value = value

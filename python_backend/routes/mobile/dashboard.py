@@ -11,6 +11,16 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import desc
 from .deps import get_current_member
 
+CURRENCY_SYMBOLS = {
+    "USD": "$", "EUR": "€", "GBP": "£", "KES": "KSh", "UGX": "USh",
+    "TZS": "TSh", "RWF": "RF", "NGN": "₦", "GHS": "GH₵", "ZAR": "R",
+    "ETB": "Br", "XAF": "FCFA", "XOF": "CFA", "INR": "₹", "BRL": "R$",
+    "JPY": "¥", "CNY": "¥", "AUD": "A$", "CAD": "CA$", "CHF": "CHF",
+}
+
+def get_currency_symbol(currency_code: str) -> str:
+    return CURRENCY_SYMBOLS.get(currency_code, currency_code)
+
 router = APIRouter()
 
 
@@ -75,7 +85,8 @@ def get_dashboard(ctx: dict = Depends(get_current_member)):
             ],
             "organization": {
                 "name": org.name,
-                "currency": getattr(org, "currency", "KES"),
+                "currency": org.currency or "USD",
+                "currency_symbol": get_currency_symbol(org.currency or "USD"),
                 "logo_url": getattr(org, "logo", None),
             },
         }

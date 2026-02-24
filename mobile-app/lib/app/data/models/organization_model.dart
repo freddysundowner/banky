@@ -19,8 +19,8 @@ class OrganizationModel {
     this.phone,
     this.address,
     this.logo,
-    this.currency = 'KES',
-    this.currencySymbol = 'KSh',
+    this.currency = 'USD',
+    this.currencySymbol = '\$',
     this.isActive = true,
     this.createdAt,
   });
@@ -34,8 +34,8 @@ class OrganizationModel {
       phone: json['phone'],
       address: json['address'],
       logo: json['logo'],
-      currency: json['currency'] ?? 'KES',
-      currencySymbol: json['currency_symbol'] ?? json['currencySymbol'] ?? 'KSh',
+      currency: json['currency'] ?? 'USD',
+      currencySymbol: json['currency_symbol'] ?? json['currencySymbol'] ?? '\$',
       isActive: json['is_active'] ?? json['isActive'] ?? true,
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
     );

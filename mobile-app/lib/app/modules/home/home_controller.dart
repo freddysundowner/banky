@@ -116,7 +116,7 @@ class HomeController extends GetxController {
     }
   }
 
-  String get currencySymbol => organization.value?.currencySymbol ?? 'KSh';
+  String get currencySymbol => organization.value?.currencySymbol ?? '\$';
   
   String formatCurrency(double amount) {
     final formatted = amount.toStringAsFixed(2).replaceAllMapped(
