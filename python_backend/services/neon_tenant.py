@@ -117,7 +117,17 @@ class NeonTenantService:
                     conn.execute(text("""
                         ALTER TABLE expenses ADD COLUMN IF NOT EXISTS next_due_date DATE
                     """))
-                
+
+                # Add is_read to sms_notifications for mobile read/unread tracking
+                result = conn.execute(text("""
+                    SELECT column_name FROM information_schema.columns 
+                    WHERE table_name = 'sms_notifications' AND column_name = 'is_read'
+                """))
+                if not result.fetchone():
+                    conn.execute(text("""
+                        ALTER TABLE sms_notifications ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT FALSE
+                    """))
+
                 conn.commit()
             
             engine.dispose()

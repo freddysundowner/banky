@@ -26,6 +26,11 @@ class ApiConstants {
   static const String _m = '/api/mobile';
 
   static const String memberMe = '$_m/me';
+
+  // Shorthand aliases used across repositories
+  static const String loans = '$_m/me/loans';
+  static const String notifications = '$_m/me/notifications';
+  static const String statements = '$_m/me/statements';
   static const String memberDashboard = '$_m/me/dashboard';
   static const String memberBalances = '$_m/me/balances';
   static const String memberSavings = '$_m/me/savings';

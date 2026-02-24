@@ -455,6 +455,7 @@ class SMSNotification(TenantBase):
     sent_at = Column(DateTime)
     delivered_at = Column(DateTime)
     error_message = Column(Text)
+    is_read = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class SMSTemplate(TenantBase):
