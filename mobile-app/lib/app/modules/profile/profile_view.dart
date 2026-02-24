@@ -14,17 +14,6 @@ class ProfileView extends GetView<ProfileController> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Profile'),
-        actions: [
-          Obx(() => controller.isEditing.value
-              ? TextButton(
-                  onPressed: controller.saveProfile,
-                  child: const Text('Save'),
-                )
-              : IconButton(
-                  onPressed: controller.toggleEdit,
-                  icon: const Icon(Icons.edit),
-                )),
-        ],
       ),
       body: Obx(() {
         if (controller.isLoading.value && controller.member.value == null) {
@@ -86,17 +75,13 @@ class ProfileView extends GetView<ProfileController> {
             const SizedBox(height: 4),
             Text(
               'Member ID: ${member.memberId}',
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-              ),
+              style: const TextStyle(color: AppColors.textSecondary),
             ),
             if (controller.organization.value != null) ...[
               const SizedBox(height: 4),
               Text(
                 controller.organization.value!.name,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                ),
+                style: const TextStyle(color: AppColors.textSecondary),
               ),
             ],
           ],
@@ -106,65 +91,43 @@ class ProfileView extends GetView<ProfileController> {
   }
 
   Widget _buildProfileDetails(member) {
-    return Form(
-      key: controller.formKey,
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Personal Information',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 16),
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Personal Information',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 16),
+            _buildInfoRow(
+              icon: Icons.email,
+              label: 'Email',
+              value: member.email ?? 'Not set',
+            ),
+            const Divider(height: 24),
+            _buildInfoRow(
+              icon: Icons.phone,
+              label: 'Phone',
+              value: member.phone ?? 'Not set',
+            ),
+            const Divider(height: 24),
+            _buildInfoRow(
+              icon: Icons.location_on,
+              label: 'Address',
+              value: member.address ?? 'Not set',
+            ),
+            if (member.idNumber != null) ...[
+              const Divider(height: 24),
               _buildInfoRow(
-                icon: Icons.email,
-                label: 'Email',
-                value: member.email,
-                editable: false,
+                icon: Icons.badge,
+                label: 'ID Number',
+                value: member.idNumber!,
               ),
-              const Divider(height: 24),
-              Obx(() => controller.isEditing.value
-                  ? _buildEditableField(
-                      icon: Icons.phone,
-                      label: 'Phone',
-                      controller: controller.phoneController,
-                      keyboardType: TextInputType.phone,
-                    )
-                  : _buildInfoRow(
-                      icon: Icons.phone,
-                      label: 'Phone',
-                      value: member.phone ?? 'Not set',
-                    )),
-              const Divider(height: 24),
-              Obx(() => controller.isEditing.value
-                  ? _buildEditableField(
-                      icon: Icons.location_on,
-                      label: 'Address',
-                      controller: controller.addressController,
-                      maxLines: 2,
-                    )
-                  : _buildInfoRow(
-                      icon: Icons.location_on,
-                      label: 'Address',
-                      value: member.address ?? 'Not set',
-                    )),
-              if (member.idNumber != null) ...[
-                const Divider(height: 24),
-                _buildInfoRow(
-                  icon: Icons.badge,
-                  label: 'ID Number',
-                  value: member.idNumber!,
-                  editable: false,
-                ),
-              ],
             ],
-          ),
+          ],
         ),
       ),
     );
@@ -174,7 +137,6 @@ class ProfileView extends GetView<ProfileController> {
     required IconData icon,
     required String label,
     required String value,
-    bool editable = true,
   }) {
     return Row(
       children: [
@@ -213,41 +175,6 @@ class ProfileView extends GetView<ProfileController> {
     );
   }
 
-  Widget _buildEditableField({
-    required IconData icon,
-    required String label,
-    required TextEditingController controller,
-    TextInputType? keyboardType,
-    int maxLines = 1,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: AppColors.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: AppColors.primary, size: 20),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: TextFormField(
-            controller: controller,
-            keyboardType: keyboardType,
-            maxLines: maxLines,
-            decoration: InputDecoration(
-              labelText: label,
-              isDense: true,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildAccountInfo(member) {
     return Card(
       child: Padding(
@@ -257,10 +184,7 @@ class ProfileView extends GetView<ProfileController> {
           children: [
             const Text(
               'Account Summary',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 16),
             Row(
@@ -310,13 +234,7 @@ class ProfileView extends GetView<ProfileController> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: color,
-            ),
-          ),
+          Text(label, style: TextStyle(fontSize: 12, color: color)),
           const SizedBox(height: 4),
           Text(
             value,
