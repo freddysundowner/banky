@@ -16,6 +16,7 @@ import secrets
 import hashlib
 from datetime import datetime, timedelta
 from typing import Optional
+from routes.sms import send_sms
 from fastapi import APIRouter, HTTPException, Depends, Request, Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -65,18 +66,6 @@ def _verify_pin(pin: str, stored: str) -> bool:
     salt, dk_hex = stored.split(":", 1)
     dk = hashlib.pbkdf2_hmac(_PBKDF2_HASH, pin.encode(), salt.encode(), _PBKDF2_ITERATIONS)
     return secrets.compare_digest(dk.hex(), dk_hex)
-
-
-def _send_otp_sms(phone: str, otp: str, org_name: str, tenant_session: Session) -> None:
-    try:
-        from routes.sms import send_sms
-        message = (
-            f"{org_name} Mobile Banking OTP: {otp}. "
-            f"Valid for {OTP_EXPIRY_MINUTES} minutes. Do not share."
-        )
-        send_sms(phone, message, tenant_session)
-    except Exception:
-        pass
 
 
 def _find_member_by_account(account_number: str, db: Session):
@@ -207,7 +196,12 @@ async def activate_init(data: ActivateInitRequest, request: Request, db: Session
         member.otp_expires_at = datetime.utcnow() + timedelta(minutes=OTP_EXPIRY_MINUTES)
         tenant_session.commit()
 
-        _send_otp_sms(member.phone, otp, org.name, tenant_session)
+        send_sms(
+            member.phone,
+            f"{org.name} Mobile Banking: Your OTP is {otp}. "
+            f"Valid for {OTP_EXPIRY_MINUTES} minutes. Do not share.",
+            tenant_session,
+        )
 
         phone = member.phone or ""
         masked = phone[:3] + "****" + phone[-3:] if len(phone) >= 7 else "****"
@@ -335,7 +329,12 @@ async def mobile_login(data: LoginRequest, request: Request, db: Session = Depen
         member.otp_expires_at = datetime.utcnow() + timedelta(minutes=LOGIN_OTP_EXPIRY_MINUTES)
         tenant_session.commit()
 
-        _send_otp_sms(member.phone, otp, org.name, tenant_session)
+        send_sms(
+            member.phone,
+            f"{org.name} Mobile Banking: Your login OTP is {otp}. "
+            f"Valid for {LOGIN_OTP_EXPIRY_MINUTES} minutes. Do not share.",
+            tenant_session,
+        )
 
         phone = member.phone or ""
         masked = phone[:3] + "****" + phone[-3:] if len(phone) >= 7 else "****"
@@ -465,7 +464,12 @@ async def resend_otp(data: ResendOtpRequest, db: Session = Depends(get_db)):
         member.otp_expires_at = datetime.utcnow() + timedelta(minutes=expiry_minutes)
         tenant_session.commit()
 
-        _send_otp_sms(member.phone, otp, org.name, tenant_session)
+        send_sms(
+            member.phone,
+            f"{org.name} Mobile Banking: Your OTP is {otp}. "
+            f"Valid for {expiry_minutes} minutes. Do not share.",
+            tenant_session,
+        )
 
         phone = member.phone or ""
         masked = phone[:3] + "****" + phone[-3:] if len(phone) >= 7 else "****"
