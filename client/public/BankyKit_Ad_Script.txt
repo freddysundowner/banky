@@ -94,14 +94,12 @@ SCENE 4 -- CALL TO ACTION (0:50 - 0:57)
 BankyKit logo centred. Contact details below. Clean branded look.
 
 [VO]
-"Contact us today for a free demo."
+"Try it free -- visit demo.bankykit.com"
 
 [ON-SCREEN TEXT -- large and clear]
 BANKYKIT
+Free Demo: demo.bankykit.com
 Phone / WhatsApp: [YOUR NUMBER]
-Website: bankykit.com
-
-"Free Demo Available"
 
 [MUSIC fades out]
 

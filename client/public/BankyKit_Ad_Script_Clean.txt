@@ -22,7 +22,7 @@ your portfolio, revenue, and member growth."
 No subscriptions. Pay once and own it forever."
 
 
-"Contact us today for a free demo."
+"Try it free -- visit demo.bankykit.com"
 
 
 ================================
@@ -43,9 +43,8 @@ ON-SCREEN TEXT (in order)
     80+ currencies supported
     One-time purchase
 
-6.  Phone / WhatsApp: [YOUR NUMBER]
-    Website: bankykit.com
-    Free Demo Available
+6.  Free Demo -- demo.bankykit.com
+    Phone / WhatsApp: [YOUR NUMBER]
 
 7.  Your Bank. Your Data. Your Control.
 ================================
