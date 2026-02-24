@@ -781,6 +781,13 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
             if not data.disbursement_phone:
                 raise HTTPException(status_code=400, detail="Phone number required for M-Pesa disbursement")
             from middleware.demo_guard import is_demo_mode as _is_demo
+            from models.tenant import OrganizationSettings as _OrgSettings
+            mpesa_setting = tenant_session.query(_OrgSettings).filter(
+                _OrgSettings.setting_key == "mpesa_enabled"
+            ).first()
+            mpesa_on = mpesa_setting and mpesa_setting.setting_value.lower() == "true" if mpesa_setting else False
+            if not mpesa_on:
+                raise HTTPException(status_code=400, detail="M-Pesa is not enabled for this organization")
             if not _is_demo():
                 org = db.query(Organization).filter(Organization.id == org_id).first()
                 if not org or (getattr(org, "currency", None) or "USD") != "KES":
