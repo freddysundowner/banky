@@ -299,7 +299,10 @@ def request_withdrawal(data: WithdrawRequest, ctx: dict = Depends(get_current_me
     from services.code_generator import generate_txn_code
 
     member = ctx["member"]
+    org = ctx["org"]
     ts = ctx["session"]
+
+    _require_mpesa_available(org, ts)
 
     if data.amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than zero")
