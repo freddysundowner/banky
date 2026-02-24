@@ -6,9 +6,10 @@ from datetime import datetime
 import httpx
 import base64
 import json
+import os
 from models.database import get_db
 from models.tenant import Member, Transaction, OrganizationSettings, MpesaPayment, Staff, LoanApplication
-from middleware.demo_guard import require_not_demo
+from middleware.demo_guard import require_not_demo, is_demo_mode
 from models.master import Organization
 from services.tenant_context import TenantContext
 from routes.auth import get_current_user
@@ -16,6 +17,17 @@ from routes.common import get_tenant_session_context, require_permission
 from services.feature_flags import check_org_feature
 from services.mpesa_loan_service import apply_mpesa_payment_to_loan, find_loan_from_reference
 from services.code_generator import generate_txn_code
+
+SANDBOX_SHORTCODE = "174379"
+SANDBOX_PASSKEY = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
+SANDBOX_BASE_URL = "https://sandbox.safaricom.co.ke"
+
+
+def get_sandbox_consumer_credentials():
+    """Return sandbox consumer key/secret from env vars."""
+    key = os.environ.get("MPESA_SANDBOX_CONSUMER_KEY", "")
+    secret = os.environ.get("MPESA_SANDBOX_CONSUMER_SECRET", "")
+    return key, secret
 
 router = APIRouter()
 
@@ -488,18 +500,22 @@ async def credit_mpesa_payment(
         tenant_ctx.close()
 
 def get_mpesa_access_token(tenant_session) -> str:
-    """Get M-Pesa OAuth access token"""
-    consumer_key = get_org_setting(tenant_session, "mpesa_consumer_key", "")
-    consumer_secret = get_org_setting(tenant_session, "mpesa_consumer_secret", "")
-    
-    if not consumer_key or not consumer_secret:
-        raise HTTPException(status_code=400, detail="M-Pesa credentials not configured")
-    
+    """Get M-Pesa OAuth access token. In demo mode, uses platform sandbox credentials."""
+    if is_demo_mode():
+        consumer_key, consumer_secret = get_sandbox_consumer_credentials()
+        if not consumer_key or not consumer_secret:
+            raise HTTPException(status_code=400, detail="Sandbox M-Pesa credentials not configured (set MPESA_SANDBOX_CONSUMER_KEY and MPESA_SANDBOX_CONSUMER_SECRET)")
+        base_url = SANDBOX_BASE_URL
+    else:
+        consumer_key = get_org_setting(tenant_session, "mpesa_consumer_key", "")
+        consumer_secret = get_org_setting(tenant_session, "mpesa_consumer_secret", "")
+        if not consumer_key or not consumer_secret:
+            raise HTTPException(status_code=400, detail="M-Pesa credentials not configured")
+        environment = get_org_setting(tenant_session, "mpesa_environment", "sandbox")
+        base_url = "https://api.safaricom.co.ke" if environment == "production" else "https://sandbox.safaricom.co.ke"
+
     credentials = base64.b64encode(f"{consumer_key}:{consumer_secret}".encode()).decode()
-    
-    environment = get_org_setting(tenant_session, "mpesa_environment", "sandbox")
-    base_url = "https://api.safaricom.co.ke" if environment == "production" else "https://sandbox.safaricom.co.ke"
-    
+
     with httpx.Client(timeout=30.0) as client:
         response = client.get(
             f"{base_url}/oauth/v1/generate?grant_type=client_credentials",
