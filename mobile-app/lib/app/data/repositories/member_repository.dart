@@ -9,14 +9,22 @@ import '../models/loan_model.dart';
 class MemberRepository {
   final ApiService _api = Get.find<ApiService>();
 
-  Future<MemberModel?> getMemberDetails() async {
+  Future<Map<String, dynamic>?> getMemberDetailsRaw() async {
     try {
       final response = await _api.get(ApiConstants.memberMe);
       if (response.statusCode == 200) {
-        return MemberModel.fromJson(response.data);
+        return Map<String, dynamic>.from(response.data);
       }
     } catch (e) {
       print('Error getting member details: $e');
+    }
+    return null;
+  }
+
+  Future<MemberModel?> getMemberDetails() async {
+    final raw = await getMemberDetailsRaw();
+    if (raw != null) {
+      return MemberModel.fromJson(raw);
     }
     return null;
   }

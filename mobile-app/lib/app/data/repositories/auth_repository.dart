@@ -70,6 +70,16 @@ class AuthRepository {
     return null;
   }
 
+  void updateOrganizationCache(Map<String, dynamic> orgJson) {
+    final cached = _storage.getOrganization();
+    if (cached != null) {
+      cached.addAll(orgJson);
+      _storage.saveOrganization(cached);
+    } else {
+      _storage.saveOrganization(orgJson);
+    }
+  }
+
   MemberModel? getCachedMember() {
     final data = _storage.getMember();
     if (data != null) {

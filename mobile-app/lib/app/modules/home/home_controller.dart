@@ -37,12 +37,19 @@ class HomeController extends GetxController {
       member.value = _authRepo.getCachedMember();
       organization.value = await _authRepo.getCurrentOrganization();
       
-      final freshMember = await _memberRepo.getMemberDetails();
-      if (freshMember != null) {
+      final rawData = await _memberRepo.getMemberDetailsRaw();
+      if (rawData != null) {
+        final freshMember = MemberModel.fromJson(rawData);
         member.value = freshMember;
         savingsBalance.value = freshMember.savingsBalance;
         sharesBalance.value = freshMember.sharesBalance;
         loanBalance.value = freshMember.loanBalance;
+
+        if (rawData['organization'] != null) {
+          final orgJson = Map<String, dynamic>.from(rawData['organization'] as Map);
+          _authRepo.updateOrganizationCache(orgJson);
+          organization.value = OrganizationModel.fromJson(orgJson);
+        }
       }
     } catch (e) {
       print('Error loading initial data: $e');
