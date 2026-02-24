@@ -1012,6 +1012,7 @@ DEFAULT_PLATFORM_SETTINGS = [
     {"key": "guide_url", "value": "", "type": "string", "description": "URL for the View Guide link shown on login and registration pages"},
     {"key": "logo_url", "value": "", "type": "string", "description": "URL for the platform logo image (PNG, JPG, or SVG) - used in sidebar and login page"},
     {"key": "favicon_url", "value": "", "type": "string", "description": "URL for the browser tab favicon (PNG, ICO, or SVG) - defaults to a generated bank icon if not set"},
+    {"key": "demo_mode", "value": "false", "type": "boolean", "description": "When enabled, restricts editing of sensitive settings and destructive actions across the platform"},
 ]
 
 def initialize_platform_settings(db: Session):

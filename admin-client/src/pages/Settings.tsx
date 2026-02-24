@@ -171,6 +171,31 @@ export default function Settings() {
                 </div>
 
                 <div className="grid gap-6">
+                  {(() => {
+                    const demoEnabled = getValue('demo_mode') === 'true'
+                    return (
+                      <div className={`rounded-lg border-2 p-5 transition-all ${demoEnabled ? 'border-amber-300 bg-amber-50' : 'border-gray-200 bg-gray-50'}`}>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-medium text-gray-900">Demo Mode</h3>
+                            <p className="text-sm text-gray-500 mt-0.5">
+                              When on, sensitive settings and destructive actions are blocked platform-wide
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleChange('demo_mode', demoEnabled ? 'false' : 'true')}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${demoEnabled ? 'bg-amber-500' : 'bg-gray-300'}`}
+                          >
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${demoEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })()}
+                </div>
+
+                <div className="grid gap-6">
                   <div className="bg-gray-50 rounded-lg p-5 border border-gray-100">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Platform Name

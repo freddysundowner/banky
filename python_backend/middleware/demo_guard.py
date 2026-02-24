@@ -33,6 +33,20 @@ CRITICAL_SETTINGS_KEYS = SENSITIVE_KEYS | {
 
 
 def is_demo_mode() -> bool:
+    try:
+        from models.database import SessionLocal
+        from models.master import PlatformSettings
+        db = SessionLocal()
+        try:
+            setting = db.query(PlatformSettings).filter(
+                PlatformSettings.setting_key == "demo_mode"
+            ).first()
+            if setting is not None:
+                return setting.setting_value.lower() == "true"
+        finally:
+            db.close()
+    except Exception:
+        pass
     return os.environ.get("VITE_PRODUCTION_MODE", "").lower() == "demo"
 
 
