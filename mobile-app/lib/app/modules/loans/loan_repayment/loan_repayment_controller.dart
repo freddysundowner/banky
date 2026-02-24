@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/theme/app_theme.dart';
 import '../../../data/models/loan_model.dart';
 import '../../../data/repositories/payment_repository.dart';
 import '../../home/home_controller.dart';
@@ -211,9 +212,4 @@ class LoanRepaymentController extends GetxController {
   String formatCurrency(double amount) {
     return homeController.formatCurrency(amount);
   }
-}
-
-class AppColors {
-  static const Color success = Color(0xFF22C55E);
-  static const Color textSecondary = Color(0xFF64748B);
 }
