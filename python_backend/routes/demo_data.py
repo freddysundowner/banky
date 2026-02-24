@@ -9,7 +9,7 @@ import uuid
 from models.database import get_db, get_tenant_session
 from models.master import (
     Organization, OrganizationMember, User, OrganizationSubscription, SubscriptionPlan,
-    Session as UserSession
+    Session as UserSession, MobileDeviceRegistry
 )
 from models.tenant import (
     TenantBase, Branch, Staff, Member, LoanProduct, LoanApplication,
@@ -707,6 +707,9 @@ def clean_demo(admin: AdminUser = Depends(require_admin), db: Session = Depends(
         ).delete()
         db.query(OrganizationMember).filter(
             OrganizationMember.organization_id == org.id
+        ).delete()
+        db.query(MobileDeviceRegistry).filter(
+            MobileDeviceRegistry.org_id == org.id
         ).delete()
 
         owner = db.query(User).filter(User.email == DEMO_OWNER_EMAIL).first()
