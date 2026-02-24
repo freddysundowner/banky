@@ -25,7 +25,7 @@ def sanitize_org(org: Organization) -> dict:
         "phone": org.phone,
         "address": org.address,
         "staff_email_domain": org.staff_email_domain,
-        "currency": org.currency or "USD",
+        "currency": org.currency or "KES",
         "is_active": org.is_active,
         "created_at": org.created_at
     }
@@ -62,7 +62,7 @@ async def create_organization(data: OrganizationCreate, user = Depends(get_curre
         address=data.address,
         staff_email_domain=staff_domain,
         deployment_mode=deployment_mode,
-        currency=data.currency or "USD",
+        currency=data.currency or "KES",
         financial_year_start="01-01"
     )
     db.add(org)

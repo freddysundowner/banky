@@ -14,7 +14,7 @@ from models.master import Organization
 router = APIRouter()
 
 DEFAULT_SETTINGS = [
-    {"key": "currency", "value": "USD", "type": "string", "description": "Default currency"},
+    {"key": "currency", "value": "KES", "type": "string", "description": "Default currency"},
     {"key": "currency_symbol", "value": "KSh", "type": "string", "description": "Currency symbol"},
     {"key": "timezone", "value": "Africa/Nairobi", "type": "string", "description": "Organization timezone"},
     {"key": "date_format", "value": "DD/MM/YYYY", "type": "string", "description": "Date format"},
@@ -118,7 +118,7 @@ async def list_settings(org_id: str, user=Depends(get_current_user), db: Session
                 "working_days": ("string", lambda v: ",".join(v) if isinstance(v, list) else (str(v) if v else "")),
                 "auto_logout_minutes": ("string", lambda v: str(v) if v else None),
                 "require_two_factor_auth": ("boolean", lambda v: str(v).lower() if v is not None else "false"),
-                "currency": ("string", lambda v: str(v) if v else "USD"),
+                "currency": ("string", lambda v: str(v) if v else "KES"),
                 "financial_year_start": ("string", lambda v: str(v) if v else None),
             }
             for field_key, (field_type, formatter) in org_field_map.items():

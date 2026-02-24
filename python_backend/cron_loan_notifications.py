@@ -84,7 +84,7 @@ def get_org_currency(tenant_session):
     setting = tenant_session.query(OrganizationSettings).filter(
         OrganizationSettings.setting_key == "currency"
     ).first()
-    return setting.setting_value if setting else "USD"
+    return setting.setting_value if setting else "KES"
 
 
 def process_due_today(tenant_session, org_name):
