@@ -123,13 +123,6 @@ class DashboardView extends GetView<DashboardController> {
     return Obx(() {
       final cards = [
         _BalanceCardData(
-          label: 'Total Balance',
-          amount: controller.totalBalance,
-          icon: Icons.account_balance_outlined,
-          gradient: [AppColors.primary, AppColors.primaryDark],
-          visible: controller.showTotal,
-        ),
-        _BalanceCardData(
           label: 'Savings',
           amount: controller.savingsBalance.value,
           icon: Icons.savings_outlined,

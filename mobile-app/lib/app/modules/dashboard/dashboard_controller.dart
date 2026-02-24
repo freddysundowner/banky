@@ -27,7 +27,6 @@ class DashboardController extends GetxController {
   final loanBalance = 0.0.obs;
   final fixedDepositBalance = 0.0.obs;
 
-  final showTotal = false.obs;
   final showSavings = false.obs;
   final showShares = false.obs;
   final showFixedDeposits = false.obs;
