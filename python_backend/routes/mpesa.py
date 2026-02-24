@@ -80,7 +80,7 @@ async def mpesa_validation(org_id: str, request: Request, db: Session = Depends(
         if not org or not org.connection_string:
             return {"ResultCode": "C2B00012", "ResultDesc": "Invalid organization"}
         
-        tenant_ctx = TenantContext(org.connection_string, org_id)
+        tenant_ctx = TenantContext(org.connection_string)
         tenant_session = tenant_ctx.create_session()
         
         try:
@@ -121,7 +121,7 @@ async def mpesa_confirmation(org_id: str, request: Request, db: Session = Depend
         if not org or not org.connection_string:
             return {"ResultCode": "C2B00012", "ResultDesc": "Invalid organization"}
         
-        tenant_ctx = TenantContext(org.connection_string, org_id)
+        tenant_ctx = TenantContext(org.connection_string)
         tenant_session = tenant_ctx.create_session()
         
         try:
@@ -310,7 +310,7 @@ async def simulate_mpesa_deposit(
     if not org or not org.connection_string:
         raise HTTPException(status_code=404, detail="Organization not found")
     
-    tenant_ctx = TenantContext(org.connection_string, org_id)
+    tenant_ctx = TenantContext(org.connection_string)
     tenant_session = tenant_ctx.create_session()
     
     try:
@@ -903,7 +903,7 @@ async def mpesa_stk_callback(org_id: str, request: Request, db: Session = Depend
             if checkout_request_id:
                 org = db.query(Organization).filter(Organization.id == org_id).first()
                 if org and org.connection_string:
-                    tc = TenantContext(org.connection_string, org_id)
+                    tc = TenantContext(org.connection_string)
                     ts = tc.create_session()
                     try:
                         pr = ts.query(MpesaPayment).filter(
@@ -942,7 +942,7 @@ async def mpesa_stk_callback(org_id: str, request: Request, db: Session = Depend
             print(f"[STK Callback] Organization not found: {org_id}")
             return {"ResultCode": 0, "ResultDesc": "Accepted"}
 
-        tenant_ctx = TenantContext(org.connection_string, org_id)
+        tenant_ctx = TenantContext(org.connection_string)
         tenant_session = tenant_ctx.create_session()
 
         try:
