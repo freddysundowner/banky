@@ -1,4 +1,5 @@
-import 'dart:math';
+import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -95,14 +96,34 @@ class StorageService extends GetxService {
     return _box.read<String>(fcmTokenKey);
   }
 
+  /// Returns the real hardware device ID.
+  /// On Android: Android ID (stable per device + app signing key).
+  /// On iOS: identifierForVendor (stable per vendor, resets on reinstall).
+  /// The value is cached in secure storage after the first read so subsequent
+  /// calls are fast and the ID survives app updates.
   Future<String> getOrCreateDeviceId() async {
-    String? existing = await _secureStorage.read(key: deviceIdKey);
-    if (existing != null && existing.isNotEmpty) return existing;
-    final rng = Random.secure();
-    final id = List.generate(32, (_) => rng.nextInt(16).toRadixString(16)).join();
-    final formatted = '${id.substring(0, 8)}-${id.substring(8, 12)}-4${id.substring(13, 16)}-${id.substring(16, 20)}-${id.substring(20)}';
-    await _secureStorage.write(key: deviceIdKey, value: formatted);
-    return formatted;
+    final cached = await _secureStorage.read(key: deviceIdKey);
+    if (cached != null && cached.isNotEmpty) return cached;
+
+    String id = '';
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      if (Platform.isAndroid) {
+        final info = await deviceInfo.androidInfo;
+        id = info.id; // Android ID — hex string, unique per device + signing key
+      } else if (Platform.isIOS) {
+        final info = await deviceInfo.iosInfo;
+        id = info.identifierForVendor ?? '';
+      }
+    } catch (_) {}
+
+    if (id.isEmpty) {
+      // Fallback: generate a stable random ID and persist it
+      id = DateTime.now().microsecondsSinceEpoch.toRadixString(16);
+    }
+
+    await _secureStorage.write(key: deviceIdKey, value: id);
+    return id;
   }
 
   Future<void> clearAll() async {
