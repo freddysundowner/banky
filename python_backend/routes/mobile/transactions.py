@@ -21,6 +21,7 @@ from .deps import get_current_member
 def _require_mpesa_available(org, tenant_session):
     from middleware.demo_guard import is_demo_mode
     from models.tenant import OrganizationSettings
+    from routes.mpesa import get_org_setting
     setting = tenant_session.query(OrganizationSettings).filter(
         OrganizationSettings.setting_key == "mpesa_enabled"
     ).first()
@@ -31,6 +32,9 @@ def _require_mpesa_available(org, tenant_session):
         currency = getattr(org, "currency", None) or "USD"
         if currency != "KES":
             raise HTTPException(status_code=400, detail="M-Pesa payments are not available for your organization. Please contact your administrator.")
+        mpesa_env = get_org_setting(tenant_session, "mpesa_environment", "sandbox")
+        if mpesa_env != "production":
+            raise HTTPException(status_code=400, detail="M-Pesa is not configured for live payments yet. Please ask your administrator to set up production M-Pesa credentials.")
 
 router = APIRouter()
 
@@ -267,10 +271,7 @@ async def initiate_deposit(data: DepositRequest, ctx: dict = Depends(get_current
         ts.add(pending_payment)
         ts.commit()
 
-        from services.tenant_context import get_org_setting
-        mpesa_env = get_org_setting(ts, "mpesa_environment", "sandbox") if not is_demo_mode() else "sandbox"
-        use_sandbox = is_demo_mode() or mpesa_env == "sandbox"
-        if use_sandbox:
+        if is_demo_mode():
             asyncio.create_task(simulate_sandbox_callback(
                 org.id,
                 checkout_request_id or "",
@@ -280,7 +281,7 @@ async def initiate_deposit(data: DepositRequest, ctx: dict = Depends(get_current
 
         return {
             "success": True,
-            "message": "M-Pesa prompt sent. Enter your PIN to complete the deposit." if not use_sandbox else "M-Pesa deposit initiated. Funds will be credited shortly.",
+            "message": "M-Pesa prompt sent. Enter your PIN to complete the deposit.",
             "checkout_request_id": checkout_request_id,
             "merchant_request_id": merchant_request_id,
             "phone": phone,
@@ -469,10 +470,7 @@ async def mobile_mpesa_pay(data: MpesaPayRequest, ctx: dict = Depends(get_curren
         ts.add(pending_payment)
         ts.commit()
 
-        from services.tenant_context import get_org_setting as _get_setting
-        mpesa_env_pay = _get_setting(ts, "mpesa_environment", "sandbox") if not is_demo_mode() else "sandbox"
-        use_sandbox_pay = is_demo_mode() or mpesa_env_pay == "sandbox"
-        if use_sandbox_pay:
+        if is_demo_mode():
             asyncio.create_task(simulate_sandbox_callback(
                 org.id,
                 checkout_request_id or "",
@@ -482,7 +480,7 @@ async def mobile_mpesa_pay(data: MpesaPayRequest, ctx: dict = Depends(get_curren
 
         return {
             "success": True,
-            "message": "M-Pesa prompt sent. Enter your PIN to complete the payment." if not use_sandbox_pay else "M-Pesa payment initiated. Funds will be credited shortly.",
+            "message": "M-Pesa prompt sent. Enter your PIN to complete the payment.",
             "checkout_request_id": checkout_request_id,
             "merchant_request_id": merchant_request_id,
             "phone": data.phone_number,

@@ -1054,21 +1054,8 @@ async def mpesa_stk_callback(org_id: str, request: Request, db: Session = Depend
 
         if result_code != 0:
             print(f"[STK Callback] Payment failed/cancelled: {result_desc}")
-            ignore_failure = is_demo_mode()
-            if not ignore_failure:
-                org_check = db.query(Organization).filter(Organization.id == org_id).first()
-                if org_check and org_check.connection_string:
-                    _tc = TenantContext(org_check.connection_string)
-                    _ts = _tc.create_session()
-                    try:
-                        mpesa_env = get_org_setting(_ts, "mpesa_environment", "sandbox")
-                        if mpesa_env == "sandbox":
-                            ignore_failure = True
-                    finally:
-                        _ts.close()
-                        _tc.close()
-            if ignore_failure:
-                print(f"[STK Callback] Sandbox/demo mode — ignoring failure, simulated success will follow")
+            if is_demo_mode():
+                print(f"[STK Callback] Demo mode — ignoring sandbox failure, simulated success will follow")
                 return {"ResultCode": 0, "ResultDesc": "Accepted"}
             if checkout_request_id:
                 org = db.query(Organization).filter(Organization.id == org_id).first()
