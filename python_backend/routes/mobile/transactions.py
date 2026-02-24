@@ -38,9 +38,12 @@ def _tx(t) -> dict:
 @router.get("/me/transactions")
 def get_transactions(
     page: int = Query(1, ge=1),
-    per_page: int = Query(20, ge=1, le=100),
+    per_page: int = Query(20, ge=1, le=200),
+    limit: Optional[int] = Query(None),
     account_type: Optional[str] = Query(None),
     transaction_type: Optional[str] = Query(None),
+    start_date: Optional[str] = Query(None),
+    end_date: Optional[str] = Query(None),
     ctx: dict = Depends(get_current_member),
 ):
     from models.tenant import Transaction
@@ -48,22 +51,38 @@ def get_transactions(
     member = ctx["member"]
     ts = ctx["session"]
 
+    effective_per_page = limit if limit is not None else per_page
+
     try:
         q = ts.query(Transaction).filter(Transaction.member_id == member.id)
         if account_type:
             q = q.filter(Transaction.account_type == account_type)
         if transaction_type:
             q = q.filter(Transaction.transaction_type == transaction_type)
+        if start_date:
+            try:
+                from datetime import datetime as dt
+                sd = dt.fromisoformat(start_date.replace("Z", "+00:00"))
+                q = q.filter(Transaction.created_at >= sd)
+            except Exception:
+                pass
+        if end_date:
+            try:
+                from datetime import datetime as dt
+                ed = dt.fromisoformat(end_date.replace("Z", "+00:00"))
+                q = q.filter(Transaction.created_at <= ed)
+            except Exception:
+                pass
 
         total = q.count()
-        items = q.order_by(desc(Transaction.created_at)).offset((page - 1) * per_page).limit(per_page).all()
+        items = q.order_by(desc(Transaction.created_at)).offset((page - 1) * effective_per_page).limit(effective_per_page).all()
 
         return {
             "items": [_tx(t) for t in items],
             "total": total,
             "page": page,
-            "per_page": per_page,
-            "total_pages": math.ceil(total / per_page) if total > 0 else 1,
+            "per_page": effective_per_page,
+            "total_pages": math.ceil(total / effective_per_page) if total > 0 else 1,
         }
     finally:
         ts.close()

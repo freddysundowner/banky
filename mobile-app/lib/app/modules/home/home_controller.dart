@@ -6,6 +6,8 @@ import '../../data/models/organization_model.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/member_repository.dart';
 import '../../routes/app_pages.dart';
+import '../transactions/transactions_controller.dart';
+import '../statements/statements_controller.dart';
 
 class HomeController extends GetxController {
   final AuthRepository _authRepo = Get.find<AuthRepository>();
@@ -54,6 +56,12 @@ class HomeController extends GetxController {
 
   void onNavTap(int index) {
     currentIndex.value = index;
+    if (index == 1) {
+      try { Get.find<TransactionsController>().loadTransactions(refresh: true); } catch (_) {}
+    }
+    if (index == 2) {
+      try { Get.find<StatementsController>().loadStatements(); } catch (_) {}
+    }
   }
 
   void navigateToDashboard() {

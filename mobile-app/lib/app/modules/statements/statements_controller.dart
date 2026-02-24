@@ -2,16 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../data/models/transaction_model.dart';
+import '../../data/repositories/member_repository.dart';
 import '../../data/repositories/statement_repository.dart';
 
 class StatementsController extends GetxController {
   final StatementRepository _statementRepo = Get.find<StatementRepository>();
+  final MemberRepository _memberRepo = Get.find<MemberRepository>();
 
   final isLoading = false.obs;
   final isGenerating = false.obs;
-  final statements = <Map<String, dynamic>>[].obs;
-  
-  final selectedAccountType = 'savings'.obs;
+  final transactions = <TransactionModel>[].obs;
+
+  final selectedAccountType = 'all'.obs;
   final startDate = Rxn<DateTime>();
   final endDate = Rxn<DateTime>();
 
@@ -21,18 +24,23 @@ class StatementsController extends GetxController {
   void onInit() {
     super.onInit();
     final now = DateTime.now();
-    startDate.value = DateTime(now.year, now.month - 1, 1);
-    endDate.value = DateTime(now.year, now.month, 0);
+    startDate.value = DateTime(now.year, now.month - 1, now.day);
+    endDate.value = now;
     loadStatements();
   }
 
   Future<void> loadStatements() async {
     isLoading.value = true;
     try {
-      final result = await _statementRepo.getStatementHistory();
-      statements.assignAll(result);
+      final result = await _memberRepo.getTransactions(
+        limit: 200,
+        accountType: selectedAccountType.value == 'all' ? null : selectedAccountType.value,
+        startDate: startDate.value,
+        endDate: endDate.value,
+      );
+      transactions.assignAll(result);
     } catch (e) {
-      print('Error loading statements: $e');
+      print('Error loading statement transactions: $e');
     } finally {
       isLoading.value = false;
     }
@@ -40,6 +48,7 @@ class StatementsController extends GetxController {
 
   void setAccountType(String type) {
     selectedAccountType.value = type;
+    loadStatements();
   }
 
   Future<void> selectStartDate(BuildContext context) async {
@@ -51,6 +60,7 @@ class StatementsController extends GetxController {
     );
     if (picked != null) {
       startDate.value = picked;
+      loadStatements();
     }
   }
 
@@ -63,6 +73,7 @@ class StatementsController extends GetxController {
     );
     if (picked != null) {
       endDate.value = picked;
+      loadStatements();
     }
   }
 
@@ -86,15 +97,19 @@ class StatementsController extends GetxController {
         endDate: endDate.value!,
       );
 
-      if (result['success']) {
-        Get.snackbar(
-          'Success',
-          'Statement generated successfully',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green.shade100,
-          colorText: Colors.green.shade900,
-        );
-        await loadStatements();
+      if (result['success'] == true) {
+        final statementId = result['data']?['id'];
+        if (statementId != null) {
+          await downloadStatement(statementId.toString());
+        } else {
+          Get.snackbar(
+            'Success',
+            'Statement generated successfully',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green.shade100,
+            colorText: Colors.green.shade900,
+          );
+        }
       } else {
         Get.snackbar(
           'Error',
@@ -121,8 +136,8 @@ class StatementsController extends GetxController {
     isLoading.value = true;
     try {
       final result = await _statementRepo.downloadStatement(statementId);
-      
-      if (result['success']) {
+
+      if (result['success'] == true) {
         Get.snackbar(
           'Downloaded',
           'Statement saved to ${result['filePath']}',
@@ -156,8 +171,8 @@ class StatementsController extends GetxController {
     isLoading.value = true;
     try {
       final result = await _statementRepo.generateMiniStatement();
-      
-      if (result['success']) {
+
+      if (result['success'] == true) {
         _showMiniStatementDialog(result['data']);
       } else {
         Get.snackbar(

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:get/get.dart';
 
 import '../../data/models/member_model.dart';
@@ -8,6 +9,7 @@ import '../../data/repositories/member_repository.dart';
 import '../../data/repositories/payment_repository.dart';
 import '../../core/services/api_service.dart';
 import '../home/home_controller.dart';
+import '../transactions/transactions_controller.dart';
 
 class DashboardController extends GetxController {
   final AuthRepository _authRepo = Get.find<AuthRepository>();
@@ -106,6 +108,10 @@ class DashboardController extends GetxController {
     );
     if (result['success'] == true) {
       await refreshDashboard();
+      Future.delayed(const Duration(seconds: 6), () {
+        try { Get.find<TransactionsController>().loadTransactions(refresh: true); } catch (_) {}
+        refreshDashboard();
+      });
     }
     return result;
   }
