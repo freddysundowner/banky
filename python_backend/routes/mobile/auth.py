@@ -68,24 +68,69 @@ def _verify_pin(pin: str, stored: str) -> bool:
     return secrets.compare_digest(dk.hex(), dk_hex)
 
 
-def _find_member_by_account(account_number: str, db: Session):
-    """Search all tenant databases for a member by account number."""
-    from models.master import Organization
-    from models.tenant import Member
+def _open_tenant(org, db: Session):
+    """Open a tenant session for a given org. Returns (tenant_session, tenant_ctx) or (None, None)."""
     from services.tenant_context import get_tenant_context_simple
+    tenant_ctx = get_tenant_context_simple(org.id, db)
+    if not tenant_ctx:
+        return None, None
+    return tenant_ctx.create_session(), tenant_ctx
 
-    organizations = db.query(Organization).filter(
-        Organization.connection_string.isnot(None)
-    ).all()
+
+def _find_member_by_account(account_number: str, db: Session):
+    """
+    Find a member by account_number.
+
+    Fast path: look up account_number in the master-DB MobileDeviceRegistry,
+    which is written when staff generates the activation code. This avoids
+    scanning every tenant database.
+
+    Fallback: if the registry has no entry (e.g., legacy data), scan all
+    tenant databases in sequence.
+    """
+    from models.master import Organization, MobileDeviceRegistry
+    from models.tenant import Member
+
+    norm = account_number.upper().strip()
+
+    # --- Fast path via registry ---
+    entry = db.query(MobileDeviceRegistry).filter(
+        MobileDeviceRegistry.account_number == norm
+    ).first()
+
+    if entry:
+        org = db.query(Organization).filter(Organization.id == entry.org_id).first()
+        if org:
+            tenant_session, tenant_ctx = _open_tenant(org, db)
+            if tenant_session:
+                member = None
+                try:
+                    member = tenant_session.query(Member).filter(
+                        Member.member_number == norm
+                    ).first()
+                    if member:
+                        return member, org, tenant_session, tenant_ctx
+                except Exception:
+                    pass
+                finally:
+                    if not member:
+                        tenant_session.close()
+                        tenant_ctx.close()
+
+    # --- Fallback: scan all tenants (backward compat / stale registry) ---
+    skip_org_id = entry.org_id if entry else None
+    _filters = [Organization.connection_string.isnot(None)]
+    if skip_org_id:
+        _filters.append(Organization.id != skip_org_id)
+    organizations = db.query(Organization).filter(*_filters).all()
 
     for org in organizations:
-        tenant_ctx = get_tenant_context_simple(org.id, db)
-        if not tenant_ctx:
+        tenant_session, tenant_ctx = _open_tenant(org, db)
+        if not tenant_session:
             continue
-        tenant_session = tenant_ctx.create_session()
         try:
             member = tenant_session.query(Member).filter(
-                Member.member_number == account_number.upper().strip()
+                Member.member_number == norm
             ).first()
             if member:
                 return member, org, tenant_session, tenant_ctx
@@ -99,33 +144,44 @@ def _find_member_by_account(account_number: str, db: Session):
 
 
 def _find_member_by_device(device_id: str, db: Session):
-    """Search all tenant databases for a member by device_id."""
-    from models.master import Organization
+    """
+    Find a member by device_id using the master-DB MobileDeviceRegistry only.
+
+    The registry entry is written when a member completes activation, so if
+    the device is not in the registry the member has never activated and
+    cannot log in.
+    """
+    from models.master import Organization, MobileDeviceRegistry
     from models.tenant import Member
-    from services.tenant_context import get_tenant_context_simple
 
-    organizations = db.query(Organization).filter(
-        Organization.connection_string.isnot(None)
-    ).all()
+    entry = db.query(MobileDeviceRegistry).filter(
+        MobileDeviceRegistry.device_id == device_id
+    ).first()
 
-    for org in organizations:
-        tenant_ctx = get_tenant_context_simple(org.id, db)
-        if not tenant_ctx:
-            continue
-        tenant_session = tenant_ctx.create_session()
-        try:
-            member = tenant_session.query(Member).filter(
-                Member.mobile_device_id == device_id
-            ).first()
-            if member:
-                return member, org, tenant_session, tenant_ctx
-            tenant_session.close()
-            tenant_ctx.close()
-        except Exception:
-            tenant_session.close()
-            tenant_ctx.close()
+    if not entry:
+        return None, None, None, None
 
-    return None, None, None, None
+    org = db.query(Organization).filter(Organization.id == entry.org_id).first()
+    if not org:
+        return None, None, None, None
+
+    tenant_session, tenant_ctx = _open_tenant(org, db)
+    if not tenant_session:
+        return None, None, None, None
+
+    try:
+        member = tenant_session.query(Member).filter(
+            Member.mobile_device_id == device_id
+        ).first()
+        if member:
+            return member, org, tenant_session, tenant_ctx
+        tenant_session.close()
+        tenant_ctx.close()
+        return None, None, None, None
+    except Exception:
+        tenant_session.close()
+        tenant_ctx.close()
+        return None, None, None, None
 
 
 class ActivateInitRequest(BaseModel):
@@ -276,6 +332,25 @@ async def activate_complete(
         )
         tenant_session.add(mobile_session)
         tenant_session.commit()
+
+        # Bind device_id to the registry entry so subsequent logins use O(1) lookup.
+        try:
+            from models.master import MobileDeviceRegistry
+            reg = db.query(MobileDeviceRegistry).filter(
+                MobileDeviceRegistry.account_number == data.account_number.upper().strip()
+            ).first()
+            if reg:
+                reg.device_id = data.device_id
+                reg.updated_at = datetime.utcnow()
+            else:
+                db.add(MobileDeviceRegistry(
+                    account_number=data.account_number.upper().strip(),
+                    device_id=data.device_id,
+                    org_id=org.id,
+                ))
+            db.commit()
+        except Exception as e:
+            print(f"[MobileRegistry] Failed to bind device {data.device_id}: {e}")
 
         cookie_value = f"mobile:{org.id}:{member.id}:{session_token}"
         response.set_cookie(

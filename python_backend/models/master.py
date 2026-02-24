@@ -241,3 +241,25 @@ class EmailVerificationToken(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     
     user = relationship("User")
+
+
+class MobileDeviceRegistry(Base):
+    """
+    Master-DB routing index for mobile banking.
+
+    Written when staff generates an activation code (account_number → org_id).
+    Updated when the member completes activation (device_id added).
+
+    Allows O(1) lookups for both the activation flow (by account_number) and
+    subsequent logins (by device_id), replacing the previous full tenant scan.
+    """
+    __tablename__ = "mobile_device_registry"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    account_number = Column(String(50), unique=True, nullable=False, index=True)
+    device_id = Column(String(255), nullable=True, index=True)
+    org_id = Column(String, ForeignKey("organizations.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    organization = relationship("Organization")

@@ -77,6 +77,25 @@ async def staff_activate_mobile(
         member.mobile_activation_expires_at = datetime.utcnow() + timedelta(hours=ACTIVATION_EXPIRY_HOURS)
         tenant_session.commit()
 
+        # Register account_number → org_id in the master DB so that the
+        # mobile app can route directly to this tenant without scanning all orgs.
+        try:
+            from models.master import MobileDeviceRegistry
+            registry_entry = db.query(MobileDeviceRegistry).filter(
+                MobileDeviceRegistry.account_number == member.member_number
+            ).first()
+            if registry_entry:
+                registry_entry.org_id = org_id
+                registry_entry.updated_at = datetime.utcnow()
+            else:
+                db.add(MobileDeviceRegistry(
+                    account_number=member.member_number,
+                    org_id=org_id,
+                ))
+            db.commit()
+        except Exception as e:
+            print(f"[MobileRegistry] Failed to register {member.member_number}: {e}")
+
         sms_sent = False
         try:
             from routes.sms import send_sms
