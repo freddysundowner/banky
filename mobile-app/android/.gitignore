@@ -1,0 +1,4 @@
+key.properties
+app/bankykit-release.jks
+app/*.jks
+app/*.keystore
