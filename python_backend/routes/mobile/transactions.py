@@ -191,7 +191,7 @@ def initiate_deposit(data: DepositRequest, ctx: dict = Depends(get_current_membe
             tenant_session=ts,
             phone=phone,
             amount=amount,
-            account_reference=member.account_number or member.id[:8],
+            account_reference=member.member_number or member.id[:8],
             description=data.description or f"{account_label} Deposit",
             org_id=org.id,
         )
