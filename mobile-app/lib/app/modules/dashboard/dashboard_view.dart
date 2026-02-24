@@ -35,8 +35,6 @@ class DashboardView extends GetView<DashboardController> {
                   delegate: SliverChildListDelegate([
                     _buildQuickActions(),
                     const SizedBox(height: 24),
-                    _buildAccountsSection(),
-                    const SizedBox(height: 24),
                     _buildRecentTransactions(),
                     const SizedBox(height: 24),
                     _buildActiveLoans(),
