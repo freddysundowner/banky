@@ -72,8 +72,9 @@ class MemberRepository {
       final response = await _api.get('${ApiConstants.memberMe}/loans');
       
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data['items'] ?? response.data;
-        final all = data.map((json) => LoanModel.fromJson(json)).toList();
+        final raw = response.data;
+        final List<dynamic> data = (raw is Map) ? (raw['items'] ?? raw['loans'] ?? []) : (raw as List<dynamic>);
+        final all = data.map((json) => LoanModel.fromJson(json as Map<String, dynamic>)).toList();
         if (activeOnly) {
           return all.where((l) => l.isActive).toList();
         }
