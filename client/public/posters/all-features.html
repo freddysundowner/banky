@@ -31,11 +31,43 @@ html, body { width:1400px; background:#003eaf; font-family:'Poppins', sans-serif
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  /* prevent cards from splitting across pages */
-  .card, .summary, .footer, .divider, .hero, .header {
+  /* pitch cards and summary stay whole */
+  .pitch-card, .pitch-cta, .summary, .header, .hero, .pitch-intro {
     break-inside: avoid;
     page-break-inside: avoid;
   }
+  /* cards CAN split across pages — but header row never orphans */
+  .card-head {
+    break-inside: avoid;
+    break-after: avoid;
+    page-break-inside: avoid;
+    page-break-after: avoid;
+  }
+  /* each bullet item avoids internal breaks */
+  .card-items li {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  /* footer stays together */
+  .footer {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  /* tighter spacing in print to pack pages better */
+  .poster { padding: 48px 60px 48px; }
+  .card { padding: 22px 28px 20px; margin-bottom: 0; }
+  .card-head { margin-bottom: 14px; padding-bottom: 12px; }
+  .card-items { gap: 10px 48px; }
+  .card-items li { font-size: 22px; }
+  .grid { gap: 16px; }
+  .divider { margin-bottom: 20px; }
+  .hero { margin-bottom: 32px; }
+  .pitch { margin-bottom: 32px; }
+  .pitch-cards { gap: 14px; margin-bottom: 28px; }
+  .pitch-card { padding: 22px 22px; }
+  .pitch-card-icon { font-size: 32px; margin-bottom: 10px; }
+  .pitch-card-text { font-size: 15px; }
+  .summary { padding: 28px 36px; margin-bottom: 24px; }
 }
 
 .poster {
