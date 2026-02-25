@@ -33,6 +33,12 @@ const posters = [
     description: "White background, big typography, colored feature sections.",
     file: "/posters/poster-bold.html",
   },
+  {
+    id: "5",
+    title: "Everything Your SACCO Needs ⭐",
+    description: "Blue gradient, bold headline, decorative circles, feature pills. Clean and shareable.",
+    file: "/posters/poster-5.html",
+  },
 ];
 
 export default function Marketing() {
