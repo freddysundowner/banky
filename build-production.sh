@@ -67,6 +67,22 @@ DATABASE_URL=postgresql:///bankykit
 # Deployment mode (do not change)
 DEPLOYMENT_MODE=enterprise
 
+# ── Tenant database provisioning ────────────────────────────────────
+# Controls how per-organisation databases are created.
+# auto-detected: Neon if NEON_API_KEY is set, otherwise local Postgres.
+# Options: local | neon | shared
+#   local  — creates a separate database per org on this server (default)
+#   neon   — provisions a Neon cloud database per org (requires NEON_API_KEY)
+#   shared — all orgs share the master database (no per-org isolation)
+#TENANT_BACKEND=local
+
+# Neon API key — only needed for TENANT_BACKEND=neon (SaaS/cloud deployments)
+#NEON_API_KEY=
+
+# Override superuser Postgres URL — only needed if DATABASE_URL does not use a
+# superuser account. Leave unset for normal install.sh deployments.
+#LOCAL_PG_SUPERUSER_URL=postgresql:///postgres
+
 # Production mode: "demo" prefills login with demo credentials
 # Set to blank or remove for normal production use
 VITE_PRODUCTION_MODE=
