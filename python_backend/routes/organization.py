@@ -38,15 +38,9 @@ def generate_org_code(db: Session) -> str:
 @router.post("", response_model=OrganizationResponse)
 async def create_organization(data: OrganizationCreate, user = Depends(get_current_user), db: Session = Depends(get_db)):
     deployment_mode = get_deployment_mode()
-    
-    if deployment_mode == "enterprise":
-        existing_org = db.query(Organization).first()
-        if existing_org:
-            raise HTTPException(
-                status_code=400,
-                detail="This deployment supports one organization. An organization already exists."
-            )
-    
+    neon_api_key = os.environ.get("NEON_API_KEY")
+    use_shared_db = (deployment_mode == "enterprise") or (not neon_api_key)
+
     code = generate_org_code(db)
     
     staff_domain = data.staffEmailDomain.lstrip('@').strip() if data.staffEmailDomain else None
@@ -69,7 +63,7 @@ async def create_organization(data: OrganizationCreate, user = Depends(get_curre
     db.commit()
     db.refresh(org)
     
-    if deployment_mode == "enterprise":
+    if use_shared_db:
         database_url = os.environ.get("DATABASE_URL")
         if not database_url:
             db.delete(org)
@@ -83,9 +77,9 @@ async def create_organization(data: OrganizationCreate, user = Depends(get_curre
         
         try:
             TenantContext(database_url)
-            print(f"Enterprise: tenant tables created in shared database for org {org.id}")
+            print(f"[{deployment_mode}] Tenant tables ready in shared database for org {org.id}")
         except Exception as migration_err:
-            print(f"Enterprise tenant migration: {migration_err}")
+            print(f"Shared DB tenant migration warning: {migration_err}")
     else:
         try:
             tenant_info = await neon_tenant_service.create_tenant_database(org.id, org.name)
@@ -100,7 +94,7 @@ async def create_organization(data: OrganizationCreate, user = Depends(get_curre
                 except Exception as migration_err:
                     print(f"Tenant migration during creation: {migration_err}")
         except Exception as e:
-            print(f"Error provisioning tenant database: {e}")
+            print(f"Error provisioning Neon tenant database: {e}")
             db.delete(org)
             db.commit()
             raise HTTPException(
