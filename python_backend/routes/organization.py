@@ -8,7 +8,7 @@ from models.master import Organization, OrganizationMember, OrganizationSubscrip
 from schemas.organization import OrganizationCreate, OrganizationUpdate, OrganizationResponse, OrganizationMemberResponse
 from routes.auth import get_current_user
 from middleware.demo_guard import require_not_demo
-from services.neon_tenant import neon_tenant_service
+from services.tenant_provisioner import provision_tenant_database, delete_tenant_database, get_tenant_backend
 from services.tenant_context import TenantContext
 from services.feature_flags import get_deployment_mode
 from routes.admin import get_default_plan_id, get_trial_days
@@ -38,15 +38,14 @@ def generate_org_code(db: Session) -> str:
 @router.post("", response_model=OrganizationResponse)
 async def create_organization(data: OrganizationCreate, user = Depends(get_current_user), db: Session = Depends(get_db)):
     deployment_mode = get_deployment_mode()
-    neon_api_key = os.environ.get("NEON_API_KEY")
-    use_shared_db = (deployment_mode == "enterprise") or (not neon_api_key)
+    backend = get_tenant_backend() if deployment_mode != "enterprise" else "shared"
 
     code = generate_org_code(db)
-    
+
     staff_domain = data.staffEmailDomain.lstrip('@').strip() if data.staffEmailDomain else None
     if staff_domain and '.' not in staff_domain:
         staff_domain = f"{staff_domain}.com"
-    
+
     org = Organization(
         name=data.name,
         code=code,
@@ -62,44 +61,48 @@ async def create_organization(data: OrganizationCreate, user = Depends(get_curre
     db.add(org)
     db.commit()
     db.refresh(org)
-    
-    if use_shared_db:
+
+    if backend == "shared":
+        # Enterprise mode or no dedicated-DB backend configured — use the master DB
         database_url = os.environ.get("DATABASE_URL")
         if not database_url:
             db.delete(org)
             db.commit()
             raise HTTPException(status_code=500, detail="DATABASE_URL not configured.")
-        
+
         org.connection_string = database_url
         org.neon_project_id = None
         org.neon_branch_id = None
         db.commit()
-        
+
         try:
             TenantContext(database_url)
-            print(f"[{deployment_mode}] Tenant tables ready in shared database for org {org.id}")
+            print(f"[{deployment_mode}/shared] Tenant tables ready for org {org.id}")
         except Exception as migration_err:
             print(f"Shared DB tenant migration warning: {migration_err}")
     else:
+        # Dedicated DB per org — Neon or local Postgres
         try:
-            tenant_info = await neon_tenant_service.create_tenant_database(org.id, org.name)
-            org.neon_project_id = tenant_info["project_id"]
-            org.neon_branch_id = tenant_info["branch_id"]
-            org.connection_string = tenant_info["connection_string"]
-            db.commit()
-            
-            if tenant_info.get("connection_string"):
-                try:
-                    TenantContext(tenant_info["connection_string"])
-                except Exception as migration_err:
-                    print(f"Tenant migration during creation: {migration_err}")
+            tenant_info = await provision_tenant_database(org.id, org.name)
+            if tenant_info:
+                org.neon_project_id = tenant_info.get("project_id")
+                org.neon_branch_id = tenant_info.get("branch_id")
+                org.connection_string = tenant_info.get("connection_string")
+                db.commit()
+                print(f"[{backend}] Tenant database provisioned for org {org.id}")
+
+                if org.connection_string:
+                    try:
+                        TenantContext(org.connection_string)
+                    except Exception as migration_err:
+                        print(f"Tenant migration warning: {migration_err}")
         except Exception as e:
-            print(f"Error provisioning Neon tenant database: {e}")
+            print(f"Error provisioning tenant database ({backend}): {e}")
             db.delete(org)
             db.commit()
             raise HTTPException(
-                status_code=500, 
-                detail="Failed to provision organization database. Please try again."
+                status_code=500,
+                detail=f"Failed to provision organization database ({backend}): {e}"
             )
     
     membership = OrganizationMember(
@@ -248,9 +251,9 @@ async def delete_organization(org_id: str, user = Depends(get_current_user), db:
     if not org:
         raise HTTPException(status_code=404, detail="Organization not found")
     
-    if org.neon_project_id:
+    if org.connection_string and org.connection_string != os.environ.get("DATABASE_URL"):
         try:
-            deleted = await neon_tenant_service.delete_tenant_database(org.neon_project_id)
+            deleted = await delete_tenant_database(org.id, org.neon_project_id)
             if not deleted:
                 raise HTTPException(status_code=500, detail="Failed to delete organization database. Please try again.")
         except HTTPException:
