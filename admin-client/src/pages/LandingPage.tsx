@@ -23,6 +23,8 @@ interface LandingSettings {
   landing_docs_support_email: string
   landing_docs_show_license: string
   landing_show_subscription_content: string
+  landing_android_url: string
+  landing_ios_url: string
 }
 
 interface FeatureItem {
@@ -316,6 +318,8 @@ export default function LandingPageSettings() {
     landing_docs_support_email: '',
     landing_docs_show_license: 'false',
     landing_show_subscription_content: 'true',
+    landing_android_url: '',
+    landing_ios_url: '',
   })
   const [saved, setSaved] = useState(false)
 
@@ -548,6 +552,21 @@ export default function LandingPageSettings() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Main App URL</label>
                   <input type="text" value={formData.landing_app_url} onChange={e => handleChange('landing_app_url', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g. https://app.bankykit.co.ke" />
                   <p className="text-xs text-gray-500 mt-1">URL shown in the browser mockup on the hero section</p>
+                </div>
+                <div className="border-t pt-4">
+                  <p className="text-sm font-semibold text-gray-800 mb-3">Mobile App Download Links</p>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Android APK / Play Store URL</label>
+                      <input type="text" value={formData.landing_android_url} onChange={e => handleChange('landing_android_url', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g. https://play.google.com/store/apps/..." />
+                      <p className="text-xs text-gray-500 mt-1">Leave blank to hide the Android button on the landing page</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Apple App Store URL</label>
+                      <input type="text" value={formData.landing_ios_url} onChange={e => handleChange('landing_ios_url', e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500" placeholder="e.g. https://apps.apple.com/app/..." />
+                      <p className="text-xs text-gray-500 mt-1">Leave blank to hide the iOS button on the landing page</p>
+                    </div>
+                  </div>
                 </div>
                 <div className="border-t pt-4">
                   <div className="flex items-center justify-between">

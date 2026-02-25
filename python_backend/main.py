@@ -1062,7 +1062,9 @@ async def get_public_landing_settings():
             "stats_transactions": "KES 2B+",
             "stats_members": "1M+",
             "stats_uptime": "99.9%",
-            "show_subscription_content": "true"
+            "show_subscription_content": "true",
+            "android_url": "",
+            "ios_url": ""
         }
         
         for s in settings:

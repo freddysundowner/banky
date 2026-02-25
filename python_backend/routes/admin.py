@@ -751,6 +751,8 @@ def get_landing_page_settings(admin: AdminUser = Depends(require_admin), db: Ses
         "landing_docs_direct_title": "Enterprise License",
         "landing_docs_direct_subtitle": "Installation guide for organizations who purchased BANKYKIT directly from our sales team.",
         "landing_docs_show_license": "false",
+        "landing_android_url": "",
+        "landing_ios_url": "",
     }
     
     result = defaults.copy()
@@ -775,6 +777,8 @@ def update_landing_page_settings(data: dict, admin: AdminUser = Depends(require_
         "landing_docs_codecanyon_title", "landing_docs_codecanyon_subtitle",
         "landing_docs_direct_title", "landing_docs_direct_subtitle",
         "landing_docs_show_license",
+        "landing_android_url",
+        "landing_ios_url",
     ]
     
     for key, value in data.items():
