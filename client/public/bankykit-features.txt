@@ -1,0 +1,287 @@
+================================================================
+  BANKYKIT — Complete Financial Management System
+  Feature List
+  Contact: sales@bankykit.com | +254 791 334 234
+  Demo: demo.bankykit.com
+================================================================
+
+
+MEMBER MANAGEMENT
+-----------------
+- Member registration with full KYC (ID, passport, photos)
+- Unique member/account number generation
+- Member profiles with next-of-kin and beneficiary details
+- Member grouping (groups, Chamas, clubs)
+- Member status management (active, suspended, exited)
+- Duplicate ID number detection
+- Member statements and transaction history
+- Member search and filtering
+- Mobile self-registration via member app
+- OTP-based member identity verification
+
+
+LOAN MANAGEMENT
+---------------
+- Configurable loan products (personal, business, emergency, group, etc.)
+- Loan application, review, and approval workflow
+- Multi-level approval (maker-checker)
+- Loan disbursement to M-Pesa or bank account
+- Reducing balance and flat-rate interest computation
+- Flexible repayment schedules (daily, weekly, monthly)
+- Loan instalment tracking
+- Loan restructuring and rescheduling
+- Loan top-ups
+- Guarantor management
+- Collateral recording and valuation
+- Loan defaulting and write-off processing
+- Overdue loan tracking and notifications
+- Portfolio at Risk (PAR) reporting
+- Loan aging analysis
+- Auto loan repayment deduction from savings
+
+
+SAVINGS & SHARES
+----------------
+- Savings account management (regular, voluntary, compulsory)
+- Share capital tracking
+- Deposit and withdrawal processing
+- Dividend computation on shares and savings
+- Savings balance enquiry
+- Minimum balance enforcement
+- Interest on savings computation
+
+
+FIXED DEPOSITS
+--------------
+- Fixed deposit product configuration
+- Deposit placement and tracking
+- Maturity date alerts and notifications
+- Auto-rollover on maturity
+- Early withdrawal processing
+- Fixed deposit reports and portfolio view
+
+
+M-PESA INTEGRATION
+------------------
+- STK Push for deposits and repayments
+- M-Pesa C2B paybill reconciliation
+- M-Pesa B2C disbursements (loans, dividends)
+- Real-time M-Pesa transaction matching
+- M-Pesa reversal handling
+- Dedicated M-Pesa webhook processing
+
+
+TELLER SERVICES
+---------------
+- Cash deposit and withdrawal processing
+- Float allocation per teller/counter
+- Float replenishment requests and approvals
+- Vault management and cash movement
+- Teller shift handover
+- Cash shortage tracking and reconciliation
+- Daily cash position report
+- Salary deduction via teller
+
+
+ACCOUNTING & GENERAL LEDGER
+-----------------------------
+- Double-entry bookkeeping
+- Chart of accounts management
+- Journal entry posting
+- Profit & Loss statement
+- Balance sheet
+- Trial balance
+- Revenue and expense tracking
+- Financial year management
+- Multi-currency support with FX rates
+
+
+DIVIDEND PROCESSING
+-------------------
+- Dividend declaration per financial period
+- Auto-calculation based on shareholding
+- Dividend distribution to member accounts or M-Pesa
+- Dividend history and statements
+
+
+STAFF & HUMAN RESOURCES
+------------------------
+- Staff profiles and employment records
+- Role-based access control (custom roles and permissions)
+- Attendance tracking (clock-in/clock-out)
+- Leave management (leave types, requests, approvals, balances)
+- Payroll configuration (basic pay, allowances, deductions)
+- Payslip generation
+- Pay period management
+- Salary advance processing
+- Performance reviews
+- Disciplinary records
+- HR document management
+- Staff training records
+- Working hours enforcement per role
+
+
+BRANCH MANAGEMENT
+-----------------
+- Multi-branch setup and configuration
+- Branch-level reporting
+- Branch performance analytics
+- Staff assignment to branches
+- Inter-branch transfers
+
+
+REPORTS & ANALYTICS
+--------------------
+- Loan portfolio report
+- Member statement report
+- Loan aging (PAR) report
+- Financial summary report
+- Profit & Loss report
+- Fixed deposits report
+- Attendance report
+- Leave balances report
+- HR summary report
+- Data export (CSV/Excel)
+- Dashboard analytics (trends, institution health)
+- Branch performance comparison
+- Staff performance metrics
+
+
+SMS NOTIFICATIONS
+-----------------
+- Automated SMS for loan approval, disbursement, and repayment
+- Deposit and withdrawal confirmations
+- Due date and overdue reminders
+- Bulk SMS to members or groups
+- SMS template configuration
+- SMS history and delivery tracking
+
+
+DOCUMENT MANAGEMENT
+-------------------
+- Member document uploads (ID, photos, certificates)
+- Loan document attachments
+- HR staff document storage
+- KYC verification document tracking
+
+
+SUBSCRIPTION & BILLING (SaaS)
+------------------------------
+- Subscription plan management (Basic, Professional, Enterprise)
+- Trial period configuration
+- Subscription status tracking (trial, active, past-due, cancelled)
+- Subscription payment recording
+- M-Pesa and Stripe payment support for subscriptions
+- Renewal reminder notifications
+
+
+ROLES & PERMISSIONS
+-------------------
+- Custom role creation per organization
+- Granular permission assignment per role
+- Predefined roles (admin, manager, teller, loan officer, etc.)
+- Role assignment to staff members
+- Permission checks on all sensitive operations
+
+
+AUDIT & COMPLIANCE
+------------------
+- Full audit trail for all system actions
+- User activity logging (who did what, when, from where)
+- Entity-level audit history (per member, loan, transaction)
+- Audit log search and filtering
+- Staff activity reports
+
+
+NOTIFICATIONS & ALERTS
+-----------------------
+- In-app notifications
+- Email notifications (password reset, welcome, verification)
+- SMS alerts for key events
+- Maturity alerts for fixed deposits
+- Trial expiry and renewal reminders
+
+
+MOBILE BANKING (Member App API)
+--------------------------------
+- Member account activation via OTP
+- Account balance enquiry
+- Transaction history
+- Loan application from mobile
+- Loan repayment via M-Pesa
+- Fixed deposit placement
+- SMS OTP authentication
+- Android & iOS compatible
+
+
+ORGANIZATION & SYSTEM SETTINGS
+--------------------------------
+- Organization profile (name, logo, email, phone, address)
+- Currency and locale configuration
+- Financial year start configuration
+- Staff email domain restriction
+- Working hours configuration per role
+- Auto-logout timeout setting
+- M-Pesa API configuration
+- SMS gateway configuration
+- Platform branding customization
+- Demo mode toggle
+
+
+ADMIN PANEL (Platform Owner)
+-----------------------------
+- Organization management (create, view, suspend, delete)
+- Subscription plan management
+- Platform settings management
+- Per-organization password reset
+- System-wide analytics
+- Demo data seeding
+- Platform branding settings
+
+
+DEPLOYMENT & ARCHITECTURE
+--------------------------
+- SaaS mode: each organization gets a dedicated database (Neon or local Postgres)
+- Enterprise mode: all organizations on a shared database
+- Local Postgres provisioning (no dependency on cloud DB services)
+- Neon serverless Postgres provisioning for SaaS
+- Multi-tenant data isolation
+- Python FastAPI backend (high performance)
+- React / TypeScript frontend (responsive web app)
+- Flutter mobile app (Android & iOS)
+- Separate admin panel
+- Public landing page with CMS
+- Role-based API security
+- Session-based authentication with secure cookies
+- Audit middleware on all write operations
+- Background job scheduler (trial checks, maturity alerts, reminders)
+
+
+================================================================
+  20 Core Features Summary
+================================================================
+
+  01. Member Management          — KYC, profiles & groups
+  02. Loan Management            — Apply, approve & disburse
+  03. Savings & Shares           — Accounts, dividends & FDs
+  04. M-Pesa Integration         — STK Push & reconciliation
+  05. Mobile Banking App         — Android & iOS
+  06. Teller Services            — Deposits & withdrawals
+  07. Accounting & GL            — Double-entry & P&L
+  08. SMS Notifications          — Alerts & bulk SMS
+  09. Branch Management          — Multi-branch & roles
+  10. Reports & Analytics        — Portfolio & exports
+  11. Fixed Deposits             — Terms & maturity alerts
+  12. Chama & Group Tools        — Contributions & rounds
+  13. Interest Computation       — Reducing balance & flat rate
+  14. Dividend Processing        — Auto-calculate & distribute
+  15. Collateral Management      — Assets & valuations
+  16. Staff & Role Management    — Permissions & audit trail
+  17. Payroll Integration        — Staff salaries & deductions
+  18. Document Management        — Uploads & KYC verification
+  19. Insurance Products         — Premiums & claims tracking
+  20. Multi-currency Support     — FX rates & cross-border
+
+================================================================
+  Suitable for: SACCOs · Banks · Microfinance · Chamas
+================================================================
