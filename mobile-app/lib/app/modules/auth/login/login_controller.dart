@@ -25,6 +25,7 @@ class LoginController extends GetxController {
   void onInit() {
     super.onInit();
     _checkDemoStatus();
+    _storage.prewarmDeviceInfo();
   }
 
   @override

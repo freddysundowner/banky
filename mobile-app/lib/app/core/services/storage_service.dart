@@ -17,7 +17,12 @@ class StorageService extends GetxService {
   static const String onboardingKey = 'onboarding_complete';
   static const String fcmTokenKey = 'fcm_token';
   static const String deviceIdKey = 'device_id';
+  static const String _deviceIdCacheKey = 'device_id_cache';
   static const String deviceNameKey = 'device_name';
+
+  // In-memory caches — survive the entire app session, zero I/O cost
+  String? _deviceIdMemCache;
+  String? _deviceNameMemCache;
 
   Future<StorageService> init() async {
     _box = GetStorage();
@@ -98,13 +103,35 @@ class StorageService extends GetxService {
   }
 
   /// Returns the real hardware device ID.
-  /// On Android: Android ID (stable per device + app signing key).
-  /// On iOS: identifierForVendor (stable per vendor, persists through updates).
-  /// Cached in secure storage after the first read so subsequent calls are fast.
+  /// Cache hierarchy (fastest first):
+  ///   1. In-memory cache (instant, same session)
+  ///   2. GetStorage cache (fast, survives restarts — avoids EncryptedSharedPreferences read)
+  ///   3. FlutterSecureStorage (authoritative, written on first registration)
+  ///   4. DeviceInfoPlugin (fallback on very first launch)
   Future<String> getOrCreateDeviceId() async {
-    final cached = await _secureStorage.read(key: deviceIdKey);
-    if (cached != null && cached.isNotEmpty) return cached;
+    // 1. In-memory
+    if (_deviceIdMemCache != null && _deviceIdMemCache!.isNotEmpty) {
+      return _deviceIdMemCache!;
+    }
 
+    // 2. GetStorage (fast, avoids slow Keystore read on every cold start)
+    final fastCache = _box.read<String>(_deviceIdCacheKey);
+    if (fastCache != null && fastCache.isNotEmpty) {
+      _deviceIdMemCache = fastCache;
+      return fastCache;
+    }
+
+    // 3. Secure storage (existing registrations already stored here)
+    try {
+      final secure = await _secureStorage.read(key: deviceIdKey);
+      if (secure != null && secure.isNotEmpty) {
+        _deviceIdMemCache = secure;
+        _box.write(_deviceIdCacheKey, secure);
+        return secure;
+      }
+    } catch (_) {}
+
+    // 4. Generate fresh ID from hardware
     String id = '';
     try {
       final deviceInfo = DeviceInfoPlugin();
@@ -121,16 +148,28 @@ class StorageService extends GetxService {
       id = DateTime.now().microsecondsSinceEpoch.toRadixString(16);
     }
 
+    _deviceIdMemCache = id;
+    _box.write(_deviceIdCacheKey, id);
     await _secureStorage.write(key: deviceIdKey, value: id);
     return id;
   }
 
   /// Returns a human-readable device name, e.g. "Samsung Galaxy S21" or "iPhone 13".
-  /// Cached in regular storage after the first read so subsequent calls are instant.
+  /// Cache hierarchy: in-memory → GetStorage → DeviceInfoPlugin.
   Future<String> getDeviceName() async {
-    final cached = _box.read<String>(deviceNameKey);
-    if (cached != null && cached.isNotEmpty) return cached;
+    // 1. In-memory
+    if (_deviceNameMemCache != null && _deviceNameMemCache!.isNotEmpty) {
+      return _deviceNameMemCache!;
+    }
 
+    // 2. GetStorage
+    final cached = _box.read<String>(deviceNameKey);
+    if (cached != null && cached.isNotEmpty) {
+      _deviceNameMemCache = cached;
+      return cached;
+    }
+
+    // 3. DeviceInfoPlugin
     String name = 'Unknown Device';
     try {
       final deviceInfo = DeviceInfoPlugin();
@@ -147,11 +186,23 @@ class StorageService extends GetxService {
       }
     } catch (_) {}
 
+    _deviceNameMemCache = name;
     _box.write(deviceNameKey, name);
     return name;
   }
 
+  /// Pre-warms both device ID and device name into the in-memory cache.
+  /// Call this early (splash, onInit) so the values are instant when needed.
+  Future<void> prewarmDeviceInfo() async {
+    await Future.wait([
+      getOrCreateDeviceId(),
+      getDeviceName(),
+    ]);
+  }
+
   Future<void> clearAll() async {
+    _deviceIdMemCache = null;
+    _deviceNameMemCache = null;
     await clearTokens();
     await _box.erase();
   }
