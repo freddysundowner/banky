@@ -3,639 +3,462 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BankyKit — Complete Bank & SACCO Management System</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<title>BankyKit Flyer</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-  :root {
-    --blue: #0073E6;
-    --blue-dark: #0058b4;
-    --blue-light: #e8f3ff;
-    --green: #00b96b;
-    --gold: #f59e0b;
-    --purple: #7c3aed;
-    --teal: #0891b2;
-    --red: #dc2626;
-    --text: #0f172a;
-    --muted: #64748b;
-    --border: #e2e8f0;
-    --white: #ffffff;
-    --surface: #f8fafc;
-  }
+body {
+  font-family: 'Inter', sans-serif;
+  background: #e8ecf0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+}
 
-  body {
-    font-family: 'Inter', system-ui, sans-serif;
-    background: #f1f5f9;
-    color: var(--text);
-    min-height: 100vh;
-    padding: 32px 16px;
-  }
+.flyer {
+  width: 794px;
+  background: #fff;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.18);
+}
 
-  .page {
-    max-width: 1100px;
-    margin: 0 auto;
-    background: var(--white);
-    border-radius: 24px;
-    overflow: hidden;
-    box-shadow: 0 25px 80px rgba(0,0,0,0.12);
-  }
+/* ─── TOP HERO ─────────────────────────────── */
+.hero {
+  background: linear-gradient(135deg, #001f5c 0%, #0055cc 55%, #0088ff 100%);
+  padding: 36px 40px 28px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-circles {
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 280px; height: 280px;
+  border-radius: 50%;
+  border: 60px solid rgba(255,255,255,0.06);
+}
+.hero-circles2 {
+  position: absolute;
+  bottom: -40px; right: 120px;
+  width: 160px; height: 160px;
+  border-radius: 50%;
+  border: 40px solid rgba(255,255,255,0.04);
+}
+.hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  position: relative;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.brand-icon {
+  width: 52px; height: 52px;
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+}
+.brand-name {
+  font-size: 26px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.5px;
+}
+.brand-sub {
+  font-size: 11px;
+  color: rgba(255,255,255,0.55);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  margin-top: 1px;
+}
+.hero-chips {
+  display: flex;
+  gap: 8px;
+}
+.chip {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 4px 12px;
+  border-radius: 100px;
+}
+.hero-headline {
+  position: relative;
+  margin-bottom: 6px;
+}
+.hero-headline h1 {
+  font-size: 38px;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.1;
+  letter-spacing: -1px;
+}
+.hero-headline h1 em {
+  font-style: normal;
+  color: #7dd3fc;
+}
+.hero-sub {
+  font-size: 14px;
+  color: rgba(255,255,255,0.65);
+  font-weight: 400;
+  margin-top: 10px;
+  line-height: 1.6;
+  max-width: 540px;
+}
 
-  /* ── HERO ─────────────────────────────────────── */
-  .hero {
-    background: linear-gradient(135deg, #003d99 0%, #0073E6 50%, #0099cc 100%);
-    padding: 56px 56px 48px;
-    position: relative;
-    overflow: hidden;
-  }
-  .hero::before {
-    content: '';
-    position: absolute;
-    top: -80px; right: -80px;
-    width: 320px; height: 320px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.06);
-  }
-  .hero::after {
-    content: '';
-    position: absolute;
-    bottom: -60px; left: 30%;
-    width: 220px; height: 220px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.04);
-  }
-  .hero-inner {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    gap: 40px;
-  }
-  .hero-logo {
-    width: 88px; height: 88px;
-    background: rgba(255,255,255,0.15);
-    border: 2px solid rgba(255,255,255,0.3);
-    border-radius: 22px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 40px;
-    flex-shrink: 0;
-  }
-  .hero-text { flex: 1; }
-  .hero-tag {
-    display: inline-block;
-    background: rgba(255,255,255,0.18);
-    border: 1px solid rgba(255,255,255,0.3);
-    color: #fff;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    padding: 4px 14px;
-    border-radius: 100px;
-    margin-bottom: 14px;
-  }
-  .hero h1 {
-    font-size: 42px;
-    font-weight: 900;
-    color: #fff;
-    line-height: 1.1;
-    margin-bottom: 12px;
-    letter-spacing: -1px;
-  }
-  .hero h1 span { color: #7dd3fc; }
-  .hero p {
-    font-size: 17px;
-    color: rgba(255,255,255,0.80);
-    line-height: 1.6;
-    max-width: 520px;
-  }
-  .hero-badges {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-    flex-wrap: wrap;
-  }
-  .badge {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(255,255,255,0.12);
-    border: 1px solid rgba(255,255,255,0.2);
-    color: #fff;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 6px 14px;
-    border-radius: 100px;
-  }
-  .badge-dot { width: 7px; height: 7px; border-radius: 50%; background: #86efac; }
+/* ─── METRICS BAR ──────────────────────────── */
+.metrics {
+  background: #001440;
+  display: flex;
+}
+.metric {
+  flex: 1;
+  padding: 14px 0;
+  text-align: center;
+  border-right: 1px solid rgba(255,255,255,0.08);
+}
+.metric:last-child { border-right: none; }
+.metric-val {
+  font-size: 20px;
+  font-weight: 800;
+  color: #60a5fa;
+  line-height: 1;
+}
+.metric-lbl {
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-top: 3px;
+}
 
-  /* ── STATS STRIP ─────────────────────────────── */
-  .stats {
-    background: var(--blue-dark);
-    padding: 20px 56px;
-    display: flex;
-    gap: 0;
-  }
-  .stat {
-    flex: 1;
-    text-align: center;
-    padding: 0 20px;
-    border-right: 1px solid rgba(255,255,255,0.15);
-  }
-  .stat:last-child { border-right: none; }
-  .stat-num {
-    font-size: 26px;
-    font-weight: 800;
-    color: #7dd3fc;
-    line-height: 1;
-  }
-  .stat-label {
-    font-size: 11px;
-    color: rgba(255,255,255,0.65);
-    margin-top: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    font-weight: 500;
-  }
+/* ─── BODY ─────────────────────────────────── */
+.body {
+  padding: 28px 40px;
+}
 
-  /* ── BODY ────────────────────────────────────── */
-  .body { padding: 48px 56px; }
+/* ─── FEATURE GRID ─────────────────────────── */
+.feat-heading {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #94a3b8;
+  margin-bottom: 14px;
+}
 
-  .section-label {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 28px;
-  }
-  .section-label h2 {
-    font-size: 13px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--muted);
-  }
-  .section-label::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
+.feat-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 22px;
+}
 
-  /* ── FEATURE GRID ────────────────────────────── */
-  .features-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-bottom: 40px;
-  }
+.feat-item {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 14px 10px;
+  text-align: center;
+  transition: border-color 0.2s;
+}
+.feat-item:hover { border-color: #0073E6; }
+.feat-icon { font-size: 24px; margin-bottom: 8px; }
+.feat-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.3;
+}
 
-  .feature-card {
-    border: 1.5px solid var(--border);
-    border-radius: 16px;
-    padding: 22px;
-    background: var(--white);
-    transition: transform 0.2s;
-    position: relative;
-    overflow: hidden;
-  }
-  .feature-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    border-radius: 16px 16px 0 0;
-  }
-  .feature-card.blue::before   { background: var(--blue); }
-  .feature-card.green::before  { background: var(--green); }
-  .feature-card.gold::before   { background: var(--gold); }
-  .feature-card.purple::before { background: var(--purple); }
-  .feature-card.teal::before   { background: var(--teal); }
-  .feature-card.red::before    { background: var(--red); }
+/* ─── TWO COL ───────────────────────────────── */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 22px;
+}
 
-  .card-icon {
-    width: 44px; height: 44px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    margin-bottom: 14px;
-  }
-  .blue   .card-icon { background: #eff6ff; }
-  .green  .card-icon { background: #f0fdf4; }
-  .gold   .card-icon { background: #fffbeb; }
-  .purple .card-icon { background: #f5f3ff; }
-  .teal   .card-icon { background: #ecfeff; }
-  .red    .card-icon { background: #fef2f2; }
+.info-card {
+  border-radius: 12px;
+  padding: 20px;
+  border: 1.5px solid #e2e8f0;
+}
+.info-card.dark {
+  background: #0f172a;
+  border-color: #1e3a5f;
+}
+.info-card.light-blue {
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border-color: #bfdbfe;
+}
 
-  .card-title {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text);
-    margin-bottom: 8px;
-  }
-  .card-desc {
-    font-size: 13px;
-    color: var(--muted);
-    line-height: 1.6;
-    margin-bottom: 14px;
-  }
-  .pill-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  .pill {
-    font-size: 11px;
-    font-weight: 500;
-    padding: 3px 10px;
-    border-radius: 100px;
-    background: var(--surface);
-    color: var(--muted);
-    border: 1px solid var(--border);
-  }
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.card-icon-wrap {
+  width: 36px; height: 36px;
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.dark .card-icon-wrap { background: rgba(255,255,255,0.08); }
+.light-blue .card-icon-wrap { background: rgba(0,115,230,0.12); }
+.card-title {
+  font-size: 14px;
+  font-weight: 700;
+}
+.dark .card-title { color: #fff; }
+.light-blue .card-title { color: #1e3a8a; }
+.card-subtitle {
+  font-size: 11px;
+  font-weight: 500;
+  opacity: 0.6;
+}
+.dark .card-subtitle { color: rgba(255,255,255,0.6); }
 
-  /* ── DEPLOYMENT STRIP ────────────────────────── */
-  .deploy-strip {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-bottom: 40px;
-  }
-  .deploy-card {
-    border: 1.5px solid var(--border);
-    border-radius: 16px;
-    padding: 24px 28px;
-    display: flex;
-    gap: 18px;
-    align-items: flex-start;
-  }
-  .deploy-icon {
-    font-size: 32px;
-    flex-shrink: 0;
-  }
-  .deploy-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
-  .deploy-card p  { font-size: 13px; color: var(--muted); line-height: 1.6; }
-  .deploy-card.saas   { background: linear-gradient(135deg, #eff6ff, #e0f2fe); border-color: #bfdbfe; }
-  .deploy-card.onprem { background: linear-gradient(135deg, #f0fdf4, #ecfdf5); border-color: #bbf7d0; }
+.check-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.check-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 500;
+}
+.dark .check-item { color: rgba(255,255,255,0.75); }
+.light-blue .check-item { color: #1e3a8a; }
+.chk {
+  width: 16px; height: 16px;
+  border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  flex-shrink: 0;
+}
+.dark .chk { background: #0055cc; color: #fff; }
+.light-blue .chk { background: #2563eb; color: #fff; }
 
-  /* ── MOBILE STRIP ────────────────────────────── */
-  .mobile-strip {
-    background: linear-gradient(135deg, #0f172a, #1e3a5f);
-    border-radius: 16px;
-    padding: 32px 36px;
-    display: flex;
-    align-items: center;
-    gap: 32px;
-    margin-bottom: 40px;
-  }
-  .mobile-icon { font-size: 48px; flex-shrink: 0; }
-  .mobile-text { flex: 1; }
-  .mobile-text h3 { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 8px; }
-  .mobile-text p  { font-size: 14px; color: rgba(255,255,255,0.65); line-height: 1.6; }
-  .mobile-features {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .mobile-feat {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: rgba(255,255,255,0.85);
-    font-weight: 500;
-  }
-  .check { color: #86efac; font-size: 14px; }
+/* ─── BOTTOM STRIP ─────────────────────────── */
+.bottom-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 22px;
+}
+.sec-card {
+  text-align: center;
+  padding: 16px 10px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+.sec-card .si { font-size: 22px; margin-bottom: 6px; }
+.sec-card h4 { font-size: 11.5px; font-weight: 700; color: #1e293b; margin-bottom: 3px; }
+.sec-card p  { font-size: 10.5px; color: #64748b; line-height: 1.4; }
 
-  /* ── SECURITY ROW ────────────────────────────── */
-  .security-row {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 40px;
-  }
-  .sec-item {
-    text-align: center;
-    padding: 20px 12px;
-    border: 1.5px solid var(--border);
-    border-radius: 14px;
-    background: var(--surface);
-  }
-  .sec-item .sec-icon { font-size: 28px; margin-bottom: 10px; }
-  .sec-item h4 { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-  .sec-item p  { font-size: 11px; color: var(--muted); line-height: 1.5; }
+/* ─── FOOTER ────────────────────────────────── */
+.footer {
+  background: linear-gradient(135deg, #001f5c, #0055cc);
+  padding: 20px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.footer-logo {
+  width: 38px; height: 38px;
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.25);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.footer-brand-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+}
+.footer-brand-tag {
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+  font-weight: 500;
+}
+.footer-contacts {
+  display: flex;
+  gap: 20px;
+}
+.footer-contact {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.7);
+  font-weight: 500;
+}
+.footer-cta {
+  background: #fff;
+  color: #0055cc;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 10px 24px;
+  border-radius: 100px;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
 
-  /* ── FOOTER ──────────────────────────────────── */
-  .footer {
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    padding: 28px 56px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-  }
-  .footer-brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  .footer-logo {
-    width: 40px; height: 40px;
-    background: var(--blue);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-  }
-  .footer-brand h3 { font-size: 18px; font-weight: 800; color: var(--text); }
-  .footer-brand p  { font-size: 12px; color: var(--muted); }
-  .footer-links {
-    display: flex;
-    gap: 24px;
-  }
-  .footer-link {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    color: var(--muted);
-    font-weight: 500;
-  }
-  .footer-link .licon { font-size: 16px; }
-  .footer-cta {
-    background: var(--blue);
-    color: #fff;
-    font-size: 14px;
-    font-weight: 700;
-    padding: 12px 28px;
-    border-radius: 12px;
-    border: none;
-    cursor: pointer;
-    letter-spacing: 0.3px;
-  }
-
-  @media print {
-    body { background: white; padding: 0; }
-    .page { box-shadow: none; border-radius: 0; }
-  }
+@media print {
+  body { background: white; padding: 0; display: block; }
+  .flyer { width: 100%; box-shadow: none; }
+}
 </style>
 </head>
 <body>
-<div class="page">
+<div class="flyer">
 
   <!-- HERO -->
   <div class="hero">
-    <div class="hero-inner">
-      <div class="hero-logo">🏦</div>
-      <div class="hero-text">
-        <div class="hero-tag">Complete Financial Management Platform</div>
-        <h1>BankyKit — <span>The All-in-One</span><br>Bank & SACCO System</h1>
-        <p>A full-stack platform for Banks, SACCOs, and Microfinance institutions. Manage members, loans, savings, teller operations, mobile banking, and more — all from one powerful system.</p>
-        <div class="hero-badges">
-          <div class="badge"><span class="badge-dot"></span> Multi-Tenant SaaS</div>
-          <div class="badge"><span class="badge-dot"></span> Enterprise On-Premise</div>
-          <div class="badge"><span class="badge-dot"></span> Android & iOS App</div>
-          <div class="badge"><span class="badge-dot"></span> M-Pesa Ready</div>
+    <div class="hero-circles"></div>
+    <div class="hero-circles2"></div>
+    <div class="hero-top">
+      <div class="brand">
+        <div class="brand-icon">🏦</div>
+        <div>
+          <div class="brand-name">BankyKit</div>
+          <div class="brand-sub">Bank & SACCO Management Platform</div>
         </div>
       </div>
+      <div class="hero-chips">
+        <div class="chip">☁️ SaaS</div>
+        <div class="chip">🖥️ On-Premise</div>
+        <div class="chip">📱 Mobile App</div>
+      </div>
+    </div>
+    <div class="hero-headline">
+      <h1>The Complete<br><em>All-in-One</em> System for<br>Banks & SACCOs</h1>
+    </div>
+    <div class="hero-sub">
+      Member management · Loans · Savings · Teller operations · M-Pesa · Mobile banking · Accounting · Reports — everything your SACCO needs, in one platform.
     </div>
   </div>
 
-  <!-- STATS STRIP -->
-  <div class="stats">
-    <div class="stat">
-      <div class="stat-num">25+</div>
-      <div class="stat-label">Core Modules</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">∞</div>
-      <div class="stat-label">SACCOs / Tenants</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">2-FA</div>
-      <div class="stat-label">OTP Security</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">Real-time</div>
-      <div class="stat-label">SMS Alerts</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">REST</div>
-      <div class="stat-label">Open API</div>
-    </div>
-    <div class="stat">
-      <div class="stat-num">Neon</div>
-      <div class="stat-label">DB per Tenant</div>
-    </div>
+  <!-- METRICS -->
+  <div class="metrics">
+    <div class="metric"><div class="metric-val">25+</div><div class="metric-lbl">Modules</div></div>
+    <div class="metric"><div class="metric-val">∞</div><div class="metric-lbl">Tenants</div></div>
+    <div class="metric"><div class="metric-val">2FA</div><div class="metric-lbl">OTP Login</div></div>
+    <div class="metric"><div class="metric-val">M-Pesa</div><div class="metric-lbl">Integrated</div></div>
+    <div class="metric"><div class="metric-val">Android</div><div class="metric-lbl">& iOS App</div></div>
+    <div class="metric"><div class="metric-val">Real-time</div><div class="metric-lbl">SMS Alerts</div></div>
   </div>
 
   <!-- BODY -->
   <div class="body">
 
-    <!-- CORE FEATURES -->
-    <div class="section-label">
-      <h2>Core Feature Modules</h2>
+    <div class="feat-heading">Core Feature Modules</div>
+    <div class="feat-grid">
+      <div class="feat-item"><div class="feat-icon">👥</div><div class="feat-name">Member Management</div></div>
+      <div class="feat-item"><div class="feat-icon">💰</div><div class="feat-name">Savings & Shares</div></div>
+      <div class="feat-item"><div class="feat-icon">📋</div><div class="feat-name">Loan Management</div></div>
+      <div class="feat-item"><div class="feat-icon">🏧</div><div class="feat-name">Teller Services</div></div>
+      <div class="feat-item"><div class="feat-icon">📱</div><div class="feat-name">M-Pesa Integration</div></div>
+      <div class="feat-item"><div class="feat-icon">📊</div><div class="feat-name">Accounting & GL</div></div>
+      <div class="feat-item"><div class="feat-icon">🏢</div><div class="feat-name">Branch Management</div></div>
+      <div class="feat-item"><div class="feat-icon">👩‍💼</div><div class="feat-name">Staff & HR</div></div>
+      <div class="feat-item"><div class="feat-icon">💬</div><div class="feat-name">SMS Notifications</div></div>
+      <div class="feat-item"><div class="feat-icon">📈</div><div class="feat-name">Analytics & Reports</div></div>
+      <div class="feat-item"><div class="feat-icon">🏦</div><div class="feat-name">Fixed Deposits</div></div>
+      <div class="feat-item"><div class="feat-icon">💵</div><div class="feat-name">Dividends</div></div>
+      <div class="feat-item"><div class="feat-icon">🔄</div><div class="feat-name">Loan Restructuring</div></div>
+      <div class="feat-item"><div class="feat-icon">🤝</div><div class="feat-name">Guarantors</div></div>
+      <div class="feat-item"><div class="feat-icon">📂</div><div class="feat-name">Document Manager</div></div>
     </div>
 
-    <div class="features-grid">
-
-      <div class="feature-card blue">
-        <div class="card-icon">👥</div>
-        <div class="card-title">Member Management</div>
-        <div class="card-desc">Full member lifecycle from onboarding to exit. KYC, documents, linked accounts, and status management.</div>
-        <div class="pill-list">
-          <span class="pill">Registration</span>
-          <span class="pill">KYC Docs</span>
-          <span class="pill">Member Profiles</span>
-          <span class="pill">Next-of-Kin</span>
-          <span class="pill">Status Control</span>
+    <div class="two-col">
+      <!-- Mobile App -->
+      <div class="info-card dark">
+        <div class="card-header">
+          <div class="card-icon-wrap">📲</div>
+          <div>
+            <div class="card-title">Native Mobile Banking App</div>
+            <div class="card-subtitle">Android & iOS · Flutter</div>
+          </div>
+        </div>
+        <div class="check-list">
+          <div class="check-item"><span class="chk">✓</span>Account balances & statements</div>
+          <div class="check-item"><span class="chk">✓</span>Loan application & tracking</div>
+          <div class="check-item"><span class="chk">✓</span>Repayment schedules</div>
+          <div class="check-item"><span class="chk">✓</span>Auto-logout on idle / background</div>
+          <div class="check-item"><span class="chk">✓</span>OTP 2-factor authentication</div>
+          <div class="check-item"><span class="chk">✓</span>Device-bound secure activation</div>
         </div>
       </div>
 
-      <div class="feature-card green">
-        <div class="card-icon">💰</div>
-        <div class="card-title">Savings & Shares</div>
-        <div class="card-desc">Complete savings account and share capital management with real-time balance tracking and statements.</div>
-        <div class="pill-list">
-          <span class="pill">Savings Accounts</span>
-          <span class="pill">Share Capital</span>
-          <span class="pill">Fixed Deposits</span>
-          <span class="pill">Dividends</span>
-          <span class="pill">Statements</span>
+      <!-- Deployment -->
+      <div class="info-card light-blue">
+        <div class="card-header">
+          <div class="card-icon-wrap">☁️</div>
+          <div>
+            <div class="card-title">Flexible Deployment</div>
+            <div class="card-subtitle">SaaS Cloud or On-Premise</div>
+          </div>
         </div>
-      </div>
-
-      <div class="feature-card gold">
-        <div class="card-icon">📋</div>
-        <div class="card-title">Loan Management</div>
-        <div class="card-desc">End-to-end loan processing with configurable products, eligibility scoring, repayment schedules, and recovery.</div>
-        <div class="pill-list">
-          <span class="pill">Loan Products</span>
-          <span class="pill">Applications</span>
-          <span class="pill">Approval Workflow</span>
-          <span class="pill">Schedules</span>
-          <span class="pill">Guarantors</span>
-          <span class="pill">Restructuring</span>
-          <span class="pill">Defaults</span>
-        </div>
-      </div>
-
-      <div class="feature-card teal">
-        <div class="card-icon">🏧</div>
-        <div class="card-title">Teller Services</div>
-        <div class="card-desc">Full teller counter operations including cash deposits, withdrawals, float management, and shortage approvals.</div>
-        <div class="pill-list">
-          <span class="pill">Cash Deposits</span>
-          <span class="pill">Withdrawals</span>
-          <span class="pill">Float Management</span>
-          <span class="pill">Approvals</span>
-          <span class="pill">Till Balancing</span>
-        </div>
-      </div>
-
-      <div class="feature-card purple">
-        <div class="card-icon">📱</div>
-        <div class="card-title">M-Pesa Integration</div>
-        <div class="card-desc">Full Safaricom M-Pesa integration for mobile money deposits, withdrawals, and loan disbursements.</div>
-        <div class="pill-list">
-          <span class="pill">Paybill / Till</span>
-          <span class="pill">STK Push</span>
-          <span class="pill">Disbursements</span>
-          <span class="pill">Reconciliation</span>
-          <span class="pill">Callbacks</span>
-        </div>
-      </div>
-
-      <div class="feature-card red">
-        <div class="card-icon">📊</div>
-        <div class="card-title">Accounting & Reports</div>
-        <div class="card-desc">Double-entry bookkeeping, general ledger, and rich financial reports with PDF and Excel export.</div>
-        <div class="pill-list">
-          <span class="pill">General Ledger</span>
-          <span class="pill">Journal Entries</span>
-          <span class="pill">Trial Balance</span>
-          <span class="pill">PDF Export</span>
-          <span class="pill">Excel Export</span>
-          <span class="pill">Analytics</span>
-        </div>
-      </div>
-
-      <div class="feature-card blue">
-        <div class="card-icon">🏢</div>
-        <div class="card-title">Staff & Branch Management</div>
-        <div class="card-desc">Multi-branch setup with role-based access control, HR records, and performance tracking.</div>
-        <div class="pill-list">
-          <span class="pill">Role-Based Access</span>
-          <span class="pill">Multi-Branch</span>
-          <span class="pill">HR Records</span>
-          <span class="pill">Performance</span>
-          <span class="pill">Audit Logs</span>
-        </div>
-      </div>
-
-      <div class="feature-card green">
-        <div class="card-icon">💬</div>
-        <div class="card-title">SMS Notifications</div>
-        <div class="card-desc">Automated SMS alerts for every key transaction — deposits, loan approvals, repayments, and OTPs.</div>
-        <div class="pill-list">
-          <span class="pill">Transaction Alerts</span>
-          <span class="pill">Loan Updates</span>
-          <span class="pill">OTP Delivery</span>
-          <span class="pill">Custom Templates</span>
-          <span class="pill">Bulk SMS</span>
-        </div>
-      </div>
-
-      <div class="feature-card gold">
-        <div class="card-icon">⚙️</div>
-        <div class="card-title">Admin & Settings</div>
-        <div class="card-desc">Full system administration — organization settings, feature flags, subscription management, and landing page CMS.</div>
-        <div class="pill-list">
-          <span class="pill">Org Settings</span>
-          <span class="pill">Feature Flags</span>
-          <span class="pill">Landing Page CMS</span>
-          <span class="pill">Subscriptions</span>
-          <span class="pill">Expenses</span>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- MOBILE APP -->
-    <div class="section-label">
-      <h2>Mobile Banking App</h2>
-    </div>
-
-    <div class="mobile-strip">
-      <div class="mobile-icon">📲</div>
-      <div class="mobile-text">
-        <h3>Native Android & iOS App for Members</h3>
-        <p>Members access their accounts anytime with a secure, fast Flutter app. Built with OTP-based 2FA login, auto session timeout, and offline-safe design.</p>
-      </div>
-      <div class="mobile-features">
-        <div class="mobile-feat"><span class="check">✓</span> Account balances & statements</div>
-        <div class="mobile-feat"><span class="check">✓</span> Loan application & tracking</div>
-        <div class="mobile-feat"><span class="check">✓</span> Loan repayment scheduling</div>
-        <div class="mobile-feat"><span class="check">✓</span> Transaction history</div>
-        <div class="mobile-feat"><span class="check">✓</span> Push notifications</div>
-        <div class="mobile-feat"><span class="check">✓</span> Auto logout on idle / background</div>
-        <div class="mobile-feat"><span class="check">✓</span> Device-bound activation</div>
-        <div class="mobile-feat"><span class="check">✓</span> Demo mode for testing</div>
-      </div>
-    </div>
-
-    <!-- DEPLOYMENT -->
-    <div class="section-label">
-      <h2>Deployment Options</h2>
-    </div>
-
-    <div class="deploy-strip">
-      <div class="deploy-card saas">
-        <div class="deploy-icon">☁️</div>
-        <div>
-          <h3>SaaS Cloud Mode</h3>
-          <p>Each SACCO gets its own isolated database provisioned instantly via Neon. Zero infrastructure management. Scale to hundreds of tenants from day one. Perfect for platform operators managing multiple SACCOs.</p>
-        </div>
-      </div>
-      <div class="deploy-card onprem">
-        <div class="deploy-icon">🖥️</div>
-        <div>
-          <h3>Enterprise On-Premise</h3>
-          <p>Full control. Deploy on your own servers or private cloud. Single-tenant setup for large banks and institutions that require data sovereignty and custom infrastructure policies.</p>
+        <div class="check-list">
+          <div class="check-item"><span class="chk">✓</span>Database-per-tenant isolation (Neon)</div>
+          <div class="check-item"><span class="chk">✓</span>Instant SACCO provisioning</div>
+          <div class="check-item"><span class="chk">✓</span>Enterprise self-hosted option</div>
+          <div class="check-item"><span class="chk">✓</span>Role-based staff access control</div>
+          <div class="check-item"><span class="chk">✓</span>Feature flags per tenant</div>
+          <div class="check-item"><span class="chk">✓</span>Full audit trail & compliance</div>
         </div>
       </div>
     </div>
 
-    <!-- SECURITY -->
-    <div class="section-label">
-      <h2>Security & Compliance</h2>
-    </div>
-
-    <div class="security-row">
-      <div class="sec-item">
-        <div class="sec-icon">🔐</div>
-        <h4>2-Factor Authentication</h4>
-        <p>OTP via SMS for every login. Secure password hashing with PBKDF2-HMAC-SHA256.</p>
+    <!-- Security Row -->
+    <div class="bottom-strip">
+      <div class="sec-card">
+        <div class="si">🔐</div>
+        <h4>2-Factor Auth</h4>
+        <p>OTP via SMS every login. PBKDF2 password hashing.</p>
       </div>
-      <div class="sec-item">
-        <div class="sec-icon">📱</div>
+      <div class="sec-card">
+        <div class="si">📱</div>
         <h4>Device Binding</h4>
-        <p>Members locked to one registered device. Re-activation required on device change.</p>
+        <p>One phone per member. Re-activation on device change.</p>
       </div>
-      <div class="sec-item">
-        <div class="sec-icon">⏱️</div>
+      <div class="sec-card">
+        <div class="si">⏱️</div>
         <h4>Session Timeout</h4>
-        <p>Auto-logout after 5 min idle or 2 min background. No forever sessions in banking.</p>
+        <p>Auto-logout: 5 min idle or 2 min in background.</p>
       </div>
-      <div class="sec-item">
-        <div class="sec-icon">📝</div>
-        <h4>Full Audit Trail</h4>
-        <p>Every staff action logged with timestamp, IP address, and user identity. Tamper-proof.</p>
+      <div class="sec-card">
+        <div class="si">📝</div>
+        <h4>Audit Trail</h4>
+        <p>Every action logged with timestamp, IP & identity.</p>
       </div>
     </div>
 
@@ -643,19 +466,18 @@
 
   <!-- FOOTER -->
   <div class="footer">
-    <div class="footer-brand">
+    <div class="footer-left">
       <div class="footer-logo">🏦</div>
       <div>
-        <h3>BankyKit</h3>
-        <p>Bank & SACCO Management Platform</p>
+        <div class="footer-brand-name">BankyKit</div>
+        <div class="footer-brand-tag">Secure · Scalable · Built for Africa</div>
       </div>
     </div>
-    <div class="footer-links">
-      <div class="footer-link"><span class="licon">🌐</span> app.bankykit.com</div>
-      <div class="footer-link"><span class="licon">✉️</span> info@bankykit.com</div>
-      <div class="footer-link"><span class="licon">📞</span> Request a Demo</div>
+    <div class="footer-contacts">
+      <div class="footer-contact">🌐 app.bankykit.com</div>
+      <div class="footer-contact">✉️ info@bankykit.com</div>
     </div>
-    <button class="footer-cta">Get Started Free →</button>
+    <button class="footer-cta">Request a Demo →</button>
   </div>
 
 </div>
