@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1080">
+<title>BankyKit Features – Part 2</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:1080px; height:1920px; overflow:hidden; background:#003fa3; font-family:'Poppins',sans-serif; }
+
+.slide {
+  width:1080px; height:1920px;
+  background:linear-gradient(160deg,#0055cc 0%,#003399 100%);
+  padding:60px 56px 50px;
+  position:relative; overflow:hidden;
+  display:flex; flex-direction:column;
+}
+
+.slide::before {
+  content:''; position:absolute; inset:0;
+  background-image:radial-gradient(rgba(255,255,255,0.09) 2px, transparent 2px);
+  background-size:34px 34px; pointer-events:none; z-index:0;
+}
+.arc { position:absolute; border-radius:50%; pointer-events:none; z-index:0; }
+.arc1 { width:600px; height:600px; top:-220px; left:-180px; border:70px solid rgba(255,255,255,0.06); }
+.arc2 { width:500px; height:500px; bottom:-180px; right:-160px; border:65px solid rgba(255,255,255,0.05); }
+
+.header {
+  position:relative; z-index:5;
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:30px; padding-bottom:24px;
+  border-bottom:1.5px solid rgba(255,255,255,0.20);
+}
+.logo { display:flex; align-items:center; gap:16px; }
+.logo-icon {
+  width:64px; height:64px; border-radius:18px;
+  background:rgba(255,255,255,0.20); border:2px solid rgba(255,255,255,0.32);
+  display:flex; align-items:center; justify-content:center; font-size:30px;
+}
+.logo-name { font-size:32px; font-weight:900; color:#fff; letter-spacing:-0.5px; }
+.logo-tag  { font-size:13px; color:rgba(255,255,255,0.65); font-weight:500; margin-top:2px; }
+.badge {
+  background:rgba(255,255,255,0.20); border:1.5px solid rgba(255,255,255,0.32);
+  color:#fff; font-size:11px; font-weight:700; letter-spacing:1.6px;
+  text-transform:uppercase; padding:8px 20px; border-radius:100px;
+}
+
+.divider {
+  position:relative; z-index:5;
+  display:flex; align-items:center; gap:14px; margin-bottom:24px;
+}
+.divider-line { flex:1; height:1.5px; background:rgba(255,255,255,0.18); }
+.divider-label { font-size:11px; font-weight:700; letter-spacing:1.8px; text-transform:uppercase; color:rgba(255,255,255,0.45); }
+
+.grid {
+  position:relative; z-index:5;
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:13px;
+}
+.card {
+  background:rgba(255,255,255,0.12);
+  border:1.5px solid rgba(255,255,255,0.20);
+  border-radius:16px; padding:18px 17px;
+}
+.card-head {
+  display:flex; align-items:center; gap:11px;
+  margin-bottom:11px; padding-bottom:10px;
+  border-bottom:1.5px solid rgba(255,255,255,0.14);
+}
+.card-icon {
+  width:36px; height:36px; border-radius:10px; flex-shrink:0;
+  background:rgba(255,255,255,0.20);
+  display:flex; align-items:center; justify-content:center; font-size:17px;
+}
+.card-title { font-size:14.5px; font-weight:800; color:#fff; line-height:1.3; }
+.card-items { list-style:none; }
+.card-items li {
+  display:flex; align-items:flex-start; gap:9px;
+  font-size:12.5px; color:rgba(255,255,255,0.88); font-weight:500;
+  line-height:1.5; padding:2.5px 0;
+}
+.card-items li::before {
+  content:'›'; color:rgba(255,255,255,0.50); font-size:15px;
+  flex-shrink:0; font-weight:700; line-height:1.5;
+}
+
+/* HR card spans 2 columns */
+.card-wide { grid-column:span 2; }
+.card-wide .card-items {
+  display:grid; grid-template-columns:1fr 1fr; gap:0 28px;
+}
+
+/* ── SUMMARY ── */
+.summary {
+  position:relative; z-index:5;
+  background:rgba(255,255,255,0.12);
+  border:1.5px solid rgba(255,255,255,0.22);
+  border-radius:18px; padding:24px 28px; margin-top:13px;
+}
+.summary-title { font-size:15px; font-weight:800; color:#fff; text-align:center; margin-bottom:16px; }
+.sum-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px 18px; }
+.sum-item {
+  display:flex; align-items:flex-start; gap:8px;
+  font-size:11.5px; color:rgba(255,255,255,0.82); font-weight:500; line-height:1.45;
+}
+.sum-num { font-size:10px; font-weight:800; color:rgba(255,255,255,0.40); flex-shrink:0; min-width:18px; padding-top:1px; }
+
+/* ── FOOTER ── */
+.footer {
+  position:relative; z-index:5;
+  margin-top:20px; padding-top:18px;
+  border-top:1.5px solid rgba(255,255,255,0.18);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.f-contact { font-size:14px; color:rgba(255,255,255,0.75); font-weight:500; line-height:2; }
+.f-contact strong { color:#fff; font-weight:700; }
+.f-cta {
+  background:#fff; color:#0044bb;
+  font-size:14px; font-weight:800;
+  padding:14px 36px; border-radius:100px;
+  box-shadow:0 8px 28px rgba(0,0,0,0.25);
+  white-space:nowrap;
+}
+</style>
+</head>
+<body>
+<div class="slide">
+  <div class="arc arc1"></div>
+  <div class="arc arc2"></div>
+
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🏦</div>
+      <div>
+        <div class="logo-name">BankyKit</div>
+        <div class="logo-tag">Complete Financial Management System</div>
+      </div>
+    </div>
+    <div class="badge">Features — 2 of 2</div>
+  </div>
+
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-label">Modules 11 – 19</div>
+    <div class="divider-line"></div>
+  </div>
+
+  <div class="grid">
+
+    <!-- Staff & HR — wide -->
+    <div class="card card-wide">
+      <div class="card-head"><div class="card-icon">🧑‍💼</div><div class="card-title">Staff &amp; Human Resources</div></div>
+      <ul class="card-items">
+        <li>Staff profiles &amp; employment records</li>
+        <li>Payroll — basic pay, allowances, deductions</li>
+        <li>Payslip generation &amp; pay period management</li>
+        <li>Attendance clock-in / clock-out tracking</li>
+        <li>Leave management — types, requests &amp; approvals</li>
+        <li>Salary advance processing</li>
+        <li>Performance reviews &amp; disciplinary records</li>
+        <li>Training records &amp; HR document storage</li>
+        <li>Working hours enforcement per role</li>
+        <li>Role-based access control</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="card-icon">💬</div><div class="card-title">SMS Notifications</div></div>
+      <ul class="card-items">
+        <li>Loan approval &amp; disbursement alerts</li>
+        <li>Deposit &amp; withdrawal confirmations</li>
+        <li>Due date &amp; overdue reminders</li>
+        <li>Bulk SMS to all members</li>
+        <li>Template config &amp; delivery tracking</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="card-icon">📁</div><div class="card-title">Document Management</div></div>
+      <ul class="card-items">
+        <li>Member document uploads — ID, photos</li>
+        <li>Loan document attachments</li>
+        <li>HR staff document storage</li>
+        <li>KYC verification tracking</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="card-icon">🔑</div><div class="card-title">Roles &amp; Permissions</div></div>
+      <ul class="card-items">
+        <li>Custom roles per organization</li>
+        <li>Granular permission assignment</li>
+        <li>Predefined — admin, teller, loan officer</li>
+        <li>Permission checks on all operations</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="card-icon">🛡️</div><div class="card-title">Audit &amp; Compliance</div></div>
+      <ul class="card-items">
+        <li>Full audit trail for all actions</li>
+        <li>User activity — who, what, when</li>
+        <li>Entity-level audit history</li>
+        <li>Log search, filtering &amp; reports</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="card-icon">🔔</div><div class="card-title">Notifications &amp; Alerts</div></div>
+      <ul class="card-items">
+        <li>In-app notifications</li>
+        <li>Email — welcome, reset, verification</li>
+        <li>Fixed deposit maturity alerts</li>
+        <li>Trial expiry &amp; renewal reminders</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><div class="card-icon">⚙️</div><div class="card-title">Organization Settings</div></div>
+      <ul class="card-items">
+        <li>Organization profile, logo &amp; branding</li>
+        <li>Currency &amp; financial year config</li>
+        <li>M-Pesa &amp; SMS gateway setup</li>
+        <li>Staff email domain restriction</li>
+        <li>Working hours &amp; auto-logout</li>
+      </ul>
+    </div>
+
+    <!-- Mobile Banking — wide -->
+    <div class="card card-wide">
+      <div class="card-head"><div class="card-icon">📲</div><div class="card-title">Mobile Banking App — Android &amp; iOS</div></div>
+      <ul class="card-items">
+        <li>OTP-based account activation</li>
+        <li>Account balance enquiry</li>
+        <li>Transaction history &amp; statements</li>
+        <li>Loan application from mobile</li>
+        <li>Mobile soft loan — instant short-term loan via app</li>
+        <li>Loan repayment via M-Pesa</li>
+        <li>Fixed deposit placement</li>
+        <li>SMS OTP login authentication</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="summary">
+    <div class="summary-title">19 Core Modules — Complete Feature Summary</div>
+    <div class="sum-grid">
+      <div class="sum-item"><span class="sum-num">01</span>Member Management</div>
+      <div class="sum-item"><span class="sum-num">02</span>Loan Management</div>
+      <div class="sum-item"><span class="sum-num">03</span>Savings &amp; Shares</div>
+      <div class="sum-item"><span class="sum-num">04</span>M-Pesa Integration</div>
+      <div class="sum-item"><span class="sum-num">05</span>Mobile Banking App</div>
+      <div class="sum-item"><span class="sum-num">06</span>Teller Services</div>
+      <div class="sum-item"><span class="sum-num">07</span>Accounting &amp; GL</div>
+      <div class="sum-item"><span class="sum-num">08</span>SMS Notifications</div>
+      <div class="sum-item"><span class="sum-num">09</span>Branch Management</div>
+      <div class="sum-item"><span class="sum-num">10</span>Reports &amp; Analytics</div>
+      <div class="sum-item"><span class="sum-num">11</span>Fixed Deposits</div>
+      <div class="sum-item"><span class="sum-num">12</span>Loan Restructuring</div>
+      <div class="sum-item"><span class="sum-num">13</span>Interest Computation</div>
+      <div class="sum-item"><span class="sum-num">14</span>Dividend Processing</div>
+      <div class="sum-item"><span class="sum-num">15</span>Collateral Management</div>
+      <div class="sum-item"><span class="sum-num">16</span>Staff &amp; HR</div>
+      <div class="sum-item"><span class="sum-num">17</span>Roles &amp; Permissions</div>
+      <div class="sum-item"><span class="sum-num">18</span>Document Management</div>
+      <div class="sum-item"><span class="sum-num">19</span>Audit &amp; Compliance</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="f-contact">
+      📞 <strong>+254 791 334 234</strong> &nbsp;·&nbsp;
+      ✉️ <strong>sales@bankykit.com</strong> &nbsp;·&nbsp;
+      🌐 <strong>demo.bankykit.com</strong>
+    </div>
+    <div class="f-cta">demo.bankykit.com</div>
+  </div>
+</div>
+</body>
+</html>
