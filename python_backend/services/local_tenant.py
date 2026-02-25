@@ -6,39 +6,61 @@ from models.tenant import TenantBase
 
 class LocalTenantService:
     """
-    Provisions per-org databases on a locally accessible Postgres server.
+    Provisions per-org databases on the local Postgres server that was already
+    set up by install.sh.
 
-    Required env var:
-        LOCAL_PG_SUPERUSER_URL  — connection string for a superuser account that
-                                   can CREATE / DROP databases, e.g.:
-                                   postgresql://postgres:secret@localhost:5432/postgres
+    No extra env vars are required. The service derives the superuser connection
+    from DATABASE_URL (which install.sh always writes) by swapping the database
+    name to the Postgres maintenance database ('postgres').
+
+    Optional override:
+        LOCAL_PG_SUPERUSER_URL  — set only if you need a different superuser
+                                   account than the one in DATABASE_URL.
 
     The service will:
-      1. Connect to the superuser database
+      1. Connect to the Postgres maintenance database as superuser
       2. CREATE DATABASE bankykit_<org_id_short>
       3. Run tenant schema migrations on the new database
       4. Return the connection string for the new database
     """
 
+    @staticmethod
+    def _swap_db_name(url: str, new_db: str) -> str:
+        """Replace the database name in a Postgres URL with new_db.
+
+        Works for all three URL forms install.sh may write:
+          postgresql:///bankykit              (peer auth, no host)
+          postgresql://localhost:5432/bankykit (TCP with host)
+          postgresql://user:pass@host/bankykit (with credentials)
+        """
+        without_query = url.split("?")[0]
+        base = without_query.rsplit("/", 1)[0]
+        return f"{base}/{new_db}"
+
     def _superuser_url(self) -> str:
+        # Explicit override takes priority
         url = os.environ.get("LOCAL_PG_SUPERUSER_URL")
-        if not url:
+        if url:
+            return url
+
+        # Derive from DATABASE_URL — swap the DB name for the Postgres maintenance DB.
+        # DATABASE_URL is always written by install.sh using the same superuser account,
+        # so no extra credentials are needed.
+        base_url = os.environ.get("DATABASE_URL", "")
+        if not base_url:
             raise ValueError(
-                "LOCAL_PG_SUPERUSER_URL is not set. "
-                "Set it to a Postgres superuser connection string, e.g. "
-                "postgresql://postgres:secret@localhost:5432/postgres"
+                "DATABASE_URL is not set. Run install.sh first, or set "
+                "LOCAL_PG_SUPERUSER_URL manually."
             )
-        return url
+        return self._swap_db_name(base_url, "postgres")
 
     def _db_name(self, org_id: str) -> str:
         safe = re.sub(r"[^a-z0-9]", "_", org_id[:16].lower())
         return f"bankykit_{safe}"
 
     def _tenant_url(self, org_id: str) -> str:
-        superuser_url = self._superuser_url()
-        db_name = self._db_name(org_id)
-        base = superuser_url.rsplit("/", 1)[0]
-        return f"{base}/{db_name}"
+        base_url = os.environ.get("LOCAL_PG_SUPERUSER_URL") or os.environ.get("DATABASE_URL", "")
+        return self._swap_db_name(base_url, self._db_name(org_id))
 
     async def create_tenant_database(self, org_id: str, org_name: str) -> dict:
         superuser_url = self._superuser_url()
