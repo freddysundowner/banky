@@ -200,6 +200,7 @@ MOBILE BANKING (Member App API)
 - Account balance enquiry
 - Transaction history
 - Loan application from mobile
+- Mobile soft loan (instant short-term loan via app)
 - Loan repayment via M-Pesa
 - Fixed deposit placement
 - SMS OTP authentication
