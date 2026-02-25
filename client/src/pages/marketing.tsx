@@ -84,7 +84,7 @@ export default function Marketing() {
 
   if (selected && selectedPoster) {
     return (
-      <div className="min-h-screen bg-slate-100 flex flex-col">
+      <div className="h-screen overflow-y-auto bg-slate-100 flex flex-col">
         <div className="bg-white border-b px-6 py-4 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-4">
             <button
@@ -136,8 +136,8 @@ export default function Marketing() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100">
-      <div className="bg-white border-b px-6 py-4 shadow-sm">
+    <div className="h-screen overflow-y-auto bg-slate-100">
+      <div className="bg-white border-b px-6 py-4 shadow-sm sticky top-0 z-10">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-slate-900">Marketing Posters</h1>
