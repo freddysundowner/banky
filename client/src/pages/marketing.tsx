@@ -22,24 +22,6 @@ const posters = [
     file: "/posters/poster-gradient.html",
   },
   {
-    id: "minimal",
-    title: "Split Panel",
-    description: "Dark navy left panel + white feature cards on the right.",
-    file: "/posters/poster-minimal.html",
-  },
-  {
-    id: "bold",
-    title: "Bold & Clean",
-    description: "White background, big typography, colored feature sections.",
-    file: "/posters/poster-bold.html",
-  },
-  {
-    id: "5",
-    title: "Everything Your SACCO Needs",
-    description: "Blue gradient, bold headline, decorative circles, feature pills.",
-    file: "/posters/poster-5.html",
-  },
-  {
     id: "7",
     title: "Your Members Deserve Better",
     description: "Dark navy theme, blue glow accents, dot-grid background. Professional & bold.",
