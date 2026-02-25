@@ -164,7 +164,6 @@ export default function Marketing() {
               <div className="p-3 flex items-start justify-between">
                 <div>
                   <h2 className="font-semibold text-slate-900 text-sm">{poster.title}</h2>
-                  <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{poster.description}</p>
                 </div>
                 <a
                   href={poster.file}
