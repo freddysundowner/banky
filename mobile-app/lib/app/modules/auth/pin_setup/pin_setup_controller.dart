@@ -8,9 +8,6 @@ import '../../../routes/app_pages.dart';
 class PinSetupController extends GetxController {
   ApiService get _api => Get.find<ApiService>();
 
-  final pinController = TextEditingController();
-  final confirmPinController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
   final isLoading = false.obs;
   final obscurePin = true.obs;
   final obscureConfirmPin = true.obs;
@@ -30,13 +27,6 @@ class PinSetupController extends GetxController {
     deviceName = args['device_name'] ?? '';
   }
 
-  @override
-  void onClose() {
-    pinController.dispose();
-    confirmPinController.dispose();
-    super.onClose();
-  }
-
   String? validatePin(String? value) {
     if (value == null || value.isEmpty) {
       return 'Please enter a 6-digit password';
@@ -50,19 +40,17 @@ class PinSetupController extends GetxController {
     return null;
   }
 
-  String? validateConfirmPin(String? value) {
+  String? validateConfirmPin(String? value, String pin) {
     if (value == null || value.isEmpty) {
       return 'Please confirm your password';
     }
-    if (value != pinController.text) {
+    if (value != pin) {
       return 'Passwords do not match';
     }
     return null;
   }
 
-  Future<void> setupPin() async {
-    if (!formKey.currentState!.validate()) return;
-
+  Future<void> setupPin(String pin) async {
     isLoading.value = true;
 
     try {
@@ -71,7 +59,7 @@ class PinSetupController extends GetxController {
         data: {
           'id_number': idNumber,
           'otp': otp,
-          'password': pinController.text,
+          'password': pin,
           'device_id': deviceId,
           if (deviceName.isNotEmpty) 'device_name': deviceName,
         },

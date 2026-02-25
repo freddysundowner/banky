@@ -11,9 +11,6 @@ class ActivateController extends GetxController {
   ApiService get _api => Get.find<ApiService>();
   StorageService get _storage => Get.find<StorageService>();
 
-  final idNumberController = TextEditingController();
-  final activationCodeController = TextEditingController();
-  final formKey = GlobalKey<FormState>();
   final isLoading = false.obs;
   final isDemoLoading = false.obs;
   final errorMessage = ''.obs;
@@ -24,13 +21,6 @@ class ActivateController extends GetxController {
     super.onInit();
     _checkDemoStatus();
     _storage.prewarmDeviceInfo();
-  }
-
-  @override
-  void onClose() {
-    idNumberController.dispose();
-    activationCodeController.dispose();
-    super.onClose();
   }
 
   Future<void> _checkDemoStatus() async {
@@ -58,9 +48,7 @@ class ActivateController extends GetxController {
     return null;
   }
 
-  Future<void> activate() async {
-    if (!formKey.currentState!.validate()) return;
-
+  Future<void> activate(String idNumber, String activationCode) async {
     errorMessage.value = '';
     isLoading.value = true;
 
@@ -71,8 +59,8 @@ class ActivateController extends GetxController {
       final response = await _api.post(
         ApiConstants.mobileActivateInit,
         data: {
-          'id_number': idNumberController.text.trim().toUpperCase(),
-          'activation_code': activationCodeController.text.trim().toUpperCase(),
+          'id_number': idNumber.trim().toUpperCase(),
+          'activation_code': activationCode.trim().toUpperCase(),
           'device_id': deviceId,
           'device_name': deviceName,
         },
@@ -83,7 +71,7 @@ class ActivateController extends GetxController {
         Get.toNamed(
           Routes.otpVerify,
           arguments: {
-            'id_number': idNumberController.text.trim().toUpperCase(),
+            'id_number': idNumber.trim().toUpperCase(),
             'masked_phone': data['masked_phone'],
             'member_name': data['member_name'],
             'organization_name': data['organization_name'],

@@ -6,8 +6,35 @@ import '../../../core/theme/app_theme.dart';
 import '../../../routes/app_pages.dart';
 import 'login_controller.dart';
 
-class LoginView extends GetView<LoginController> {
+class LoginView extends StatefulWidget {
   const LoginView({super.key});
+
+  @override
+  State<LoginView> createState() => _LoginViewState();
+}
+
+class _LoginViewState extends State<LoginView> {
+  final _pinController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  late final LoginController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = Get.find<LoginController>();
+  }
+
+  @override
+  void dispose() {
+    _pinController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_formKey.currentState!.validate()) {
+      _ctrl.login(_pinController.text);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +44,7 @@ class LoginView extends GetView<LoginController> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
-            key: controller.formKey,
+            key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -65,11 +92,12 @@ class LoginView extends GetView<LoginController> {
                 const SizedBox(height: 48),
 
                 Obx(() => TextFormField(
-                  controller: controller.pinController,
-                  validator: controller.validatePin,
-                  obscureText: controller.obscurePin.value,
+                  controller: _pinController,
+                  validator: _ctrl.validatePin,
+                  obscureText: _ctrl.obscurePin.value,
                   keyboardType: TextInputType.number,
                   maxLength: 6,
+                  onFieldSubmitted: (_) => _submit(),
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
                     LengthLimitingTextInputFormatter(6),
@@ -81,11 +109,11 @@ class LoginView extends GetView<LoginController> {
                     counterText: '',
                     suffixIcon: IconButton(
                       icon: Icon(
-                        controller.obscurePin.value
+                        _ctrl.obscurePin.value
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
                       ),
-                      onPressed: controller.togglePinVisibility,
+                      onPressed: _ctrl.togglePinVisibility,
                     ),
                   ),
                 )),
@@ -93,11 +121,11 @@ class LoginView extends GetView<LoginController> {
                 const SizedBox(height: 24),
 
                 Obx(() => ElevatedButton(
-                  onPressed: controller.isLoading.value ? null : controller.login,
+                  onPressed: _ctrl.isLoading.value ? null : _submit,
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(56),
                   ),
-                  child: controller.isLoading.value
+                  child: _ctrl.isLoading.value
                       ? const SizedBox(
                           height: 24,
                           width: 24,
@@ -128,7 +156,7 @@ class LoginView extends GetView<LoginController> {
                   ],
                 ),
 
-                Obx(() => controller.isDemoMode.value
+                Obx(() => _ctrl.isDemoMode.value
                     ? Column(
                         children: [
                           const SizedBox(height: 16),
@@ -171,10 +199,10 @@ class LoginView extends GetView<LoginController> {
                                 Obx(() => SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton.icon(
-                                    onPressed: controller.isDemoLoading.value
+                                    onPressed: _ctrl.isDemoLoading.value
                                         ? null
-                                        : controller.demoLogin,
-                                    icon: controller.isDemoLoading.value
+                                        : _ctrl.demoLogin,
+                                    icon: _ctrl.isDemoLoading.value
                                         ? const SizedBox(
                                             height: 18,
                                             width: 18,
@@ -187,7 +215,7 @@ class LoginView extends GetView<LoginController> {
                                           )
                                         : const Icon(Icons.play_arrow_rounded),
                                     label: Text(
-                                      controller.isDemoLoading.value
+                                      _ctrl.isDemoLoading.value
                                           ? 'Loading...'
                                           : 'Try Demo',
                                       style: const TextStyle(fontSize: 15),

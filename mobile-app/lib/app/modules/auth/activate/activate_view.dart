@@ -5,8 +5,37 @@ import '../../../core/theme/app_theme.dart';
 import '../../../routes/app_pages.dart';
 import 'activate_controller.dart';
 
-class ActivateView extends GetView<ActivateController> {
+class ActivateView extends StatefulWidget {
   const ActivateView({super.key});
+
+  @override
+  State<ActivateView> createState() => _ActivateViewState();
+}
+
+class _ActivateViewState extends State<ActivateView> {
+  final _idController = TextEditingController();
+  final _codeController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  late final ActivateController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = Get.find<ActivateController>();
+  }
+
+  @override
+  void dispose() {
+    _idController.dispose();
+    _codeController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_formKey.currentState!.validate()) {
+      _ctrl.activate(_idController.text, _codeController.text);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +45,7 @@ class ActivateView extends GetView<ActivateController> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
-            key: controller.formKey,
+            key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -65,8 +94,8 @@ class ActivateView extends GetView<ActivateController> {
                 const SizedBox(height: 40),
 
                 TextFormField(
-                  controller: controller.idNumberController,
-                  validator: controller.validateIdNumber,
+                  controller: _idController,
+                  validator: _ctrl.validateIdNumber,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(
                     labelText: 'ID Number',
@@ -78,8 +107,8 @@ class ActivateView extends GetView<ActivateController> {
                 const SizedBox(height: 16),
 
                 TextFormField(
-                  controller: controller.activationCodeController,
-                  validator: controller.validateActivationCode,
+                  controller: _codeController,
+                  validator: _ctrl.validateActivationCode,
                   keyboardType: TextInputType.text,
                   textCapitalization: TextCapitalization.characters,
                   decoration: const InputDecoration(
@@ -102,11 +131,11 @@ class ActivateView extends GetView<ActivateController> {
                 const SizedBox(height: 32),
 
                 Obx(() => ElevatedButton(
-                  onPressed: controller.isLoading.value ? null : controller.activate,
+                  onPressed: _ctrl.isLoading.value ? null : _submit,
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(56),
                   ),
-                  child: controller.isLoading.value
+                  child: _ctrl.isLoading.value
                       ? const SizedBox(
                           height: 24,
                           width: 24,
@@ -137,7 +166,7 @@ class ActivateView extends GetView<ActivateController> {
                   ],
                 ),
 
-                Obx(() => controller.isDemoMode.value
+                Obx(() => _ctrl.isDemoMode.value
                     ? Column(
                         children: [
                           const SizedBox(height: 16),
@@ -180,10 +209,10 @@ class ActivateView extends GetView<ActivateController> {
                                 Obx(() => SizedBox(
                                   width: double.infinity,
                                   child: ElevatedButton.icon(
-                                    onPressed: controller.isDemoLoading.value
+                                    onPressed: _ctrl.isDemoLoading.value
                                         ? null
-                                        : controller.demoLogin,
-                                    icon: controller.isDemoLoading.value
+                                        : _ctrl.demoLogin,
+                                    icon: _ctrl.isDemoLoading.value
                                         ? const SizedBox(
                                             height: 18,
                                             width: 18,
@@ -196,7 +225,7 @@ class ActivateView extends GetView<ActivateController> {
                                           )
                                         : const Icon(Icons.play_arrow_rounded),
                                     label: Text(
-                                      controller.isDemoLoading.value
+                                      _ctrl.isDemoLoading.value
                                           ? 'Loading...'
                                           : 'Try Demo',
                                       style: const TextStyle(fontSize: 15),

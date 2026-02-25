@@ -5,8 +5,37 @@ import 'package:get/get.dart';
 import '../../../core/theme/app_theme.dart';
 import 'pin_setup_controller.dart';
 
-class PinSetupView extends GetView<PinSetupController> {
+class PinSetupView extends StatefulWidget {
   const PinSetupView({super.key});
+
+  @override
+  State<PinSetupView> createState() => _PinSetupViewState();
+}
+
+class _PinSetupViewState extends State<PinSetupView> {
+  final _pinController = TextEditingController();
+  final _confirmController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  late final PinSetupController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = Get.find<PinSetupController>();
+  }
+
+  @override
+  void dispose() {
+    _pinController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_formKey.currentState!.validate()) {
+      _ctrl.setupPin(_pinController.text);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +53,7 @@ class PinSetupView extends GetView<PinSetupController> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
-            key: controller.formKey,
+            key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -73,10 +102,10 @@ class PinSetupView extends GetView<PinSetupController> {
                 const SizedBox(height: 40),
 
                 Obx(() => TextFormField(
-                  controller: controller.pinController,
-                  validator: controller.validatePin,
+                  controller: _pinController,
+                  validator: _ctrl.validatePin,
                   keyboardType: TextInputType.number,
-                  obscureText: controller.obscurePin.value,
+                  obscureText: _ctrl.obscurePin.value,
                   maxLength: 6,
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
@@ -89,11 +118,11 @@ class PinSetupView extends GetView<PinSetupController> {
                     counterText: '',
                     suffixIcon: IconButton(
                       icon: Icon(
-                        controller.obscurePin.value
+                        _ctrl.obscurePin.value
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
                       ),
-                      onPressed: () => controller.obscurePin.toggle(),
+                      onPressed: () => _ctrl.obscurePin.toggle(),
                     ),
                   ),
                 )),
@@ -101,10 +130,10 @@ class PinSetupView extends GetView<PinSetupController> {
                 const SizedBox(height: 16),
 
                 Obx(() => TextFormField(
-                  controller: controller.confirmPinController,
-                  validator: controller.validateConfirmPin,
+                  controller: _confirmController,
+                  validator: (v) => _ctrl.validateConfirmPin(v, _pinController.text),
                   keyboardType: TextInputType.number,
-                  obscureText: controller.obscureConfirmPin.value,
+                  obscureText: _ctrl.obscureConfirmPin.value,
                   maxLength: 6,
                   inputFormatters: [
                     FilteringTextInputFormatter.digitsOnly,
@@ -117,11 +146,11 @@ class PinSetupView extends GetView<PinSetupController> {
                     counterText: '',
                     suffixIcon: IconButton(
                       icon: Icon(
-                        controller.obscureConfirmPin.value
+                        _ctrl.obscureConfirmPin.value
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
                       ),
-                      onPressed: () => controller.obscureConfirmPin.toggle(),
+                      onPressed: () => _ctrl.obscureConfirmPin.toggle(),
                     ),
                   ),
                 )),
@@ -129,11 +158,11 @@ class PinSetupView extends GetView<PinSetupController> {
                 const SizedBox(height: 32),
 
                 Obx(() => ElevatedButton(
-                  onPressed: controller.isLoading.value ? null : controller.setupPin,
+                  onPressed: _ctrl.isLoading.value ? null : _submit,
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size.fromHeight(56),
                   ),
-                  child: controller.isLoading.value
+                  child: _ctrl.isLoading.value
                       ? const SizedBox(
                           height: 24,
                           width: 24,

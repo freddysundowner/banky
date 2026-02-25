@@ -11,10 +11,6 @@ class LoginController extends GetxController {
   ApiService get _api => Get.find<ApiService>();
   StorageService get _storage => Get.find<StorageService>();
 
-  final pinController = TextEditingController();
-
-  final formKey = GlobalKey<FormState>();
-
   final isLoading = false.obs;
   final isDemoLoading = false.obs;
   final obscurePin = true.obs;
@@ -26,12 +22,6 @@ class LoginController extends GetxController {
     super.onInit();
     _checkDemoStatus();
     _storage.prewarmDeviceInfo();
-  }
-
-  @override
-  void onClose() {
-    pinController.dispose();
-    super.onClose();
   }
 
   Future<void> _checkDemoStatus() async {
@@ -46,9 +36,7 @@ class LoginController extends GetxController {
     obscurePin.value = !obscurePin.value;
   }
 
-  Future<void> login() async {
-    if (!formKey.currentState!.validate()) return;
-
+  Future<void> login(String pin) async {
     errorMessage.value = '';
     isLoading.value = true;
 
@@ -60,7 +48,7 @@ class LoginController extends GetxController {
         ApiConstants.mobileLogin,
         data: {
           'device_id': deviceId,
-          'password': pinController.text,
+          'password': pin,
           'device_name': deviceName,
         },
       );
