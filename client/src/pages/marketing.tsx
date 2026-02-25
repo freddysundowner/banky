@@ -39,12 +39,6 @@ const posters = [
     description: "Blue gradient, bold headline, decorative circles, feature pills.",
     file: "/posters/poster-5.html",
   },
-  {
-    id: "6",
-    title: "One System. Every Feature. ⭐",
-    description: "Clean blue background, bold headline, numbered features in two columns.",
-    file: "/posters/poster-6.html",
-  },
 ];
 
 export default function Marketing() {
