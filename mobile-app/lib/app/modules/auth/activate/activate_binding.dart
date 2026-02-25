@@ -4,6 +4,6 @@ import 'activate_controller.dart';
 class ActivateBinding extends Bindings {
   @override
   void dependencies() {
-    Get.lazyPut<ActivateController>(() => ActivateController());
+    Get.lazyPut<ActivateController>(() => ActivateController(), fenix: true);
   }
 }
