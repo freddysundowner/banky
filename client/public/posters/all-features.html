@@ -24,9 +24,18 @@ html, body { width:1400px; background:#003eaf; font-family:'Poppins', sans-serif
 /* ── PRINT / PDF STYLES ── */
 @media print {
   .pdf-btn { display:none !important; }
-  @page { size:1400px auto; margin:0; }
-  html, body { width:1400px; }
-  .poster { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  @page { size: A3 landscape; margin: 0; }
+  html, body { width: 100%; margin: 0; padding: 0; }
+  .poster {
+    width: 100%;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* prevent cards from splitting across pages */
+  .card, .summary, .footer, .divider, .hero, .header {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
 }
 
 .poster {
@@ -468,7 +477,24 @@ html, body { width:1400px; background:#003eaf; font-family:'Poppins', sans-serif
 </div>
 
 <!-- SAVE AS PDF BUTTON -->
-<button class="pdf-btn" onclick="window.print()">
+<div id="pdf-hint" style="
+  position:fixed; bottom:100px; right:32px; z-index:999;
+  background:#1a1a2e; color:#fff; font-family:'Poppins',sans-serif;
+  font-size:13px; font-weight:500; line-height:1.7;
+  padding:16px 20px; border-radius:14px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.40);
+  max-width:280px; display:none;
+">
+  In the print dialog:<br>
+  1. <strong>Destination</strong> → Save as PDF<br>
+  2. <strong>Paper size</strong> → A3<br>
+  3. <strong>Layout</strong> → Landscape<br>
+  4. <strong>Margins</strong> → None<br>
+  5. Tick <strong>Background graphics</strong> ✓<br>
+  Then click <strong>Save</strong>
+</div>
+
+<button class="pdf-btn" onclick="document.getElementById('pdf-hint').style.display='block'; setTimeout(()=>{ window.print(); document.getElementById('pdf-hint').style.display='none'; },600);">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
     <polyline points="14 2 14 8 20 8"/>
