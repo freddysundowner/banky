@@ -103,48 +103,45 @@ html, body { width:1400px; background:#003eaf; font-family:'Poppins', sans-serif
 .divider-line  { flex:1; height:2px; background:rgba(255,255,255,0.18); }
 .divider-label { font-size:14px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:rgba(255,255,255,0.50); }
 
-/* ── 2-COLUMN GRID ── */
+/* ── 1-COLUMN GRID ── */
 .grid {
   position:relative; z-index:5;
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:20px;
+  grid-template-columns:1fr;
+  gap:24px;
   margin-bottom:36px;
 }
 
 .card {
   background:rgba(255,255,255,0.10);
   border:1.5px solid rgba(255,255,255,0.20);
-  border-radius:20px;
-  padding:28px 26px 24px;
+  border-radius:22px;
+  padding:34px 36px 30px;
 }
 .card-head {
-  display:flex; align-items:center; gap:16px;
-  margin-bottom:18px; padding-bottom:16px;
+  display:flex; align-items:center; gap:20px;
+  margin-bottom:22px; padding-bottom:20px;
   border-bottom:1.5px solid rgba(255,255,255,0.15);
 }
 .card-icon {
-  width:52px; height:52px; border-radius:14px; flex-shrink:0;
+  width:64px; height:64px; border-radius:16px; flex-shrink:0;
   background:rgba(255,255,255,0.20);
-  display:flex; align-items:center; justify-content:center; font-size:25px;
+  display:flex; align-items:center; justify-content:center; font-size:30px;
 }
-.card-title { font-size:21px; font-weight:800; color:#fff; line-height:1.25; }
+.card-title { font-size:28px; font-weight:800; color:#fff; line-height:1.25; }
 
-.card-items { list-style:none; display:flex; flex-direction:column; gap:10px; }
+.card-items { list-style:none; display:grid; grid-template-columns:1fr 1fr; gap:12px 48px; }
 .card-items li {
-  display:flex; align-items:flex-start; gap:12px;
-  font-size:17px; color:rgba(255,255,255,0.90); font-weight:500; line-height:1.45;
+  display:flex; align-items:flex-start; gap:14px;
+  font-size:20px; color:rgba(255,255,255,0.90); font-weight:500; line-height:1.5;
 }
 .card-items li::before {
-  content:'✓'; color:rgba(140,210,255,0.85); font-size:16px;
-  flex-shrink:0; font-weight:800; margin-top:2px;
+  content:'✓'; color:rgba(140,210,255,0.85); font-size:18px;
+  flex-shrink:0; font-weight:800; margin-top:3px;
 }
 
-/* wide card — spans both columns, 2-col items */
-.card-wide { grid-column:span 2; }
-.card-wide .card-items {
-  display:grid; grid-template-columns:1fr 1fr; gap:10px 48px;
-}
+/* wide card — no longer needs span in 1-col, items stay 2-col */
+.card-wide { grid-column:span 1; }
 
 /* ── SUMMARY STRIP ── */
 .summary {
@@ -154,15 +151,15 @@ html, body { width:1400px; background:#003eaf; font-family:'Poppins', sans-serif
   border-radius:20px; padding:38px 44px; margin-bottom:36px;
 }
 .summary-title {
-  font-size:20px; font-weight:800; color:#fff;
-  margin-bottom:24px; text-align:center; letter-spacing:0.2px;
+  font-size:26px; font-weight:800; color:#fff;
+  margin-bottom:28px; text-align:center; letter-spacing:0.2px;
 }
-.summary-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px 28px; }
+.summary-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px 32px; }
 .sum-item {
-  display:flex; align-items:flex-start; gap:10px;
-  font-size:15px; color:rgba(255,255,255,0.84); font-weight:500; line-height:1.5;
+  display:flex; align-items:flex-start; gap:12px;
+  font-size:18px; color:rgba(255,255,255,0.84); font-weight:500; line-height:1.5;
 }
-.sum-num { font-size:12px; font-weight:800; color:rgba(255,255,255,0.42); flex-shrink:0; min-width:22px; padding-top:2px; }
+.sum-num { font-size:14px; font-weight:800; color:rgba(255,255,255,0.42); flex-shrink:0; min-width:26px; padding-top:2px; }
 
 /* ── FOOTER ── */
 .footer {
@@ -170,13 +167,13 @@ html, body { width:1400px; background:#003eaf; font-family:'Poppins', sans-serif
   display:flex; align-items:center; justify-content:space-between;
   padding-top:36px; border-top:2px solid rgba(255,255,255,0.20);
 }
-.f-left { font-size:18px; color:rgba(255,255,255,0.72); font-weight:500; line-height:2; }
+.f-left { font-size:22px; color:rgba(255,255,255,0.72); font-weight:500; line-height:2; }
 .f-left strong { color:#fff; font-weight:700; }
-.f-suits { font-size:15px; color:rgba(255,255,255,0.45); font-weight:500; margin-top:4px; }
+.f-suits { font-size:18px; color:rgba(255,255,255,0.45); font-weight:500; margin-top:4px; }
 .f-cta {
   background:#fff; color:#0044bb;
-  font-size:19px; font-weight:800;
-  padding:20px 56px; border-radius:100px;
+  font-size:22px; font-weight:800;
+  padding:22px 60px; border-radius:100px;
   box-shadow:0 12px 40px rgba(0,0,0,0.28);
   white-space:nowrap; flex-shrink:0;
 }
@@ -477,24 +474,7 @@ html, body { width:1400px; background:#003eaf; font-family:'Poppins', sans-serif
 </div>
 
 <!-- SAVE AS PDF BUTTON -->
-<div id="pdf-hint" style="
-  position:fixed; bottom:100px; right:32px; z-index:999;
-  background:#1a1a2e; color:#fff; font-family:'Poppins',sans-serif;
-  font-size:13px; font-weight:500; line-height:1.7;
-  padding:16px 20px; border-radius:14px;
-  box-shadow:0 8px 32px rgba(0,0,0,0.40);
-  max-width:280px; display:none;
-">
-  In the print dialog:<br>
-  1. <strong>Destination</strong> → Save as PDF<br>
-  2. <strong>Paper size</strong> → A3<br>
-  3. <strong>Layout</strong> → Landscape<br>
-  4. <strong>Margins</strong> → None<br>
-  5. Tick <strong>Background graphics</strong> ✓<br>
-  Then click <strong>Save</strong>
-</div>
-
-<button class="pdf-btn" onclick="document.getElementById('pdf-hint').style.display='block'; setTimeout(()=>{ window.print(); document.getElementById('pdf-hint').style.display='none'; },600);">
+<button class="pdf-btn" onclick="window.print()">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
     <polyline points="14 2 14 8 20 8"/>
