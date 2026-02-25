@@ -166,6 +166,29 @@ html, body { width:1400px; background:#003eaf; font-family:'Poppins', sans-serif
   padding:16px 36px; border-radius:100px; white-space:nowrap; flex-shrink:0;
 }
 
+/* ── PLATFORM CAPABILITIES STRIP ── */
+.platform-caps {
+  position:relative; z-index:5;
+  background:rgba(0,0,0,0.18);
+  border:1.5px solid rgba(255,255,255,0.15);
+  border-radius:16px; padding:26px 36px;
+  margin-bottom:36px;
+}
+.platform-caps-label {
+  font-size:13px; font-weight:700; letter-spacing:2px; text-transform:uppercase;
+  color:rgba(255,255,255,0.45); margin-bottom:16px;
+}
+.platform-caps-list {
+  display:flex; flex-wrap:wrap; gap:10px 14px;
+}
+.cap-pill {
+  background:rgba(255,255,255,0.12);
+  border:1px solid rgba(255,255,255,0.18);
+  color:rgba(255,255,255,0.90); font-size:17px; font-weight:500;
+  padding:8px 20px; border-radius:100px;
+  white-space:nowrap;
+}
+
 /* ── DIVIDER ── */
 .divider {
   position:relative; z-index:5;
@@ -277,6 +300,24 @@ html, body { width:1400px; background:#003eaf; font-family:'Poppins', sans-serif
   <div class="hero">
     <div class="hero-title">Everything Your SACCO, Bank or Microfinance<br><em>Needs in One System</em></div>
     <div class="hero-sub">BankyKit is a complete, multi-tenant financial management platform — loans, savings, payroll, M-Pesa, mobile banking and full accounting. Enterprise and SaaS deployments supported.</div>
+  </div>
+
+  <!-- PLATFORM CAPABILITIES -->
+  <div class="platform-caps">
+    <div class="platform-caps-label">Present throughout every module</div>
+    <div class="platform-caps-list">
+      <span class="cap-pill">📋 Full Audit Logs</span>
+      <span class="cap-pill">🔑 User Roles &amp; Permissions</span>
+      <span class="cap-pill">📒 Double-Entry Journal Posting</span>
+      <span class="cap-pill">✅ Maker-Checker Approval Queues</span>
+      <span class="cap-pill">📄 PDF Statement Exports</span>
+      <span class="cap-pill">📊 CSV / Excel Data Exports</span>
+      <span class="cap-pill">🏢 Multi-Tenant Architecture</span>
+      <span class="cap-pill">💬 SMS &amp; Email Alerts</span>
+      <span class="cap-pill">🔒 Demo Mode</span>
+      <span class="cap-pill">📅 Financial Year Management</span>
+      <span class="cap-pill">🌐 REST API</span>
+    </div>
   </div>
 
   <div class="divider">
