@@ -2,267 +2,379 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>BankyKit Features</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<title>BankyKit</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-html, body { width:1080px; height:1080px; overflow:hidden; font-family:'Inter',sans-serif; background:#fff; }
+html, body { width:1080px; height:1080px; overflow:hidden; }
 
 .poster {
   width:1080px; height:1080px;
-  display:flex; flex-direction:column;
-  background:#fff;
-}
-
-/* ─── HEADER ─── */
-.header {
-  background:#0B1F4F;
-  padding:36px 56px 32px;
+  background:#0F1C3F;
+  font-family:'Poppins', sans-serif;
   position:relative; overflow:hidden;
 }
-.header-ring {
-  position:absolute; width:340px; height:340px; border-radius:50%;
-  border:55px solid rgba(255,255,255,0.04);
-  right:-80px; top:-120px;
-}
-.header-ring2 {
-  position:absolute; width:180px; height:180px; border-radius:50%;
-  border:35px solid rgba(255,255,255,0.03);
-  left:60px; bottom:-80px;
+
+/* ── Dot grid pattern ── */
+.poster::before {
+  content:'';
+  position:absolute; inset:0;
+  background-image: radial-gradient(rgba(255,255,255,0.07) 1.5px, transparent 1.5px);
+  background-size:32px 32px;
+  pointer-events:none; z-index:0;
 }
 
-.header-top {
+/* ── Glow orbs ── */
+.orb-tl {
+  position:absolute; width:460px; height:460px; border-radius:50%;
+  background:radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);
+  top:-120px; left:-80px; z-index:0;
+}
+.orb-br {
+  position:absolute; width:380px; height:380px; border-radius:50%;
+  background:radial-gradient(circle, rgba(0,115,230,0.15) 0%, transparent 70%);
+  bottom:-80px; right:-60px; z-index:0;
+}
+
+/* ── Gold top bar ── */
+.gold-bar {
+  position:absolute; top:0; left:0; right:0;
+  height:7px;
+  background:linear-gradient(90deg, #0073E6, #3399FF, #0073E6);
+  z-index:10;
+}
+
+/* ── Gold bottom bar ── */
+.gold-bar-bottom {
+  position:absolute; bottom:0; left:0; right:0;
+  height:7px;
+  background:linear-gradient(90deg, #0073E6, #3399FF, #0073E6);
+  z-index:10;
+}
+
+/* ── LAYOUT ── */
+.layout {
+  position:relative; z-index:5;
+  width:100%; height:100%;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:auto 1fr auto;
+  padding:40px 52px 40px;
+  gap:0;
+}
+
+/* ── HEADER ── */
+.header {
+  grid-column:1/3;
   display:flex; align-items:center; justify-content:space-between;
-  margin-bottom:22px; position:relative; z-index:2;
+  margin-bottom:28px;
 }
-.brand { display:flex; align-items:center; gap:14px; }
-.brand-icon {
-  width:50px; height:50px; border-radius:13px;
-  background:rgba(255,255,255,0.12); border:1.5px solid rgba(255,255,255,0.22);
-  display:flex; align-items:center; justify-content:center; font-size:24px;
+.logo-wrap { display:flex; align-items:center; gap:14px; }
+.logo-icon {
+  width:56px; height:56px; border-radius:14px;
+  background:rgba(255,255,255,0.15); border:2px solid rgba(255,255,255,0.25);
+  display:flex; align-items:center; justify-content:center; font-size:28px;
 }
-.brand-name { font-size:22px; font-weight:800; color:#fff; letter-spacing:-0.3px; }
-.brand-sub  { font-size:11px; color:rgba(255,255,255,0.42); margin-top:2px; font-weight:400; }
-.url-badge {
-  font-size:12px; font-weight:600; color:rgba(255,255,255,0.50);
-  background:rgba(255,255,255,0.07); border:1px solid rgba(255,255,255,0.12);
-  padding:7px 18px; border-radius:100px;
+.logo-name { font-size:26px; font-weight:800; color:#fff; letter-spacing:-0.3px; }
+.logo-tag  { font-size:11px; color:rgba(255,255,255,0.50); font-weight:400; margin-top:1px; }
+
+.for-pills { display:flex; gap:10px; align-items:center; }
+.for-label { font-size:11px; color:rgba(255,255,255,0.45); font-weight:500; margin-right:4px; }
+.pill {
+  background:rgba(0,115,230,0.18); border:1.5px solid rgba(0,115,230,0.50);
+  color:#93C5FD; font-size:12px; font-weight:700;
+  padding:6px 16px; border-radius:100px;
 }
 
-/* For who */
-.for-who {
-  position:relative; z-index:2;
-}
-.for-label {
-  font-size:10px; font-weight:700; letter-spacing:2.5px;
-  text-transform:uppercase; color:rgba(255,255,255,0.35); margin-bottom:10px;
-}
-.for-tags { display:flex; gap:10px; }
-.for-tag {
-  background:rgba(59,130,246,0.18); border:1.5px solid rgba(59,130,246,0.35);
-  color:#93C5FD; font-size:14px; font-weight:700;
-  padding:8px 22px; border-radius:8px; letter-spacing:0.2px;
+/* ── LEFT COLUMN ── */
+.left-col {
+  padding-right:40px;
+  display:flex; flex-direction:column; justify-content:space-between;
 }
 
-/* ─── HEADLINE BAR ─── */
-.headline-bar {
-  background:#1E3A8A;
-  padding:18px 56px;
-  display:flex; align-items:center; justify-content:space-between;
+.headline-block { margin-bottom:24px; }
+.hl-tag {
+  display:inline-block;
+  background:#0073E6; color:#fff;
+  font-size:11px; font-weight:800;
+  text-transform:uppercase; letter-spacing:1.5px;
+  padding:5px 16px; border-radius:4px; margin-bottom:16px;
 }
-.headline-text {
-  font-size:20px; font-weight:800; color:#fff; letter-spacing:-0.3px;
+.hl-main {
+  font-size:52px; font-weight:900; color:#fff;
+  line-height:1.05; letter-spacing:-1.5px; margin-bottom:14px;
 }
-.headline-sub {
-  font-size:13px; color:rgba(255,255,255,0.55); font-weight:400;
-}
-.stats-row { display:flex; gap:28px; }
-.hs { text-align:center; }
-.hs-n { font-size:20px; font-weight:800; color:#60A5FA; line-height:1; }
-.hs-l { font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
-
-/* ─── FEATURES GRID ─── */
-.features {
-  flex:1; padding:28px 46px 22px;
-  display:grid; grid-template-columns:repeat(3,1fr); gap:14px;
+.hl-gold { color:#0073E6; display:block; }
+.hl-desc {
+  font-size:14px; color:rgba(255,255,255,0.60);
+  font-weight:400; line-height:1.7; max-width:430px;
 }
 
-.fc {
-  border:1.5px solid #E8EDF5;
-  border-radius:14px; padding:20px;
-  display:flex; flex-direction:column; gap:10px;
-  background:#FAFBFF;
+/* Feature list */
+.feat-list { display:flex; flex-direction:column; gap:14px; }
+.feat-item { display:flex; align-items:center; gap:16px; }
+.feat-num {
+  width:42px; height:42px; border-radius:10px;
+  background:rgba(0,115,230,0.18); border:1.5px solid rgba(0,115,230,0.40);
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; font-weight:800; color:#0073E6; flex-shrink:0;
+}
+.feat-info {}
+.feat-name { font-size:15px; font-weight:700; color:#fff; margin-bottom:2px; }
+.feat-desc { font-size:12px; color:rgba(255,255,255,0.48); font-weight:400; }
+
+/* Stats */
+.stats-row { display:flex; gap:0; margin-top:24px; }
+.stat {
+  flex:1; text-align:center;
+  border-right:1px solid rgba(255,255,255,0.10);
+  padding:14px 0;
+}
+.stat:last-child { border:none; }
+.stat-n { font-size:24px; font-weight:800; color:#0073E6; line-height:1; }
+.stat-l { font-size:10px; color:rgba(255,255,255,0.35); text-transform:uppercase; letter-spacing:1px; margin-top:3px; }
+
+/* ── DIVIDER ── */
+.divider {
+  position:absolute;
+  top:40px; bottom:40px;
+  left:50%; width:1px;
+  background:rgba(255,255,255,0.08);
+  z-index:5;
 }
 
-.fc-top { display:flex; align-items:center; gap:12px; }
-.fc-icon {
-  width:40px; height:40px; border-radius:10px;
-  display:flex; align-items:center; justify-content:center; font-size:20px;
-  flex-shrink:0;
+/* ── RIGHT COLUMN ── */
+.right-col {
+  padding-left:40px;
+  display:flex; flex-direction:column; gap:12px;
 }
-.ic-blue   { background:#EFF6FF; }
-.ic-green  { background:#F0FDF4; }
-.ic-amber  { background:#FFFBEB; }
-.ic-purple { background:#F5F3FF; }
-.ic-teal   { background:#F0FDFA; }
-.ic-rose   { background:#FFF1F2; }
-.ic-sky    { background:#F0F9FF; }
-.ic-orange { background:#FFF7ED; }
-.ic-slate  { background:#F8FAFC; }
 
-.fc-name { font-size:13px; font-weight:700; color:#0F172A; line-height:1.3; }
-
-.fc-list { display:flex; flex-direction:column; gap:4px; padding-left:52px; }
-.fc-list-item {
-  font-size:11px; color:#64748B; font-weight:400; line-height:1.4;
-  display:flex; align-items:flex-start; gap:5px;
+.right-label {
+  font-size:10px; font-weight:700; text-transform:uppercase;
+  letter-spacing:2.5px; color:rgba(255,255,255,0.30); margin-bottom:4px;
 }
-.fc-list-item::before { content:'·'; color:#CBD5E1; font-size:14px; line-height:1; margin-top:-1px; flex-shrink:0; }
 
-/* ─── FOOTER ─── */
+.module-card {
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:12px; padding:16px 18px;
+  display:flex; align-items:flex-start; gap:14px;
+}
+.mc-icon {
+  width:42px; height:42px; border-radius:10px;
+  background:rgba(0,115,230,0.15); border:1.5px solid rgba(0,115,230,0.30);
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; flex-shrink:0;
+}
+.mc-name { font-size:13.5px; font-weight:700; color:#fff; margin-bottom:3px; }
+.mc-feats { display:flex; flex-wrap:wrap; gap:4px; }
+.mc-feat {
+  font-size:10.5px; color:rgba(255,255,255,0.48);
+  background:rgba(255,255,255,0.06);
+  padding:2px 9px; border-radius:100px; font-weight:400;
+}
+
+/* ── FOOTER ── */
 .footer {
-  background:#0B1F4F;
-  padding:16px 56px;
+  grid-column:1/3;
   display:flex; align-items:center; justify-content:space-between;
+  margin-top:20px; padding-top:18px;
+  border-top:1px solid rgba(255,255,255,0.10);
 }
-.footer-left { font-size:12px; color:rgba(255,255,255,0.35); font-weight:500; }
-.footer-left strong { color:rgba(255,255,255,0.70); font-weight:700; }
-.footer-right {
-  background:#2563EB; color:#fff;
-  font-size:13px; font-weight:700;
-  padding:10px 26px; border-radius:8px; letter-spacing:0.2px;
+.footer-contact { display:flex; gap:28px; }
+.fct { font-size:13px; color:rgba(255,255,255,0.45); font-weight:500; display:flex; align-items:center; gap:7px; }
+.fct strong { color:rgba(255,255,255,0.80); }
+.footer-cta {
+  background:linear-gradient(135deg,#0073E6,#3399FF);
+  color:#fff; font-size:14px; font-weight:800;
+  padding:13px 34px; border-radius:100px; letter-spacing:0.3px;
+  box-shadow:0 4px 20px rgba(0,115,230,0.40);
+}
+
+/* ── Decorative plus signs ── */
+.plus {
+  position:absolute; color:rgba(255,255,255,0.12);
+  font-size:22px; font-weight:300; z-index:1;
+  line-height:1; user-select:none;
 }
 </style>
 </head>
 <body>
 <div class="poster">
+  <div class="gold-bar"></div>
+  <div class="gold-bar-bottom"></div>
+  <div class="orb-tl"></div>
+  <div class="orb-br"></div>
 
-  <div class="header">
-    <div class="header-ring"></div>
-    <div class="header-ring2"></div>
-    <div class="header-top">
-      <div class="brand">
-        <div class="brand-icon">🏦</div>
+  <!-- Decorative + signs -->
+  <span class="plus" style="top:160px;right:58px">+ + + +</span>
+  <span class="plus" style="bottom:110px;left:52px">+ + + +</span>
+
+  <div class="divider"></div>
+
+  <div class="layout">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div class="logo-wrap">
+        <div class="logo-icon">🏦</div>
         <div>
-          <div class="brand-name">BankyKit</div>
-          <div class="brand-sub">Complete Financial Management System</div>
+          <div class="logo-name">BankyKit</div>
+          <div class="logo-tag">Complete Financial Management System</div>
         </div>
       </div>
-      <div class="url-badge">app.bankykit.com</div>
-    </div>
-    <div class="for-who">
-      <div class="for-label">Built for</div>
-      <div class="for-tags">
-        <div class="for-tag">🏦 SACCOs</div>
-        <div class="for-tag">🏛️ Banks</div>
-        <div class="for-tag">🤝 Microfinance</div>
-        <div class="for-tag">👥 Chamas</div>
+      <div class="for-pills">
+        <span class="for-label">For:</span>
+        <div class="pill">SACCOs</div>
+        <div class="pill">Banks</div>
+        <div class="pill">Microfinance</div>
+        <div class="pill">Chamas</div>
       </div>
     </div>
+
+    <!-- LEFT -->
+    <div class="left-col">
+      <div>
+        <div class="headline-block">
+          <div class="hl-tag">All-in-One Platform</div>
+          <div class="hl-main">
+            Run Your<br>
+            <span class="hl-gold">Institution</span><br>
+            Digitally.
+          </div>
+          <div class="hl-desc">
+            Everything from member registration to loan management, teller services, M-Pesa, mobile banking, and full accounting — in one powerful system.
+          </div>
+        </div>
+
+        <div class="feat-list">
+          <div class="feat-item">
+            <div class="feat-num">01</div>
+            <div class="feat-info">
+              <div class="feat-name">Member Management</div>
+              <div class="feat-desc">Registration, KYC, profiles & documents</div>
+            </div>
+          </div>
+          <div class="feat-item">
+            <div class="feat-num">02</div>
+            <div class="feat-info">
+              <div class="feat-name">Loan Management</div>
+              <div class="feat-desc">Apply, approve, disburse & track repayments</div>
+            </div>
+          </div>
+          <div class="feat-item">
+            <div class="feat-num">03</div>
+            <div class="feat-info">
+              <div class="feat-name">Savings & Shares</div>
+              <div class="feat-desc">Multiple accounts, dividends & fixed deposits</div>
+            </div>
+          </div>
+          <div class="feat-item">
+            <div class="feat-num">04</div>
+            <div class="feat-info">
+              <div class="feat-name">Teller Services</div>
+              <div class="feat-desc">Cash deposits, withdrawals & till management</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat"><div class="stat-n">25+</div><div class="stat-l">Modules</div></div>
+        <div class="stat"><div class="stat-n">2FA</div><div class="stat-l">Security</div></div>
+        <div class="stat"><div class="stat-n">M-Pesa</div><div class="stat-l">Integrated</div></div>
+        <div class="stat"><div class="stat-n">Android+iOS</div><div class="stat-l">Mobile App</div></div>
+      </div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right-col">
+      <div class="right-label">More Features</div>
+
+      <div class="module-card">
+        <div class="mc-icon">📱</div>
+        <div>
+          <div class="mc-name">M-Pesa Integration</div>
+          <div class="mc-feats">
+            <span class="mc-feat">STK Push Deposits</span>
+            <span class="mc-feat">Loan Repayments</span>
+            <span class="mc-feat">Reconciliation</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="module-card">
+        <div class="mc-icon">📲</div>
+        <div>
+          <div class="mc-name">Mobile Banking App</div>
+          <div class="mc-feats">
+            <span class="mc-feat">Android & iOS</span>
+            <span class="mc-feat">Account Balances</span>
+            <span class="mc-feat">Loan Applications</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="module-card">
+        <div class="mc-icon">📊</div>
+        <div>
+          <div class="mc-name">Accounting & General Ledger</div>
+          <div class="mc-feats">
+            <span class="mc-feat">Double-Entry GL</span>
+            <span class="mc-feat">Trial Balance</span>
+            <span class="mc-feat">P&L Reports</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="module-card">
+        <div class="mc-icon">💬</div>
+        <div>
+          <div class="mc-name">SMS Notifications</div>
+          <div class="mc-feats">
+            <span class="mc-feat">Transaction Alerts</span>
+            <span class="mc-feat">Loan Reminders</span>
+            <span class="mc-feat">Bulk SMS</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="module-card">
+        <div class="mc-icon">🏢</div>
+        <div>
+          <div class="mc-name">Branches & Staff</div>
+          <div class="mc-feats">
+            <span class="mc-feat">Multi-Branch</span>
+            <span class="mc-feat">Role-Based Access</span>
+            <span class="mc-feat">Audit Trail</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="module-card">
+        <div class="mc-icon">📈</div>
+        <div>
+          <div class="mc-name">Reports & Analytics</div>
+          <div class="mc-feats">
+            <span class="mc-feat">Loan Portfolio</span>
+            <span class="mc-feat">Delinquency Reports</span>
+            <span class="mc-feat">Exports</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <div class="footer-contact">
+        <div class="fct">🌐 <strong>app.bankykit.com</strong></div>
+        <div class="fct">✉️ <strong>info@bankykit.com</strong></div>
+        <div class="fct">📞 <strong>Contact us for a demo</strong></div>
+      </div>
+      <div class="footer-cta">Book a Free Demo →</div>
+    </div>
+
   </div>
-
-  <div class="headline-bar">
-    <div>
-      <div class="headline-text">Everything you need to run your institution — in one system</div>
-      <div class="headline-sub">Members · Loans · Savings · Teller · M-Pesa · Mobile App · Accounting · SMS · Reports</div>
-    </div>
-    <div class="stats-row">
-      <div class="hs"><div class="hs-n">25+</div><div class="hs-l">Modules</div></div>
-      <div class="hs"><div class="hs-n">2FA</div><div class="hs-l">Security</div></div>
-      <div class="hs"><div class="hs-n">M-Pesa</div><div class="hs-l">Ready</div></div>
-    </div>
-  </div>
-
-  <div class="features">
-
-    <div class="fc">
-      <div class="fc-top"><div class="fc-icon ic-blue">👥</div><div class="fc-name">Member Management</div></div>
-      <div class="fc-list">
-        <div class="fc-list-item">Member registration & KYC</div>
-        <div class="fc-list-item">Profiles, documents & next-of-kin</div>
-        <div class="fc-list-item">Member groups & categories</div>
-      </div>
-    </div>
-
-    <div class="fc">
-      <div class="fc-top"><div class="fc-icon ic-amber">📋</div><div class="fc-name">Loan Management</div></div>
-      <div class="fc-list">
-        <div class="fc-list-item">Multiple loan product types</div>
-        <div class="fc-list-item">Application, approval & disbursement</div>
-        <div class="fc-list-item">Repayment schedules & guarantors</div>
-      </div>
-    </div>
-
-    <div class="fc">
-      <div class="fc-top"><div class="fc-icon ic-green">💰</div><div class="fc-name">Savings & Shares</div></div>
-      <div class="fc-list">
-        <div class="fc-list-item">Multiple savings account types</div>
-        <div class="fc-list-item">Share capital management</div>
-        <div class="fc-list-item">Dividends & fixed deposits</div>
-      </div>
-    </div>
-
-    <div class="fc">
-      <div class="fc-top"><div class="fc-icon ic-sky">🏧</div><div class="fc-name">Teller Services</div></div>
-      <div class="fc-list">
-        <div class="fc-list-item">Cash deposits & withdrawals</div>
-        <div class="fc-list-item">Loan disbursements</div>
-        <div class="fc-list-item">Teller till & inter-account transfers</div>
-      </div>
-    </div>
-
-    <div class="fc">
-      <div class="fc-top"><div class="fc-icon ic-teal">📱</div><div class="fc-name">M-Pesa Integration</div></div>
-      <div class="fc-list">
-        <div class="fc-list-item">STK Push for deposits</div>
-        <div class="fc-list-item">Loan repayments via M-Pesa</div>
-        <div class="fc-list-item">Real-time reconciliation</div>
-      </div>
-    </div>
-
-    <div class="fc">
-      <div class="fc-top"><div class="fc-icon ic-rose">📲</div><div class="fc-name">Mobile Banking App</div></div>
-      <div class="fc-list">
-        <div class="fc-list-item">Android & iOS member app</div>
-        <div class="fc-list-item">Account balances & statements</div>
-        <div class="fc-list-item">Loan applications & repayments</div>
-      </div>
-    </div>
-
-    <div class="fc">
-      <div class="fc-top"><div class="fc-icon ic-purple">📊</div><div class="fc-name">Accounting & GL</div></div>
-      <div class="fc-list">
-        <div class="fc-list-item">Double-entry general ledger</div>
-        <div class="fc-list-item">Trial balance & P&L reports</div>
-        <div class="fc-list-item">Chart of accounts</div>
-      </div>
-    </div>
-
-    <div class="fc">
-      <div class="fc-top"><div class="fc-icon ic-orange">💬</div><div class="fc-name">SMS Notifications</div></div>
-      <div class="fc-list">
-        <div class="fc-list-item">Transaction alerts to members</div>
-        <div class="fc-list-item">Loan due reminders</div>
-        <div class="fc-list-item">Bulk SMS & custom templates</div>
-      </div>
-    </div>
-
-    <div class="fc">
-      <div class="fc-top"><div class="fc-icon ic-slate">📈</div><div class="fc-name">Reports & Analytics</div></div>
-      <div class="fc-list">
-        <div class="fc-list-item">Loan portfolio & delinquency</div>
-        <div class="fc-list-item">Savings & shares summaries</div>
-        <div class="fc-list-item">Custom date-range exports</div>
-      </div>
-    </div>
-
-  </div>
-
-  <div class="footer">
-    <div class="footer-left"><strong>BankyKit</strong> · info@bankykit.com</div>
-    <div class="footer-right">Contact Us for a Demo</div>
-  </div>
-
 </div>
 </body>
 </html>
