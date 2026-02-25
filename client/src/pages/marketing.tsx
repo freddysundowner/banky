@@ -133,16 +133,16 @@ export default function Marketing() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-10">
-        <div className="grid grid-cols-3 gap-6">
+      <div className="max-w-7xl mx-auto px-6 py-5">
+        <div className="grid grid-cols-3 gap-4">
           {posters.map((poster) => (
             <div
               key={poster.id}
-              className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group"
+              className="bg-white rounded-xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group"
               onClick={() => setSelected(poster.id)}
             >
               {/* Poster preview */}
-              <div className="relative overflow-hidden bg-slate-50" style={{ height: 320 }}>
+              <div className="relative overflow-hidden bg-slate-50" style={{ height: 160 }}>
                 <iframe
                   src={poster.file}
                   title={poster.title}
@@ -150,7 +150,7 @@ export default function Marketing() {
                     width: 1080,
                     height: 1080,
                     border: "none",
-                    transform: "scale(0.296)",
+                    transform: "scale(0.148)",
                     transformOrigin: "top left",
                     display: "block",
                     pointerEvents: "none",
@@ -159,17 +159,17 @@ export default function Marketing() {
                 />
                 <div className="absolute inset-0 group-hover:bg-blue-600/5 transition-colors" />
                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="bg-white/90 backdrop-blur-sm text-blue-700 font-semibold text-sm px-5 py-2.5 rounded-full shadow flex items-center gap-2">
-                    <Monitor className="w-4 h-4" /> Preview
+                  <div className="bg-white/90 backdrop-blur-sm text-blue-700 font-semibold text-sm px-4 py-2 rounded-full shadow flex items-center gap-2">
+                    <Monitor className="w-3.5 h-3.5" /> Preview
                   </div>
                 </div>
               </div>
 
               {/* Card info */}
-              <div className="p-5 flex items-start justify-between">
+              <div className="p-3 flex items-start justify-between">
                 <div>
-                  <h2 className="font-bold text-slate-900 text-base">{poster.title}</h2>
-                  <p className="text-sm text-slate-500 mt-1 leading-relaxed">{poster.description}</p>
+                  <h2 className="font-semibold text-slate-900 text-sm">{poster.title}</h2>
+                  <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{poster.description}</p>
                 </div>
                 <a
                   href={poster.file}
