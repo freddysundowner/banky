@@ -7,105 +7,109 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-html, body { width:1080px; height:1920px; overflow:hidden; background:#0055cc; font-family:'Poppins',sans-serif; }
+html, body { width:1080px; height:1920px; overflow:hidden; font-family:'Poppins',sans-serif; }
 
 .slide {
   width:1080px; height:1920px;
-  background:linear-gradient(160deg,#0066e0 0%,#0044bb 100%);
-  padding:60px 56px 50px;
+  background:linear-gradient(160deg,#0066e0 0%,#0044bb 60%,#003399 100%);
+  padding:52px 52px 44px;
+  display:flex; flex-direction:column; gap:0;
   position:relative; overflow:hidden;
-  display:flex; flex-direction:column;
 }
 
-/* dot grid */
 .slide::before {
   content:''; position:absolute; inset:0;
-  background-image:radial-gradient(rgba(255,255,255,0.09) 2px, transparent 2px);
-  background-size:34px 34px; pointer-events:none; z-index:0;
+  background-image:radial-gradient(rgba(255,255,255,0.08) 1.8px, transparent 1.8px);
+  background-size:36px 36px; z-index:0; pointer-events:none;
 }
-/* arcs */
 .arc { position:absolute; border-radius:50%; pointer-events:none; z-index:0; }
-.arc1 { width:700px; height:700px; top:-280px; right:-200px; border:80px solid rgba(255,255,255,0.06); }
-.arc2 { width:420px; height:420px; bottom:-160px; left:-160px; border:60px solid rgba(255,255,255,0.05); }
+.arc1 { width:780px; height:780px; top:-320px; right:-240px; border:90px solid rgba(255,255,255,0.055); }
+.arc2 { width:480px; height:480px; bottom:-190px; left:-200px; border:70px solid rgba(255,255,255,0.045); }
 
-/* ── HEADER ── */
+/* HEADER */
 .header {
   position:relative; z-index:5;
   display:flex; align-items:center; justify-content:space-between;
-  margin-bottom:36px; padding-bottom:28px;
-  border-bottom:1.5px solid rgba(255,255,255,0.20);
+  padding-bottom:26px; margin-bottom:26px;
+  border-bottom:1.5px solid rgba(255,255,255,0.18);
+  flex-shrink:0;
 }
-.logo { display:flex; align-items:center; gap:16px; }
+.logo { display:flex; align-items:center; gap:18px; }
 .logo-icon {
-  width:64px; height:64px; border-radius:18px;
-  background:rgba(255,255,255,0.20); border:2px solid rgba(255,255,255,0.32);
-  display:flex; align-items:center; justify-content:center; font-size:30px;
+  width:68px; height:68px; border-radius:18px;
+  background:rgba(255,255,255,0.18); border:2px solid rgba(255,255,255,0.28);
+  display:flex; align-items:center; justify-content:center; font-size:32px;
 }
-.logo-name { font-size:32px; font-weight:900; color:#fff; letter-spacing:-0.5px; }
-.logo-tag  { font-size:13px; color:rgba(255,255,255,0.65); font-weight:500; margin-top:2px; }
-.badge {
-  background:rgba(255,255,255,0.20); border:1.5px solid rgba(255,255,255,0.32);
-  color:#fff; font-size:11px; font-weight:700; letter-spacing:1.6px;
-  text-transform:uppercase; padding:8px 20px; border-radius:100px;
+.logo-text .name { font-size:34px; font-weight:900; color:#fff; letter-spacing:-0.5px; }
+.logo-text .tag  { font-size:13.5px; color:rgba(255,255,255,0.62); font-weight:500; margin-top:1px; }
+.slide-pill {
+  background:rgba(255,255,255,0.18); border:1.5px solid rgba(255,255,255,0.28);
+  color:#fff; font-size:12px; font-weight:700; letter-spacing:1.8px;
+  text-transform:uppercase; padding:10px 22px; border-radius:100px;
 }
 
-/* ── TITLE ── */
-.title-block { position:relative; z-index:5; text-align:center; margin-bottom:32px; }
-.title-main { font-size:46px; font-weight:900; color:#fff; line-height:1.1; letter-spacing:-1.5px; margin-bottom:10px; }
-.title-main em { color:rgba(255,255,255,0.42); font-style:normal; }
-.title-sub { font-size:16px; color:rgba(255,255,255,0.75); font-weight:500; line-height:1.6; }
-
-/* ── DIVIDER ── */
-.divider {
+/* HEADLINE */
+.headline {
   position:relative; z-index:5;
-  display:flex; align-items:center; gap:14px; margin-bottom:30px;
+  text-align:center; margin-bottom:22px; flex-shrink:0;
 }
-.divider-line { flex:1; height:1.5px; background:rgba(255,255,255,0.18); }
-.divider-label { font-size:11px; font-weight:700; letter-spacing:1.8px; text-transform:uppercase; color:rgba(255,255,255,0.45); }
+.headline h1 { font-size:44px; font-weight:900; color:#fff; line-height:1.13; letter-spacing:-1.5px; }
+.headline h1 span { color:rgba(255,255,255,0.40); }
+.headline p { font-size:16px; color:rgba(255,255,255,0.72); font-weight:500; margin-top:8px; }
 
-/* ── GRID ── */
+/* SECTION LABEL */
+.section-label {
+  position:relative; z-index:5;
+  display:flex; align-items:center; gap:14px; margin-bottom:18px; flex-shrink:0;
+}
+.section-label .line { flex:1; height:1.5px; background:rgba(255,255,255,0.18); }
+.section-label .text { font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.42); }
+
+/* GRID */
 .grid {
   position:relative; z-index:5;
   display:grid; grid-template-columns:1fr 1fr;
-  gap:14px; flex:1;
+  gap:16px; flex:1;
 }
 .card {
-  background:rgba(255,255,255,0.12);
+  background:rgba(255,255,255,0.11);
   border:1.5px solid rgba(255,255,255,0.20);
-  border-radius:16px; padding:20px 18px;
+  border-radius:20px; padding:22px 20px;
+  display:flex; flex-direction:column;
 }
 .card-head {
-  display:flex; align-items:center; gap:12px;
-  margin-bottom:12px; padding-bottom:10px;
+  display:flex; align-items:center; gap:13px;
+  margin-bottom:14px; padding-bottom:13px;
   border-bottom:1.5px solid rgba(255,255,255,0.14);
 }
 .card-icon {
-  width:38px; height:38px; border-radius:10px; flex-shrink:0;
+  width:42px; height:42px; border-radius:12px; flex-shrink:0;
   background:rgba(255,255,255,0.20);
-  display:flex; align-items:center; justify-content:center; font-size:18px;
+  display:flex; align-items:center; justify-content:center; font-size:20px;
 }
-.card-title { font-size:15px; font-weight:800; color:#fff; line-height:1.3; }
-.card-items { list-style:none; }
+.card-title { font-size:16.5px; font-weight:800; color:#fff; line-height:1.25; }
+.card-items { list-style:none; display:flex; flex-direction:column; gap:7px; }
 .card-items li {
   display:flex; align-items:flex-start; gap:9px;
-  font-size:13px; color:rgba(255,255,255,0.88); font-weight:500;
-  line-height:1.5; padding:3px 0;
+  font-size:14px; color:rgba(255,255,255,0.90); font-weight:500; line-height:1.45;
 }
 .card-items li::before {
-  content:'›'; color:rgba(255,255,255,0.50); font-size:15px;
-  flex-shrink:0; font-weight:700; line-height:1.5;
+  content:'✓'; color:rgba(140,200,255,0.85); font-size:13px;
+  flex-shrink:0; font-weight:800; margin-top:1px;
 }
 
-/* ── FOOTER ── */
+/* FOOTER */
 .footer {
   position:relative; z-index:5;
-  margin-top:28px; padding-top:22px;
+  margin-top:18px; padding-top:18px;
   border-top:1.5px solid rgba(255,255,255,0.18);
   display:flex; align-items:center; justify-content:space-between;
+  flex-shrink:0;
 }
-.f-contact { font-size:14px; color:rgba(255,255,255,0.75); font-weight:500; line-height:2; }
-.f-contact strong { color:#fff; font-weight:700; }
-.f-page { font-size:13px; color:rgba(255,255,255,0.45); font-weight:600; letter-spacing:0.5px; }
+.footer-info { display:flex; flex-direction:column; gap:5px; }
+.footer-info span { font-size:14.5px; color:rgba(255,255,255,0.80); font-weight:500; }
+.footer-info strong { color:#fff; font-weight:700; }
+.footer-page { font-size:13px; color:rgba(255,255,255,0.38); font-weight:700; letter-spacing:0.5px; }
 </style>
 </head>
 <body>
@@ -113,116 +117,153 @@ html, body { width:1080px; height:1920px; overflow:hidden; background:#0055cc; f
   <div class="arc arc1"></div>
   <div class="arc arc2"></div>
 
+  <!-- HEADER -->
   <div class="header">
     <div class="logo">
       <div class="logo-icon">🏦</div>
-      <div>
-        <div class="logo-name">BankyKit</div>
-        <div class="logo-tag">Complete Financial Management System</div>
+      <div class="logo-text">
+        <div class="name">BankyKit</div>
+        <div class="tag">Complete Financial Management System</div>
       </div>
     </div>
-    <div class="badge">Features — 1 of 2</div>
+    <div class="slide-pill">Part 1 of 2</div>
   </div>
 
-  <div class="title-block">
-    <div class="title-main">Everything Your SACCO or Bank<br><em>Needs in One System</em></div>
-    <div class="title-sub">For SACCOs · Banks · Microfinance · Cooperatives</div>
+  <!-- HEADLINE -->
+  <div class="headline">
+    <h1>Everything Your SACCO or Bank<br><span>Needs — in One System</span></h1>
+    <p>SACCOs · Banks · Microfinance · Cooperatives</p>
   </div>
 
-  <div class="divider">
-    <div class="divider-line"></div>
-    <div class="divider-label">Modules 01 – 10</div>
-    <div class="divider-line"></div>
+  <!-- SECTION LABEL -->
+  <div class="section-label">
+    <div class="line"></div>
+    <div class="text">Modules 01 – 10</div>
+    <div class="line"></div>
   </div>
 
+  <!-- CARDS GRID -->
   <div class="grid">
 
     <div class="card">
-      <div class="card-head"><div class="card-icon">👤</div><div class="card-title">Member Management</div></div>
+      <div class="card-head">
+        <div class="card-icon">👤</div>
+        <div class="card-title">Member Management</div>
+      </div>
       <ul class="card-items">
         <li>Full KYC — ID, passport, photos</li>
         <li>Unique member &amp; account numbers</li>
-        <li>Next-of-kin &amp; beneficiary details</li>
-        <li>Status management (active / suspended)</li>
+        <li>Next-of-kin &amp; beneficiaries</li>
         <li>Duplicate ID detection</li>
-        <li>Statements &amp; transaction history</li>
+        <li>Statements &amp; history</li>
         <li>Mobile OTP activation</li>
       </ul>
     </div>
 
     <div class="card">
-      <div class="card-head"><div class="card-icon">💳</div><div class="card-title">Loan Management</div></div>
+      <div class="card-head">
+        <div class="card-icon">💳</div>
+        <div class="card-title">Loan Management</div>
+      </div>
       <ul class="card-items">
         <li>Configurable loan products</li>
-        <li>Application, review &amp; approval workflow</li>
-        <li>Maker-checker multi-level approval</li>
+        <li>Multi-level approval workflow</li>
         <li>M-Pesa &amp; bank disbursement</li>
-        <li>Reducing balance &amp; flat-rate interest</li>
-        <li>Instalment tracking &amp; repayments</li>
-        <li>Restructuring, write-offs &amp; PAR</li>
+        <li>Reducing &amp; flat-rate interest</li>
+        <li>Instalment tracking</li>
+        <li>Restructuring &amp; PAR reports</li>
       </ul>
     </div>
 
     <div class="card">
-      <div class="card-head"><div class="card-icon">💰</div><div class="card-title">Savings &amp; Shares</div></div>
+      <div class="card-head">
+        <div class="card-icon">💰</div>
+        <div class="card-title">Savings &amp; Shares</div>
+      </div>
       <ul class="card-items">
-        <li>Regular, voluntary &amp; compulsory savings</li>
+        <li>Regular, voluntary &amp; compulsory</li>
         <li>Share capital tracking</li>
         <li>Deposits &amp; withdrawals</li>
-        <li>Dividend computation on shares</li>
+        <li>Dividend computation</li>
         <li>Interest on savings</li>
-        <li>Minimum balance enforcement</li>
       </ul>
     </div>
 
     <div class="card">
-      <div class="card-head"><div class="card-icon">🔒</div><div class="card-title">Fixed Deposits</div></div>
+      <div class="card-head">
+        <div class="card-icon">🔒</div>
+        <div class="card-title">Fixed Deposits</div>
+      </div>
       <ul class="card-items">
         <li>Product configuration &amp; placement</li>
         <li>Maturity date alerts</li>
         <li>Auto-rollover on maturity</li>
         <li>Early withdrawal processing</li>
-        <li>FD portfolio view &amp; reports</li>
+        <li>FD portfolio &amp; reports</li>
       </ul>
     </div>
 
     <div class="card">
-      <div class="card-head"><div class="card-icon">📱</div><div class="card-title">M-Pesa Integration</div></div>
+      <div class="card-head">
+        <div class="card-icon">📱</div>
+        <div class="card-title">M-Pesa Integration</div>
+      </div>
       <ul class="card-items">
         <li>STK Push — deposits &amp; repayments</li>
         <li>C2B paybill reconciliation</li>
-        <li>B2C disbursements (loans &amp; dividends)</li>
+        <li>B2C disbursements</li>
         <li>Real-time transaction matching</li>
         <li>Reversal handling &amp; webhooks</li>
       </ul>
     </div>
 
     <div class="card">
-      <div class="card-head"><div class="card-icon">🏧</div><div class="card-title">Teller Services</div></div>
+      <div class="card-head">
+        <div class="card-icon">🏧</div>
+        <div class="card-title">Teller Services</div>
+      </div>
       <ul class="card-items">
         <li>Cash deposits &amp; withdrawals</li>
         <li>Float allocation per counter</li>
         <li>Float replenishment &amp; approvals</li>
         <li>Vault &amp; cash movement</li>
         <li>Shift handover &amp; reconciliation</li>
-        <li>Daily cash position report</li>
       </ul>
     </div>
 
     <div class="card">
-      <div class="card-head"><div class="card-icon">📊</div><div class="card-title">Accounting &amp; General Ledger</div></div>
+      <div class="card-head">
+        <div class="card-icon">📊</div>
+        <div class="card-title">Accounting &amp; GL</div>
+      </div>
       <ul class="card-items">
         <li>Double-entry bookkeeping</li>
-        <li>Chart of accounts management</li>
+        <li>Chart of accounts</li>
         <li>Journal entry posting</li>
-        <li>Profit &amp; Loss statement</li>
-        <li>Balance sheet &amp; trial balance</li>
+        <li>P&amp;L, balance sheet, trial balance</li>
         <li>Financial year management</li>
       </ul>
     </div>
 
     <div class="card">
-      <div class="card-head"><div class="card-icon">💸</div><div class="card-title">Dividend Processing</div></div>
+      <div class="card-head">
+        <div class="card-icon">📈</div>
+        <div class="card-title">Reports &amp; Analytics</div>
+      </div>
+      <ul class="card-items">
+        <li>Loan portfolio &amp; PAR reports</li>
+        <li>Member statement reports</li>
+        <li>P&amp;L &amp; financial summary</li>
+        <li>Dashboard analytics &amp; trends</li>
+        <li>Export — CSV / Excel</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">💸</div>
+        <div class="card-title">Dividend Processing</div>
+      </div>
       <ul class="card-items">
         <li>Declaration per financial period</li>
         <li>Auto-calculation by shareholding</li>
@@ -232,7 +273,10 @@ html, body { width:1080px; height:1920px; overflow:hidden; background:#0055cc; f
     </div>
 
     <div class="card">
-      <div class="card-head"><div class="card-icon">🏢</div><div class="card-title">Branch Management</div></div>
+      <div class="card-head">
+        <div class="card-icon">🏢</div>
+        <div class="card-title">Branch Management</div>
+      </div>
       <ul class="card-items">
         <li>Multi-branch setup</li>
         <li>Branch-level reporting</li>
@@ -241,27 +285,15 @@ html, body { width:1080px; height:1920px; overflow:hidden; background:#0055cc; f
       </ul>
     </div>
 
-    <div class="card">
-      <div class="card-head"><div class="card-icon">📈</div><div class="card-title">Reports &amp; Analytics</div></div>
-      <ul class="card-items">
-        <li>Loan portfolio &amp; PAR reports</li>
-        <li>Member statement reports</li>
-        <li>P&amp;L &amp; financial summary</li>
-        <li>Attendance &amp; leave reports</li>
-        <li>Data export — CSV / Excel</li>
-        <li>Dashboard analytics &amp; trends</li>
-      </ul>
-    </div>
-
   </div>
 
+  <!-- FOOTER -->
   <div class="footer">
-    <div class="f-contact">
-      📞 <strong>+254 791 334 234</strong> &nbsp;·&nbsp;
-      ✉️ <strong>sales@bankykit.com</strong> &nbsp;·&nbsp;
-      🌐 <strong>demo.bankykit.com</strong>
+    <div class="footer-info">
+      <span>📞 <strong>+254 791 334 234</strong></span>
+      <span>✉️ <strong>sales@bankykit.com</strong> &nbsp;·&nbsp; 🌐 <strong>demo.bankykit.com</strong></span>
     </div>
-    <div class="f-page">1 / 2</div>
+    <div class="footer-page">1 / 2</div>
   </div>
 </div>
 </body>
