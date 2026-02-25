@@ -83,7 +83,7 @@ html, body { width:1400px; background:#003eaf; font-family:'Poppins', sans-serif
 /* ── HERO ── */
 .hero {
   position:relative; z-index:5;
-  text-align:center; margin-bottom:50px;
+  text-align:center; margin-bottom:48px;
 }
 .hero-title {
   font-size:62px; font-weight:900; color:#fff;
@@ -91,8 +91,44 @@ html, body { width:1400px; background:#003eaf; font-family:'Poppins', sans-serif
 }
 .hero-title em { color:rgba(255,255,255,0.38); font-style:normal; }
 .hero-sub {
-  font-size:20px; color:rgba(255,255,255,0.78); font-weight:500;
+  font-size:22px; color:rgba(255,255,255,0.78); font-weight:500;
   line-height:1.65; max-width:960px; margin:0 auto;
+}
+
+/* ── PITCH ── */
+.pitch {
+  position:relative; z-index:5;
+  margin-bottom:48px;
+}
+.pitch-intro {
+  font-size:24px; color:rgba(255,255,255,0.80); font-weight:500;
+  line-height:1.75; text-align:center; max-width:1100px; margin:0 auto 44px;
+}
+.pitch-intro strong { color:#fff; font-weight:700; }
+.pitch-cards {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-bottom:44px;
+}
+.pitch-card {
+  background:rgba(255,255,255,0.12);
+  border:1.5px solid rgba(255,255,255,0.22);
+  border-radius:20px; padding:30px 28px;
+  text-align:center;
+}
+.pitch-card-icon { font-size:42px; margin-bottom:16px; }
+.pitch-card-title { font-size:22px; font-weight:800; color:#fff; margin-bottom:10px; }
+.pitch-card-text { font-size:17px; color:rgba(255,255,255,0.78); font-weight:500; line-height:1.65; }
+.pitch-cta {
+  background:rgba(255,255,255,0.14);
+  border:2px solid rgba(255,255,255,0.28);
+  border-radius:18px; padding:32px 40px;
+  display:flex; align-items:center; justify-content:space-between; gap:32px;
+}
+.pitch-cta-text { font-size:26px; font-weight:700; color:#fff; line-height:1.5; }
+.pitch-cta-text span { color:rgba(255,255,255,0.55); font-weight:500; font-size:20px; display:block; margin-top:4px; }
+.pitch-cta-arrow {
+  font-size:22px; font-weight:700; color:#fff;
+  background:rgba(255,255,255,0.20); border:2px solid rgba(255,255,255,0.30);
+  padding:16px 36px; border-radius:100px; white-space:nowrap; flex-shrink:0;
 }
 
 /* ── DIVIDER ── */
@@ -206,6 +242,54 @@ html, body { width:1400px; background:#003eaf; font-family:'Poppins', sans-serif
   <div class="hero">
     <div class="hero-title">Everything Your SACCO, Bank or Microfinance<br><em>Needs in One System</em></div>
     <div class="hero-sub">BankyKit is a complete, multi-tenant financial management platform — loans, savings, payroll, M-Pesa, mobile banking and full accounting. Enterprise and SaaS deployments supported.</div>
+  </div>
+
+  <!-- PITCH SECTION -->
+  <div class="pitch">
+    <p class="pitch-intro">
+      Most SACCO and banking software forces you to stitch together <strong>3 or 4 separate systems</strong> — one for loans, one for accounting, one for HR, one for M-Pesa. BankyKit replaces all of them. It is a <strong>single, fully integrated platform</strong> purpose-built for SACCOs, banks, microfinance institutions and cooperatives across Africa — deployable on your own server or via our cloud SaaS plan.
+    </p>
+
+    <div class="pitch-cards">
+      <div class="pitch-card">
+        <div class="pitch-card-icon">⚡</div>
+        <div class="pitch-card-title">Ready in Days, Not Months</div>
+        <div class="pitch-card-text">Go live fast. BankyKit ships pre-configured with sensible defaults for African financial institutions. No lengthy consultancy required — your team can be processing loans and deposits within days of installation.</div>
+      </div>
+      <div class="pitch-card">
+        <div class="pitch-card-icon">🔒</div>
+        <div class="pitch-card-title">Your Data, Your Control</div>
+        <div class="pitch-card-text">Deploy on-premise on your own server for full data sovereignty, or choose our managed cloud option. Either way, your member data stays under your control with full audit trails on every action.</div>
+      </div>
+      <div class="pitch-card">
+        <div class="pitch-card-icon">🌍</div>
+        <div class="pitch-card-title">Built for African Markets</div>
+        <div class="pitch-card-text">Native M-Pesa STK Push and C2B/B2C integration, SMS alerts via Africa's Talking, and mobile banking for Android and iOS — everything your members expect, already built in.</div>
+      </div>
+      <div class="pitch-card">
+        <div class="pitch-card-icon">📊</div>
+        <div class="pitch-card-title">Full Double-Entry Accounting</div>
+        <div class="pitch-card-text">Every transaction — loan disbursement, deposit, dividend, payroll — automatically posts to the general ledger. Generate your P&L, balance sheet and trial balance at any time with zero manual journals.</div>
+      </div>
+      <div class="pitch-card">
+        <div class="pitch-card-icon">👥</div>
+        <div class="pitch-card-title">Staff, HR &amp; Payroll Included</div>
+        <div class="pitch-card-text">Manage your full team inside the same system — attendance, leave, payroll, salary advances, performance reviews and disciplinary records. No separate HR software needed.</div>
+      </div>
+      <div class="pitch-card">
+        <div class="pitch-card-icon">📱</div>
+        <div class="pitch-card-title">Mobile Banking App Included</div>
+        <div class="pitch-card-text">Your members get a branded Android and iOS mobile app — they can check balances, view statements, apply for loans, repay via M-Pesa and access instant mobile soft loans, all from their phone.</div>
+      </div>
+    </div>
+
+    <div class="pitch-cta">
+      <div class="pitch-cta-text">
+        See the complete feature set below — 19 modules, all included in one licence.
+        <span>Scroll down to explore every feature in detail ↓</span>
+      </div>
+      <div class="pitch-cta-arrow">📋 Full Feature List Below</div>
+    </div>
   </div>
 
   <div class="divider">
