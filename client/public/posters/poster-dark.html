@@ -2,132 +2,159 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>BankyKit – Dark Poster</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<title>BankyKit Poster</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-html, body { width:1080px; height:1080px; overflow:hidden; font-family:'Inter',sans-serif; }
+html, body { width:1080px; height:1080px; overflow:hidden; }
 
 .poster {
   width:1080px; height:1080px;
-  background:#060F1E;
-  padding:64px;
-  display:flex; flex-direction:column; justify-content:space-between;
+  background:#04091A;
+  font-family:'Inter',sans-serif;
   position:relative; overflow:hidden;
+  display:flex; flex-direction:column;
 }
 
-/* Glow orbs */
-.orb1 {
-  position:absolute; width:500px; height:500px;
-  border-radius:50%;
-  background:radial-gradient(circle, rgba(37,99,235,0.18) 0%, transparent 70%);
-  top:-100px; right:-100px; pointer-events:none;
+/* Glows */
+.glow-1 {
+  position:absolute;
+  width:700px; height:700px; border-radius:50%;
+  background:radial-gradient(circle at 50% 50%, rgba(29,78,216,0.28) 0%, transparent 65%);
+  top:-200px; right:-150px; pointer-events:none;
 }
-.orb2 {
-  position:absolute; width:400px; height:400px;
-  border-radius:50%;
-  background:radial-gradient(circle, rgba(139,92,246,0.10) 0%, transparent 70%);
-  bottom:-80px; left:-80px; pointer-events:none;
+.glow-2 {
+  position:absolute;
+  width:500px; height:500px; border-radius:50%;
+  background:radial-gradient(circle at 50% 50%, rgba(99,102,241,0.12) 0%, transparent 65%);
+  bottom:-100px; left:-100px; pointer-events:none;
 }
 
-/* Top */
-.top { display:flex; align-items:center; justify-content:space-between; position:relative; z-index:2; }
-.logo { display:flex; align-items:center; gap:14px; }
-.logo-box {
+/* Top nav */
+.nav {
+  position:relative; z-index:10;
+  padding:44px 60px 0;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.nav-brand { display:flex; align-items:center; gap:16px; }
+.nav-icon {
   width:52px; height:52px; border-radius:14px;
-  background:rgba(255,255,255,0.07);
-  border:1.5px solid rgba(255,255,255,0.12);
+  background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.14);
   display:flex; align-items:center; justify-content:center; font-size:24px;
 }
-.logo-name { font-size:22px; font-weight:800; color:#fff; letter-spacing:-0.3px; }
-.logo-sub  { font-size:11px; color:rgba(255,255,255,0.35); font-weight:400; margin-top:1px; }
-.badge {
-  background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.3);
-  color:#60A5FA; font-size:11px; font-weight:600;
-  padding:6px 16px; border-radius:100px; letter-spacing:0.3px;
+.nav-name { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:#fff; }
+.nav-badge {
+  font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase;
+  color:rgba(255,255,255,0.35); border:1px solid rgba(255,255,255,0.12);
+  padding:6px 16px; border-radius:100px;
 }
 
-/* Headline */
-.headline { position:relative; z-index:2; }
-.hl-tag {
-  font-size:11px; font-weight:600; text-transform:uppercase;
-  letter-spacing:3px; color:rgba(255,255,255,0.3); margin-bottom:14px;
+/* Center hero */
+.hero {
+  flex:1; position:relative; z-index:10;
+  display:flex; flex-direction:column; justify-content:center;
+  padding:0 60px;
 }
-.hl-main {
-  font-size:64px; font-weight:900; color:#fff;
-  line-height:1.0; letter-spacing:-2.5px; margin-bottom:18px;
+.hero-tag {
+  display:inline-flex; align-items:center; gap:8px;
+  background:rgba(59,130,246,0.12); border:1px solid rgba(59,130,246,0.25);
+  color:#60A5FA; font-size:12px; font-weight:600; letter-spacing:0.5px;
+  padding:7px 18px; border-radius:100px; margin-bottom:30px; width:fit-content;
 }
-.hl-main em { color:#60A5FA; font-style:normal; }
-.hl-sub { font-size:16px; color:rgba(255,255,255,0.45); font-weight:400; line-height:1.6; max-width:600px; }
+.hero-tag-dot { width:6px; height:6px; border-radius:50%; background:#3B82F6; }
 
-/* Feature grid */
-.feat-grid {
-  display:grid; grid-template-columns:repeat(4,1fr); gap:14px;
-  position:relative; z-index:2;
+.hero-headline {
+  font-family:'Syne',sans-serif; font-weight:800;
+  font-size:86px; color:#fff;
+  line-height:0.95; letter-spacing:-4px;
+  margin-bottom:30px;
 }
-.feat {
-  background:rgba(255,255,255,0.04);
-  border:1px solid rgba(255,255,255,0.08);
-  border-radius:14px; padding:20px 16px; text-align:center;
-}
-.feat-i  { font-size:28px; margin-bottom:10px; }
-.feat-n  { font-size:12px; font-weight:600; color:rgba(255,255,255,0.80); line-height:1.3; }
+.hero-headline .blue { color:#3B82F6; }
+.hero-headline .dim  { color:rgba(255,255,255,0.22); }
 
-/* Bottom bar */
-.bottom { display:flex; align-items:center; justify-content:space-between; position:relative; z-index:2; }
-.stats { display:flex; gap:36px; }
-.stat { text-align:center; }
-.stat-n { font-size:22px; font-weight:800; color:#60A5FA; }
-.stat-l { font-size:10px; color:rgba(255,255,255,0.3); font-weight:500; text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
-.cta {
-  background:#2563EB; color:#fff;
-  font-size:14px; font-weight:700; padding:14px 32px;
-  border-radius:10px; letter-spacing:0.3px;
+.hero-sub {
+  font-size:18px; color:rgba(255,255,255,0.45);
+  font-weight:400; line-height:1.6; max-width:560px;
 }
-.url { font-size:13px; color:rgba(255,255,255,0.3); font-weight:500; }
+
+/* Feature strip */
+.feat-strip {
+  position:relative; z-index:10;
+  padding:0 60px;
+  display:flex; gap:12px; margin-bottom:36px;
+}
+.feat-chip {
+  display:flex; align-items:center; gap:9px;
+  background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.10);
+  padding:12px 20px; border-radius:12px; flex:1;
+}
+.feat-chip-icon { font-size:20px; }
+.feat-chip-name { font-size:12px; font-weight:600; color:rgba(255,255,255,0.70); }
+
+/* Bottom */
+.bottom {
+  position:relative; z-index:10;
+  padding:28px 60px 44px;
+  border-top:1px solid rgba(255,255,255,0.07);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.bottom-left { display:flex; gap:32px; }
+.bstat { }
+.bstat-n { font-family:'Syne',sans-serif; font-size:26px; font-weight:800; color:#60A5FA; }
+.bstat-l { font-size:10px; text-transform:uppercase; letter-spacing:1.2px; color:rgba(255,255,255,0.25); margin-top:2px; }
+.bottom-right { display:flex; align-items:center; gap:24px; }
+.burl { font-size:13px; color:rgba(255,255,255,0.25); font-weight:500; }
+.bcta {
+  background:linear-gradient(135deg,#2563EB,#3B82F6);
+  color:#fff; font-size:14px; font-weight:700;
+  padding:14px 32px; border-radius:12px; letter-spacing:0.2px;
+}
 </style>
 </head>
 <body>
 <div class="poster">
-  <div class="orb1"></div>
-  <div class="orb2"></div>
+  <div class="glow-1"></div>
+  <div class="glow-2"></div>
 
-  <div class="top">
-    <div class="logo">
-      <div class="logo-box">🏦</div>
-      <div>
-        <div class="logo-name">BankyKit</div>
-        <div class="logo-sub">Bank & SACCO Management System</div>
-      </div>
+  <div class="nav">
+    <div class="nav-brand">
+      <div class="nav-icon">🏦</div>
+      <div class="nav-name">BankyKit</div>
     </div>
-    <div class="badge">Loan · Savings · M-Pesa · Mobile App</div>
+    <div class="nav-badge">Bank & SACCO Management System</div>
   </div>
 
-  <div class="headline">
-    <div class="hl-tag">Complete Bank & SACCO System</div>
-    <div class="hl-main">Run your<br><em>entire SACCO</em><br>from one place.</div>
-    <div class="hl-sub">Members · Loans · Savings · Teller · M-Pesa · Mobile Banking · Accounting · Reports</div>
+  <div class="hero">
+    <div class="hero-tag"><span class="hero-tag-dot"></span> Complete SACCO Management</div>
+    <div class="hero-headline">
+      One system.<br>
+      <span class="blue">Every feature</span><br>
+      <span class="dim">your SACCO needs.</span>
+    </div>
+    <div class="hero-sub">
+      Members · Loans · Savings · Teller · M-Pesa · Mobile App · Accounting · Reports — all in one place.
+    </div>
   </div>
 
-  <div class="feat-grid">
-    <div class="feat"><div class="feat-i">👥</div><div class="feat-n">Member Management</div></div>
-    <div class="feat"><div class="feat-i">💰</div><div class="feat-n">Savings & Shares</div></div>
-    <div class="feat"><div class="feat-i">📋</div><div class="feat-n">Loan Management</div></div>
-    <div class="feat"><div class="feat-i">🏧</div><div class="feat-n">Teller Services</div></div>
-    <div class="feat"><div class="feat-i">📱</div><div class="feat-n">M-Pesa Integration</div></div>
-    <div class="feat"><div class="feat-i">📊</div><div class="feat-n">Accounting & GL</div></div>
-    <div class="feat"><div class="feat-i">📲</div><div class="feat-n">Android & iOS App</div></div>
-    <div class="feat"><div class="feat-i">📈</div><div class="feat-n">Reports & Analytics</div></div>
+  <div class="feat-strip">
+    <div class="feat-chip"><span class="feat-chip-icon">👥</span><span class="feat-chip-name">Members</span></div>
+    <div class="feat-chip"><span class="feat-chip-icon">📋</span><span class="feat-chip-name">Loans</span></div>
+    <div class="feat-chip"><span class="feat-chip-icon">💰</span><span class="feat-chip-name">Savings</span></div>
+    <div class="feat-chip"><span class="feat-chip-icon">🏧</span><span class="feat-chip-name">Teller</span></div>
+    <div class="feat-chip"><span class="feat-chip-icon">📱</span><span class="feat-chip-name">M-Pesa</span></div>
+    <div class="feat-chip"><span class="feat-chip-icon">📲</span><span class="feat-chip-name">Mobile App</span></div>
   </div>
 
   <div class="bottom">
-    <div class="stats">
-      <div class="stat"><div class="stat-n">25+</div><div class="stat-l">Modules</div></div>
-      <div class="stat"><div class="stat-n">2FA</div><div class="stat-l">Security</div></div>
-      <div class="stat"><div class="stat-n">M-Pesa</div><div class="stat-l">Ready</div></div>
+    <div class="bottom-left">
+      <div class="bstat"><div class="bstat-n">25+</div><div class="bstat-l">Modules</div></div>
+      <div class="bstat"><div class="bstat-n">2FA</div><div class="bstat-l">Security</div></div>
+      <div class="bstat"><div class="bstat-n">Android & iOS</div><div class="bstat-l">Mobile App</div></div>
     </div>
-    <div class="url">app.bankykit.com</div>
-    <div class="cta">Request a Demo</div>
+    <div class="bottom-right">
+      <div class="burl">app.bankykit.com</div>
+      <div class="bcta">Book a Demo →</div>
+    </div>
   </div>
 </div>
 </body>
