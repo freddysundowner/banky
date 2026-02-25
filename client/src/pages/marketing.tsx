@@ -4,36 +4,34 @@ import { Link } from "wouter";
 
 const posters = [
   {
+    id: "features",
+    title: "Feature Overview ⭐",
+    description: "All system features listed with sub-points. Shows SACCOs, Banks, Microfinance & Chamas at the top. Best for sharing.",
+    file: "/posters/features.html",
+  },
+  {
     id: "dark",
     title: "Dark Theme",
-    description: "Bold dark background with glowing blue accents. Works great on dark feeds.",
+    description: "Bold dark background with glowing blue accents and feature chips.",
     file: "/posters/poster-dark.html",
-    preview: "bg-gray-900",
-    accent: "#60A5FA",
   },
   {
     id: "gradient",
     title: "Blue Gradient",
-    description: "Full blue gradient fill, large bold text. Eye-catching on WhatsApp status.",
+    description: "Deep blue gradient, large bold text. Eye-catching on WhatsApp status.",
     file: "/posters/poster-gradient.html",
-    preview: "bg-blue-600",
-    accent: "#fff",
   },
   {
     id: "minimal",
-    title: "Two-Column Split",
-    description: "Dark left panel + white right panel with feature list. Clean and professional.",
+    title: "Split Panel",
+    description: "Dark navy left panel + white feature cards on the right.",
     file: "/posters/poster-minimal.html",
-    preview: "bg-white border",
-    accent: "#0A2463",
   },
   {
     id: "bold",
     title: "Bold & Clean",
-    description: "White background, large '25+' stat, feature checklist. Great for LinkedIn.",
+    description: "White background, big typography, colored feature sections.",
     file: "/posters/poster-bold.html",
-    preview: "bg-white border",
-    accent: "#0A2463",
   },
 ];
 
