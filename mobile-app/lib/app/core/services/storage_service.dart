@@ -17,6 +17,7 @@ class StorageService extends GetxService {
   static const String onboardingKey = 'onboarding_complete';
   static const String fcmTokenKey = 'fcm_token';
   static const String deviceIdKey = 'device_id';
+  static const String deviceNameKey = 'device_name';
 
   Future<StorageService> init() async {
     _box = GetStorage();
@@ -125,7 +126,12 @@ class StorageService extends GetxService {
   }
 
   /// Returns a human-readable device name, e.g. "Samsung Galaxy S21" or "iPhone 13".
+  /// Cached in regular storage after the first read so subsequent calls are instant.
   Future<String> getDeviceName() async {
+    final cached = _box.read<String>(deviceNameKey);
+    if (cached != null && cached.isNotEmpty) return cached;
+
+    String name = 'Unknown Device';
     try {
       final deviceInfo = DeviceInfoPlugin();
       if (Platform.isAndroid) {
@@ -134,13 +140,15 @@ class StorageService extends GetxService {
         final brand = rawBrand.isNotEmpty
             ? rawBrand[0].toUpperCase() + rawBrand.substring(1)
             : 'Android';
-        return '$brand ${info.model}';
+        name = '$brand ${info.model}';
       } else if (Platform.isIOS) {
         final info = await deviceInfo.iosInfo;
-        return '${info.name} (${info.model})';
+        name = '${info.name} (${info.model})';
       }
     } catch (_) {}
-    return 'Unknown Device';
+
+    _box.write(deviceNameKey, name);
+    return name;
   }
 
   Future<void> clearAll() async {

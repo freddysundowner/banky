@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 
+import '../../core/services/storage_service.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../routes/app_pages.dart';
 
@@ -12,11 +13,18 @@ class SplashController extends GetxController {
 
   Future<void> _checkAuthStatus() async {
     try {
-      await Future.delayed(const Duration(seconds: 2));
-      
+      final storage = Get.find<StorageService>();
+
+      // Pre-warm device info during splash delay so login is instant.
+      await Future.wait([
+        Future.delayed(const Duration(seconds: 2)),
+        storage.getOrCreateDeviceId(),
+        storage.getDeviceName(),
+      ]);
+
       final AuthRepository authRepo = Get.find<AuthRepository>();
       final isLoggedIn = await authRepo.isLoggedIn();
-      
+
       if (isLoggedIn) {
         final member = await authRepo.getCurrentMember();
         if (member != null) {
