@@ -133,22 +133,25 @@ html, body { width:1400px; background:#003eaf; font-family:'Poppins', sans-serif
   margin-bottom:48px;
 }
 .pitch-intro {
-  font-size:24px; color:rgba(255,255,255,0.80); font-weight:500;
-  line-height:1.75; text-align:center; max-width:1100px; margin:0 auto 44px;
+  font-size:26px; color:rgba(255,255,255,0.88); font-weight:500;
+  line-height:1.75; text-align:center; max-width:1100px; margin:0 auto 36px;
 }
-.pitch-intro strong { color:#fff; font-weight:700; }
-.pitch-cards {
-  display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-bottom:44px;
+.pitch-intro strong { color:#fff; font-weight:800; }
+.pitch-rows {
+  display:flex; flex-direction:column; gap:16px; margin-bottom:36px;
 }
-.pitch-card {
-  background:rgba(255,255,255,0.12);
-  border:1.5px solid rgba(255,255,255,0.22);
-  border-radius:20px; padding:30px 28px;
-  text-align:center;
+.pitch-row {
+  background:rgba(255,255,255,0.11);
+  border:1.5px solid rgba(255,255,255,0.20);
+  border-radius:18px; padding:26px 32px;
+  display:flex; align-items:flex-start; gap:28px;
 }
-.pitch-card-icon { font-size:42px; margin-bottom:16px; }
-.pitch-card-title { font-size:22px; font-weight:800; color:#fff; margin-bottom:10px; }
-.pitch-card-text { font-size:17px; color:rgba(255,255,255,0.78); font-weight:500; line-height:1.65; }
+.pitch-row-icon {
+  font-size:38px; flex-shrink:0; line-height:1; margin-top:4px;
+}
+.pitch-row-body {}
+.pitch-row-title { font-size:24px; font-weight:800; color:#fff; margin-bottom:6px; }
+.pitch-row-text  { font-size:20px; color:rgba(255,255,255,0.82); font-weight:500; line-height:1.65; }
 .pitch-cta {
   background:rgba(255,255,255,0.14);
   border:2px solid rgba(255,255,255,0.28);
@@ -279,48 +282,46 @@ html, body { width:1400px; background:#003eaf; font-family:'Poppins', sans-serif
   <!-- PITCH SECTION -->
   <div class="pitch">
     <p class="pitch-intro">
-      Most SACCO and banking software forces you to stitch together <strong>3 or 4 separate systems</strong> — one for loans, one for accounting, one for HR, one for M-Pesa. BankyKit replaces all of them. It is a <strong>single, fully integrated platform</strong> purpose-built for SACCOs, banks, microfinance institutions and cooperatives across Africa — deployable on your own server or via our cloud SaaS plan.
+      Running a SACCO or bank is complex — but your software shouldn't be. <strong>BankyKit brings every operation into one system:</strong> member accounts, loans, savings, M-Pesa, mobile banking, HR, payroll, and full double-entry accounting. No integrations to maintain. No data scattered across tools. Everything talks to everything — automatically.
     </p>
 
-    <div class="pitch-cards">
-      <div class="pitch-card">
-        <div class="pitch-card-icon">⚡</div>
-        <div class="pitch-card-title">Ready in Days, Not Months</div>
-        <div class="pitch-card-text">Go live fast. BankyKit ships pre-configured with sensible defaults for African financial institutions. No lengthy consultancy required — your team can be processing loans and deposits within days of installation.</div>
+    <div class="pitch-rows">
+      <div class="pitch-row">
+        <div class="pitch-row-icon">🏦</div>
+        <div class="pitch-row-body">
+          <div class="pitch-row-title">One System — Loans, Savings, Accounting, HR and Mobile Banking</div>
+          <div class="pitch-row-text">Most institutions run 3–5 disconnected tools. BankyKit replaces them all. Every transaction — disbursement, deposit, payroll, dividend — automatically posts to your general ledger. Your books are always up to date with zero manual effort.</div>
+        </div>
       </div>
-      <div class="pitch-card">
-        <div class="pitch-card-icon">🔒</div>
-        <div class="pitch-card-title">Your Data, Your Control</div>
-        <div class="pitch-card-text">Deploy on-premise on your own server for full data sovereignty, or choose our managed cloud option. Either way, your member data stays under your control with full audit trails on every action.</div>
+      <div class="pitch-row">
+        <div class="pitch-row-icon">📱</div>
+        <div class="pitch-row-body">
+          <div class="pitch-row-title">M-Pesa Native &amp; Mobile Banking App Included</div>
+          <div class="pitch-row-text">STK Push, C2B paybill reconciliation and B2C disbursements are built in — not bolt-ons. Your members also get an Android &amp; iOS mobile app to check balances, apply for loans, repay via M-Pesa and access instant mobile soft loans, all from their phone.</div>
+        </div>
       </div>
-      <div class="pitch-card">
-        <div class="pitch-card-icon">🌍</div>
-        <div class="pitch-card-title">Built for African Markets</div>
-        <div class="pitch-card-text">Native M-Pesa STK Push and C2B/B2C integration, SMS alerts via Africa's Talking, and mobile banking for Android and iOS — everything your members expect, already built in.</div>
+      <div class="pitch-row">
+        <div class="pitch-row-icon">🔒</div>
+        <div class="pitch-row-body">
+          <div class="pitch-row-title">Deploy On Your Server or Our Cloud — You Decide</div>
+          <div class="pitch-row-text">Buy a one-time enterprise licence and run BankyKit on your own infrastructure for complete data sovereignty. Or subscribe to our SaaS plan and we manage everything for you. Either way, member data never leaves your control, and every action is logged in a full audit trail.</div>
+        </div>
       </div>
-      <div class="pitch-card">
-        <div class="pitch-card-icon">📊</div>
-        <div class="pitch-card-title">Full Double-Entry Accounting</div>
-        <div class="pitch-card-text">Every transaction — loan disbursement, deposit, dividend, payroll — automatically posts to the general ledger. Generate your P&L, balance sheet and trial balance at any time with zero manual journals.</div>
-      </div>
-      <div class="pitch-card">
-        <div class="pitch-card-icon">👥</div>
-        <div class="pitch-card-title">Staff, HR &amp; Payroll Included</div>
-        <div class="pitch-card-text">Manage your full team inside the same system — attendance, leave, payroll, salary advances, performance reviews and disciplinary records. No separate HR software needed.</div>
-      </div>
-      <div class="pitch-card">
-        <div class="pitch-card-icon">📱</div>
-        <div class="pitch-card-title">Mobile Banking App Included</div>
-        <div class="pitch-card-text">Your members get a branded Android and iOS mobile app — they can check balances, view statements, apply for loans, repay via M-Pesa and access instant mobile soft loans, all from their phone.</div>
+      <div class="pitch-row">
+        <div class="pitch-row-icon">⚡</div>
+        <div class="pitch-row-body">
+          <div class="pitch-row-title">Up and Running in Days — Not Months</div>
+          <div class="pitch-row-text">BankyKit is pre-configured for African financial institutions. No expensive consultancy, no long setup projects. Your team can be onboarding members, processing loans and reconciling M-Pesa payments within days of installation.</div>
+        </div>
       </div>
     </div>
 
     <div class="pitch-cta">
       <div class="pitch-cta-text">
-        See the complete feature set below — 19 modules, all included in one licence.
-        <span>Scroll down to explore every feature in detail ↓</span>
+        19 modules. One licence. Everything your institution needs — see the full feature breakdown below.
+        <span>↓ Full feature list starts here</span>
       </div>
-      <div class="pitch-cta-arrow">📋 Full Feature List Below</div>
+      <div class="pitch-cta-arrow">📋 All 19 Modules Below</div>
     </div>
   </div>
 
