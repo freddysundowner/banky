@@ -158,11 +158,6 @@ export default function Marketing() {
                   tabIndex={-1}
                 />
                 <div className="absolute inset-0 group-hover:bg-blue-600/5 transition-colors" />
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="bg-white/90 backdrop-blur-sm text-blue-700 font-semibold text-sm px-4 py-2 rounded-full shadow flex items-center gap-2">
-                    <Monitor className="w-3.5 h-3.5" /> Preview
-                  </div>
-                </div>
               </div>
 
               {/* Card info */}
