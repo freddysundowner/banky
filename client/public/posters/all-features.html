@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BankyKit – Complete Feature List</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:1200px; background:#0073E6; font-family:'Poppins', sans-serif; }
+
+.poster {
+  width:1200px;
+  background:#0073E6;
+  padding:60px 64px 56px;
+  position:relative;
+  overflow:hidden;
+}
+
+/* dot grid */
+.poster::before {
+  content:''; position:absolute; inset:0;
+  background-image:radial-gradient(rgba(255,255,255,0.08) 1.5px, transparent 1.5px);
+  background-size:30px 30px; pointer-events:none; z-index:0;
+}
+
+/* arcs */
+.arc { position:absolute; border-radius:50%; border:80px solid rgba(255,255,255,0.05); pointer-events:none; z-index:0; }
+.arc1 { width:700px; height:700px; top:-280px; right:-220px; }
+.arc2 { width:420px; height:420px; top:-80px;  right:200px; border-width:50px; opacity:.6; }
+.arc3 { width:500px; height:500px; bottom:-200px; left:-180px; }
+.arc4 { width:280px; height:280px; bottom:-60px; left:200px; border-width:40px; opacity:.6; }
+
+/* ── HEADER ── */
+.header {
+  position:relative; z-index:5;
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:42px;
+  padding-bottom:32px;
+  border-bottom:1px solid rgba(255,255,255,0.18);
+}
+.logo { display:flex; align-items:center; gap:18px; }
+.logo-icon {
+  width:64px; height:64px; border-radius:18px;
+  background:rgba(255,255,255,0.18); border:2px solid rgba(255,255,255,0.30);
+  display:flex; align-items:center; justify-content:center; font-size:30px;
+  flex-shrink:0;
+}
+.logo-name  { font-size:30px; font-weight:900; color:#fff; letter-spacing:-0.5px; }
+.logo-tag   { font-size:12px; color:rgba(255,255,255,0.60); font-weight:500; margin-top:2px; }
+.header-right { text-align:right; }
+.badge {
+  display:inline-block;
+  background:rgba(255,255,255,0.18); border:1px solid rgba(255,255,255,0.30);
+  color:#fff; font-size:11px; font-weight:700; letter-spacing:1.4px;
+  text-transform:uppercase; padding:6px 16px; border-radius:100px;
+  margin-bottom:8px;
+}
+.header-contact { font-size:12px; color:rgba(255,255,255,0.60); line-height:1.8; font-weight:500; }
+.header-contact strong { color:rgba(255,255,255,0.90); }
+
+/* ── HERO TITLE ── */
+.hero {
+  position:relative; z-index:5;
+  margin-bottom:44px; text-align:center;
+}
+.hero-title {
+  font-size:54px; font-weight:900; color:#fff;
+  line-height:1.05; letter-spacing:-2px; margin-bottom:12px;
+}
+.hero-title em { color:rgba(255,255,255,0.45); font-style:normal; }
+.hero-sub {
+  font-size:16px; color:rgba(255,255,255,0.70); font-weight:500; line-height:1.6;
+  max-width:800px; margin:0 auto;
+}
+
+/* ── DIVIDER ── */
+.divider {
+  position:relative; z-index:5;
+  display:flex; align-items:center; gap:16px; margin-bottom:40px;
+}
+.divider-line { flex:1; height:1px; background:rgba(255,255,255,0.15); }
+.divider-label {
+  font-size:11px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase;
+  color:rgba(255,255,255,0.45);
+}
+
+/* ── FEATURE GRID ── */
+.grid {
+  position:relative; z-index:5;
+  display:grid;
+  grid-template-columns:1fr 1fr 1fr 1fr;
+  gap:16px;
+  margin-bottom:40px;
+}
+
+.card {
+  background:rgba(255,255,255,0.10);
+  border:1px solid rgba(255,255,255,0.16);
+  border-radius:16px;
+  padding:22px 20px 20px;
+}
+.card-head {
+  display:flex; align-items:center; gap:11px;
+  margin-bottom:14px;
+  padding-bottom:12px;
+  border-bottom:1px solid rgba(255,255,255,0.12);
+}
+.card-icon {
+  width:36px; height:36px; border-radius:10px; flex-shrink:0;
+  background:rgba(255,255,255,0.18);
+  display:flex; align-items:center; justify-content:center;
+  font-size:17px;
+}
+.card-title { font-size:13.5px; font-weight:800; color:#fff; line-height:1.3; }
+
+.card-items { list-style:none; }
+.card-items li {
+  display:flex; align-items:flex-start; gap:8px;
+  font-size:11px; color:rgba(255,255,255,0.68); font-weight:400;
+  line-height:1.45; padding:3px 0;
+}
+.card-items li::before {
+  content:'›'; color:rgba(255,255,255,0.40); font-size:13px;
+  flex-shrink:0; margin-top:-1px; font-weight:700;
+}
+
+/* wide cards that span 2 columns */
+.card-wide { grid-column:span 2; }
+
+/* ── SUMMARY STRIP ── */
+.summary {
+  position:relative; z-index:5;
+  background:rgba(255,255,255,0.10);
+  border:1px solid rgba(255,255,255,0.18);
+  border-radius:20px;
+  padding:32px 36px;
+  margin-bottom:40px;
+}
+.summary-title {
+  font-size:16px; font-weight:800; color:#fff;
+  letter-spacing:.3px; margin-bottom:20px; text-align:center;
+}
+.summary-grid {
+  display:grid; grid-template-columns:repeat(5,1fr); gap:8px 20px;
+}
+.sum-item {
+  display:flex; align-items:flex-start; gap:8px;
+  font-size:11px; color:rgba(255,255,255,0.72); font-weight:500; line-height:1.4;
+}
+.sum-num {
+  font-size:10px; font-weight:800; color:rgba(255,255,255,0.40);
+  flex-shrink:0; min-width:18px; padding-top:1px; letter-spacing:.5px;
+}
+
+/* ── FOOTER ── */
+.footer {
+  position:relative; z-index:5;
+  display:flex; align-items:center; justify-content:space-between;
+  padding-top:28px;
+  border-top:1px solid rgba(255,255,255,0.18);
+}
+.f-left  { font-size:13px; color:rgba(255,255,255,0.60); font-weight:500; line-height:2; }
+.f-left  strong { color:#fff; }
+.f-suits { font-size:12px; color:rgba(255,255,255,0.45); font-weight:500; margin-top:2px; }
+.f-cta {
+  background:#fff; color:#0073E6;
+  font-size:15px; font-weight:800;
+  padding:16px 44px; border-radius:100px;
+  letter-spacing:0.2px;
+  box-shadow:0 10px 32px rgba(0,0,0,0.25);
+  white-space:nowrap; flex-shrink:0;
+}
+</style>
+</head>
+<body>
+<div class="poster">
+  <div class="arc arc1"></div>
+  <div class="arc arc2"></div>
+  <div class="arc arc3"></div>
+  <div class="arc arc4"></div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🏦</div>
+      <div>
+        <div class="logo-name">BankyKit</div>
+        <div class="logo-tag">Complete Financial Management System</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="badge">Full Feature List</div>
+      <div class="header-contact">
+        📞 <strong>+254 791 334 234</strong><br>
+        ✉️ <strong>sales@bankykit.com</strong><br>
+        🌐 demo.bankykit.com
+      </div>
+    </div>
+  </div>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-title">Everything Your SACCO, Bank<br>or Microfinance <em>Needs in One System</em></div>
+    <div class="hero-sub">BankyKit is a complete, multi-tenant financial management platform — from loans and savings to payroll, M-Pesa, mobile banking and full accounting. Enterprise and SaaS deployments supported.</div>
+  </div>
+
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="divider-label">20+ Feature Modules</div>
+    <div class="divider-line"></div>
+  </div>
+
+  <!-- FEATURE GRID -->
+  <div class="grid">
+
+    <!-- 1. Member Management -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">👤</div>
+        <div class="card-title">Member Management</div>
+      </div>
+      <ul class="card-items">
+        <li>Full KYC — ID, passport, photos</li>
+        <li>Unique member &amp; account numbers</li>
+        <li>Next-of-kin &amp; beneficiary details</li>
+        <li>Status management (active / suspended)</li>
+        <li>Duplicate ID detection</li>
+        <li>Member statements &amp; history</li>
+        <li>Search &amp; filtering</li>
+        <li>Mobile OTP activation</li>
+      </ul>
+    </div>
+
+    <!-- 2. Loan Management -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">💳</div>
+        <div class="card-title">Loan Management</div>
+      </div>
+      <ul class="card-items">
+        <li>Configurable loan products</li>
+        <li>Application, review &amp; approval workflow</li>
+        <li>Multi-level maker-checker approval</li>
+        <li>Disbursement to M-Pesa or bank</li>
+        <li>Reducing balance &amp; flat-rate interest</li>
+        <li>Instalment tracking &amp; repayments</li>
+        <li>Restructuring &amp; rescheduling</li>
+        <li>Defaulting, write-offs &amp; PAR reports</li>
+      </ul>
+    </div>
+
+    <!-- 3. Savings & Shares -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">💰</div>
+        <div class="card-title">Savings &amp; Shares</div>
+      </div>
+      <ul class="card-items">
+        <li>Regular, voluntary &amp; compulsory savings</li>
+        <li>Share capital tracking</li>
+        <li>Deposits &amp; withdrawals</li>
+        <li>Dividend computation on shares</li>
+        <li>Interest on savings</li>
+        <li>Minimum balance enforcement</li>
+        <li>Balance enquiry</li>
+      </ul>
+    </div>
+
+    <!-- 4. Fixed Deposits -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">🔒</div>
+        <div class="card-title">Fixed Deposits</div>
+      </div>
+      <ul class="card-items">
+        <li>Fixed deposit product setup</li>
+        <li>Placement &amp; tracking</li>
+        <li>Maturity date alerts</li>
+        <li>Auto-rollover on maturity</li>
+        <li>Early withdrawal processing</li>
+        <li>FD portfolio view &amp; reports</li>
+      </ul>
+    </div>
+
+    <!-- 5. M-Pesa Integration -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">📱</div>
+        <div class="card-title">M-Pesa Integration</div>
+      </div>
+      <ul class="card-items">
+        <li>STK Push for deposits &amp; repayments</li>
+        <li>C2B paybill reconciliation</li>
+        <li>B2C disbursements (loans, dividends)</li>
+        <li>Real-time transaction matching</li>
+        <li>Reversal handling</li>
+        <li>Dedicated webhook processing</li>
+      </ul>
+    </div>
+
+    <!-- 6. Teller Services -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">🏧</div>
+        <div class="card-title">Teller Services</div>
+      </div>
+      <ul class="card-items">
+        <li>Cash deposits &amp; withdrawals</li>
+        <li>Float allocation per counter</li>
+        <li>Float replenishment &amp; approvals</li>
+        <li>Vault &amp; cash movement management</li>
+        <li>Teller shift handover</li>
+        <li>Cash shortage reconciliation</li>
+        <li>Daily cash position report</li>
+      </ul>
+    </div>
+
+    <!-- 7. Accounting & GL -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">📊</div>
+        <div class="card-title">Accounting &amp; General Ledger</div>
+      </div>
+      <ul class="card-items">
+        <li>Double-entry bookkeeping</li>
+        <li>Chart of accounts management</li>
+        <li>Journal entry posting</li>
+        <li>Profit &amp; Loss statement</li>
+        <li>Balance sheet &amp; trial balance</li>
+        <li>Revenue &amp; expense tracking</li>
+        <li>Financial year management</li>
+      </ul>
+    </div>
+
+    <!-- 8. Dividend Processing -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">💸</div>
+        <div class="card-title">Dividend Processing</div>
+      </div>
+      <ul class="card-items">
+        <li>Dividend declaration per period</li>
+        <li>Auto-calculation by shareholding</li>
+        <li>Distribute to accounts or M-Pesa</li>
+        <li>Dividend history &amp; statements</li>
+      </ul>
+    </div>
+
+    <!-- 9. Staff & HR (wide) -->
+    <div class="card card-wide">
+      <div class="card-head">
+        <div class="card-icon">🧑‍💼</div>
+        <div class="card-title">Staff &amp; Human Resources</div>
+      </div>
+      <ul class="card-items" style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;">
+        <li>Staff profiles &amp; employment records</li>
+        <li>Payroll — basic pay, allowances, deductions</li>
+        <li>Attendance clock-in / clock-out</li>
+        <li>Payslip generation &amp; pay periods</li>
+        <li>Leave management &amp; approvals</li>
+        <li>Salary advance processing</li>
+        <li>Performance reviews</li>
+        <li>Disciplinary records</li>
+        <li>Training &amp; certification records</li>
+        <li>HR document management</li>
+        <li>Working hours enforcement per role</li>
+        <li>Role-based access control</li>
+      </ul>
+    </div>
+
+    <!-- 10. Branch Management -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">🏢</div>
+        <div class="card-title">Branch Management</div>
+      </div>
+      <ul class="card-items">
+        <li>Multi-branch setup</li>
+        <li>Branch-level reporting</li>
+        <li>Performance analytics</li>
+        <li>Staff assignment to branches</li>
+      </ul>
+    </div>
+
+    <!-- 11. Reports & Analytics -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">📈</div>
+        <div class="card-title">Reports &amp; Analytics</div>
+      </div>
+      <ul class="card-items">
+        <li>Loan portfolio &amp; PAR reports</li>
+        <li>Member statement report</li>
+        <li>Financial summary &amp; P&amp;L</li>
+        <li>Fixed deposits report</li>
+        <li>Attendance &amp; leave reports</li>
+        <li>Data export — CSV / Excel</li>
+        <li>Dashboard analytics &amp; trends</li>
+      </ul>
+    </div>
+
+    <!-- 12. SMS Notifications -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">💬</div>
+        <div class="card-title">SMS Notifications</div>
+      </div>
+      <ul class="card-items">
+        <li>Loan approval, disbursement &amp; repayment alerts</li>
+        <li>Deposit &amp; withdrawal confirmations</li>
+        <li>Due date &amp; overdue reminders</li>
+        <li>Bulk SMS to members</li>
+        <li>SMS template configuration</li>
+        <li>Delivery history &amp; tracking</li>
+      </ul>
+    </div>
+
+    <!-- 13. Roles & Permissions -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">🔑</div>
+        <div class="card-title">Roles &amp; Permissions</div>
+      </div>
+      <ul class="card-items">
+        <li>Custom role creation per org</li>
+        <li>Granular permission assignment</li>
+        <li>Predefined roles (admin, teller, etc.)</li>
+        <li>Permission checks on all operations</li>
+      </ul>
+    </div>
+
+    <!-- 14. Audit & Compliance -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">🛡️</div>
+        <div class="card-title">Audit &amp; Compliance</div>
+      </div>
+      <ul class="card-items">
+        <li>Full audit trail for all actions</li>
+        <li>User activity logging (who, what, when)</li>
+        <li>Entity-level audit history</li>
+        <li>Audit log search &amp; filtering</li>
+        <li>Staff activity reports</li>
+      </ul>
+    </div>
+
+    <!-- 15. Document Management -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">📁</div>
+        <div class="card-title">Document Management</div>
+      </div>
+      <ul class="card-items">
+        <li>Member document uploads (ID, photos)</li>
+        <li>Loan document attachments</li>
+        <li>HR staff document storage</li>
+        <li>KYC verification document tracking</li>
+      </ul>
+    </div>
+
+    <!-- 16. Mobile Banking (wide) -->
+    <div class="card card-wide">
+      <div class="card-head">
+        <div class="card-icon">📲</div>
+        <div class="card-title">Mobile Banking App (Android &amp; iOS)</div>
+      </div>
+      <ul class="card-items" style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;">
+        <li>OTP account activation</li>
+        <li>Loan application from mobile</li>
+        <li>Account balance enquiry</li>
+        <li>Mobile soft loan — instant short-term loan</li>
+        <li>Transaction history &amp; statements</li>
+        <li>Loan repayment via M-Pesa</li>
+        <li>Fixed deposit placement</li>
+        <li>SMS OTP authentication</li>
+      </ul>
+    </div>
+
+    <!-- 17. Subscription & Billing -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">🧾</div>
+        <div class="card-title">Subscription &amp; Billing</div>
+      </div>
+      <ul class="card-items">
+        <li>Plan management (Basic / Pro / Enterprise)</li>
+        <li>Trial period configuration</li>
+        <li>M-Pesa &amp; Stripe payment support</li>
+        <li>Subscription status tracking</li>
+        <li>Renewal reminder notifications</li>
+      </ul>
+    </div>
+
+    <!-- 18. Notifications & Alerts -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">🔔</div>
+        <div class="card-title">Notifications &amp; Alerts</div>
+      </div>
+      <ul class="card-items">
+        <li>In-app notifications</li>
+        <li>Email — welcome, reset, verification</li>
+        <li>SMS alerts for key events</li>
+        <li>FD maturity alerts</li>
+        <li>Trial expiry &amp; renewal reminders</li>
+      </ul>
+    </div>
+
+    <!-- 19. Organization Settings -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">⚙️</div>
+        <div class="card-title">Organization Settings</div>
+      </div>
+      <ul class="card-items">
+        <li>Organization profile &amp; branding</li>
+        <li>Currency &amp; financial year config</li>
+        <li>M-Pesa &amp; SMS gateway setup</li>
+        <li>Staff email domain restriction</li>
+        <li>Working hours &amp; auto-logout</li>
+        <li>Demo mode toggle</li>
+      </ul>
+    </div>
+
+    <!-- 20. Admin Panel -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">🖥️</div>
+        <div class="card-title">Admin Panel (Platform Owner)</div>
+      </div>
+      <ul class="card-items">
+        <li>Organization management</li>
+        <li>Subscription plan management</li>
+        <li>Platform settings &amp; branding</li>
+        <li>Per-org password reset</li>
+        <li>System-wide analytics</li>
+        <li>Demo data seeding</li>
+      </ul>
+    </div>
+
+    <!-- 21. Deployment (wide) -->
+    <div class="card card-wide">
+      <div class="card-head">
+        <div class="card-icon">🚀</div>
+        <div class="card-title">Deployment &amp; Architecture</div>
+      </div>
+      <ul class="card-items" style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;">
+        <li>SaaS mode — dedicated DB per org (Neon or local Postgres)</li>
+        <li>Python FastAPI backend — high performance</li>
+        <li>Enterprise mode — shared database</li>
+        <li>React / TypeScript frontend — responsive web</li>
+        <li>Multi-tenant data isolation</li>
+        <li>Flutter mobile app — Android &amp; iOS</li>
+        <li>Role-based API security</li>
+        <li>Background scheduler — alerts &amp; reminders</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- SUMMARY STRIP -->
+  <div class="summary">
+    <div class="summary-title">20 Core Modules at a Glance</div>
+    <div class="summary-grid">
+      <div class="sum-item"><span class="sum-num">01</span>Member Management — KYC &amp; profiles</div>
+      <div class="sum-item"><span class="sum-num">02</span>Loan Management — apply, approve &amp; disburse</div>
+      <div class="sum-item"><span class="sum-num">03</span>Savings &amp; Shares — accounts &amp; dividends</div>
+      <div class="sum-item"><span class="sum-num">04</span>M-Pesa — STK Push &amp; reconciliation</div>
+      <div class="sum-item"><span class="sum-num">05</span>Mobile Banking App — Android &amp; iOS</div>
+      <div class="sum-item"><span class="sum-num">06</span>Teller Services — cash &amp; float management</div>
+      <div class="sum-item"><span class="sum-num">07</span>Accounting &amp; GL — double-entry &amp; P&amp;L</div>
+      <div class="sum-item"><span class="sum-num">08</span>SMS Notifications — alerts &amp; bulk SMS</div>
+      <div class="sum-item"><span class="sum-num">09</span>Branch Management — multi-branch &amp; roles</div>
+      <div class="sum-item"><span class="sum-num">10</span>Reports &amp; Analytics — portfolio &amp; exports</div>
+      <div class="sum-item"><span class="sum-num">11</span>Fixed Deposits — terms &amp; auto-rollover</div>
+      <div class="sum-item"><span class="sum-num">12</span>Loan Restructuring — reschedule &amp; write-offs</div>
+      <div class="sum-item"><span class="sum-num">13</span>Interest Computation — reducing &amp; flat rate</div>
+      <div class="sum-item"><span class="sum-num">14</span>Dividend Processing — auto-calculate &amp; pay</div>
+      <div class="sum-item"><span class="sum-num">15</span>Collateral Management — assets &amp; valuations</div>
+      <div class="sum-item"><span class="sum-num">16</span>Staff &amp; HR — payroll, leave &amp; performance</div>
+      <div class="sum-item"><span class="sum-num">17</span>Roles &amp; Permissions — granular access control</div>
+      <div class="sum-item"><span class="sum-num">18</span>Document Management — KYC &amp; attachments</div>
+      <div class="sum-item"><span class="sum-num">19</span>Subscription &amp; Billing — plans &amp; payments</div>
+      <div class="sum-item"><span class="sum-num">20</span>Audit &amp; Compliance — full activity trail</div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div>
+      <div class="f-left">
+        📞 <strong>+254 791 334 234</strong> &nbsp;·&nbsp;
+        ✉️ <strong>sales@bankykit.com</strong> &nbsp;·&nbsp;
+        🌐 <strong>demo.bankykit.com</strong>
+      </div>
+      <div class="f-suits">Suitable for: SACCOs · Banks · Microfinance · Cooperatives</div>
+    </div>
+    <div class="f-cta">Visit demo.bankykit.com</div>
+  </div>
+
+</div>
+</body>
+</html>
