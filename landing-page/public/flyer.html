@@ -4,335 +4,271 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BankyKit Flyer</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,900&display=swap" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
-body {
-  font-family: 'Inter', sans-serif;
-  background: #e8ecf0;
-  min-height: 100vh;
+html, body {
+  background: #c8d0db;
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 32px 16px;
+  align-items: flex-start;
+  padding: 40px 20px;
+  font-family: 'Inter', sans-serif;
 }
 
+/* A4 portrait proportions */
 .flyer {
-  width: 794px;
-  background: #fff;
-  border-radius: 4px;
-  overflow: hidden;
-  box-shadow: 0 32px 80px rgba(0,0,0,0.18);
-}
-
-/* ─── TOP HERO ─────────────────────────────── */
-.hero {
-  background: linear-gradient(135deg, #001f5c 0%, #0055cc 55%, #0088ff 100%);
-  padding: 36px 40px 28px;
+  width: 680px;
+  background: #ffffff;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.25);
 }
-.hero-circles {
-  position: absolute;
-  top: -60px; right: -60px;
-  width: 280px; height: 280px;
-  border-radius: 50%;
-  border: 60px solid rgba(255,255,255,0.06);
-}
-.hero-circles2 {
-  position: absolute;
-  bottom: -40px; right: 120px;
-  width: 160px; height: 160px;
-  border-radius: 50%;
-  border: 40px solid rgba(255,255,255,0.04);
-}
-.hero-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
+
+/* ─── HEADER BLOCK ─────────────────────── */
+.header {
+  background: #0047CC;
   position: relative;
-}
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.brand-icon {
-  width: 52px; height: 52px;
-  background: rgba(255,255,255,0.15);
-  border: 1.5px solid rgba(255,255,255,0.3);
-  border-radius: 14px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 26px;
-}
-.brand-name {
-  font-size: 26px;
-  font-weight: 900;
-  color: #fff;
-  letter-spacing: -0.5px;
-}
-.brand-sub {
-  font-size: 11px;
-  color: rgba(255,255,255,0.55);
-  font-weight: 500;
-  letter-spacing: 0.5px;
-  margin-top: 1px;
-}
-.hero-chips {
-  display: flex;
-  gap: 8px;
-}
-.chip {
-  font-size: 11px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.9);
-  background: rgba(255,255,255,0.12);
-  border: 1px solid rgba(255,255,255,0.2);
-  padding: 4px 12px;
-  border-radius: 100px;
-}
-.hero-headline {
-  position: relative;
-  margin-bottom: 6px;
-}
-.hero-headline h1 {
-  font-size: 38px;
-  font-weight: 900;
-  color: #fff;
-  line-height: 1.1;
-  letter-spacing: -1px;
-}
-.hero-headline h1 em {
-  font-style: normal;
-  color: #7dd3fc;
-}
-.hero-sub {
-  font-size: 14px;
-  color: rgba(255,255,255,0.65);
-  font-weight: 400;
-  margin-top: 10px;
-  line-height: 1.6;
-  max-width: 540px;
+  padding: 36px 40px 0;
+  overflow: hidden;
 }
 
-/* ─── METRICS BAR ──────────────────────────── */
-.metrics {
-  background: #001440;
-  display: flex;
-}
-.metric {
-  flex: 1;
-  padding: 14px 0;
-  text-align: center;
-  border-right: 1px solid rgba(255,255,255,0.08);
-}
-.metric:last-child { border-right: none; }
-.metric-val {
-  font-size: 20px;
-  font-weight: 800;
-  color: #60a5fa;
-  line-height: 1;
-}
-.metric-lbl {
-  font-size: 10px;
-  color: rgba(255,255,255,0.4);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  margin-top: 3px;
-}
-
-/* ─── BODY ─────────────────────────────────── */
-.body {
-  padding: 28px 40px;
-}
-
-/* ─── FEATURE GRID ─────────────────────────── */
-.feat-heading {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: #94a3b8;
-  margin-bottom: 14px;
-}
-
-.feat-grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 10px;
-  margin-bottom: 22px;
-}
-
-.feat-item {
-  background: #f8fafc;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 14px 10px;
-  text-align: center;
-  transition: border-color 0.2s;
-}
-.feat-item:hover { border-color: #0073E6; }
-.feat-icon { font-size: 24px; margin-bottom: 8px; }
-.feat-name {
-  font-size: 11px;
-  font-weight: 600;
-  color: #1e293b;
-  line-height: 1.3;
-}
-
-/* ─── TWO COL ───────────────────────────────── */
-.two-col {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 22px;
-}
-
-.info-card {
-  border-radius: 12px;
-  padding: 20px;
-  border: 1.5px solid #e2e8f0;
-}
-.info-card.dark {
-  background: #0f172a;
-  border-color: #1e3a5f;
-}
-.info-card.light-blue {
-  background: linear-gradient(135deg, #eff6ff, #dbeafe);
-  border-color: #bfdbfe;
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-.card-icon-wrap {
-  width: 36px; height: 36px;
-  border-radius: 9px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px;
-  flex-shrink: 0;
-}
-.dark .card-icon-wrap { background: rgba(255,255,255,0.08); }
-.light-blue .card-icon-wrap { background: rgba(0,115,230,0.12); }
-.card-title {
-  font-size: 14px;
-  font-weight: 700;
-}
-.dark .card-title { color: #fff; }
-.light-blue .card-title { color: #1e3a8a; }
-.card-subtitle {
-  font-size: 11px;
-  font-weight: 500;
+/* Decorative shapes */
+.shape-circle-1 {
+  position: absolute;
+  width: 340px; height: 340px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #0066ff 0%, transparent 70%);
+  top: -120px; right: -80px;
   opacity: 0.6;
 }
-.dark .card-subtitle { color: rgba(255,255,255,0.6); }
+.shape-circle-2 {
+  position: absolute;
+  width: 180px; height: 180px;
+  border-radius: 50%;
+  border: 30px solid rgba(255,255,255,0.06);
+  bottom: 20px; right: 240px;
+}
+.shape-rect {
+  position: absolute;
+  width: 120px; height: 120px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 24px;
+  transform: rotate(20deg);
+  bottom: -40px; left: -20px;
+}
 
-.check-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-.check-item {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  font-weight: 500;
-}
-.dark .check-item { color: rgba(255,255,255,0.75); }
-.light-blue .check-item { color: #1e3a8a; }
-.chk {
-  width: 16px; height: 16px;
-  border-radius: 5px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 9px;
-  flex-shrink: 0;
-}
-.dark .chk { background: #0055cc; color: #fff; }
-.light-blue .chk { background: #2563eb; color: #fff; }
-
-/* ─── BOTTOM STRIP ─────────────────────────── */
-.bottom-strip {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin-bottom: 22px;
-}
-.sec-card {
-  text-align: center;
-  padding: 16px 10px;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
-  background: #f8fafc;
-}
-.sec-card .si { font-size: 22px; margin-bottom: 6px; }
-.sec-card h4 { font-size: 11.5px; font-weight: 700; color: #1e293b; margin-bottom: 3px; }
-.sec-card p  { font-size: 10.5px; color: #64748b; line-height: 1.4; }
-
-/* ─── FOOTER ────────────────────────────────── */
-.footer {
-  background: linear-gradient(135deg, #001f5c, #0055cc);
-  padding: 20px 40px;
+.header-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 30px;
+  position: relative;
+  z-index: 2;
 }
-.footer-left {
+.logo-wrap {
   display: flex;
   align-items: center;
   gap: 12px;
 }
+.logo-icon {
+  width: 46px; height: 46px;
+  background: rgba(255,255,255,0.18);
+  border: 1.5px solid rgba(255,255,255,0.35);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+}
+.logo-name {
+  font-size: 22px; font-weight: 900;
+  color: #fff; letter-spacing: -0.3px;
+}
+.logo-tagline {
+  font-size: 10px; color: rgba(255,255,255,0.5);
+  font-weight: 500; margin-top: 1px;
+  letter-spacing: 0.3px;
+}
+.header-tag {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: rgba(255,255,255,0.85);
+  font-size: 10.5px; font-weight: 600;
+  padding: 5px 14px; border-radius: 100px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Big headline */
+.header-headline {
+  position: relative; z-index: 2;
+  margin-bottom: 16px;
+}
+.hl-eyebrow {
+  font-size: 11px; font-weight: 700;
+  color: #7dd3fc;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+.hl-main {
+  font-size: 52px; font-weight: 900;
+  color: #ffffff;
+  line-height: 1.0;
+  letter-spacing: -2px;
+}
+.hl-main span { color: #7dd3fc; }
+.hl-sub {
+  font-size: 14px; color: rgba(255,255,255,0.65);
+  margin-top: 12px; line-height: 1.6;
+  max-width: 420px; font-weight: 400;
+}
+
+/* Floating stats chips */
+.header-chips {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+  margin-bottom: 0;
+  position: relative; z-index: 2;
+  flex-wrap: wrap;
+}
+.hchip {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.18);
+  padding: 6px 14px; border-radius: 100px;
+  font-size: 12px; font-weight: 600; color: #fff;
+}
+.hchip-dot { width: 6px; height: 6px; border-radius: 50%; background: #4ade80; }
+
+/* Wave divider */
+.wave {
+  display: block;
+  width: 100%;
+  margin-top: 24px;
+}
+
+/* ─── STATS ROW ─────────────────────────── */
+.stats-row {
+  background: #00307a;
+  display: flex;
+}
+.stat { flex: 1; padding: 13px 0; text-align: center; border-right: 1px solid rgba(255,255,255,0.07); }
+.stat:last-child { border: none; }
+.stat-n { font-size: 18px; font-weight: 800; color: #60a5fa; }
+.stat-l { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.8px; color: rgba(255,255,255,0.38); font-weight: 600; margin-top: 2px; }
+
+/* ─── FEATURES SECTION ──────────────────── */
+.features-section {
+  padding: 28px 40px 24px;
+  background: #f8fafc;
+}
+.section-title {
+  font-size: 9.5px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 2px;
+  color: #94a3b8; margin-bottom: 16px;
+}
+.feat-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+.feat {
+  background: #fff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 8px 12px;
+  text-align: center;
+}
+.feat-i { font-size: 26px; margin-bottom: 7px; }
+.feat-t { font-size: 10.5px; font-weight: 600; color: #334155; line-height: 1.3; }
+
+/* ─── HIGHLIGHT CARDS ───────────────────── */
+.cards-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+
+.hcard {
+  padding: 26px 32px;
+}
+.hcard.left  { background: #0f172a; }
+.hcard.right { background: linear-gradient(145deg, #1d4ed8, #0047CC); }
+
+.hcard-icon { font-size: 30px; margin-bottom: 14px; }
+.hcard-title {
+  font-size: 15px; font-weight: 800;
+  color: #fff; margin-bottom: 4px;
+}
+.hcard-sub {
+  font-size: 11px; color: rgba(255,255,255,0.45);
+  font-weight: 500; margin-bottom: 16px;
+}
+.hcard-list { display: flex; flex-direction: column; gap: 7px; }
+.hcard-item {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 500;
+  color: rgba(255,255,255,0.80);
+}
+.hcard-check {
+  width: 18px; height: 18px; border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; flex-shrink: 0; font-weight: 700;
+}
+.left  .hcard-check { background: #0047CC; color: #7dd3fc; }
+.right .hcard-check { background: rgba(255,255,255,0.15); color: #fff; }
+
+/* ─── SECURITY STRIP ────────────────────── */
+.security {
+  padding: 22px 40px;
+  background: #fff;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+.sec {
+  display: flex; flex-direction: column;
+  align-items: center; text-align: center; gap: 6px;
+}
+.sec-i { font-size: 22px; }
+.sec-t { font-size: 11px; font-weight: 700; color: #1e293b; }
+.sec-d { font-size: 10px; color: #94a3b8; line-height: 1.4; }
+
+/* ─── FOOTER ────────────────────────────── */
+.footer {
+  background: #0047CC;
+  padding: 22px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.footer-left { display: flex; align-items: center; gap: 12px; }
 .footer-logo {
-  width: 38px; height: 38px;
+  width: 40px; height: 40px;
   background: rgba(255,255,255,0.15);
   border: 1.5px solid rgba(255,255,255,0.25);
   border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px;
+  font-size: 20px;
 }
-.footer-brand-name {
-  font-size: 16px;
-  font-weight: 800;
-  color: #fff;
-}
-.footer-brand-tag {
-  font-size: 10px;
-  color: rgba(255,255,255,0.5);
-  font-weight: 500;
-}
-.footer-contacts {
-  display: flex;
-  gap: 20px;
-}
-.footer-contact {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: rgba(255,255,255,0.7);
-  font-weight: 500;
-}
-.footer-cta {
+.footer-name { font-size: 16px; font-weight: 900; color: #fff; }
+.footer-domain { font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 500; }
+.footer-contacts { display: flex; gap: 18px; }
+.fcontact { font-size: 11.5px; color: rgba(255,255,255,0.65); font-weight: 500; display: flex; align-items: center; gap: 5px; }
+.footer-btn {
   background: #fff;
-  color: #0055cc;
-  font-size: 13px;
-  font-weight: 800;
-  padding: 10px 24px;
-  border-radius: 100px;
-  border: none;
-  cursor: pointer;
+  color: #0047CC;
+  font-size: 12px; font-weight: 800;
+  padding: 10px 22px; border-radius: 100px;
+  border: none; cursor: pointer; white-space: nowrap;
   letter-spacing: 0.3px;
-  white-space: nowrap;
 }
 
 @media print {
-  body { background: white; padding: 0; display: block; }
+  body { background: #fff; padding: 0; }
   .flyer { width: 100%; box-shadow: none; }
 }
 </style>
@@ -340,128 +276,123 @@ body {
 <body>
 <div class="flyer">
 
-  <!-- HERO -->
-  <div class="hero">
-    <div class="hero-circles"></div>
-    <div class="hero-circles2"></div>
-    <div class="hero-top">
-      <div class="brand">
-        <div class="brand-icon">🏦</div>
+  <!-- HEADER -->
+  <div class="header">
+    <div class="shape-circle-1"></div>
+    <div class="shape-circle-2"></div>
+    <div class="shape-rect"></div>
+
+    <div class="header-top">
+      <div class="logo-wrap">
+        <div class="logo-icon">🏦</div>
         <div>
-          <div class="brand-name">BankyKit</div>
-          <div class="brand-sub">Bank & SACCO Management Platform</div>
+          <div class="logo-name">BankyKit</div>
+          <div class="logo-tagline">Bank & SACCO Management Platform</div>
         </div>
       </div>
-      <div class="hero-chips">
-        <div class="chip">☁️ SaaS</div>
-        <div class="chip">🖥️ On-Premise</div>
-        <div class="chip">📱 Mobile App</div>
-      </div>
+      <div class="header-tag">Built for Africa</div>
     </div>
-    <div class="hero-headline">
-      <h1>The Complete<br><em>All-in-One</em> System for<br>Banks & SACCOs</h1>
+
+    <div class="header-headline">
+      <div class="hl-eyebrow">Complete Financial Management System</div>
+      <div class="hl-main">One Platform.<br><span>Every Feature</span><br>Your SACCO Needs.</div>
+      <div class="hl-sub">From member onboarding to loan disbursement, teller operations, mobile banking, M-Pesa, and full accounting — all in one system.</div>
     </div>
-    <div class="hero-sub">
-      Member management · Loans · Savings · Teller operations · M-Pesa · Mobile banking · Accounting · Reports — everything your SACCO needs, in one platform.
+
+    <div class="header-chips">
+      <div class="hchip"><span class="hchip-dot"></span> Multi-Tenant SaaS</div>
+      <div class="hchip"><span class="hchip-dot"></span> Enterprise On-Premise</div>
+      <div class="hchip"><span class="hchip-dot"></span> Android & iOS App</div>
+      <div class="hchip"><span class="hchip-dot"></span> M-Pesa Ready</div>
     </div>
+
+    <svg class="wave" viewBox="0 0 680 40" preserveAspectRatio="none" height="40">
+      <path d="M0,0 Q170,40 340,20 Q510,0 680,30 L680,40 L0,40 Z" fill="#00307a"/>
+    </svg>
   </div>
 
-  <!-- METRICS -->
-  <div class="metrics">
-    <div class="metric"><div class="metric-val">25+</div><div class="metric-lbl">Modules</div></div>
-    <div class="metric"><div class="metric-val">∞</div><div class="metric-lbl">Tenants</div></div>
-    <div class="metric"><div class="metric-val">2FA</div><div class="metric-lbl">OTP Login</div></div>
-    <div class="metric"><div class="metric-val">M-Pesa</div><div class="metric-lbl">Integrated</div></div>
-    <div class="metric"><div class="metric-val">Android</div><div class="metric-lbl">& iOS App</div></div>
-    <div class="metric"><div class="metric-val">Real-time</div><div class="metric-lbl">SMS Alerts</div></div>
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat"><div class="stat-n">25+</div><div class="stat-l">Modules</div></div>
+    <div class="stat"><div class="stat-n">∞</div><div class="stat-l">Tenants</div></div>
+    <div class="stat"><div class="stat-n">2FA</div><div class="stat-l">OTP Login</div></div>
+    <div class="stat"><div class="stat-n">M-Pesa</div><div class="stat-l">Integrated</div></div>
+    <div class="stat"><div class="stat-n">Android+iOS</div><div class="stat-l">Mobile App</div></div>
+    <div class="stat"><div class="stat-n">Real-time</div><div class="stat-l">SMS Alerts</div></div>
   </div>
 
-  <!-- BODY -->
-  <div class="body">
-
-    <div class="feat-heading">Core Feature Modules</div>
+  <!-- FEATURES -->
+  <div class="features-section">
+    <div class="section-title">Core Modules</div>
     <div class="feat-grid">
-      <div class="feat-item"><div class="feat-icon">👥</div><div class="feat-name">Member Management</div></div>
-      <div class="feat-item"><div class="feat-icon">💰</div><div class="feat-name">Savings & Shares</div></div>
-      <div class="feat-item"><div class="feat-icon">📋</div><div class="feat-name">Loan Management</div></div>
-      <div class="feat-item"><div class="feat-icon">🏧</div><div class="feat-name">Teller Services</div></div>
-      <div class="feat-item"><div class="feat-icon">📱</div><div class="feat-name">M-Pesa Integration</div></div>
-      <div class="feat-item"><div class="feat-icon">📊</div><div class="feat-name">Accounting & GL</div></div>
-      <div class="feat-item"><div class="feat-icon">🏢</div><div class="feat-name">Branch Management</div></div>
-      <div class="feat-item"><div class="feat-icon">👩‍💼</div><div class="feat-name">Staff & HR</div></div>
-      <div class="feat-item"><div class="feat-icon">💬</div><div class="feat-name">SMS Notifications</div></div>
-      <div class="feat-item"><div class="feat-icon">📈</div><div class="feat-name">Analytics & Reports</div></div>
-      <div class="feat-item"><div class="feat-icon">🏦</div><div class="feat-name">Fixed Deposits</div></div>
-      <div class="feat-item"><div class="feat-icon">💵</div><div class="feat-name">Dividends</div></div>
-      <div class="feat-item"><div class="feat-icon">🔄</div><div class="feat-name">Loan Restructuring</div></div>
-      <div class="feat-item"><div class="feat-icon">🤝</div><div class="feat-name">Guarantors</div></div>
-      <div class="feat-item"><div class="feat-icon">📂</div><div class="feat-name">Document Manager</div></div>
+      <div class="feat"><div class="feat-i">👥</div><div class="feat-t">Member Management</div></div>
+      <div class="feat"><div class="feat-i">💰</div><div class="feat-t">Savings & Shares</div></div>
+      <div class="feat"><div class="feat-i">📋</div><div class="feat-t">Loan Management</div></div>
+      <div class="feat"><div class="feat-i">🏧</div><div class="feat-t">Teller Services</div></div>
+      <div class="feat"><div class="feat-i">📱</div><div class="feat-t">M-Pesa Integration</div></div>
+      <div class="feat"><div class="feat-i">📊</div><div class="feat-t">Accounting & GL</div></div>
+      <div class="feat"><div class="feat-i">🏢</div><div class="feat-t">Branch Management</div></div>
+      <div class="feat"><div class="feat-i">👩‍💼</div><div class="feat-t">Staff & HR</div></div>
+      <div class="feat"><div class="feat-i">💬</div><div class="feat-t">SMS Notifications</div></div>
+      <div class="feat"><div class="feat-i">📈</div><div class="feat-t">Analytics & Reports</div></div>
+      <div class="feat"><div class="feat-i">🏦</div><div class="feat-t">Fixed Deposits</div></div>
+      <div class="feat"><div class="feat-i">💵</div><div class="feat-t">Dividends</div></div>
+      <div class="feat"><div class="feat-i">🔄</div><div class="feat-t">Loan Restructuring</div></div>
+      <div class="feat"><div class="feat-i">🤝</div><div class="feat-t">Guarantors</div></div>
+      <div class="feat"><div class="feat-i">📂</div><div class="feat-t">Document Manager</div></div>
     </div>
+  </div>
 
-    <div class="two-col">
-      <!-- Mobile App -->
-      <div class="info-card dark">
-        <div class="card-header">
-          <div class="card-icon-wrap">📲</div>
-          <div>
-            <div class="card-title">Native Mobile Banking App</div>
-            <div class="card-subtitle">Android & iOS · Flutter</div>
-          </div>
-        </div>
-        <div class="check-list">
-          <div class="check-item"><span class="chk">✓</span>Account balances & statements</div>
-          <div class="check-item"><span class="chk">✓</span>Loan application & tracking</div>
-          <div class="check-item"><span class="chk">✓</span>Repayment schedules</div>
-          <div class="check-item"><span class="chk">✓</span>Auto-logout on idle / background</div>
-          <div class="check-item"><span class="chk">✓</span>OTP 2-factor authentication</div>
-          <div class="check-item"><span class="chk">✓</span>Device-bound secure activation</div>
-        </div>
-      </div>
-
-      <!-- Deployment -->
-      <div class="info-card light-blue">
-        <div class="card-header">
-          <div class="card-icon-wrap">☁️</div>
-          <div>
-            <div class="card-title">Flexible Deployment</div>
-            <div class="card-subtitle">SaaS Cloud or On-Premise</div>
-          </div>
-        </div>
-        <div class="check-list">
-          <div class="check-item"><span class="chk">✓</span>Database-per-tenant isolation (Neon)</div>
-          <div class="check-item"><span class="chk">✓</span>Instant SACCO provisioning</div>
-          <div class="check-item"><span class="chk">✓</span>Enterprise self-hosted option</div>
-          <div class="check-item"><span class="chk">✓</span>Role-based staff access control</div>
-          <div class="check-item"><span class="chk">✓</span>Feature flags per tenant</div>
-          <div class="check-item"><span class="chk">✓</span>Full audit trail & compliance</div>
-        </div>
+  <!-- HIGHLIGHT CARDS -->
+  <div class="cards-row">
+    <div class="hcard left">
+      <div class="hcard-icon">📲</div>
+      <div class="hcard-title">Native Mobile Banking App</div>
+      <div class="hcard-sub">Android & iOS · Built with Flutter</div>
+      <div class="hcard-list">
+        <div class="hcard-item"><span class="hcard-check">✓</span> Account balances & statements</div>
+        <div class="hcard-item"><span class="hcard-check">✓</span> Loan application & tracking</div>
+        <div class="hcard-item"><span class="hcard-check">✓</span> Repayment schedules & history</div>
+        <div class="hcard-item"><span class="hcard-check">✓</span> Auto-logout on idle / background</div>
+        <div class="hcard-item"><span class="hcard-check">✓</span> Device-bound secure activation</div>
       </div>
     </div>
-
-    <!-- Security Row -->
-    <div class="bottom-strip">
-      <div class="sec-card">
-        <div class="si">🔐</div>
-        <h4>2-Factor Auth</h4>
-        <p>OTP via SMS every login. PBKDF2 password hashing.</p>
-      </div>
-      <div class="sec-card">
-        <div class="si">📱</div>
-        <h4>Device Binding</h4>
-        <p>One phone per member. Re-activation on device change.</p>
-      </div>
-      <div class="sec-card">
-        <div class="si">⏱️</div>
-        <h4>Session Timeout</h4>
-        <p>Auto-logout: 5 min idle or 2 min in background.</p>
-      </div>
-      <div class="sec-card">
-        <div class="si">📝</div>
-        <h4>Audit Trail</h4>
-        <p>Every action logged with timestamp, IP & identity.</p>
+    <div class="hcard right">
+      <div class="hcard-icon">☁️</div>
+      <div class="hcard-title">Flexible Deployment</div>
+      <div class="hcard-sub">SaaS Cloud or Self-Hosted</div>
+      <div class="hcard-list">
+        <div class="hcard-item"><span class="hcard-check">✓</span> Database-per-tenant isolation</div>
+        <div class="hcard-item"><span class="hcard-check">✓</span> Instant SACCO provisioning</div>
+        <div class="hcard-item"><span class="hcard-check">✓</span> Enterprise on-premise option</div>
+        <div class="hcard-item"><span class="hcard-check">✓</span> Role-based access control</div>
+        <div class="hcard-item"><span class="hcard-check">✓</span> Feature flags per tenant</div>
       </div>
     </div>
+  </div>
 
+  <!-- SECURITY -->
+  <div class="security">
+    <div class="sec">
+      <div class="sec-i">🔐</div>
+      <div class="sec-t">2-Factor Auth</div>
+      <div class="sec-d">OTP via SMS on every login</div>
+    </div>
+    <div class="sec">
+      <div class="sec-i">📱</div>
+      <div class="sec-t">Device Binding</div>
+      <div class="sec-d">One phone per registered member</div>
+    </div>
+    <div class="sec">
+      <div class="sec-i">⏱️</div>
+      <div class="sec-t">Session Timeout</div>
+      <div class="sec-d">Auto-logout on idle or background</div>
+    </div>
+    <div class="sec">
+      <div class="sec-i">📝</div>
+      <div class="sec-t">Full Audit Trail</div>
+      <div class="sec-d">Every staff action logged with IP</div>
+    </div>
   </div>
 
   <!-- FOOTER -->
@@ -469,15 +400,15 @@ body {
     <div class="footer-left">
       <div class="footer-logo">🏦</div>
       <div>
-        <div class="footer-brand-name">BankyKit</div>
-        <div class="footer-brand-tag">Secure · Scalable · Built for Africa</div>
+        <div class="footer-name">BankyKit</div>
+        <div class="footer-domain">app.bankykit.com</div>
       </div>
     </div>
     <div class="footer-contacts">
-      <div class="footer-contact">🌐 app.bankykit.com</div>
-      <div class="footer-contact">✉️ info@bankykit.com</div>
+      <div class="fcontact">✉️ info@bankykit.com</div>
+      <div class="fcontact">📞 Request a Demo</div>
     </div>
-    <button class="footer-cta">Request a Demo →</button>
+    <button class="footer-btn">Get Started →</button>
   </div>
 
 </div>
