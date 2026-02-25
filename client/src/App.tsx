@@ -14,6 +14,7 @@ import Home from "@/pages/home";
 import VerifyEmail from "@/pages/verify-email";
 import TermsPage from "@/pages/terms";
 import PrivacyPage from "@/pages/privacy";
+import Marketing from "@/pages/marketing";
 
 function Router() {
   const { user, isLoading } = useAuth();
@@ -35,6 +36,7 @@ function Router() {
     return (
       <Switch>
         <Route path="/" component={Home} />
+        <Route path="/marketing" component={Marketing} />
         <Route path="/verify-email" component={VerifyEmail} />
         <Route path="/terms" component={TermsPage} />
         <Route path="/privacy" component={PrivacyPage} />
@@ -54,6 +56,7 @@ function Router() {
       <Route path="/verify-email" component={VerifyEmail} />
       <Route path="/terms" component={TermsPage} />
       <Route path="/privacy" component={PrivacyPage} />
+      <Route path="/marketing" component={Marketing} />
       <Route component={NotFound} />
     </Switch>
   );

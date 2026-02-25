@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BankyKit – Minimal Poster</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:1080px; height:1080px; overflow:hidden; font-family:'Inter',sans-serif; }
+
+.poster {
+  width:1080px; height:1080px;
+  background:#F8FAFF;
+  display:grid;
+  grid-template-columns:380px 1fr;
+  position:relative; overflow:hidden;
+}
+
+/* Left panel */
+.left {
+  background:#0A2463;
+  padding:52px 44px;
+  display:flex; flex-direction:column; justify-content:space-between;
+  position:relative; overflow:hidden;
+}
+.left-dot {
+  position:absolute; width:300px; height:300px; border-radius:50%;
+  background:rgba(255,255,255,0.04);
+  bottom:-100px; right:-80px;
+}
+.brand { position:relative; z-index:2; }
+.brand-icon {
+  width:54px; height:54px; border-radius:14px;
+  background:rgba(255,255,255,0.12); border:1.5px solid rgba(255,255,255,0.2);
+  display:flex; align-items:center; justify-content:center; font-size:26px;
+  margin-bottom:18px;
+}
+.brand-name { font-size:26px; font-weight:900; color:#fff; letter-spacing:-0.5px; }
+.brand-sub  { font-size:12px; color:rgba(255,255,255,0.40); margin-top:4px; }
+
+.left-mid { position:relative; z-index:2; }
+.left-headline {
+  font-size:38px; font-weight:900; color:#fff;
+  line-height:1.1; letter-spacing:-1.5px; margin-bottom:18px;
+}
+.left-headline em { color:#93C5FD; font-style:normal; }
+.left-desc {
+  font-size:13px; color:rgba(255,255,255,0.50);
+  font-weight:400; line-height:1.7;
+}
+
+.left-stats { position:relative; z-index:2; }
+.lst { display:flex; flex-direction:column; gap:14px; }
+.ls-item {
+  display:flex; align-items:center; justify-content:space-between;
+  border-top:1px solid rgba(255,255,255,0.08); padding-top:14px;
+}
+.ls-label { font-size:11px; color:rgba(255,255,255,0.40); font-weight:500; text-transform:uppercase; letter-spacing:1px; }
+.ls-val   { font-size:16px; font-weight:800; color:#93C5FD; }
+
+/* Right panel */
+.right {
+  padding:52px 44px;
+  display:flex; flex-direction:column; justify-content:space-between;
+}
+.right-top-label {
+  font-size:10px; font-weight:700; text-transform:uppercase;
+  letter-spacing:2px; color:#94A3B8; margin-bottom:22px;
+}
+.feat-list { display:flex; flex-direction:column; gap:10px; }
+.feat-item {
+  display:flex; align-items:center; gap:14px;
+  background:#fff; border:1.5px solid #E2E8F0;
+  border-radius:12px; padding:16px 18px;
+}
+.feat-icon {
+  width:40px; height:40px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; flex-shrink:0;
+}
+.fi-blue   { background:#EFF6FF; }
+.fi-green  { background:#F0FDF4; }
+.fi-orange { background:#FFF7ED; }
+.fi-purple { background:#F5F3FF; }
+.fi-teal   { background:#F0FDFA; }
+.fi-rose   { background:#FFF1F2; }
+.fi-amber  { background:#FFFBEB; }
+.fi-slate  { background:#F8FAFC; }
+
+.feat-info {}
+.feat-name { font-size:13px; font-weight:700; color:#0F172A; }
+.feat-desc { font-size:11px; color:#94A3B8; font-weight:400; margin-top:2px; }
+
+.right-footer {
+  display:flex; align-items:center; justify-content:space-between;
+  padding-top:18px; border-top:1.5px solid #E2E8F0;
+}
+.rf-url { font-size:13px; color:#94A3B8; font-weight:500; }
+.rf-cta {
+  background:#0A2463; color:#fff;
+  font-size:13px; font-weight:700;
+  padding:12px 26px; border-radius:8px;
+}
+</style>
+</head>
+<body>
+<div class="poster">
+
+  <div class="left">
+    <div class="left-dot"></div>
+    <div class="brand">
+      <div class="brand-icon">🏦</div>
+      <div class="brand-name">BankyKit</div>
+      <div class="brand-sub">Bank & SACCO Management System</div>
+    </div>
+    <div class="left-mid">
+      <div class="left-headline">Built for<br><em>every SACCO.</em><br>Works for<br>all of them.</div>
+      <div class="left-desc">One platform to handle your members, loans, savings, teller operations, mobile banking, and accounting.</div>
+    </div>
+    <div class="left-stats">
+      <div class="lst">
+        <div class="ls-item"><span class="ls-label">Modules</span><span class="ls-val">25+</span></div>
+        <div class="ls-item"><span class="ls-label">Mobile App</span><span class="ls-val">Android & iOS</span></div>
+        <div class="ls-item"><span class="ls-label">Payments</span><span class="ls-val">M-Pesa</span></div>
+        <div class="ls-item"><span class="ls-label">Security</span><span class="ls-val">2FA + Device Binding</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div>
+      <div class="right-top-label">What's Inside</div>
+      <div class="feat-list">
+        <div class="feat-item"><div class="feat-icon fi-blue">👥</div><div class="feat-info"><div class="feat-name">Member Management</div><div class="feat-desc">Registration, KYC, profiles & documents</div></div></div>
+        <div class="feat-item"><div class="feat-icon fi-green">💰</div><div class="feat-info"><div class="feat-name">Savings & Shares</div><div class="feat-desc">Multiple account types, dividends, fixed deposits</div></div></div>
+        <div class="feat-item"><div class="feat-icon fi-orange">📋</div><div class="feat-info"><div class="feat-name">Loan Management</div><div class="feat-desc">Applications, approvals, schedules & guarantors</div></div></div>
+        <div class="feat-item"><div class="feat-icon fi-teal">🏧</div><div class="feat-info"><div class="feat-name">Teller Services</div><div class="feat-desc">Deposits, withdrawals, disbursements</div></div></div>
+        <div class="feat-item"><div class="feat-icon fi-purple">📱</div><div class="feat-info"><div class="feat-name">M-Pesa Integration</div><div class="feat-desc">STK Push, repayments, reconciliation</div></div></div>
+        <div class="feat-item"><div class="feat-icon fi-rose">📲</div><div class="feat-info"><div class="feat-name">Mobile Banking App</div><div class="feat-desc">Android & iOS self-service for members</div></div></div>
+        <div class="feat-item"><div class="feat-icon fi-amber">📊</div><div class="feat-info"><div class="feat-name">Accounting & GL</div><div class="feat-desc">Double-entry ledger, statements, trial balance</div></div></div>
+        <div class="feat-item"><div class="feat-icon fi-slate">📈</div><div class="feat-info"><div class="feat-name">Reports & Analytics</div><div class="feat-desc">Loan portfolios, delinquency, custom exports</div></div></div>
+      </div>
+    </div>
+    <div class="right-footer">
+      <div class="rf-url">app.bankykit.com</div>
+      <div class="rf-cta">Request a Demo</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

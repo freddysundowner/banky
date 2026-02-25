@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BankyKit – Bold Poster</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:1080px; height:1080px; overflow:hidden; font-family:'Inter',sans-serif; }
+
+.poster {
+  width:1080px; height:1080px;
+  background:#fff;
+  display:flex; flex-direction:column;
+  position:relative; overflow:hidden;
+}
+
+/* Top accent bar */
+.accent-bar { height:8px; background:linear-gradient(90deg,#0A2463,#2563EB,#38BDF8); }
+
+/* Header */
+.header {
+  padding:36px 56px 0;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.logo { display:flex; align-items:center; gap:14px; }
+.logo-box {
+  width:50px; height:50px; border-radius:12px;
+  background:#EFF6FF; border:1.5px solid #BFDBFE;
+  display:flex; align-items:center; justify-content:center; font-size:24px;
+}
+.logo-name { font-size:20px; font-weight:800; color:#0A2463; }
+.logo-sub  { font-size:11px; color:#94A3B8; margin-top:2px; }
+.header-right {
+  font-size:12px; color:#94A3B8; font-weight:500;
+  text-align:right; line-height:1.5;
+}
+
+/* Big number zone */
+.hero {
+  padding:44px 56px 0;
+  display:flex; gap:0;
+  flex:1;
+}
+.left-col { width:50%; display:flex; flex-direction:column; justify-content:center; }
+.right-col { width:50%; display:flex; flex-direction:column; justify-content:center; padding-left:50px; border-left:2px solid #F1F5F9; }
+
+.big-num {
+  font-size:130px; font-weight:900; color:#0A2463;
+  line-height:1; letter-spacing:-6px; margin-bottom:8px;
+}
+.big-label {
+  font-size:22px; font-weight:700; color:#1E3A8A; margin-bottom:16px;
+}
+.big-desc {
+  font-size:15px; color:#64748B; line-height:1.7; font-weight:400; max-width:360px;
+}
+.tag-row { display:flex; flex-wrap:wrap; gap:8px; margin-top:24px; }
+.tag {
+  background:#EFF6FF; color:#1D4ED8;
+  font-size:12px; font-weight:600;
+  padding:7px 16px; border-radius:6px;
+}
+
+/* Feature checklist */
+.check-title { font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1.8px; color:#94A3B8; margin-bottom:20px; }
+.check-list { display:flex; flex-direction:column; gap:14px; }
+.check-item {
+  display:flex; align-items:center; gap:14px;
+}
+.check-box {
+  width:32px; height:32px; border-radius:8px;
+  background:#0A2463;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; flex-shrink:0;
+}
+.check-text { font-size:16px; font-weight:600; color:#0F172A; }
+.check-sub  { font-size:12px; color:#94A3B8; font-weight:400; margin-top:1px; }
+
+/* Bottom */
+.bottom {
+  padding:30px 56px;
+  display:flex; align-items:center; justify-content:space-between;
+  border-top:1.5px solid #F1F5F9;
+}
+.bottom-left { font-size:13px; color:#94A3B8; font-weight:500; }
+.bottom-left strong { color:#0A2463; font-weight:700; }
+.cta-btn {
+  background:#0A2463; color:#fff;
+  font-size:15px; font-weight:800;
+  padding:16px 40px; border-radius:10px; letter-spacing:0.2px;
+}
+</style>
+</head>
+<body>
+<div class="poster">
+  <div class="accent-bar"></div>
+
+  <div class="header">
+    <div class="logo">
+      <div class="logo-box">🏦</div>
+      <div>
+        <div class="logo-name">BankyKit</div>
+        <div class="logo-sub">Bank & SACCO Management System</div>
+      </div>
+    </div>
+    <div class="header-right">
+      M-Pesa · Android & iOS App<br>
+      2FA Security · Real-time SMS
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="left-col">
+      <div class="big-num">25+</div>
+      <div class="big-label">System Modules</div>
+      <div class="big-desc">
+        One complete platform covering every aspect of SACCO operations — from member registration to full financial reporting.
+      </div>
+      <div class="tag-row">
+        <div class="tag">Members</div>
+        <div class="tag">Loans</div>
+        <div class="tag">Savings</div>
+        <div class="tag">Teller</div>
+        <div class="tag">M-Pesa</div>
+        <div class="tag">Mobile App</div>
+        <div class="tag">Accounting</div>
+        <div class="tag">Reports</div>
+      </div>
+    </div>
+    <div class="right-col">
+      <div class="check-title">Key Capabilities</div>
+      <div class="check-list">
+        <div class="check-item">
+          <div class="check-box">👥</div>
+          <div><div class="check-text">Member Management</div><div class="check-sub">Registration, KYC, profiles & groups</div></div>
+        </div>
+        <div class="check-item">
+          <div class="check-box">📋</div>
+          <div><div class="check-text">Loan Management</div><div class="check-sub">Applications, approval, repayments, guarantors</div></div>
+        </div>
+        <div class="check-item">
+          <div class="check-box">💰</div>
+          <div><div class="check-text">Savings & Shares</div><div class="check-sub">Multiple types, dividends, fixed deposits</div></div>
+        </div>
+        <div class="check-item">
+          <div class="check-box">📱</div>
+          <div><div class="check-text">M-Pesa Integration</div><div class="check-sub">STK Push, repayments, reconciliation</div></div>
+        </div>
+        <div class="check-item">
+          <div class="check-box">📲</div>
+          <div><div class="check-text">Mobile Banking App</div><div class="check-sub">Android & iOS self-service for members</div></div>
+        </div>
+        <div class="check-item">
+          <div class="check-box">📊</div>
+          <div><div class="check-text">Accounting & Reports</div><div class="check-sub">GL, trial balance, financial statements</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <div class="bottom-left"><strong>BankyKit</strong> · app.bankykit.com · info@bankykit.com</div>
+    <div class="cta-btn">Request a Demo</div>
+  </div>
+</div>
+</body>
+</html>

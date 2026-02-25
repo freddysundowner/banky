@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BankyKit – Gradient Poster</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:1080px; height:1080px; overflow:hidden; font-family:'Inter',sans-serif; }
+
+.poster {
+  width:1080px; height:1080px;
+  background:linear-gradient(150deg, #0033A0 0%, #0055D4 40%, #0077FF 70%, #00AAFF 100%);
+  padding:60px;
+  display:grid;
+  grid-template-rows:auto 1fr auto;
+  gap:40px;
+  position:relative; overflow:hidden;
+}
+
+.shape1 {
+  position:absolute; width:600px; height:600px; border-radius:50%;
+  border:80px solid rgba(255,255,255,0.06);
+  top:-200px; right:-200px; pointer-events:none;
+}
+.shape2 {
+  position:absolute; width:400px; height:400px; border-radius:50%;
+  border:60px solid rgba(255,255,255,0.05);
+  bottom:-150px; left:-100px; pointer-events:none;
+}
+
+/* Header */
+.header { display:flex; align-items:center; justify-content:space-between; position:relative; z-index:2; }
+.brand { display:flex; align-items:center; gap:14px; }
+.brand-box {
+  width:50px; height:50px; border-radius:13px;
+  background:rgba(255,255,255,0.18); border:1.5px solid rgba(255,255,255,0.30);
+  display:flex; align-items:center; justify-content:center; font-size:22px;
+}
+.brand-name { font-size:20px; font-weight:800; color:#fff; }
+.brand-sub  { font-size:11px; color:rgba(255,255,255,0.55); margin-top:1px; }
+.header-right {
+  text-align:right;
+}
+.header-tag {
+  font-size:11px; font-weight:600; text-transform:uppercase;
+  letter-spacing:1.5px; color:rgba(255,255,255,0.55);
+}
+
+/* Center */
+.center { display:flex; flex-direction:column; justify-content:center; position:relative; z-index:2; }
+.big-text {
+  font-size:72px; font-weight:900; color:#fff;
+  line-height:0.95; letter-spacing:-3px; margin-bottom:24px;
+}
+.big-text span { display:block; color:rgba(255,255,255,0.40); font-size:52px; font-weight:700; }
+.desc {
+  font-size:18px; color:rgba(255,255,255,0.70);
+  font-weight:400; line-height:1.6; margin-bottom:32px; max-width:600px;
+}
+
+.feature-pills { display:flex; flex-wrap:wrap; gap:10px; }
+.fpill {
+  background:rgba(255,255,255,0.12); border:1px solid rgba(255,255,255,0.22);
+  color:#fff; font-size:13px; font-weight:600;
+  padding:9px 20px; border-radius:100px;
+  display:flex; align-items:center; gap:7px;
+}
+
+/* Bottom */
+.bottom { display:flex; align-items:center; justify-content:space-between; position:relative; z-index:2; }
+.stat-row { display:flex; gap:0; }
+.stat {
+  text-align:center; padding:0 28px;
+  border-right:1px solid rgba(255,255,255,0.15);
+}
+.stat:first-child { padding-left:0; }
+.stat:last-child  { border:none; }
+.sn { font-size:26px; font-weight:800; color:#fff; }
+.sl { font-size:10px; color:rgba(255,255,255,0.45); text-transform:uppercase; letter-spacing:1.2px; margin-top:3px; }
+.cta-wrap { text-align:right; }
+.cta-url { font-size:12px; color:rgba(255,255,255,0.45); margin-bottom:8px; }
+.cta-btn {
+  background:#fff; color:#0033A0;
+  font-size:15px; font-weight:800;
+  padding:14px 34px; border-radius:12px;
+  display:inline-block; letter-spacing:-0.2px;
+}
+</style>
+</head>
+<body>
+<div class="poster">
+  <div class="shape1"></div>
+  <div class="shape2"></div>
+
+  <div class="header">
+    <div class="brand">
+      <div class="brand-box">🏦</div>
+      <div>
+        <div class="brand-name">BankyKit</div>
+        <div class="brand-sub">Bank & SACCO Management System</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="header-tag">All-in-One Platform</div>
+    </div>
+  </div>
+
+  <div class="center">
+    <div class="big-text">
+      Everything<br>your SACCO<br><span>needs. All here.</span>
+    </div>
+    <div class="desc">
+      Manage members, loans, savings, teller operations, M-Pesa payments, and mobile banking — from a single integrated system.
+    </div>
+    <div class="feature-pills">
+      <div class="fpill">👥 Members</div>
+      <div class="fpill">💰 Savings & Shares</div>
+      <div class="fpill">📋 Loans</div>
+      <div class="fpill">🏧 Teller</div>
+      <div class="fpill">📱 M-Pesa</div>
+      <div class="fpill">📲 Mobile App</div>
+      <div class="fpill">📊 Accounting</div>
+      <div class="fpill">📈 Reports</div>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <div class="stat-row">
+      <div class="stat"><div class="sn">25+</div><div class="sl">Modules</div></div>
+      <div class="stat"><div class="sn">2FA</div><div class="sl">Secure Login</div></div>
+      <div class="stat"><div class="sn">Android + iOS</div><div class="sl">Mobile App</div></div>
+      <div class="stat"><div class="sn">M-Pesa</div><div class="sl">Integrated</div></div>
+    </div>
+    <div class="cta-wrap">
+      <div class="cta-url">app.bankykit.com</div>
+      <div class="cta-btn">Book a Demo →</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
