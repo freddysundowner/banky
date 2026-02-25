@@ -36,7 +36,12 @@ html, body { width:1400px; background:#003eaf; font-family:'Poppins', sans-serif
     break-inside: avoid;
     page-break-inside: avoid;
   }
-  /* cards CAN split across pages — but header row never orphans */
+  /* each card stays whole — moves to next page rather than splitting mid-card */
+  .card, .card-wide {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  /* card header also stays with its content (belt and braces) */
   .card-head {
     break-inside: avoid;
     break-after: avoid;
