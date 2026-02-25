@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BankyKit – poster-8 WA</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:1080px; height:1920px; overflow:hidden; }
+.poster {
+  width:1080px; height:1920px;
+  background:#065F46;
+  font-family:'Poppins',sans-serif;
+  position:relative; overflow:hidden;
+  display:flex; flex-direction:column;
+  padding:80px 72px 70px;
+}
+.poster::before {
+  content:''; position:absolute; inset:0;
+  background-image:radial-gradient(rgba(255,255,255,0.07) 1.5px,transparent 1.5px);
+  background-size:36px 36px; pointer-events:none;
+}
+.arc {
+  position:absolute; border-radius:50%;
+  border:90px solid rgba(128,128,128,0.06); pointer-events:none;
+}
+.arc1 { width:800px; height:800px; bottom:-350px; right:-250px; }
+.arc2 { width:500px; height:500px; bottom:-80px; right:180px; border-width:60px; opacity:.7; }
+.top {
+  position:relative; z-index:5;
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:70px;
+}
+.logo { display:flex; align-items:center; gap:18px; }
+.logo-icon {
+  width:70px; height:70px; border-radius:18px;
+  background:rgba(128,128,128,0.18); border:2px solid rgba(128,128,128,0.28);
+  display:flex; align-items:center; justify-content:center; font-size:34px;
+}
+.logo-name { font-size:32px; font-weight:800; color:#fff; }
+.logo-sub  { font-size:14px; color:rgba(255,255,255,0.68); margin-top:2px; }
+.top-right { text-align:right; font-size:15px; color:rgba(255,255,255,0.68); font-weight:500; line-height:1.8; }
+.headline { position:relative; z-index:5; margin-bottom:60px; }
+.hl-pill {
+  display:inline-block;
+  background:rgba(128,128,128,0.15); border:1px solid rgba(128,128,128,0.25);
+  color:#fff; font-size:15px; font-weight:700; letter-spacing:1.5px;
+  text-transform:uppercase; padding:10px 24px; border-radius:100px; margin-bottom:26px;
+}
+.hl-main {
+  font-size:100px; font-weight:900; color:#fff;
+  line-height:1.0; letter-spacing:-3px; margin-bottom:24px;
+}
+.hl-main span { color:#fff; }
+.hl-sub {
+  font-size:22px; color:rgba(255,255,255,0.68);
+  font-weight:400; line-height:1.55; max-width:900px;
+}
+.features {
+  position:relative; z-index:5;
+  display:grid; grid-template-columns:1fr 1fr;
+  flex:1; gap:0;
+}
+.feat {
+  display:flex; align-items:flex-start; gap:16px;
+  padding:20px 20px 20px 0;
+  border-bottom:1px solid rgba(255,255,255,0.15);
+}
+.feat-num { font-size:14px; font-weight:800; width:28px; flex-shrink:0; padding-top:3px; }
+.feat-name { font-size:19px; font-weight:700; margin-bottom:4px; line-height:1.3; }
+.feat-desc { font-size:14px; line-height:1.45; }
+.footer {
+  position:relative; z-index:5;
+  margin-top:50px;
+  display:flex; align-items:center; justify-content:space-between;
+  padding-top:36px; border-top:1px solid rgba(255,255,255,0.15);
+}
+.f-left { font-size:17px; color:rgba(255,255,255,0.55); }
+.f-cta {
+  background:#fff; color:#065F46;
+  font-size:20px; font-weight:800;
+  padding:20px 52px; border-radius:100px;
+  box-shadow:0 10px 36px rgba(0,0,0,0.20);
+}
+</style>
+</head>
+<body>
+<div class="poster">
+  <div class="arc arc1"></div>
+  <div class="arc arc2"></div>
+  <div class="top">
+    <div class="logo">
+      <div class="logo-icon">🏦</div>
+      <div><div class="logo-name">BankyKit</div><div class="logo-sub">Complete Financial Management System</div></div>
+    </div>
+    <div class="top-right">For SACCOs · Banks<br>Microfinance · Chamas<br>app.bankykit.com</div>
+  </div>
+  <div class="headline">
+    <div class="hl-pill">All-In-One Platform</div>
+    <div class="hl-main">Your Members' Money.<br><span>Perfectly Managed.</span></div>
+    <div class="hl-sub">Give your SACCO, Bank, Microfinance or Chama the tools to manage funds accurately, transparently and efficiently.</div>
+  </div>
+  <div class="features">
+    <div class="feat">
+      <div class="feat-num" style="color:rgba(255,255,255,0.70)">01</div>
+      <div>
+        <div class="feat-name" style="color:#fff">Member Management</div>
+        <div class="feat-desc" style="color:rgba(255,255,255,0.50)">KYC, profiles &amp; groups</div>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-num" style="color:rgba(255,255,255,0.70)">02</div>
+      <div>
+        <div class="feat-name" style="color:#fff">Loan Management</div>
+        <div class="feat-desc" style="color:rgba(255,255,255,0.50)">Apply, approve &amp; disburse</div>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-num" style="color:rgba(255,255,255,0.70)">03</div>
+      <div>
+        <div class="feat-name" style="color:#fff">Savings &amp; Shares</div>
+        <div class="feat-desc" style="color:rgba(255,255,255,0.50)">Accounts, dividends &amp; FDs</div>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-num" style="color:rgba(255,255,255,0.70)">04</div>
+      <div>
+        <div class="feat-name" style="color:#fff">M-Pesa Integration</div>
+        <div class="feat-desc" style="color:rgba(255,255,255,0.50)">STK Push &amp; reconciliation</div>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-num" style="color:rgba(255,255,255,0.70)">05</div>
+      <div>
+        <div class="feat-name" style="color:#fff">Mobile Banking App</div>
+        <div class="feat-desc" style="color:rgba(255,255,255,0.50)">Android &amp; iOS</div>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-num" style="color:rgba(255,255,255,0.70)">06</div>
+      <div>
+        <div class="feat-name" style="color:#fff">Teller Services</div>
+        <div class="feat-desc" style="color:rgba(255,255,255,0.50)">Deposits &amp; withdrawals</div>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-num" style="color:rgba(255,255,255,0.70)">07</div>
+      <div>
+        <div class="feat-name" style="color:#fff">Accounting &amp; GL</div>
+        <div class="feat-desc" style="color:rgba(255,255,255,0.50)">Double-entry &amp; P&amp;L</div>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-num" style="color:rgba(255,255,255,0.70)">08</div>
+      <div>
+        <div class="feat-name" style="color:#fff">SMS Notifications</div>
+        <div class="feat-desc" style="color:rgba(255,255,255,0.50)">Alerts &amp; bulk SMS</div>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-num" style="color:rgba(255,255,255,0.70)">09</div>
+      <div>
+        <div class="feat-name" style="color:#fff">Branch Management</div>
+        <div class="feat-desc" style="color:rgba(255,255,255,0.50)">Multi-branch &amp; roles</div>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-num" style="color:rgba(255,255,255,0.70)">10</div>
+      <div>
+        <div class="feat-name" style="color:#fff">Reports &amp; Analytics</div>
+        <div class="feat-desc" style="color:rgba(255,255,255,0.50)">Portfolio &amp; exports</div>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-num" style="color:rgba(255,255,255,0.70)">11</div>
+      <div>
+        <div class="feat-name" style="color:#fff">Fixed Deposits</div>
+        <div class="feat-desc" style="color:rgba(255,255,255,0.50)">Terms &amp; maturity alerts</div>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-num" style="color:rgba(255,255,255,0.70)">12</div>
+      <div>
+        <div class="feat-name" style="color:#fff">Chama &amp; Group Tools</div>
+        <div class="feat-desc" style="color:rgba(255,255,255,0.50)">Contributions &amp; rounds</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer">
+    <div class="f-left">📞 +254 791 334 234 &nbsp;·&nbsp; <strong>sales@bankykit.com</strong></div>
+    <div class="f-cta">Visit demo.bankykit.com</div>
+  </div>
+</div>
+</body>
+</html>

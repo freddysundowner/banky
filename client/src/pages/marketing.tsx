@@ -2,49 +2,85 @@ import { useState } from "react";
 import { ExternalLink, Monitor, Download, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
 
-const posters = [
-  {
-    id: "features",
-    title: "Feature Overview ⭐",
-    description: "All system features listed with sub-points. Shows SACCOs, Banks, Microfinance & Chamas at the top. Best for sharing.",
-    file: "/posters/features.html",
-  },
-  {
-    id: "dark",
-    title: "The End of Manual Banking",
-    description: "",
-    file: "/posters/poster-dark.html",
-  },
-  {
-    id: "gradient",
-    title: "One System. Every Institution.",
-    description: "",
-    file: "/posters/poster-gradient.html",
-  },
-  {
-    id: "7",
-    title: "Run Your SACCO, Bank or Chama Like a Pro",
-    description: "",
-    file: "/posters/poster-7.html",
-  },
-  {
-    id: "8",
-    title: "Your Members' Money. Perfectly Managed.",
-    description: "",
-    file: "/posters/poster-8.html",
-  },
-  {
-    id: "9",
-    title: "Less Chaos. More Control.",
-    description: "",
-    file: "/posters/poster-9.html",
-  },
+const TITLES = [
+  "Feature Overview ⭐",
+  "The End of Manual Banking",
+  "One System. Every Institution.",
+  "Run Your SACCO, Bank or Chama Like a Pro",
+  "Your Members' Money. Perfectly Managed.",
+  "Less Chaos. More Control.",
 ];
+
+const SLUGS = ["features", "poster-dark", "poster-gradient", "poster-7", "poster-8", "poster-9"];
+
+const posters = SLUGS.map((slug, i) => ({
+  id: slug,
+  title: TITLES[i],
+  file: `/posters/${slug}.html`,
+}));
+
+const fbPosters = SLUGS.map((slug, i) => ({
+  id: `${slug}-fb`,
+  title: TITLES[i],
+  file: `/posters/${slug}-fb.html`,
+}));
+
+const waPosters = SLUGS.map((slug, i) => ({
+  id: `${slug}-wa`,
+  title: TITLES[i],
+  file: `/posters/${slug}-wa.html`,
+}));
+
+const allPosters = [...posters, ...fbPosters, ...waPosters];
+
+function PosterCard({ poster, iw, ih, ch, scale, onSelect }: {
+  poster: { id: string; title: string; file: string };
+  iw: number; ih: number; ch: number; scale: number;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <div
+      className="bg-white rounded-xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group"
+      onClick={() => onSelect(poster.id)}
+    >
+      <div className="relative overflow-hidden bg-slate-50" style={{ height: ch }}>
+        <iframe
+          src={poster.file}
+          title={poster.title}
+          style={{
+            width: iw,
+            height: ih,
+            border: "none",
+            transform: `scale(${scale})`,
+            transformOrigin: "top left",
+            display: "block",
+            pointerEvents: "none",
+          }}
+          tabIndex={-1}
+        />
+        <div className="absolute inset-0 group-hover:bg-blue-600/5 transition-colors" />
+      </div>
+      <div className="p-3 flex items-center justify-between">
+        <h2 className="font-semibold text-slate-900 text-sm truncate pr-2">{poster.title}</h2>
+        <a
+          href={poster.file}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="text-slate-400 hover:text-blue-600 transition-colors flex-shrink-0"
+          title="Open full size"
+        >
+          <ExternalLink className="w-4 h-4" />
+        </a>
+      </div>
+    </div>
+  );
+}
 
 export default function Marketing() {
   const [selected, setSelected] = useState<string | null>(null);
 
-  const selectedPoster = posters.find((p) => p.id === selected);
+  const selectedPoster = allPosters.find((p) => p.id === selected);
 
   if (selected && selectedPoster) {
     return (
@@ -115,55 +151,46 @@ export default function Marketing() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-5">
-        <div className="grid grid-cols-3 gap-4">
-          {posters.map((poster) => (
-            <div
-              key={poster.id}
-              className="bg-white rounded-xl overflow-hidden shadow-sm border border-slate-200 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group"
-              onClick={() => setSelected(poster.id)}
-            >
-              {/* Poster preview */}
-              <div className="relative overflow-hidden bg-slate-50" style={{ height: 160 }}>
-                <iframe
-                  src={poster.file}
-                  title={poster.title}
-                  style={{
-                    width: 1080,
-                    height: 1080,
-                    border: "none",
-                    transform: "scale(0.148)",
-                    transformOrigin: "top left",
-                    display: "block",
-                    pointerEvents: "none",
-                  }}
-                  tabIndex={-1}
-                />
-                <div className="absolute inset-0 group-hover:bg-blue-600/5 transition-colors" />
-              </div>
+      <div className="max-w-7xl mx-auto px-6 py-5 space-y-10 pb-12">
 
-              {/* Card info */}
-              <div className="p-3 flex items-start justify-between">
-                <div>
-                  <h2 className="font-semibold text-slate-900 text-sm">{poster.title}</h2>
-                </div>
-                <a
-                  href={poster.file}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="ml-4 mt-0.5 text-slate-400 hover:text-blue-600 transition-colors flex-shrink-0"
-                  title="Open full size"
-                >
-                  <ExternalLink className="w-4 h-4" />
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* ── Square 1080×1080 ── */}
+        <section>
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="text-base font-bold text-slate-800">Square  <span className="text-slate-400 font-normal text-sm">1080 × 1080px — WhatsApp posts, Facebook feed, Instagram</span></h2>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            {posters.map((poster) => (
+              <PosterCard key={poster.id} poster={poster} iw={1080} ih={1080} ch={160} scale={0.148} onSelect={setSelected} />
+            ))}
+          </div>
+        </section>
 
-        <div className="mt-8 bg-blue-50 border border-blue-100 rounded-xl p-5 text-sm text-blue-800">
-          <strong>How to share a poster:</strong> Click any design to preview it → click "Open Full Size" to see it at full 1080×1080px → take a screenshot or right-click to save → share directly on WhatsApp, Facebook, or any platform.
+        {/* ── Facebook Ad 1200×628 ── */}
+        <section>
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="text-base font-bold text-slate-800">Facebook Ad  <span className="text-slate-400 font-normal text-sm">1200 × 628px — Facebook & LinkedIn ads, link previews</span></h2>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            {fbPosters.map((poster) => (
+              <PosterCard key={poster.id} poster={poster} iw={1200} ih={628} ch={160} scale={0.254} onSelect={setSelected} />
+            ))}
+          </div>
+        </section>
+
+        {/* ── WhatsApp Status 1080×1920 ── */}
+        <section>
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="text-base font-bold text-slate-800">WhatsApp Status  <span className="text-slate-400 font-normal text-sm">1080 × 1920px — WhatsApp status, Instagram & Facebook stories</span></h2>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            {waPosters.map((poster) => (
+              <PosterCard key={poster.id} poster={poster} iw={1080} ih={1920} ch={260} scale={0.148} onSelect={setSelected} />
+            ))}
+          </div>
+        </section>
+
+        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-sm text-blue-800">
+          <strong>How to share:</strong> Click any poster → "Open Full Size" → screenshot at the exact pixel size → share directly on WhatsApp, Facebook or Instagram.
         </div>
       </div>
     </div>
