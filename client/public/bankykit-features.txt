@@ -11,18 +11,16 @@ MEMBER MANAGEMENT
 - Member registration with full KYC (ID, passport, photos)
 - Unique member/account number generation
 - Member profiles with next-of-kin and beneficiary details
-- Member grouping (groups, Chamas, clubs)
 - Member status management (active, suspended, exited)
 - Duplicate ID number detection
 - Member statements and transaction history
 - Member search and filtering
-- Mobile self-registration via member app
-- OTP-based member identity verification
+- Mobile app account activation via OTP (staff registers, member activates)
 
 
 LOAN MANAGEMENT
 ---------------
-- Configurable loan products (personal, business, emergency, group, etc.)
+- Configurable loan products (personal, business, emergency, etc.)
 - Loan application, review, and approval workflow
 - Multi-level approval (maker-checker)
 - Loan disbursement to M-Pesa or bank account
@@ -30,7 +28,6 @@ LOAN MANAGEMENT
 - Flexible repayment schedules (daily, weekly, monthly)
 - Loan instalment tracking
 - Loan restructuring and rescheduling
-- Loan top-ups
 - Guarantor management
 - Collateral recording and valuation
 - Loan defaulting and write-off processing
@@ -80,7 +77,6 @@ TELLER SERVICES
 - Teller shift handover
 - Cash shortage tracking and reconciliation
 - Daily cash position report
-- Salary deduction via teller
 
 
 ACCOUNTING & GENERAL LEDGER
@@ -93,7 +89,6 @@ ACCOUNTING & GENERAL LEDGER
 - Trial balance
 - Revenue and expense tracking
 - Financial year management
-- Multi-currency support with FX rates
 
 
 DIVIDEND PROCESSING
@@ -127,7 +122,6 @@ BRANCH MANAGEMENT
 - Branch-level reporting
 - Branch performance analytics
 - Staff assignment to branches
-- Inter-branch transfers
 
 
 REPORTS & ANALYTICS
@@ -143,8 +137,6 @@ REPORTS & ANALYTICS
 - HR summary report
 - Data export (CSV/Excel)
 - Dashboard analytics (trends, institution health)
-- Branch performance comparison
-- Staff performance metrics
 
 
 SMS NOTIFICATIONS
@@ -152,7 +144,7 @@ SMS NOTIFICATIONS
 - Automated SMS for loan approval, disbursement, and repayment
 - Deposit and withdrawal confirmations
 - Due date and overdue reminders
-- Bulk SMS to members or groups
+- Bulk SMS to members
 - SMS template configuration
 - SMS history and delivery tracking
 
@@ -217,7 +209,7 @@ MOBILE BANKING (Member App API)
 ORGANIZATION & SYSTEM SETTINGS
 --------------------------------
 - Organization profile (name, logo, email, phone, address)
-- Currency and locale configuration
+- Currency configuration per organization
 - Financial year start configuration
 - Staff email domain restriction
 - Working hours configuration per role
@@ -261,9 +253,9 @@ DEPLOYMENT & ARCHITECTURE
   20 Core Features Summary
 ================================================================
 
-  01. Member Management          — KYC, profiles & groups
+  01. Member Management          — KYC, profiles & statements
   02. Loan Management            — Apply, approve & disburse
-  03. Savings & Shares           — Accounts, dividends & FDs
+  03. Savings & Shares           — Accounts, dividends & interest
   04. M-Pesa Integration         — STK Push & reconciliation
   05. Mobile Banking App         — Android & iOS
   06. Teller Services            — Deposits & withdrawals
@@ -271,17 +263,17 @@ DEPLOYMENT & ARCHITECTURE
   08. SMS Notifications          — Alerts & bulk SMS
   09. Branch Management          — Multi-branch & roles
   10. Reports & Analytics        — Portfolio & exports
-  11. Fixed Deposits             — Terms & maturity alerts
-  12. Chama & Group Tools        — Contributions & rounds
+  11. Fixed Deposits             — Terms, maturity & auto-rollover
+  12. Loan Restructuring         — Rescheduling & write-offs
   13. Interest Computation       — Reducing balance & flat rate
   14. Dividend Processing        — Auto-calculate & distribute
   15. Collateral Management      — Assets & valuations
   16. Staff & Role Management    — Permissions & audit trail
-  17. Payroll Integration        — Staff salaries & deductions
+  17. Payroll & HR               — Salaries, leave & performance
   18. Document Management        — Uploads & KYC verification
-  19. Insurance Products         — Premiums & claims tracking
-  20. Multi-currency Support     — FX rates & cross-border
+  19. Subscription & Billing     — Plans, trials & payments
+  20. Audit & Compliance         — Full activity trail & logs
 
 ================================================================
-  Suitable for: SACCOs · Banks · Microfinance · Chamas
+  Suitable for: SACCOs · Banks · Microfinance · Cooperatives
 ================================================================
