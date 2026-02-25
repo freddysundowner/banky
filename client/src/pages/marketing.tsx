@@ -39,6 +39,24 @@ const posters = [
     description: "Blue gradient, bold headline, decorative circles, feature pills.",
     file: "/posters/poster-5.html",
   },
+  {
+    id: "7",
+    title: "Your Members Deserve Better",
+    description: "Dark navy theme, blue glow accents, dot-grid background. Professional & bold.",
+    file: "/posters/poster-7.html",
+  },
+  {
+    id: "8",
+    title: "One App. Every Feature. Zero Chaos.",
+    description: "Split panel — blue left with headline & CTA, white right with clean feature list.",
+    file: "/posters/poster-8.html",
+  },
+  {
+    id: "9",
+    title: "Manage More. Stress Less.",
+    description: "Blue gradient, large '12' watermark, feature pills with icons.",
+    file: "/posters/poster-9.html",
+  },
 ];
 
 export default function Marketing() {
