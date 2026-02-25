@@ -493,11 +493,11 @@ export default function Home() {
       setupReadyRef.current = true;
       setSetupReady(true);
     },
-    onError: () => {
+    onError: (error: Error) => {
       setShowSetupProgress(false);
       toast({
-        title: "Error",
-        description: "Failed to create organization. Please try again.",
+        title: "Failed to create organization",
+        description: error?.message || "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     },
