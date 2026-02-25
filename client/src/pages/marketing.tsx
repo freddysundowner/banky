@@ -35,9 +35,15 @@ const posters = [
   },
   {
     id: "5",
-    title: "Everything Your SACCO Needs ⭐",
-    description: "Blue gradient, bold headline, decorative circles, feature pills. Clean and shareable.",
+    title: "Everything Your SACCO Needs",
+    description: "Blue gradient, bold headline, decorative circles, feature pills.",
     file: "/posters/poster-5.html",
+  },
+  {
+    id: "6",
+    title: "One System. Every Feature. ⭐",
+    description: "Clean blue background, bold headline, numbered features in two columns.",
+    file: "/posters/poster-6.html",
   },
 ];
 
@@ -115,8 +121,8 @@ export default function Marketing() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-10">
-        <div className="grid grid-cols-2 gap-8">
+      <div className="max-w-7xl mx-auto px-6 py-10">
+        <div className="grid grid-cols-3 gap-6">
           {posters.map((poster) => (
             <div
               key={poster.id}
@@ -168,7 +174,7 @@ export default function Marketing() {
           ))}
         </div>
 
-        <div className="mt-10 bg-blue-50 border border-blue-100 rounded-xl p-5 text-sm text-blue-800">
+        <div className="mt-8 bg-blue-50 border border-blue-100 rounded-xl p-5 text-sm text-blue-800">
           <strong>How to share a poster:</strong> Click any design to preview it → click "Open Full Size" to see it at full 1080×1080px → take a screenshot or right-click to save → share directly on WhatsApp, Facebook, or any platform.
         </div>
       </div>
