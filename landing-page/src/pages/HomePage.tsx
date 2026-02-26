@@ -4,7 +4,6 @@ import HowItWorks from '../components/HowItWorks';
 import MobileApp from '../components/MobileApp';
 import Pricing from '../components/Pricing';
 import FAQ from '../components/FAQ';
-import CTA from '../components/CTA';
 import { useBranding } from '../context/BrandingContext';
 
 export default function HomePage() {
@@ -19,7 +18,6 @@ export default function HomePage() {
       <HowItWorks />
       {isSaaS && <Pricing />}
       <FAQ />
-      <CTA />
     </>
   );
 }
