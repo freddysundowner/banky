@@ -435,12 +435,12 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
                 <CardTitle className="text-base md:text-lg capitalize">{plan.name}</CardTitle>
                 <CardDescription className="pt-2">
                   <span className="text-2xl md:text-3xl font-bold text-foreground">
-                    ${plan.monthly_price.toLocaleString()}
+                    KES {plan.monthly_price.toLocaleString()}
                   </span>
                   <span className="text-muted-foreground text-sm">/month</span>
                 </CardDescription>
                 {plan.annual_price > 0 && (
-                  <span className="text-xs text-muted-foreground mt-1">${plan.annual_price.toLocaleString()}/year</span>
+                  <span className="text-xs text-muted-foreground mt-1">KES {plan.annual_price.toLocaleString()}/year</span>
                 )}
               </CardHeader>
 
