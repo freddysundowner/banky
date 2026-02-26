@@ -356,31 +356,78 @@ if ! pg_isready -q 2>/dev/null; then
     fi
 fi
 
-# ── Determine how to run psql commands ───────────────────────
-# -w = never prompt for password (fail immediately if auth fails)
-# Try peer auth first, then TCP with known password, then give up.
+# ── Connect to PostgreSQL and ensure password is set ─────────
+# Strategy:
+#   1. Peer auth works (fresh install) → set password, done.
+#   2. TCP with known password works (re-run) → already set up, done.
+#   3. Neither works → temporarily use trust auth to force-set the
+#      password, then switch back and connect via TCP. Fully automatic.
+
+_pg_hba_find() {
+    sudo -u postgres psql -w -tAc "SHOW hba_file;" 2>/dev/null | tr -d ' ' \
+    || find /etc/postgresql -name pg_hba.conf 2>/dev/null | head -1 \
+    || echo ""
+}
+
+_pg_reload() {
+    sudo systemctl reload postgresql 2>/dev/null \
+    || sudo service postgresql reload 2>/dev/null \
+    || true
+    sleep 1
+}
+
 if [ "$PLATFORM" = "linux" ] && sudo -u postgres psql -w -c '\q' 2>/dev/null; then
+    # ── Case 1: Peer auth works ───────────────────────────────
     PSQL_CMD="sudo -u postgres psql"
     CREATEDB_CMD="sudo -u postgres createdb"
     PEER_AUTH=1
+    sudo -u postgres psql -c "ALTER USER postgres PASSWORD '${DB_PASSWORD}';" >/dev/null 2>&1
+    print_ok "PostgreSQL password set to '${DB_PASSWORD}'"
+
 elif PGPASSWORD="$DB_PASSWORD" psql -U postgres -h 127.0.0.1 -p 5432 -w -c '\q' 2>/dev/null; then
+    # ── Case 2: TCP with correct password already works ───────
     export PGPASSWORD="$DB_PASSWORD"
     PSQL_CMD="psql -U postgres -h 127.0.0.1 -p 5432"
     CREATEDB_CMD="createdb -U postgres -h 127.0.0.1 -p 5432"
     PEER_AUTH=0
-    print_ok "Connected to PostgreSQL via TCP (scram-sha-256)"
-elif PGPASSWORD="$DB_PASSWORD" psql -U postgres -w -c '\q' 2>/dev/null; then
-    export PGPASSWORD="$DB_PASSWORD"
-    PSQL_CMD="psql -U postgres"
-    CREATEDB_CMD="createdb -U postgres"
-    PEER_AUTH=0
+    print_ok "PostgreSQL connected via TCP (password already set)"
+
 else
-    print_err "Cannot connect to PostgreSQL. Ensure it is running and the password is '${DB_PASSWORD}'."
-    print_err "Try: sudo -u postgres psql -c \"ALTER USER postgres PASSWORD '${DB_PASSWORD}';\""
-    exit 1
+    # ── Case 3: scram-sha-256 everywhere, password unknown ────
+    # Temporarily switch local postgres auth to trust, set the
+    # password, then restore scram-sha-256.
+    print_warn "PostgreSQL requires password — setting it automatically..."
+    PG_HBA=$(_pg_hba_find)
+    if [ -z "$PG_HBA" ] || [ ! -f "$PG_HBA" ]; then
+        print_err "Cannot locate pg_hba.conf. Please set the postgres password manually:"
+        print_err "  sudo -u postgres psql -c \"ALTER USER postgres PASSWORD '${DB_PASSWORD}';\""
+        exit 1
+    fi
+    # Patch local postgres line to trust
+    sudo sed -i \
+        "s|^\(local[[:space:]]\+all[[:space:]]\+postgres[[:space:]]\+\).*|\1trust|" \
+        "$PG_HBA"
+    _pg_reload
+    sudo -u postgres psql -c "ALTER USER postgres PASSWORD '${DB_PASSWORD}';" >/dev/null 2>&1
+    print_ok "PostgreSQL password set to '${DB_PASSWORD}'"
+    # Restore scram-sha-256
+    sudo sed -i \
+        "s|^\(local[[:space:]]\+all[[:space:]]\+postgres[[:space:]]\+\)trust|\1scram-sha-256|" \
+        "$PG_HBA"
+    _pg_reload
+    # Now connect via TCP with the freshly set password
+    if PGPASSWORD="$DB_PASSWORD" psql -U postgres -h 127.0.0.1 -p 5432 -w -c '\q' 2>/dev/null; then
+        export PGPASSWORD="$DB_PASSWORD"
+        PSQL_CMD="psql -U postgres -h 127.0.0.1 -p 5432"
+        CREATEDB_CMD="createdb -U postgres -h 127.0.0.1 -p 5432"
+        PEER_AUTH=0
+    else
+        print_err "Still cannot connect after setting password. Check PostgreSQL is running."
+        exit 1
+    fi
 fi
 
-# ── Ensure a PostgreSQL role exists for the current OS user ──
+# ── Ensure a role exists for the current OS user (peer-auth installs) ──
 CURRENT_OS_USER=$(whoami)
 if [ "$PLATFORM" = "linux" ] && [ "${PEER_AUTH:-0}" = "1" ]; then
     if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='${CURRENT_OS_USER}'" 2>/dev/null | grep -q 1; then
@@ -396,12 +443,6 @@ else
     print_warn "Database '${DB_NAME}' not found — creating..."
     $CREATEDB_CMD "$DB_NAME"
     print_ok "Database '${DB_NAME}' created"
-fi
-
-# ── Set postgres password (only needed when peer auth is active) ──
-if [ "${PEER_AUTH:-0}" = "1" ]; then
-    sudo -u postgres psql -c "ALTER USER postgres PASSWORD '${DB_PASSWORD}';" >/dev/null 2>&1
-    print_ok "PostgreSQL password set for user 'postgres'"
 fi
 
 # ── Write DATABASE_URL to .env if not already set ────────────
