@@ -107,22 +107,17 @@ async def initiate_subscription_payment(organization_id: str, data: dict, auth=D
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
 
+    # Prices are stored directly in KES — no conversion needed.
     if billing_period == "annual" and plan.annual_price and float(plan.annual_price) > 0:
-        amount_usd = float(plan.annual_price)
+        amount = round(float(plan.annual_price))
         period_days = 365
     else:
-        amount_usd = float(plan.monthly_price)
+        amount = round(float(plan.monthly_price))
         period_days = 30
         billing_period = "monthly"
 
-    if amount_usd <= 0:
-        raise HTTPException(status_code=400, detail="This plan has no price set. Contact admin.")
-
-    rates = await fetch_exchange_rates()
-    amount = convert_usd_to(amount_usd, "KES", rates)
-
     if amount <= 0:
-        raise HTTPException(status_code=400, detail="Currency conversion error. Contact admin.")
+        raise HTTPException(status_code=400, detail="This plan has no price set. Contact admin.")
 
     mpesa_config = get_platform_mpesa_config(db)
 
@@ -344,24 +339,28 @@ async def initiate_stripe_payment(organization_id: str, data: dict, auth=Depends
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
 
+    # Prices are stored in KES — convert to USD for Stripe.
     if billing_period == "annual" and plan.annual_price and float(plan.annual_price) > 0:
-        amount_usd = float(plan.annual_price)
+        amount_kes = round(float(plan.annual_price))
         period_days = 365
     else:
-        amount_usd = float(plan.monthly_price)
+        amount_kes = round(float(plan.monthly_price))
         period_days = 30
         billing_period = "monthly"
 
-    if amount_usd <= 0:
-        raise HTTPException(status_code=400, detail="USD price not set for this plan. Contact admin.")
+    if amount_kes <= 0:
+        raise HTTPException(status_code=400, detail="Price not set for this plan. Contact admin.")
 
+    rates = await fetch_exchange_rates()
+    kes_rate = rates.get("KES", 130.0)
+    amount_usd = round(amount_kes / kes_rate, 2)
     amount_cents = int(amount_usd * 100)
 
     payment = SubscriptionPayment(
         organization_id=organization_id,
         plan_id=plan_id,
-        amount=Decimal(str(amount_usd)),
-        currency="USD",
+        amount=Decimal(str(amount_kes)),
+        currency="KES",
         payment_method="stripe",
         billing_period=billing_period,
         status="pending"
@@ -397,7 +396,7 @@ async def initiate_stripe_payment(organization_id: str, data: dict, auth=Depends
         payment.status = "awaiting_payment"
         db.commit()
 
-        print(f"[Subscription] Stripe session created for org {org.name}, plan {plan.name}, amount ${amount_usd}")
+        print(f"[Subscription] Stripe session created for org {org.name}, plan {plan.name}, KES {amount_kes} (${amount_usd} USD)")
 
         return {
             "success": True,
@@ -451,19 +450,25 @@ async def initiate_paystack_payment(organization_id: str, data: dict, auth=Depen
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
 
+    # Prices are stored in KES. For non-KES Paystack currencies convert via exchange rate.
     if billing_period == "annual" and plan.annual_price and float(plan.annual_price) > 0:
-        amount_usd = float(plan.annual_price)
+        amount_kes = round(float(plan.annual_price))
         period_days = 365
     else:
-        amount_usd = float(plan.monthly_price)
+        amount_kes = round(float(plan.monthly_price))
         period_days = 30
         billing_period = "monthly"
 
-    if amount_usd <= 0:
+    if amount_kes <= 0:
         raise HTTPException(status_code=400, detail="Price not set for this plan. Contact admin.")
 
-    rates = await fetch_exchange_rates()
-    amount = convert_usd_to(amount_usd, currency, rates)
+    if currency == "KES":
+        amount = amount_kes
+    else:
+        rates = await fetch_exchange_rates()
+        kes_rate = rates.get("KES", 130.0)
+        target_rate = rates.get(currency, 1.0)
+        amount = round(amount_kes / kes_rate * target_rate)
 
     amount_minor = int(amount * 100)
 
