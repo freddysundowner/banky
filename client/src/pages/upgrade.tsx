@@ -61,10 +61,14 @@ const PAYSTACK_CHANNELS: { id: PaystackChannel; label: string; icon: typeof Cred
   { id: "mobile_money", label: "Mobile Money", icon: Smartphone, description: "M-Pesa, MTN MoMo, Airtel" },
 ];
 
-function convertPrice(amountUsd: number, currency: string, rates: Record<string, number>): number {
-  if (currency === "USD") return amountUsd;
-  const rate = rates[currency] || 1;
-  return Math.round(amountUsd * rate);
+// Prices are stored natively in KES. Convert to the gateway's currency for display.
+function convertFromKes(amountKes: number, currency: string, rates: Record<string, number>): number {
+  if (currency === "KES") return amountKes;
+  const kesPerUsd = rates["KES"] || 130;
+  const amountUsd = amountKes / kesPerUsd;
+  if (currency === "USD") return Math.round(amountUsd * 100) / 100;
+  const targetRate = rates[currency] || 1;
+  return Math.round(amountUsd * targetRate);
 }
 
 function getGatewayCurrency(gateway: Gateway, paystackCurrency: string, paystackChannel?: PaystackChannel): string {
@@ -75,14 +79,15 @@ function getGatewayCurrency(gateway: Gateway, paystackCurrency: string, paystack
 }
 
 function getPlanPrice(plan: Plan, gateway: Gateway, period: "monthly" | "annual", rates: Record<string, number>, paystackCurrency: string, paystackChannel?: PaystackChannel): number {
-  const amountUsd = period === "annual" && plan.annual_price > 0 ? plan.annual_price : plan.monthly_price;
+  const amountKes = period === "annual" && plan.annual_price > 0 ? plan.annual_price : plan.monthly_price;
   const currency = getGatewayCurrency(gateway, paystackCurrency, paystackChannel);
-  return convertPrice(amountUsd, currency, rates);
+  return convertFromKes(amountKes, currency, rates);
 }
 
 function formatPrice(amount: number, gateway: Gateway, paystackCurrency: string, paystackChannel?: PaystackChannel): string {
   const currency = getGatewayCurrency(gateway, paystackCurrency, paystackChannel);
   const sym = CURRENCY_SYMBOLS[currency] || currency + " ";
+  if (currency === "USD") return `${sym}${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   return `${sym}${amount.toLocaleString()}`;
 }
 
