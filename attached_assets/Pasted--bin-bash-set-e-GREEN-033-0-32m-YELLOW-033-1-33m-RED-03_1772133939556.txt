@@ -357,32 +357,24 @@ if ! pg_isready -q 2>/dev/null; then
 fi
 
 # ── Determine how to run psql commands ───────────────────────
-# -w = never prompt for password (fail immediately if auth fails)
-# Try peer auth first, then TCP with known password, then give up.
-if [ "$PLATFORM" = "linux" ] && sudo -u postgres psql -w -c '\q' 2>/dev/null; then
+# On Linux, PostgreSQL creates a system 'postgres' user (peer auth).
+# On Mac with Homebrew, the current user can connect directly.
+if [ "$PLATFORM" = "linux" ] && sudo -u postgres psql -c '\q' 2>/dev/null; then
     PSQL_CMD="sudo -u postgres psql"
     CREATEDB_CMD="sudo -u postgres createdb"
-    PEER_AUTH=1
-elif PGPASSWORD="$DB_PASSWORD" psql -U postgres -h 127.0.0.1 -p 5432 -w -c '\q' 2>/dev/null; then
-    export PGPASSWORD="$DB_PASSWORD"
-    PSQL_CMD="psql -U postgres -h 127.0.0.1 -p 5432"
-    CREATEDB_CMD="createdb -U postgres -h 127.0.0.1 -p 5432"
-    PEER_AUTH=0
-    print_ok "Connected to PostgreSQL via TCP (scram-sha-256)"
-elif PGPASSWORD="$DB_PASSWORD" psql -U postgres -w -c '\q' 2>/dev/null; then
-    export PGPASSWORD="$DB_PASSWORD"
+elif psql -U postgres -c '\q' 2>/dev/null; then
     PSQL_CMD="psql -U postgres"
     CREATEDB_CMD="createdb -U postgres"
-    PEER_AUTH=0
 else
-    print_err "Cannot connect to PostgreSQL. Ensure it is running and the password is '${DB_PASSWORD}'."
-    print_err "Try: sudo -u postgres psql -c \"ALTER USER postgres PASSWORD '${DB_PASSWORD}';\""
-    exit 1
+    PSQL_CMD="psql"
+    CREATEDB_CMD="createdb"
 fi
 
 # ── Ensure a PostgreSQL role exists for the current OS user ──
+# peer auth (postgresql:///dbname) connects as the current OS user.
+# If no matching role exists (common when running as root), create one.
 CURRENT_OS_USER=$(whoami)
-if [ "$PLATFORM" = "linux" ] && [ "${PEER_AUTH:-0}" = "1" ]; then
+if [ "$PLATFORM" = "linux" ] && [ "$PSQL_CMD" = "sudo -u postgres psql" ]; then
     if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='${CURRENT_OS_USER}'" 2>/dev/null | grep -q 1; then
         sudo -u postgres psql -c "CREATE ROLE \"${CURRENT_OS_USER}\" WITH SUPERUSER LOGIN;" >/dev/null 2>&1
         print_ok "PostgreSQL role '${CURRENT_OS_USER}' created"
@@ -398,8 +390,8 @@ else
     print_ok "Database '${DB_NAME}' created"
 fi
 
-# ── Set postgres password (only needed when peer auth is active) ──
-if [ "${PEER_AUTH:-0}" = "1" ]; then
+# ── Set postgres password (peer auth still active — safe to run now) ──
+if [ "$PLATFORM" = "linux" ] && sudo -u postgres psql -c '\q' 2>/dev/null; then
     sudo -u postgres psql -c "ALTER USER postgres PASSWORD '${DB_PASSWORD}';" >/dev/null 2>&1
     print_ok "PostgreSQL password set for user 'postgres'"
 fi
@@ -492,7 +484,7 @@ print_ok "Frontend built successfully"
 # ── Switch local PostgreSQL auth to scram-sha-256 (done last so it
 #    does not break peer-auth calls used earlier in this script) ──
 if [ "$PLATFORM" = "linux" ]; then
-    PG_HBA=$($PSQL_CMD -tAc "SHOW hba_file;" 2>/dev/null | tr -d ' ')
+    PG_HBA=$(sudo -u postgres psql -tAc "SHOW hba_file;" 2>/dev/null | tr -d ' ')
     if [ -n "$PG_HBA" ] && [ -f "$PG_HBA" ]; then
         sudo sed -i "s/^\(local[[:space:]]\+all[[:space:]]\+postgres[[:space:]]\+\)peer/\1scram-sha-256/" "$PG_HBA"
         sudo sed -i "s/^\(local[[:space:]]\+all[[:space:]]\+all[[:space:]]\+\)peer/\1scram-sha-256/" "$PG_HBA"
