@@ -390,16 +390,10 @@ else
     print_ok "Database '${DB_NAME}' created"
 fi
 
-# ── Set postgres password & switch local auth to scram-sha-256 ──
+# ── Set postgres password (peer auth still active — safe to run now) ──
 if [ "$PLATFORM" = "linux" ] && sudo -u postgres psql -c '\q' 2>/dev/null; then
     sudo -u postgres psql -c "ALTER USER postgres PASSWORD '${DB_PASSWORD}';" >/dev/null 2>&1
-    PG_HBA=$(sudo -u postgres psql -tAc "SHOW hba_file;" 2>/dev/null | tr -d ' ')
-    if [ -n "$PG_HBA" ] && [ -f "$PG_HBA" ]; then
-        sudo sed -i "s/^\(local[[:space:]]\+all[[:space:]]\+postgres[[:space:]]\+\)peer/\1scram-sha-256/" "$PG_HBA"
-        sudo sed -i "s/^\(local[[:space:]]\+all[[:space:]]\+all[[:space:]]\+\)peer/\1scram-sha-256/" "$PG_HBA"
-        sudo systemctl reload postgresql 2>/dev/null || sudo service postgresql reload 2>/dev/null || true
-        print_ok "PostgreSQL password set and local auth updated to scram-sha-256"
-    fi
+    print_ok "PostgreSQL password set for user 'postgres'"
 fi
 
 # ── Write DATABASE_URL to .env if not already set ────────────
@@ -486,6 +480,19 @@ fi
 
 npx vite build 2>&1 | tail -3
 print_ok "Frontend built successfully"
+
+# ── Switch local PostgreSQL auth to scram-sha-256 (done last so it
+#    does not break peer-auth calls used earlier in this script) ──
+if [ "$PLATFORM" = "linux" ]; then
+    PG_HBA=$(sudo -u postgres psql -tAc "SHOW hba_file;" 2>/dev/null | tr -d ' ')
+    if [ -n "$PG_HBA" ] && [ -f "$PG_HBA" ]; then
+        sudo sed -i "s/^\(local[[:space:]]\+all[[:space:]]\+postgres[[:space:]]\+\)peer/\1scram-sha-256/" "$PG_HBA"
+        sudo sed -i "s/^\(local[[:space:]]\+all[[:space:]]\+all[[:space:]]\+\)peer/\1scram-sha-256/" "$PG_HBA"
+        sudo sed -i "s/^\(local[[:space:]]\+replication[[:space:]]\+all[[:space:]]\+\)peer/\1scram-sha-256/" "$PG_HBA"
+        sudo systemctl reload postgresql 2>/dev/null || sudo service postgresql reload 2>/dev/null || true
+        print_ok "PostgreSQL local auth switched to scram-sha-256"
+    fi
+fi
 
 # ══════════════════════════════════════════════════════════════
 #  Done
