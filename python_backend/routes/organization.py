@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime, timedelta
-from models.database import get_db
+from models.database import get_db, normalize_pg_url
 from models.master import Organization, OrganizationMember, OrganizationSubscription, SubscriptionPlan, User, Session as UserSession, PasswordResetToken, EmailVerificationToken
 from schemas.organization import OrganizationCreate, OrganizationUpdate, OrganizationResponse, OrganizationMemberResponse
 from routes.auth import get_current_user
@@ -70,7 +70,7 @@ async def create_organization(data: OrganizationCreate, user = Depends(get_curre
             db.commit()
             raise HTTPException(status_code=500, detail="DATABASE_URL not configured.")
 
-        org.connection_string = database_url
+        org.connection_string = normalize_pg_url(database_url)
         org.neon_project_id = None
         org.neon_branch_id = None
         db.commit()
@@ -87,7 +87,7 @@ async def create_organization(data: OrganizationCreate, user = Depends(get_curre
             if tenant_info:
                 org.neon_project_id = tenant_info.get("project_id")
                 org.neon_branch_id = tenant_info.get("branch_id")
-                org.connection_string = tenant_info.get("connection_string")
+                org.connection_string = normalize_pg_url(tenant_info.get("connection_string"))
                 db.commit()
                 print(f"[{backend}] Tenant database provisioned for org {org.id}")
 

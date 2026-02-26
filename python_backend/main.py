@@ -385,6 +385,32 @@ def run_master_migrations():
         print(f"Master migration v4 warning (non-fatal): {e}")
     print(f"Master DB migrations complete (now at v{_MASTER_SCHEMA_VERSION})")
 
+def _normalize_stored_connection_strings():
+    """
+    On every startup, rewrite any organization connection_strings that still use
+    'localhost' or the Unix socket format to 'postgresql://user:pass@127.0.0.1:5432/db'.
+    This self-heals installs upgraded from peer-auth to password auth without needing
+    a manual SQL update.
+    """
+    from models.database import normalize_pg_url, SessionLocal
+    from models.master import Organization
+    try:
+        db = SessionLocal()
+        orgs = db.query(Organization).filter(Organization.connection_string.isnot(None)).all()
+        fixed = 0
+        for org in orgs:
+            corrected = normalize_pg_url(org.connection_string)
+            if corrected != org.connection_string:
+                org.connection_string = corrected
+                fixed += 1
+        if fixed:
+            db.commit()
+            print(f"[startup] Normalized {fixed} organization connection string(s) to use 127.0.0.1 TCP")
+        db.close()
+    except Exception as e:
+        print(f"[startup] Warning: could not normalize connection strings: {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     import threading
@@ -394,6 +420,8 @@ async def lifespan(app: FastAPI):
     run_master_migrations()
     
     seed_default_plans()
+
+    _normalize_stored_connection_strings()
     
     if os.environ.get("NODE_ENV") != "development" and not DIST_PATH.exists():
         build_frontend()
