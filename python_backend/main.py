@@ -716,6 +716,7 @@ async def get_public_plans():
     from models.database import SessionLocal
     from models.master import SubscriptionPlan, PlatformSettings
     from sqlalchemy import or_
+    from services.exchange_rate import fetch_exchange_rates, convert_usd_to, get_currency_symbol
     
     db = SessionLocal()
     try:
@@ -770,16 +771,25 @@ async def get_public_plans():
             custom = plan.features.get("custom", []) if plan.features else []
             return {"enabled": [feature_display_names.get(f, f.replace("_", " ").title()) for f in enabled], "custom": custom}
         
+        rates = await fetch_exchange_rates()
+        currency = "KES"
+        symbol = get_currency_symbol(currency)
+
+        def to_kes(usd_amount):
+            return convert_usd_to(usd_amount, currency, rates) if usd_amount else 0
+
         return {
             "title": settings.get('pricing_title', 'Choose Your Plan'),
             "subtitle": settings.get('pricing_subtitle', 'Flexible options for Saccos of all sizes'),
             "saas_label": settings.get('pricing_saas_label', 'SaaS (Monthly)'),
             "enterprise_label": settings.get('pricing_enterprise_label', 'Enterprise (One-time)'),
+            "currency": currency,
+            "currency_symbol": symbol,
             "saas": [{
                 "name": p.name,
                 "plan_type": p.plan_type,
-                "monthly_price": float(p.monthly_price) if p.monthly_price else 0,
-                "annual_price": float(p.annual_price) if p.annual_price else 0,
+                "monthly_price": to_kes(float(p.monthly_price) if p.monthly_price else 0),
+                "annual_price": to_kes(float(p.annual_price) if p.annual_price else 0),
                 "max_members": p.max_members,
                 "max_staff": p.max_staff,
                 "max_branches": p.max_branches,
@@ -787,7 +797,7 @@ async def get_public_plans():
             } for p in saas_plans],
             "enterprise": [{
                 "name": p.name,
-                "price": float(p.one_time_price) if p.one_time_price else 0,
+                "price": to_kes(float(p.one_time_price) if p.one_time_price else 0),
                 "max_members": p.max_members,
                 "max_staff": p.max_staff,
                 "max_branches": p.max_branches,

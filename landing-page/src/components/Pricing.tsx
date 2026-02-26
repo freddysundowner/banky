@@ -27,6 +27,8 @@ interface PlansResponse {
   subtitle: string;
   saas_label: string;
   enterprise_label: string;
+  currency: string;
+  currency_symbol: string;
   saas: SaaSPlan[];
   enterprise: EnterprisePlan[];
 }
@@ -65,6 +67,7 @@ export default function Pricing() {
   const [subtitle, setSubtitle] = useState('Flexible options for Saccos of all sizes');
   const [saasLabel, setSaasLabel] = useState('SaaS (Monthly)');
   const [enterpriseLabel, setEnterpriseLabel] = useState('Enterprise (One-time)');
+  const [currencySymbol, setCurrencySymbol] = useState('KES ');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
@@ -82,6 +85,7 @@ export default function Pricing() {
         if (data.subtitle) setSubtitle(data.subtitle);
         if (data.saas_label) setSaasLabel(data.saas_label);
         if (data.enterprise_label) setEnterpriseLabel(data.enterprise_label);
+        if (data.currency_symbol) setCurrencySymbol(data.currency_symbol);
         const filteredSaas = data.saas.filter(p => p.plan_type !== 'enterprise');
         setSaasPlans(filteredSaas);
         setEnterprisePlans(data.enterprise);
@@ -200,12 +204,12 @@ export default function Pricing() {
                   <div className="text-center mb-6">
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">{plan.name}</h3>
                     <div className="text-4xl font-bold text-gray-900">
-                      ${price}
+                      {currencySymbol}{price.toLocaleString()}
                       <span className="text-lg font-normal text-gray-500">/month</span>
                     </div>
                     {monthlyEquiv && (
                       <p className="text-sm text-gray-500 mt-1">
-                        ${plan.annual_price}/year (billed annually)
+                        {currencySymbol}{plan.annual_price.toLocaleString()}/year (billed annually)
                       </p>
                     )}
                   </div>
@@ -256,7 +260,7 @@ export default function Pricing() {
                   <div className="text-center mb-6">
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">{plan.name}</h3>
                     <div className="text-4xl font-bold text-gray-900">
-                      ${plan.price.toLocaleString()}{plan.name === 'Enterprise' ? '+' : ''}
+                      {currencySymbol}{plan.price.toLocaleString()}{plan.name === 'Enterprise' ? '+' : ''}
                       <span className="text-lg font-normal text-gray-500"> one-time</span>
                     </div>
                   </div>
