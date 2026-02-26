@@ -80,26 +80,51 @@ DEFAULT_PLAN_FEATURES = {
 }
 
 def seed_default_plans():
-    """Seed default subscription plans if none exist"""
+    """Seed default subscription plans. Prices stored directly in KES."""
     from models.database import SessionLocal
     from models.master import SubscriptionPlan
-    
+
+    # Canonical KES prices for the Kenyan market.
+    # Annual = monthly × 12 × 0.80 (20 % discount, rounded to nearest 10).
+    KES_PLANS = {
+        "starter":      {"monthly_price": 4999,  "annual_price": 47990},
+        "growth":       {"monthly_price": 9999,  "annual_price": 95990},
+        "professional": {"monthly_price": 24999, "annual_price": 239990},
+        "basic":        {"one_time_price": 99000},
+        "standard":     {"one_time_price": 199000},
+        "premium":      {"one_time_price": 349000},
+        "enterprise":   {"one_time_price": 499000},
+    }
+
     db = SessionLocal()
     try:
         existing = db.query(SubscriptionPlan).count()
+
         if existing > 0:
-            print(f"Found {existing} existing plans, skipping seed")
+            # Update prices on every startup so they stay in sync with KES_PLANS.
+            print("Updating subscription plan prices to KES values...")
+            for plan in db.query(SubscriptionPlan).all():
+                prices = KES_PLANS.get(plan.plan_type)
+                if not prices:
+                    continue
+                if "monthly_price" in prices:
+                    plan.monthly_price = prices["monthly_price"]
+                    plan.annual_price  = prices["annual_price"]
+                if "one_time_price" in prices:
+                    plan.one_time_price = prices["one_time_price"]
+            db.commit()
+            print("Plan prices updated.")
             return
-        
-        print("Seeding default subscription plans...")
-        
+
+        print("Seeding default subscription plans (KES)...")
+
         default_plans = [
             {
                 "name": "Starter",
                 "plan_type": "starter",
                 "pricing_model": "saas",
-                "monthly_price": 50,
-                "annual_price": 500,
+                "monthly_price": KES_PLANS["starter"]["monthly_price"],
+                "annual_price":  KES_PLANS["starter"]["annual_price"],
                 "max_members": 500,
                 "max_staff": 3,
                 "max_branches": 1,
@@ -111,8 +136,8 @@ def seed_default_plans():
                 "name": "Growth",
                 "plan_type": "growth",
                 "pricing_model": "saas",
-                "monthly_price": 150,
-                "annual_price": 1500,
+                "monthly_price": KES_PLANS["growth"]["monthly_price"],
+                "annual_price":  KES_PLANS["growth"]["annual_price"],
                 "max_members": 2000,
                 "max_staff": 10,
                 "max_branches": 5,
@@ -124,8 +149,8 @@ def seed_default_plans():
                 "name": "Professional",
                 "plan_type": "professional",
                 "pricing_model": "saas",
-                "monthly_price": 400,
-                "annual_price": 4000,
+                "monthly_price": KES_PLANS["professional"]["monthly_price"],
+                "annual_price":  KES_PLANS["professional"]["annual_price"],
                 "max_members": 10000,
                 "max_staff": 50,
                 "max_branches": 20,
@@ -137,7 +162,7 @@ def seed_default_plans():
                 "name": "Basic",
                 "plan_type": "basic",
                 "pricing_model": "enterprise",
-                "one_time_price": 10000,
+                "one_time_price": KES_PLANS["basic"]["one_time_price"],
                 "support_years": 1,
                 "max_members": None,
                 "max_staff": None,
@@ -149,7 +174,7 @@ def seed_default_plans():
                 "name": "Standard",
                 "plan_type": "standard",
                 "pricing_model": "enterprise",
-                "one_time_price": 20000,
+                "one_time_price": KES_PLANS["standard"]["one_time_price"],
                 "support_years": 2,
                 "max_members": None,
                 "max_staff": None,
@@ -161,7 +186,7 @@ def seed_default_plans():
                 "name": "Premium",
                 "plan_type": "premium",
                 "pricing_model": "enterprise",
-                "one_time_price": 35000,
+                "one_time_price": KES_PLANS["premium"]["one_time_price"],
                 "support_years": 3,
                 "max_members": None,
                 "max_staff": None,
@@ -173,7 +198,7 @@ def seed_default_plans():
                 "name": "Enterprise",
                 "plan_type": "enterprise",
                 "pricing_model": "enterprise",
-                "one_time_price": 50000,
+                "one_time_price": KES_PLANS["enterprise"]["one_time_price"],
                 "support_years": 5,
                 "max_members": None,
                 "max_staff": None,
@@ -182,11 +207,10 @@ def seed_default_plans():
                 "features": {"enabled": DEFAULT_PLAN_FEATURES["enterprise"]}
             }
         ]
-        
+
         for plan_data in default_plans:
-            plan = SubscriptionPlan(**plan_data)
-            db.add(plan)
-        
+            db.add(SubscriptionPlan(**plan_data))
+
         db.commit()
         print(f"Seeded {len(default_plans)} default subscription plans")
     except Exception as e:
@@ -788,8 +812,8 @@ async def get_public_plans():
             "saas": [{
                 "name": p.name,
                 "plan_type": p.plan_type,
-                "monthly_price": to_kes(float(p.monthly_price) if p.monthly_price else 0),
-                "annual_price": to_kes(float(p.annual_price) if p.annual_price else 0),
+                "monthly_price": round(float(p.monthly_price) if p.monthly_price else 0),
+                "annual_price": round(float(p.annual_price) if p.annual_price else 0),
                 "max_members": p.max_members,
                 "max_staff": p.max_staff,
                 "max_branches": p.max_branches,
@@ -797,7 +821,7 @@ async def get_public_plans():
             } for p in saas_plans],
             "enterprise": [{
                 "name": p.name,
-                "price": to_kes(float(p.one_time_price) if p.one_time_price else 0),
+                "price": round(float(p.one_time_price) if p.one_time_price else 0),
                 "max_members": p.max_members,
                 "max_staff": p.max_staff,
                 "max_branches": p.max_branches,
