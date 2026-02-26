@@ -1,0 +1,290 @@
+root@vmi3102280:/var/www/bankykit# pm2 restart bankykit-api
+Use --update-env to update environment variables
+[PM2] Applying action restartProcessId on app [bankykit-api](ids: [ 4 ])
+[PM2] [bankykit-api](4) ✓
+┌────┬────────────────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name                       │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────────────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 22 │ bankykit-admin             │ default     │ 1.0.0   │ fork    │ 178479   │ 29m    │ 0    │ online    │ 0%       │ 55.8mb   │ root     │ disabled │
+│ 4  │ bankykit-api               │ default     │ 1.0.0   │ fork    │ 181470   │ 0s     │ 23   │ online    │ 0%       │ 8.0mb    │ root     │ disabled │
+│ 17 │ bankykit-demo-admin        │ default     │ 1.0.0   │ fork    │ 170002   │ 87m    │ 6    │ online    │ 0%       │ 53.6mb   │ root     │ disabled │
+│ 7  │ bankykit-demo-api          │ default     │ 1.0.0   │ fork    │ 169976   │ 87m    │ 19   │ online    │ 0%       │ 24.1mb   │ root     │ disabled │
+│ 16 │ bankykit-demo-landing      │ default     │ 1.0.0   │ fork    │ 169989   │ 87m    │ 17   │ online    │ 0%       │ 51.3mb   │ root     │ disabled │
+│ 8  │ bankykit-demo-scheduler    │ default     │ 1.0.0   │ fork    │ 170048   │ 87m    │ 26   │ online    │ 0%       │ 85.9mb   │ root     │ disabled │
+│ 23 │ bankykit-landing           │ default     │ 1.0.0   │ fork    │ 179160   │ 25m    │ 0    │ online    │ 0%       │ 54.7mb   │ root     │ disabled │
+│ 2  │ bankykit-scheduler         │ default     │ 1.0.0   │ fork    │ 180397   │ 6m     │ 36   │ online    │ 0%       │ 97.1mb   │ root     │ disabled │
+└────┴────────────────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+root@vmi3102280:/var/www/bankykit# pm2 logs
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+/root/.pm2/pm2.log last 15 lines:
+PM2        | 2026-02-26T21:14:15: PM2 log: App [bankykit-api:4] online
+PM2        | 2026-02-26T21:14:15: PM2 log: App [bankykit-scheduler:2] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-26T21:14:15: PM2 log: pid=180258 msg=process killed
+PM2        | 2026-02-26T21:14:15: PM2 log: [PM2][WORKER] Registering a cron job on: 2
+PM2        | 2026-02-26T21:14:15: PM2 log: App [bankykit-scheduler:2] starting in -fork mode-
+PM2        | 2026-02-26T21:14:15: PM2 log: App [bankykit-scheduler:2] online
+PM2        | 2026-02-26T21:21:13: PM2 log: Stopping app:bankykit-api id:4
+PM2        | 2026-02-26T21:21:13: PM2 log: pid=180394 msg=failed to kill - retrying in 100ms
+PM2        | 2026-02-26T21:21:13: PM2 log: pid=180394 msg=failed to kill - retrying in 100ms
+PM2        | 2026-02-26T21:21:13: PM2 log: pid=180394 msg=failed to kill - retrying in 100ms
+PM2        | 2026-02-26T21:21:13: PM2 log: pid=180394 msg=failed to kill - retrying in 100ms
+PM2        | 2026-02-26T21:21:13: PM2 log: App [bankykit-api:4] exited with code [0] via signal [SIGINT]
+PM2        | 2026-02-26T21:21:14: PM2 log: pid=180394 msg=process killed
+PM2        | 2026-02-26T21:21:14: PM2 log: App [bankykit-api:4] starting in -fork mode-
+PM2        | 2026-02-26T21:21:14: PM2 log: App [bankykit-api:4] online
+
+/root/.pm2/logs/bankykit-admin-error.log last 15 lines:
+22|bankyki |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+22|bankyki | Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/var/www/bankykit-admin/server.js' imported from /usr/lib/node_modules/pm2/lib/ProcessContainerFork.js
+22|bankyki |     at finalizeResolution (node:internal/modules/esm/resolve:283:11)
+22|bankyki |     at moduleResolve (node:internal/modules/esm/resolve:952:10)
+22|bankyki |     at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+22|bankyki |     at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:708:12)
+22|bankyki |     at #cachedDefaultResolve (node:internal/modules/esm/loader:657:25)
+22|bankyki |     at ModuleLoader.resolve (node:internal/modules/esm/loader:640:38)
+22|bankyki |     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:264:38)
+22|bankyki |     at ModuleLoader.import (node:internal/modules/esm/loader:605:34)
+22|bankyki |     at defaultImportModuleDynamicallyForScript (node:internal/modules/esm/utils:234:31)
+22|bankyki |     at importModuleDynamicallyCallback (node:internal/modules/esm/utils:256:12) {
+22|bankyki |   code: 'ERR_MODULE_NOT_FOUND',
+22|bankyki |   url: 'file:///var/www/bankykit-admin/server.js'
+22|bankyki | }
+
+/root/.pm2/logs/bankykit-landing-error.log last 15 lines:
+23|bankyki | AggregateError [ECONNREFUSED]: 
+23|bankyki |     at internalConnectMultiple (node:net:1122:18)
+23|bankyki |     at afterConnectMultiple (node:net:1689:7)
+23|bankyki | 2:27:49 PM [vite] http proxy error: /api/public/landing-content/cta_section
+23|bankyki | AggregateError [ECONNREFUSED]: 
+23|bankyki |     at internalConnectMultiple (node:net:1122:18)
+23|bankyki |     at afterConnectMultiple (node:net:1689:7)
+23|bankyki | 2:27:49 PM [vite] http proxy error: /api/public/branding
+23|bankyki | AggregateError [ECONNREFUSED]: 
+23|bankyki |     at internalConnectMultiple (node:net:1122:18)
+23|bankyki |     at afterConnectMultiple (node:net:1689:7)
+23|bankyki | 2:28:19 PM [vite] http proxy error: /api/public/plans
+23|bankyki | AggregateError [ECONNREFUSED]: 
+23|bankyki |     at internalConnectMultiple (node:net:1122:18)
+23|bankyki |     at afterConnectMultiple (node:net:1689:7)
+
+/root/.pm2/logs/bankykit-demo-admin-error.log last 15 lines:
+17|bankyki |   syscall: 'listen',
+17|bankyki |   address: '0.0.0.0',
+17|bankyki |   port: 5002
+17|bankyki | }
+17|bankyki | Error: listen EADDRINUSE: address already in use 0.0.0.0:5002
+17|bankyki |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+17|bankyki |     at listenInCluster (node:net:1965:12)
+17|bankyki |     at doListen (node:net:2139:7)
+17|bankyki |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+17|bankyki |   code: 'EADDRINUSE',
+17|bankyki |   errno: -98,
+17|bankyki |   syscall: 'listen',
+17|bankyki |   address: '0.0.0.0',
+17|bankyki |   port: 5002
+17|bankyki | }
+
+/root/.pm2/logs/bankykit-demo-landing-error.log last 15 lines:
+/root/.pm2/logs/bankykit-demo-scheduler-out.log last 15 lines:
+8|bankykit | 
+8|bankykit | --- Processing organization: test one (ed6b5588-29dc-4c37-bcb3-9c0598b4af56) ---
+8|bankykit |   Auto loan deduction is disabled for this organization
+8|bankykit | 
+8|bankykit | --- Processing organization: dfgdg (ee7b503e-140e-4116-a4a4-c6563003a2d7) ---
+8|bankykit |   Auto loan deduction is disabled for this organization
+8|bankykit | 
+8|bankykit | === TOTAL SUMMARY ===
+8|bankykit | Loans auto-deducted: 0
+8|bankykit | Loans skipped (insufficient savings): 0
+8|bankykit | Errors: 0
+8|bankykit | [19:00:06] Completed: Auto-deduct loan repayments from savings
+8|bankykit | 
+8|bankykit | [Scheduler] Received signal 2, shutting down gracefully...
+8|bankykit | [Scheduler] Shutdown complete.
+
+/root/.pm2/logs/bankykit-demo-landing-out.log last 15 lines:
+16|bankyki | Proxying /api/ -> http://127.0.0.1:6000
+16|bankyki | BankyKit Landing Page running at http://localhost:6003
+16|bankyki | Proxying /api/ -> http://127.0.0.1:6000
+16|bankyki | BankyKit Landing Page running at http://localhost:6003
+16|bankyki | Proxying /api/ -> http://127.0.0.1:6000
+16|bankyki | BankyKit Landing Page running at http://localhost:6003
+16|bankyki | Proxying /api/ -> http://127.0.0.1:6000
+16|bankyki | BankyKit Landing Page running at http://localhost:6003
+16|bankyki | Proxying /api/ -> http://127.0.0.1:6000
+16|bankyki | BankyKit Landing Page running at http://localhost:6003
+16|bankyki | Proxying /api/ -> http://127.0.0.1:6000
+16|bankyki | BankyKit Landing Page running at http://localhost:6003
+16|bankyki | Proxying /api/ -> http://127.0.0.1:6000
+16|bankyki | BankyKit Landing Page running at http://localhost:6003
+16|bankyki | Proxying /api/ -> http://127.0.0.1:6000
+
+/root/.pm2/logs/bankykit-demo-admin-out.log last 15 lines:
+17|bankyki | Proxying /api/ -> http://127.0.0.1:6000
+17|bankyki | BankyKit Admin Panel running at http://localhost:6002
+17|bankyki | Proxying /api/ -> http://127.0.0.1:6000
+17|bankyki | BankyKit Admin Panel running at http://localhost:6002
+17|bankyki | Proxying /api/ -> http://127.0.0.1:6000
+17|bankyki | BankyKit Admin Panel running at http://localhost:6002
+17|bankyki | Proxying /api/ -> http://127.0.0.1:6000
+17|bankyki | BankyKit Admin Panel running at http://localhost:6002
+17|bankyki | Proxying /api/ -> http://127.0.0.1:6000
+17|bankyki | BankyKit Admin Panel running at http://localhost:6002
+17|bankyki | Proxying /api/ -> http://127.0.0.1:6000
+17|bankyki | BankyKit Admin Panel running at http://localhost:6002
+17|bankyki | Proxying /api/ -> http://127.0.0.1:6000
+17|bankyki | BankyKit Admin Panel running at http://localhost:6002
+17|bankyki | Proxying /api/ -> http://127.0.0.1:6000
+
+/root/.pm2/logs/bankykit-demo-api-error.log last 15 lines:
+7|bankykit |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+7|bankykit |     self.dbapi_connection = connection = pool._invoke_creator(self)
+7|bankykit |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+7|bankykit |     return dialect.connect(*cargs, **cparams)
+7|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+7|bankykit |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+7|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+7|bankykit |     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+7|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit | sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+7|bankykit | 
+7|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+
+/root/.pm2/logs/bankykit-admin-out.log last 15 lines:
+22|bankyki | Proxying /api/ -> http://127.0.0.1:5000
+22|bankyki | BankyKit Admin Panel running at http://localhost:5002
+22|bankyki | Proxying /api/ -> http://127.0.0.1:5000
+22|bankyki | BankyKit Admin Panel running at http://localhost:5002
+22|bankyki | Proxying /api/ -> http://127.0.0.1:5000
+22|bankyki | BankyKit Admin Panel running at http://localhost:5002
+22|bankyki | Proxying /api/ -> http://127.0.0.1:5000
+22|bankyki | BankyKit Admin Panel running at http://localhost:5002
+22|bankyki | Proxying /api/ -> http://127.0.0.1:5000
+22|bankyki | BankyKit Admin Panel running at http://localhost:5002
+22|bankyki | Proxying /api/ -> http://127.0.0.1:5000
+22|bankyki | BankyKit Admin Panel running at http://localhost:5002
+22|bankyki | Proxying /api/ -> http://127.0.0.1:5000
+22|bankyki | BankyKit Admin Panel running at http://localhost:5002
+22|bankyki | Proxying /api/ -> http://127.0.0.1:5000
+
+/root/.pm2/logs/bankykit-demo-scheduler-error.log last 15 lines:
+8|bankykit |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+8|bankykit |     self.dbapi_connection = connection = pool._invoke_creator(self)
+8|bankykit |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+8|bankykit |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+8|bankykit |     return dialect.connect(*cargs, **cparams)
+8|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+8|bankykit |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+8|bankykit |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+8|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+8|bankykit |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+8|bankykit |     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+8|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+8|bankykit | sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+8|bankykit | 
+8|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+
+/root/.pm2/logs/bankykit-landing-out.log last 15 lines:
+23|bankyki | Proxying /api/ -> http://127.0.0.1:5000
+23|bankyki | BankyKit Landing Page running at http://localhost:5003
+23|bankyki | Proxying /api/ -> http://127.0.0.1:5000
+23|bankyki | BankyKit Landing Page running at http://localhost:5003
+23|bankyki | Proxying /api/ -> http://127.0.0.1:5000
+23|bankyki | BankyKit Landing Page running at http://localhost:5003
+23|bankyki | Proxying /api/ -> http://127.0.0.1:5000
+23|bankyki | BankyKit Landing Page running at http://localhost:5003
+23|bankyki | Proxying /api/ -> http://127.0.0.1:5000
+23|bankyki | BankyKit Landing Page running at http://localhost:5003
+23|bankyki | Proxying /api/ -> http://127.0.0.1:5000
+23|bankyki | BankyKit Landing Page running at http://localhost:5003
+23|bankyki | Proxying /api/ -> http://127.0.0.1:5000
+23|bankyki | BankyKit Landing Page running at http://localhost:5003
+23|bankyki | Proxying /api/ -> http://127.0.0.1:5000
+
+/root/.pm2/logs/bankykit-scheduler-out.log last 15 lines:
+2|bankykit |   Error processing recurring expenses: (psycopg2.OperationalError) connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+2|bankykit | 
+2|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+2|bankykit | 
+2|bankykit | --- Processing recurring expenses: Demo Sacco (a1e5d716-6f3c-4363-8d79-49c5f1e8baac) ---
+2|bankykit |   Migration needed: db version -1 < current 26
+2|bankykit | Tenant migration error: (psycopg2.OperationalError) connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+2|bankykit | 
+2|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+2|bankykit |   Error processing recurring expenses: (psycopg2.OperationalError) connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+2|bankykit | 
+2|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+2|bankykit | 
+2|bankykit | --- Processing recurring expenses: Business Loan Fixed (5cdd828b-0ea4-48d3-9c10-c8d49383eb07) ---
+2|bankykit |   Migration needed: db version -1 < current 26
+
+/root/.pm2/logs/bankykit-scheduler-error.log last 15 lines:
+2|bankykit |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+2|bankykit |     self.dbapi_connection = connection = pool._invoke_creator(self)
+2|bankykit |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2|bankykit |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+2|bankykit |     return dialect.connect(*cargs, **cparams)
+2|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2|bankykit |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+2|bankykit |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+2|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2|bankykit |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+2|bankykit |     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+2|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2|bankykit | sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+2|bankykit | 
+2|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+
+/root/.pm2/logs/bankykit-demo-api-out.log last 15 lines:
+7|bankykit | Found 7 existing plans, skipping seed
+7|bankykit | Running migrations for tenant: Demo Sacco
+7|bankykit | Migration complete for tenant: Demo Sacco
+7|bankykit | Running migrations for tenant: test one
+7|bankykit | Migration complete for tenant: test one
+7|bankykit | Running migrations for tenant: dfgdg
+7|bankykit | Migration complete for tenant: dfgdg
+7|bankykit | All tenant migrations complete
+7|bankykit | INFO:     196.96.211.112:0 - "GET /api/auth/user HTTP/1.1" 500 Internal Server Error
+7|bankykit | INFO:     107.172.195.101:0 - "GET / HTTP/1.1" 200 OK
+7|bankykit | INFO:     103.196.9.163:0 - "GET / HTTP/1.1" 200 OK
+7|bankykit | INFO:     104.164.173.70:0 - "GET / HTTP/1.1" 200 OK
+7|bankykit | INFO:     104.164.126.195:0 - "GET / HTTP/1.1" 200 OK
+7|bankykit | INFO:     104.252.191.183:0 - "GET / HTTP/1.1" 200 OK
+7|bankykit | INFO:     103.4.250.234:0 - "GET / HTTP/1.1" 200 OK
+
+/root/.pm2/logs/bankykit-api-out.log last 15 lines:
+4|bankykit |   Migration needed: db version -1 < current 26
+4|bankykit | Tenant migration error: (psycopg2.OperationalError) connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+4|bankykit | 
+4|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+4|bankykit | INFO:     196.96.211.112:0 - "GET /api/organizations/5cdd828b-0ea4-48d3-9c10-c8d49383eb07/analytics/dashboard HTTP/1.1" 500 Internal Server Error
+4|bankykit |   Migration needed: db version -1 < current 26
+4|bankykit | Tenant migration error: (psycopg2.OperationalError) connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+4|bankykit | 
+4|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+4|bankykit | INFO:     196.96.211.112:0 - "GET /api/organizations/5cdd828b-0ea4-48d3-9c10-c8d49383eb07/settings HTTP/1.1" 500 Internal Server Error
+4|bankykit |   Migration needed: db version -1 < current 26
+4|bankykit | Tenant migration error: (psycopg2.OperationalError) connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+4|bankykit | 
+4|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+4|bankykit | INFO:     196.96.211.112:0 - "GET /api/organizations/5cdd828b-0ea4-48d3-9c10-c8d49383eb07/notifications HTTP/1.1" 500 Internal Server Error
+
+/root/.pm2/logs/bankykit-api-error.log last 15 lines:
+4|bankykit |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+4|bankykit |     self.dbapi_connection = connection = pool._invoke_creator(self)
+4|bankykit |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+4|bankykit |     return dialect.connect(*cargs, **cparams)
+4|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+4|bankykit |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+4|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+4|bankykit |     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+4|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit | sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+4|bankykit | 
+4|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)
