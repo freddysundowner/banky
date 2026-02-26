@@ -1,0 +1,32 @@
+4|bankykit |   Migration needed: db version -1 < current 26
+4|bankykit | Tenant migration error: (psycopg2.OperationalError) connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+4|bankykit | 
+4|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+4|bankykit | INFO:     196.96.211.112:0 - "GET /api/organizations/5cdd828b-0ea4-48d3-9c10-c8d49383eb07/hr/attendance/my-status HTTP/1.1" 500 Internal Server Error
+4|bankykit |   Migration needed: db version -1 < current 26
+4|bankykit | Tenant migration error: (psycopg2.OperationalError) connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+4|bankykit | 
+4|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+4|bankykit | INFO:     196.96.211.112:0 - "GET /api/organizations/5cdd828b-0ea4-48d3-9c10-c8d49383eb07/notifications HTTP/1.1" 500 Internal Server Error
+4|bankykit |   Migration needed: db version -1 < current 26
+4|bankykit | Tenant migration error: (psycopg2.OperationalError) connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+4|bankykit | 
+4|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+4|bankykit | INFO:     196.96.211.112:0 - "GET /api/organizations/5cdd828b-0ea4-48d3-9c10-c8d49383eb07/branches HTTP/1.1" 500 Internal Server Error
+
+/root/.pm2/logs/bankykit-api-error.log last 15 lines:
+4|bankykit |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+4|bankykit |     self.dbapi_connection = connection = pool._invoke_creator(self)
+4|bankykit |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+4|bankykit |     return dialect.connect(*cargs, **cparams)
+4|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+4|bankykit |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+4|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+4|bankykit |     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+4|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit | sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+4|bankykit | 
+4|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)

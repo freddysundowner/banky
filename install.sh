@@ -453,7 +453,17 @@ else
     NEW_DB_URL="postgresql://localhost:5432/${DB_NAME}"
 fi
 
-if [ -z "$DATABASE_URL" ] || echo "$DATABASE_URL" | grep -qE "(localhost:5432|///)[^/]*$"; then
+# On Linux: always enforce 127.0.0.1 + password so TCP is used (socket auth is gone).
+# On Mac/Windows: only update if empty or clearly using an old socket/no-auth URL.
+_should_update_db_url=0
+if [ "$PLATFORM" = "linux" ]; then
+    # Always update on Linux — must use 127.0.0.1, not localhost (socket).
+    _should_update_db_url=1
+elif [ -z "$DATABASE_URL" ] || echo "$DATABASE_URL" | grep -qE "(localhost|///|127\.0\.0\.1)[^?]*$" && ! echo "$DATABASE_URL" | grep -q "@"; then
+    _should_update_db_url=1
+fi
+
+if [ "$_should_update_db_url" = "1" ]; then
     if grep -q "^DATABASE_URL=" .env 2>/dev/null; then
         if [ "$PLATFORM" = "mac" ] || [ "$PLATFORM" = "windows" ]; then
             sed -i.bak "s|^DATABASE_URL=.*|DATABASE_URL=${NEW_DB_URL}|" .env
@@ -466,7 +476,7 @@ if [ -z "$DATABASE_URL" ] || echo "$DATABASE_URL" | grep -qE "(localhost:5432|//
     fi
     print_ok "DATABASE_URL set to: ${NEW_DB_URL}"
 else
-    print_skip "DATABASE_URL already configured"
+    print_skip "DATABASE_URL already configured (non-Linux)"
 fi
 
 # ── Run database migrations ───────────────────────────────────
