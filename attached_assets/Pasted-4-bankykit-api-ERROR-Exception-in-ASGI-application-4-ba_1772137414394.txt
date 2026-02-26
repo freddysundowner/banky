@@ -1,0 +1,630 @@
+4|bankykit-api  | ERROR:    Exception in ASGI application
+4|bankykit-api  | Traceback (most recent call last):
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+4|bankykit-api  |     self._dbapi_connection = engine.raw_connection()
+4|bankykit-api  |                              ^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3309, in raw_connection
+4|bankykit-api  |     return self.pool.connect()
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+4|bankykit-api  |     return _ConnectionFairy._checkout(self)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+4|bankykit-api  |     fairy = _ConnectionRecord.checkout(pool)
+4|bankykit-api  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+4|bankykit-api  |     rec = pool._do_get()
+4|bankykit-api  |           ^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+4|bankykit-api  |     with util.safe_reraise():
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+4|bankykit-api  |     raise exc_value.with_traceback(exc_tb)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+4|bankykit-api  |     return self._create_connection()
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+4|bankykit-api  |     return _ConnectionRecord(self)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+4|bankykit-api  |     self.__connect()
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+4|bankykit-api  |     with util.safe_reraise():
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+4|bankykit-api  |     raise exc_value.with_traceback(exc_tb)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+4|bankykit-api  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+4|bankykit-api  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+4|bankykit-api  |     return dialect.connect(*cargs, **cparams)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+4|bankykit-api  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+4|bankykit-api  |     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  | psycopg2.OperationalError: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+4|bankykit-api  | The above exception was the direct cause of the following exception:
+4|bankykit-api  | Traceback (most recent call last):
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 410, in run_asgi
+4|bankykit-api  |     result = await app(  # type: ignore[func-returns-value]
+4|bankykit-api  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+4|bankykit-api  |     return await self.app(scope, receive, send)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1134, in __call__
+4|bankykit-api  |     await super().__call__(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+4|bankykit-api  |     await self.middleware_stack(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+4|bankykit-api  |     raise exc
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+4|bankykit-api  |     await self.app(scope, receive, _send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+4|bankykit-api  |     with recv_stream, send_stream, collapse_excgroups():
+4|bankykit-api  |   File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+4|bankykit-api  |     self.gen.throw(value)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+4|bankykit-api  |     raise exc
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+4|bankykit-api  |     response = await self.dispatch_func(request, call_next)
+4|bankykit-api  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/python_backend/middleware/audit.py", line 32, in dispatch
+4|bankykit-api  |     return await call_next(request)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+4|bankykit-api  |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+4|bankykit-api  |     await self.app(scope, receive_or_disconnect, send_no_error)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+4|bankykit-api  |     with recv_stream, send_stream, collapse_excgroups():
+4|bankykit-api  |   File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+4|bankykit-api  |     self.gen.throw(value)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+4|bankykit-api  |     raise exc
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+4|bankykit-api  |     response = await self.dispatch_func(request, call_next)
+4|bankykit-api  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/python_backend/main.py", line 435, in timing_middleware
+4|bankykit-api  |     response = await call_next(request)
+4|bankykit-api  |                ^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+4|bankykit-api  |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+4|bankykit-api  |     await self.app(scope, receive_or_disconnect, send_no_error)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 87, in __call__
+4|bankykit-api  |     await self.app(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+4|bankykit-api  |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+4|bankykit-api  |     raise exc
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+4|bankykit-api  |     await app(scope, receive, sender)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+4|bankykit-api  |     await self.app(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+4|bankykit-api  |     await self.middleware_stack(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+4|bankykit-api  |     await route.handle(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+4|bankykit-api  |     await self.app(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 119, in app
+4|bankykit-api  |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+4|bankykit-api  |     raise exc
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+4|bankykit-api  |     await app(scope, receive, sender)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 105, in app
+4|bankykit-api  |     response = await f(request)
+4|bankykit-api  |                ^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 424, in app
+4|bankykit-api  |     raw_response = await run_endpoint_function(
+4|bankykit-api  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 314, in run_endpoint_function
+4|bankykit-api  |     return await run_in_threadpool(dependant.call, **values)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/concurrency.py", line 32, in run_in_threadpool
+4|bankykit-api  |     return await anyio.to_thread.run_sync(func)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/anyio/to_thread.py", line 63, in run_sync
+4|bankykit-api  |     return await get_async_backend().run_sync_in_worker_thread(
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2502, in run_sync_in_worker_thread
+4|bankykit-api  |     return await future
+4|bankykit-api  |            ^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 986, in run
+4|bankykit-api  |     result = context.run(func, *args)
+4|bankykit-api  |              ^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/python_backend/routes/notifications.py", line 36, in list_notifications
+4|bankykit-api  |     staff = tenant_session.query(Staff).filter(Staff.email == user.email).first()
+4|bankykit-api  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2759, in first
+4|bankykit-api  |     return self.limit(1)._iter().first()  # type: ignore
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2857, in _iter
+4|bankykit-api  |     result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+4|bankykit-api  |                                                   ^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+4|bankykit-api  |     return self._execute_internal(
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2239, in _execute_internal
+4|bankykit-api  |     conn = self._connection_for_bind(bind)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2108, in _connection_for_bind
+4|bankykit-api  |     return trans._connection_for_bind(engine, execution_options)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "<string>", line 2, in _connection_for_bind
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+4|bankykit-api  |     ret_value = fn(self, *arg, **kw)
+4|bankykit-api  |                 ^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1187, in _connection_for_bind
+4|bankykit-api  |     conn = bind.connect()
+4|bankykit-api  |            ^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3285, in connect
+4|bankykit-api  |     return self._connection_cls(self)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+4|bankykit-api  |     Connection._handle_dbapi_exception_noconnection(
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2448, in _handle_dbapi_exception_noconnection
+4|bankykit-api  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+4|bankykit-api  |     self._dbapi_connection = engine.raw_connection()
+4|bankykit-api  |                              ^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3309, in raw_connection
+4|bankykit-api  |     return self.pool.connect()
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+4|bankykit-api  |     return _ConnectionFairy._checkout(self)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+4|bankykit-api  |     fairy = _ConnectionRecord.checkout(pool)
+4|bankykit-api  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+4|bankykit-api  |     rec = pool._do_get()
+4|bankykit-api  |           ^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+4|bankykit-api  |     with util.safe_reraise():
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+4|bankykit-api  |     raise exc_value.with_traceback(exc_tb)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+4|bankykit-api  |     return self._create_connection()
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+4|bankykit-api  |     return _ConnectionRecord(self)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+4|bankykit-api  |     self.__connect()
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+4|bankykit-api  |     with util.safe_reraise():
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+4|bankykit-api  |     raise exc_value.with_traceback(exc_tb)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+4|bankykit-api  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+4|bankykit-api  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+4|bankykit-api  |     return dialect.connect(*cargs, **cparams)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+4|bankykit-api  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+4|bankykit-api  |     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  | sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+4|bankykit-api  | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+4|bankykit-api  | INFO:     196.96.211.112:0 - "GET /api/organizations/5cdd828b-0ea4-48d3-9c10-c8d49383eb07/analytics/dashboard HTTP/1.1" 500 Internal Server Error
+4|bankykit-api  | ERROR:    Exception in ASGI application
+4|bankykit-api  | Traceback (most recent call last):
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+4|bankykit-api  |     self._dbapi_connection = engine.raw_connection()
+4|bankykit-api  |                              ^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3309, in raw_connection
+4|bankykit-api  |     return self.pool.connect()
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+4|bankykit-api  |     return _ConnectionFairy._checkout(self)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+4|bankykit-api  |     fairy = _ConnectionRecord.checkout(pool)
+4|bankykit-api  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+4|bankykit-api  |     rec = pool._do_get()
+4|bankykit-api  |           ^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+4|bankykit-api  |     with util.safe_reraise():
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+4|bankykit-api  |     raise exc_value.with_traceback(exc_tb)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+4|bankykit-api  |     return self._create_connection()
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+4|bankykit-api  |     return _ConnectionRecord(self)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+4|bankykit-api  |     self.__connect()
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+4|bankykit-api  |     with util.safe_reraise():
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+4|bankykit-api  |     raise exc_value.with_traceback(exc_tb)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+4|bankykit-api  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+4|bankykit-api  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+4|bankykit-api  |     return dialect.connect(*cargs, **cparams)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+4|bankykit-api  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+4|bankykit-api  |     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  | psycopg2.OperationalError: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+4|bankykit-api  | The above exception was the direct cause of the following exception:
+4|bankykit-api  | Traceback (most recent call last):
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 410, in run_asgi
+4|bankykit-api  |     result = await app(  # type: ignore[func-returns-value]
+4|bankykit-api  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+4|bankykit-api  |     return await self.app(scope, receive, send)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1134, in __call__
+4|bankykit-api  |     await super().__call__(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+4|bankykit-api  |     await self.middleware_stack(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+4|bankykit-api  |     raise exc
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+4|bankykit-api  |     await self.app(scope, receive, _send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+4|bankykit-api  |     with recv_stream, send_stream, collapse_excgroups():
+4|bankykit-api  |   File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+4|bankykit-api  |     self.gen.throw(value)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+4|bankykit-api  |     raise exc
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+4|bankykit-api  |     response = await self.dispatch_func(request, call_next)
+4|bankykit-api  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/python_backend/middleware/audit.py", line 32, in dispatch
+4|bankykit-api  |     return await call_next(request)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+4|bankykit-api  |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+4|bankykit-api  |     await self.app(scope, receive_or_disconnect, send_no_error)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+4|bankykit-api  |     with recv_stream, send_stream, collapse_excgroups():
+4|bankykit-api  |   File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+4|bankykit-api  |     self.gen.throw(value)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+4|bankykit-api  |     raise exc
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+4|bankykit-api  |     response = await self.dispatch_func(request, call_next)
+4|bankykit-api  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/python_backend/main.py", line 435, in timing_middleware
+4|bankykit-api  |     response = await call_next(request)
+4|bankykit-api  |                ^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+4|bankykit-api  |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+4|bankykit-api  |     await self.app(scope, receive_or_disconnect, send_no_error)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 87, in __call__
+4|bankykit-api  |     await self.app(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+4|bankykit-api  |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+4|bankykit-api  |     raise exc
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+4|bankykit-api  |     await app(scope, receive, sender)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+4|bankykit-api  |     await self.app(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+4|bankykit-api  |     await self.middleware_stack(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+4|bankykit-api  |     await route.handle(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+4|bankykit-api  |     await self.app(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 119, in app
+4|bankykit-api  |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+4|bankykit-api  |     raise exc
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+4|bankykit-api  |     await app(scope, receive, sender)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 105, in app
+4|bankykit-api  |     response = await f(request)
+4|bankykit-api  |                ^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 424, in app
+4|bankykit-api  |     raw_response = await run_endpoint_function(
+4|bankykit-api  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 312, in run_endpoint_function
+4|bankykit-api  |     return await dependant.call(**values)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/python_backend/routes/analytics.py", line 20, in get_dashboard_analytics
+4|bankykit-api  |     total_members = tenant_session.query(func.count(Member.id)).filter(Member.is_active == True).scalar() or 0
+4|bankykit-api  |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2835, in scalar
+4|bankykit-api  |     ret = self.one()
+4|bankykit-api  |           ^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2808, in one
+4|bankykit-api  |     return self._iter().one()  # type: ignore
+4|bankykit-api  |            ^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2857, in _iter
+4|bankykit-api  |     result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+4|bankykit-api  |                                                   ^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+4|bankykit-api  |     return self._execute_internal(
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2239, in _execute_internal
+4|bankykit-api  |     conn = self._connection_for_bind(bind)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2108, in _connection_for_bind
+4|bankykit-api  |     return trans._connection_for_bind(engine, execution_options)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "<string>", line 2, in _connection_for_bind
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+4|bankykit-api  |     ret_value = fn(self, *arg, **kw)
+4|bankykit-api  |                 ^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1187, in _connection_for_bind
+4|bankykit-api  |     conn = bind.connect()
+4|bankykit-api  |            ^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3285, in connect
+4|bankykit-api  |     return self._connection_cls(self)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+4|bankykit-api  |     Connection._handle_dbapi_exception_noconnection(
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2448, in _handle_dbapi_exception_noconnection
+4|bankykit-api  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+4|bankykit-api  |     self._dbapi_connection = engine.raw_connection()
+4|bankykit-api  |                              ^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3309, in raw_connection
+4|bankykit-api  |     return self.pool.connect()
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+4|bankykit-api  |     return _ConnectionFairy._checkout(self)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+4|bankykit-api  |     fairy = _ConnectionRecord.checkout(pool)
+4|bankykit-api  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+4|bankykit-api  |     rec = pool._do_get()
+4|bankykit-api  |           ^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+4|bankykit-api  |     with util.safe_reraise():
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+4|bankykit-api  |     raise exc_value.with_traceback(exc_tb)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+4|bankykit-api  |     return self._create_connection()
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+4|bankykit-api  |     return _ConnectionRecord(self)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+4|bankykit-api  |     self.__connect()
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+4|bankykit-api  |     with util.safe_reraise():
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+4|bankykit-api  |     raise exc_value.with_traceback(exc_tb)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+4|bankykit-api  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+4|bankykit-api  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+4|bankykit-api  |     return dialect.connect(*cargs, **cparams)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+4|bankykit-api  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+4|bankykit-api  |     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  | sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+4|bankykit-api  | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+4|bankykit-api  | INFO:     196.96.211.112:0 - "GET /api/organizations/5cdd828b-0ea4-48d3-9c10-c8d49383eb07/settings HTTP/1.1" 500 Internal Server Error
+4|bankykit-api  | ERROR:    Exception in ASGI application
+4|bankykit-api  | Traceback (most recent call last):
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+4|bankykit-api  |     self._dbapi_connection = engine.raw_connection()
+4|bankykit-api  |                              ^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3309, in raw_connection
+4|bankykit-api  |     return self.pool.connect()
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+4|bankykit-api  |     return _ConnectionFairy._checkout(self)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+4|bankykit-api  |     fairy = _ConnectionRecord.checkout(pool)
+4|bankykit-api  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+4|bankykit-api  |     rec = pool._do_get()
+4|bankykit-api  |           ^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+4|bankykit-api  |     with util.safe_reraise():
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+4|bankykit-api  |     raise exc_value.with_traceback(exc_tb)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+4|bankykit-api  |     return self._create_connection()
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+4|bankykit-api  |     return _ConnectionRecord(self)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+4|bankykit-api  |     self.__connect()
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+4|bankykit-api  |     with util.safe_reraise():
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+4|bankykit-api  |     raise exc_value.with_traceback(exc_tb)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+4|bankykit-api  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+4|bankykit-api  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+4|bankykit-api  |     return dialect.connect(*cargs, **cparams)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+4|bankykit-api  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+4|bankykit-api  |     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  | psycopg2.OperationalError: connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+4|bankykit-api  | The above exception was the direct cause of the following exception:
+4|bankykit-api  | Traceback (most recent call last):
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py", line 410, in run_asgi
+4|bankykit-api  |     result = await app(  # type: ignore[func-returns-value]
+4|bankykit-api  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+4|bankykit-api  |     return await self.app(scope, receive, send)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/fastapi/applications.py", line 1134, in __call__
+4|bankykit-api  |     await super().__call__(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/applications.py", line 107, in __call__
+4|bankykit-api  |     await self.middleware_stack(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+4|bankykit-api  |     raise exc
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+4|bankykit-api  |     await self.app(scope, receive, _send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+4|bankykit-api  |     with recv_stream, send_stream, collapse_excgroups():
+4|bankykit-api  |   File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+4|bankykit-api  |     self.gen.throw(value)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+4|bankykit-api  |     raise exc
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+4|bankykit-api  |     response = await self.dispatch_func(request, call_next)
+4|bankykit-api  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/python_backend/middleware/audit.py", line 32, in dispatch
+4|bankykit-api  |     return await call_next(request)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+4|bankykit-api  |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+4|bankykit-api  |     await self.app(scope, receive_or_disconnect, send_no_error)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 191, in __call__
+4|bankykit-api  |     with recv_stream, send_stream, collapse_excgroups():
+4|bankykit-api  |   File "/usr/lib/python3.12/contextlib.py", line 158, in __exit__
+4|bankykit-api  |     self.gen.throw(value)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/_utils.py", line 87, in collapse_excgroups
+4|bankykit-api  |     raise exc
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 193, in __call__
+4|bankykit-api  |     response = await self.dispatch_func(request, call_next)
+4|bankykit-api  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/python_backend/main.py", line 435, in timing_middleware
+4|bankykit-api  |     response = await call_next(request)
+4|bankykit-api  |                ^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 168, in call_next
+4|bankykit-api  |     raise app_exc from app_exc.__cause__ or app_exc.__context__
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+4|bankykit-api  |     await self.app(scope, receive_or_disconnect, send_no_error)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/cors.py", line 87, in __call__
+4|bankykit-api  |     await self.app(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+4|bankykit-api  |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+4|bankykit-api  |     raise exc
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+4|bankykit-api  |     await app(scope, receive, sender)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+4|bankykit-api  |     await self.app(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+4|bankykit-api  |     await self.middleware_stack(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+4|bankykit-api  |     await route.handle(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+4|bankykit-api  |     await self.app(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 119, in app
+4|bankykit-api  |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+4|bankykit-api  |     raise exc
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+4|bankykit-api  |     await app(scope, receive, sender)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 105, in app
+4|bankykit-api  |     response = await f(request)
+4|bankykit-api  |                ^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 424, in app
+4|bankykit-api  |     raw_response = await run_endpoint_function(
+4|bankykit-api  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 312, in run_endpoint_function
+4|bankykit-api  |     return await dependant.call(**values)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/python_backend/routes/settings.py", line 104, in list_settings
+4|bankykit-api  |     initialize_settings(tenant_session)
+4|bankykit-api  |   File "/var/www/bankykit/python_backend/routes/settings.py", line 57, in initialize_settings
+4|bankykit-api  |     existing = tenant_session.query(OrganizationSettings).count()
+4|bankykit-api  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 3146, in count
+4|bankykit-api  |     self._legacy_from_self(col).enable_eagerloads(False).scalar()
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2835, in scalar
+4|bankykit-api  |     ret = self.one()
+4|bankykit-api  |           ^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2808, in one
+4|bankykit-api  |     return self._iter().one()  # type: ignore
+4|bankykit-api  |            ^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py", line 2857, in _iter
+4|bankykit-api  |     result: Union[ScalarResult[_T], Result[_T]] = self.session.execute(
+4|bankykit-api  |                                                   ^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2351, in execute
+4|bankykit-api  |     return self._execute_internal(
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2239, in _execute_internal
+4|bankykit-api  |     conn = self._connection_for_bind(bind)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 2108, in _connection_for_bind
+4|bankykit-api  |     return trans._connection_for_bind(engine, execution_options)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "<string>", line 2, in _connection_for_bind
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py", line 137, in _go
+4|bankykit-api  |     ret_value = fn(self, *arg, **kw)
+4|bankykit-api  |                 ^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py", line 1187, in _connection_for_bind
+4|bankykit-api  |     conn = bind.connect()
+4|bankykit-api  |            ^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3285, in connect
+4|bankykit-api  |     return self._connection_cls(self)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+4|bankykit-api  |     Connection._handle_dbapi_exception_noconnection(
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2448, in _handle_dbapi_exception_noconnection
+4|bankykit-api  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+4|bankykit-api  |     self._dbapi_connection = engine.raw_connection()
+4|bankykit-api  |                              ^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3309, in raw_connection
+4|bankykit-api  |     return self.pool.connect()
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+4|bankykit-api  |     return _ConnectionFairy._checkout(self)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+4|bankykit-api  |     fairy = _ConnectionRecord.checkout(pool)
+4|bankykit-api  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+4|bankykit-api  |     rec = pool._do_get()
+4|bankykit-api  |           ^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+4|bankykit-api  |     with util.safe_reraise():
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+4|bankykit-api  |     raise exc_value.with_traceback(exc_tb)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+4|bankykit-api  |     return self._create_connection()
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+4|bankykit-api  |     return _ConnectionRecord(self)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+4|bankykit-api  |     self.__connect()
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+4|bankykit-api  |     with util.safe_reraise():
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+4|bankykit-api  |     raise exc_value.with_traceback(exc_tb)
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+4|bankykit-api  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+4|bankykit-api  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+4|bankykit-api  |     return dialect.connect(*cargs, **cparams)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+4|bankykit-api  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  |   File "/var/www/bankykit/venv/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+4|bankykit-api  |     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+4|bankykit-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+4|bankykit-api  | sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: fe_sendauth: no password supplied
+4|bankykit-api  | (Background on this error at: https://sqlalche.me/e/20/e3q8)
