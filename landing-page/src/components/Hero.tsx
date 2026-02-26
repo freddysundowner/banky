@@ -119,11 +119,6 @@ export default function Hero() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white rounded-full text-sm font-medium mb-6">
-                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                {settings.hero_badge}
-              </div>
-              
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-6 leading-tight">
                 {formatTitle(settings.hero_title)}
               </h1>
