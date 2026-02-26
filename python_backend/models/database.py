@@ -33,8 +33,8 @@ def normalize_pg_url(url: str) -> str:
     if host and host not in ("localhost", "127.0.0.1"):
         return url
 
-    # Already correct
-    if host == "127.0.0.1" and parsed.username and parsed.password:
+    # Already using TCP on 127.0.0.1 with credentials — nothing to do
+    if host == "127.0.0.1" and parsed.password:
         return url
 
     # Extract just the database name

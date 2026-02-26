@@ -394,6 +394,7 @@ def _normalize_stored_connection_strings():
     """
     from models.database import normalize_pg_url, SessionLocal
     from models.master import Organization
+    db = None
     try:
         db = SessionLocal()
         orgs = db.query(Organization).filter(Organization.connection_string.isnot(None)).all()
@@ -406,9 +407,11 @@ def _normalize_stored_connection_strings():
         if fixed:
             db.commit()
             print(f"[startup] Normalized {fixed} organization connection string(s) to use 127.0.0.1 TCP")
-        db.close()
     except Exception as e:
         print(f"[startup] Warning: could not normalize connection strings: {e}")
+    finally:
+        if db:
+            db.close()
 
 
 @asynccontextmanager
