@@ -17,6 +17,7 @@ print_err()  { echo -e "${RED}    [ERROR] $1${NC}"; }
 APP_DIR=$(pwd)
 REQUIRED_PYTHON="3.11.9"
 DB_NAME="bankykit"
+DB_PASSWORD="bankykit"
 
 echo ""
 echo -e "${BLUE}================================================================${NC}"
@@ -389,10 +390,22 @@ else
     print_ok "Database '${DB_NAME}' created"
 fi
 
+# ── Set postgres password & switch local auth to scram-sha-256 ──
+if [ "$PLATFORM" = "linux" ] && sudo -u postgres psql -c '\q' 2>/dev/null; then
+    sudo -u postgres psql -c "ALTER USER postgres PASSWORD '${DB_PASSWORD}';" >/dev/null 2>&1
+    PG_HBA=$(sudo -u postgres psql -tAc "SHOW hba_file;" 2>/dev/null | tr -d ' ')
+    if [ -n "$PG_HBA" ] && [ -f "$PG_HBA" ]; then
+        sudo sed -i "s/^\(local[[:space:]]\+all[[:space:]]\+postgres[[:space:]]\+\)peer/\1scram-sha-256/" "$PG_HBA"
+        sudo sed -i "s/^\(local[[:space:]]\+all[[:space:]]\+all[[:space:]]\+\)peer/\1scram-sha-256/" "$PG_HBA"
+        sudo systemctl reload postgresql 2>/dev/null || sudo service postgresql reload 2>/dev/null || true
+        print_ok "PostgreSQL password set and local auth updated to scram-sha-256"
+    fi
+fi
+
 # ── Write DATABASE_URL to .env if not already set ────────────
 source .env 2>/dev/null || true
 if [ "$PLATFORM" = "linux" ]; then
-    NEW_DB_URL="postgresql:///${DB_NAME}"
+    NEW_DB_URL="postgresql://postgres:${DB_PASSWORD}@127.0.0.1:5432/${DB_NAME}"
 else
     NEW_DB_URL="postgresql://localhost:5432/${DB_NAME}"
 fi
