@@ -1,5 +1,4 @@
 import Hero from '../components/Hero';
-import Stats from '../components/Stats';
 import Features from '../components/Features';
 import HowItWorks from '../components/HowItWorks';
 import MobileApp from '../components/MobileApp';
@@ -16,7 +15,6 @@ export default function HomePage() {
   return (
     <>
       <Hero />
-      <Stats />
       <Features />
       <MobileApp />
       <HowItWorks />
