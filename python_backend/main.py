@@ -102,17 +102,22 @@ def seed_default_plans():
         existing = db.query(SubscriptionPlan).count()
 
         if existing > 0:
-            # Update prices on every startup so they stay in sync with KES_PLANS.
+            # Update prices and features on every startup so they stay in sync.
             print("Updating subscription plan prices to KES values...")
             for plan in db.query(SubscriptionPlan).all():
                 prices = KES_PLANS.get(plan.plan_type)
-                if not prices:
-                    continue
-                if "monthly_price" in prices:
-                    plan.monthly_price = prices["monthly_price"]
-                    plan.annual_price  = prices["annual_price"]
-                if "one_time_price" in prices:
-                    plan.one_time_price = prices["one_time_price"]
+                if prices:
+                    if "monthly_price" in prices:
+                        plan.monthly_price = prices["monthly_price"]
+                        plan.annual_price  = prices["annual_price"]
+                    if "one_time_price" in prices:
+                        plan.one_time_price = prices["one_time_price"]
+                # Sync features: ensure all canonical features are present.
+                canonical = DEFAULT_PLAN_FEATURES.get(plan.plan_type)
+                if canonical:
+                    current_enabled = (plan.features or {}).get("enabled", [])
+                    merged = list(set(current_enabled) | set(canonical))
+                    plan.features = {"enabled": merged}
             db.commit()
             print("Plan prices updated.")
             return
