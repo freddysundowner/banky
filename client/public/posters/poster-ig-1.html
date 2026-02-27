@@ -9,68 +9,72 @@
 html, body { width:1080px; height:1080px; overflow:hidden; }
 .poster {
   width:1080px; height:1080px;
-  background:linear-gradient(145deg,#064E3B 0%,#065F46 55%,#047857 100%);
+  background:#0B1120;
   font-family:"Poppins",sans-serif; position:relative; overflow:hidden;
-  display:flex; flex-direction:column; justify-content:space-between; padding:60px 70px;
+  display:flex; flex-direction:column; justify-content:space-between; padding:64px 72px;
 }
-.poster::before { content:""; position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.055) 1.5px, transparent 1.5px); background-size:28px 28px; pointer-events:none; }
-.arc { position:absolute; border-radius:50%; pointer-events:none; }
-.arc1 { width:600px; height:600px; bottom:-220px; right:-150px; border:70px solid rgba(255,255,255,0.05); }
-.arc2 { width:340px; height:340px; top:-100px; left:-80px; border:46px solid rgba(255,255,255,0.04); }
+.poster::before { content:""; position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.04) 1.5px, transparent 1.5px); background-size:28px 28px; pointer-events:none; }
+.blob { position:absolute; border-radius:50%; pointer-events:none; background:radial-gradient(circle, rgba(4,120,87,0.30) 0%, transparent 70%); }
+.blob1 { width:700px; height:700px; bottom:-220px; right:-160px; }
+.blob2 { width:380px; height:380px; top:-100px; left:-80px; opacity:.5; }
 
 .top { position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between; }
 .logo { display:flex; align-items:center; gap:14px; }
-.logo-icon { width:52px; height:52px; border-radius:13px; background:rgba(255,255,255,0.14); border:2px solid rgba(255,255,255,0.25); display:flex; align-items:center; justify-content:center; font-size:26px; }
-.logo-name { font-size:22px; font-weight:800; color:#fff; }
-.logo-sub  { font-size:11px; color:rgba(255,255,255,0.50); }
-.ig-tag { font-size:14px; color:rgba(255,255,255,0.45); font-weight:600; }
+.logo-icon { width:52px; height:52px; border-radius:13px; background:rgba(4,120,87,0.3); border:2px solid rgba(52,211,153,0.35); display:flex; align-items:center; justify-content:center; font-size:26px; }
+.logo-name { font-size:24px; font-weight:800; color:#fff; }
+.ig-handle { font-size:15px; color:#34D399; font-weight:600; }
 
 .hero { position:relative; z-index:5; }
-.pill { display:inline-block; background:rgba(110,231,183,0.15); border:1px solid rgba(110,231,183,0.28); color:#6EE7B7; font-size:11px; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:7px 16px; border-radius:100px; margin-bottom:16px; }
-.headline { font-size:76px; font-weight:900; color:#fff; line-height:1.0; letter-spacing:-3px; margin-bottom:14px; }
-.headline em { color:#6EE7B7; font-style:normal; }
-.sub { font-size:17px; color:rgba(255,255,255,0.62); line-height:1.55; max-width:800px; }
+.kicker { font-size:13px; font-weight:700; color:#34D399; letter-spacing:2px; text-transform:uppercase; margin-bottom:14px; }
+.headline { font-size:80px; font-weight:900; color:#fff; line-height:1.0; letter-spacing:-3px; margin-bottom:14px; }
+.headline em { color:#34D399; font-style:normal; }
+.sub { font-size:18px; color:rgba(255,255,255,0.55); line-height:1.55; max-width:880px; }
 
-.feats { position:relative; z-index:5; display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.feat { display:flex; align-items:center; gap:14px; background:rgba(0,0,0,0.18); border:1px solid rgba(255,255,255,0.08); border-radius:16px; padding:18px 20px; }
-.feat-icon { font-size:28px; flex-shrink:0; }
-.feat-name { font-size:15px; font-weight:700; color:#fff; }
-.feat-desc { font-size:11.5px; color:rgba(255,255,255,0.50); margin-top:2px; }
+.metric-row { position:relative; z-index:5; display:flex; gap:16px; }
+.metric { flex:1; background:rgba(4,120,87,0.14); border:1px solid rgba(52,211,153,0.18); border-radius:20px; padding:26px 28px; }
+.metric-val { font-size:48px; font-weight:900; color:#34D399; line-height:1; margin-bottom:6px; }
+.metric-desc { font-size:14px; color:rgba(255,255,255,0.52); line-height:1.35; }
+
+.feat-list { position:relative; z-index:5; display:flex; flex-direction:column; gap:12px; }
+.feat { display:flex; align-items:center; gap:16px; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:16px; padding:18px 22px; }
+.feat-icon { font-size:26px; flex-shrink:0; }
+.feat-name { font-size:16px; font-weight:700; color:#fff; }
+.feat-desc { font-size:12px; color:rgba(255,255,255,0.46); margin-top:2px; }
 
 .bottom { position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between; }
-.price-label { font-size:11px; color:rgba(255,255,255,0.48); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:5px; }
-.price-amount { font-size:44px; font-weight:900; color:#fff; letter-spacing:-1.5px; line-height:1; }
-.price-amount span { font-size:16px; color:rgba(255,255,255,0.52); }
-.price-note { font-size:11.5px; color:rgba(255,255,255,0.38); margin-top:4px; }
-.cta-btn { background:#fff; color:#064E3B; border-radius:100px; font-size:15px; font-weight:800; padding:18px 36px; white-space:nowrap; text-align:center; }
-.cta-btn span { font-size:10px; color:#065F46; display:block; font-weight:500; margin-top:2px; }
+.price-val { font-size:46px; font-weight:900; color:#fff; letter-spacing:-1.5px; line-height:1; }
+.price-val span { font-size:18px; color:rgba(255,255,255,0.48); }
+.price-sub { font-size:12px; color:rgba(255,255,255,0.36); margin-top:4px; }
+.cta-btn { background:linear-gradient(135deg,#047857,#065F46); border:2px solid rgba(52,211,153,0.35); color:#fff; border-radius:100px; font-size:16px; font-weight:800; padding:18px 36px; white-space:nowrap; }
 </style>
 </head>
 <body>
 <div class="poster">
-  <div class="arc arc1"></div><div class="arc arc2"></div>
+  <div class="blob blob1"></div><div class="blob blob2"></div>
   <div class="top">
-    <div class="logo"><div class="logo-icon">🏦</div><div><div class="logo-name">BankyKit</div><div class="logo-sub">Loan Management</div></div></div>
-    <div class="ig-tag">@bankykit</div>
+    <div class="logo"><div class="logo-icon">🏦</div><div><div class="logo-name">BankyKit</div></div></div>
+    <div class="ig-handle">@bankykit</div>
   </div>
   <div class="hero">
-    <div class="pill">For Money Lenders</div>
-    <div class="headline">Know Who<br>Owes You.<br><em>Always.</em></div>
-    <div class="sub">One dashboard shows every borrower, outstanding amount, due date, and overdue status — in real time.</div>
+    <div class="kicker">For Serious Lenders</div>
+    <div class="headline">See Your<br>Money <em>Grow</em><br>In Real Time.</div>
+    <div class="sub">BankyKit shows you interest earned, outstanding book value, and monthly collections — updated live as payments come in.</div>
   </div>
-  <div class="feats">
-    <div class="feat"><div class="feat-icon">📋</div><div><div class="feat-name">Loan Register</div><div class="feat-desc">All borrowers, one place</div></div></div>
-    <div class="feat"><div class="feat-icon">💬</div><div><div class="feat-name">Auto SMS Reminders</div><div class="feat-desc">Sent before &amp; on due date</div></div></div>
-    <div class="feat"><div class="feat-icon">💚</div><div><div class="feat-name">M-Pesa Collection</div><div class="feat-desc">Receive &amp; record payments</div></div></div>
-    <div class="feat"><div class="feat-icon">📊</div><div><div class="feat-name">Live Dashboard</div><div class="feat-desc">Total book &amp; outstanding</div></div></div>
+  <div class="metric-row">
+    <div class="metric"><div class="metric-val">Live</div><div class="metric-desc">Portfolio value updated in real time</div></div>
+    <div class="metric"><div class="metric-val">Auto</div><div class="metric-desc">Interest calculated on every loan</div></div>
+    <div class="metric"><div class="metric-val">M-Pesa</div><div class="metric-desc">Collections recorded instantly</div></div>
+  </div>
+  <div class="feat-list">
+    <div class="feat"><div class="feat-icon">📊</div><div><div class="feat-name">Dashboard with live totals</div><div class="feat-desc">Outstanding, collected, and interest earned this month</div></div></div>
+    <div class="feat"><div class="feat-icon">📱</div><div><div class="feat-name">Manage from your phone, anywhere</div><div class="feat-desc">Full loan book access on mobile — no laptop needed</div></div></div>
   </div>
   <div class="bottom">
     <div>
-      <div class="price-label">Starting from</div>
-      <div class="price-amount">KES 4,999<span>/mo</span></div>
-      <div class="price-note">14-day free trial · demo.bankykit.com</div>
+      <div class="price-val">KES 4,999<span>/mo</span></div>
+      <div class="price-sub">14-day free trial · demo.bankykit.com</div>
     </div>
-    <div class="cta-btn">Get Started →<span>sales@bankykit.com</span></div>
+    <div class="cta-btn">Start Free Trial →</div>
   </div>
 </div>
 </body>

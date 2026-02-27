@@ -9,102 +9,87 @@
 html, body { width:1080px; height:1920px; overflow:hidden; }
 .poster {
   width:1080px; height:1920px;
-  background:#0B1120;
+  background:linear-gradient(170deg,#064E3B 0%,#065F46 50%,#047857 100%);
   font-family:"Poppins",sans-serif; position:relative; overflow:hidden;
-  display:flex; flex-direction:column; justify-content:space-between; padding:80px 80px;
+  display:flex; flex-direction:column; justify-content:space-between; padding:90px 86px;
 }
-.poster::before { content:""; position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.04) 1.5px, transparent 1.5px); background-size:32px 32px; pointer-events:none; }
-.blob { position:absolute; border-radius:50%; pointer-events:none; background:radial-gradient(circle, rgba(4,120,87,0.32) 0%, transparent 70%); }
-.blob1 { width:900px; height:900px; bottom:-300px; right:-200px; }
-.blob2 { width:520px; height:520px; top:-160px; left:-100px; opacity:.5; }
+.poster::before { content:""; position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.055) 2px, transparent 2px); background-size:36px 36px; pointer-events:none; }
+.ring { position:absolute; border-radius:50%; pointer-events:none; }
+.ring1 { width:800px; height:800px; bottom:-280px; right:-220px; border:90px solid rgba(255,255,255,0.04); }
+.ring2 { width:420px; height:420px; top:-100px; left:-100px; border:55px solid rgba(255,255,255,0.035); }
 
 .top { position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between; }
 .logo { display:flex; align-items:center; gap:18px; }
-.logo-icon { width:70px; height:70px; border-radius:18px; background:rgba(4,120,87,0.3); border:2px solid rgba(52,211,153,0.35); display:flex; align-items:center; justify-content:center; font-size:34px; }
+.logo-icon { width:70px; height:70px; border-radius:18px; background:rgba(255,255,255,0.14); border:2px solid rgba(255,255,255,0.26); display:flex; align-items:center; justify-content:center; font-size:34px; }
 .logo-name { font-size:34px; font-weight:800; color:#fff; }
-.logo-sub  { font-size:16px; color:rgba(255,255,255,0.40); margin-top:2px; }
-.top-right { font-size:18px; color:rgba(255,255,255,0.36); text-align:right; line-height:1.8; }
+.logo-sub  { font-size:16px; color:rgba(255,255,255,0.50); margin-top:2px; }
+.top-right { font-size:19px; color:rgba(255,255,255,0.42); text-align:right; line-height:1.8; }
 
 .hero { position:relative; z-index:5; }
-.kicker { font-size:18px; font-weight:700; color:#34D399; letter-spacing:2px; text-transform:uppercase; margin-bottom:20px; }
-.headline { font-size:96px; font-weight:900; color:#fff; line-height:1.0; letter-spacing:-3.5px; margin-bottom:22px; }
-.headline em { color:#34D399; font-style:normal; }
-.sub { font-size:26px; color:rgba(255,255,255,0.56); line-height:1.55; }
+.pill { display:inline-block; background:rgba(110,231,183,0.15); border:1px solid rgba(110,231,183,0.28); color:#6EE7B7; font-size:18px; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:12px 28px; border-radius:100px; margin-bottom:28px; }
+.headline { font-size:108px; font-weight:900; color:#fff; line-height:0.98; letter-spacing:-4.5px; margin-bottom:26px; }
+.headline em { color:#6EE7B7; font-style:normal; }
+.sub { font-size:27px; color:rgba(255,255,255,0.62); line-height:1.55; }
 
-.compare { position:relative; z-index:5; display:grid; grid-template-columns:1fr 1fr; gap:18px; }
-.col { border-radius:24px; padding:34px 36px; }
-.col-bad { background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.20); }
-.col-good { background:rgba(4,120,87,0.14); border:1px solid rgba(52,211,153,0.22); }
-.col-label { font-size:15px; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:18px; }
-.col-bad .col-label { color:#F87171; }
-.col-good .col-label { color:#34D399; }
-.col-item { display:flex; align-items:flex-start; gap:12px; font-size:20px; color:rgba(255,255,255,0.68); line-height:1.45; margin-bottom:14px; }
-.col-item:last-child { margin-bottom:0; }
-.ci { font-size:22px; flex-shrink:0; }
+.cards { position:relative; z-index:5; display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.card { background:rgba(0,0,0,0.20); border:1px solid rgba(255,255,255,0.10); border-radius:26px; padding:34px 36px; }
+.card-icon { font-size:42px; margin-bottom:14px; }
+.card-title { font-size:24px; font-weight:700; color:#fff; margin-bottom:7px; }
+.card-desc { font-size:19px; color:rgba(255,255,255,0.52); line-height:1.45; }
 
-.stats { position:relative; z-index:5; display:flex; gap:18px; }
-.stat { flex:1; background:rgba(4,120,87,0.14); border:1px solid rgba(52,211,153,0.18); border-radius:22px; padding:34px 36px; }
-.stat-val { font-size:52px; font-weight:900; color:#34D399; line-height:1; margin-bottom:8px; }
-.stat-desc { font-size:20px; color:rgba(255,255,255,0.52); line-height:1.4; }
+.quote-block { position:relative; z-index:5; background:rgba(0,0,0,0.18); border-left:5px solid #6EE7B7; border-radius:0 20px 20px 0; padding:36px 40px; }
+.quote-text { font-size:28px; color:rgba(255,255,255,0.80); line-height:1.5; font-style:italic; margin-bottom:14px; }
+.quote-name { font-size:20px; color:#6EE7B7; font-weight:700; }
 
-.price-block { position:relative; z-index:5; background:rgba(4,120,87,0.12); border:2px solid rgba(52,211,153,0.25); border-radius:30px; padding:44px 50px; display:flex; align-items:center; justify-content:space-between; }
-.price-label { font-size:18px; color:rgba(255,255,255,0.44); text-transform:uppercase; letter-spacing:2px; margin-bottom:8px; }
-.price-amount { font-size:72px; font-weight:900; color:#fff; letter-spacing:-3px; line-height:1; }
-.price-amount span { font-size:28px; color:rgba(255,255,255,0.48); }
-.price-note { font-size:18px; color:rgba(255,255,255,0.35); margin-top:6px; }
-.trial-pill { background:rgba(52,211,153,0.12); border:1px solid rgba(52,211,153,0.25); border-radius:18px; padding:18px 28px; text-align:center; }
-.tl { font-size:15px; color:#34D399; font-weight:700; letter-spacing:1.5px; }
-.td { font-size:64px; font-weight:900; color:#fff; line-height:1; }
-.ts { font-size:16px; color:rgba(255,255,255,0.45); }
+.price-block { position:relative; z-index:5; background:rgba(0,0,0,0.22); border:2px solid rgba(110,231,183,0.28); border-radius:30px; padding:46px 52px; display:flex; align-items:center; justify-content:space-between; gap:30px; }
+.price-label { font-size:18px; color:rgba(255,255,255,0.46); text-transform:uppercase; letter-spacing:2px; margin-bottom:8px; }
+.price-val { font-size:76px; font-weight:900; color:#fff; letter-spacing:-3px; line-height:1; }
+.price-val span { font-size:28px; color:rgba(255,255,255,0.48); }
+.price-note { font-size:19px; color:rgba(255,255,255,0.37); margin-top:8px; }
+.free-box { background:rgba(110,231,183,0.14); border:1.5px solid rgba(110,231,183,0.28); border-radius:22px; padding:22px 32px; text-align:center; flex-shrink:0; }
+.fl { font-size:17px; color:#6EE7B7; font-weight:700; letter-spacing:1.5px; }
+.fd { font-size:68px; font-weight:900; color:#fff; line-height:1; }
+.fs { font-size:17px; color:rgba(255,255,255,0.46); }
 
-.cta { position:relative; z-index:5; background:linear-gradient(135deg,#047857,#065F46); border:2px solid rgba(52,211,153,0.35); border-radius:28px; padding:40px 50px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
-.cta-text { font-size:30px; font-weight:800; color:#fff; line-height:1.2; }
-.cta-text span { font-size:20px; font-weight:500; color:rgba(255,255,255,0.60); display:block; margin-top:4px; }
-.cta-badge { background:#fff; color:#064E3B; font-size:22px; font-weight:800; padding:20px 36px; border-radius:100px; white-space:nowrap; }
+.cta { position:relative; z-index:5; background:#fff; border-radius:28px; padding:42px 50px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.cta-text { font-size:30px; font-weight:800; color:#064E3B; line-height:1.2; }
+.cta-text span { font-size:20px; font-weight:500; color:#065F46; display:block; margin-top:5px; }
+.cta-btn { background:#064E3B; color:#6EE7B7; font-size:23px; font-weight:800; padding:22px 40px; border-radius:100px; white-space:nowrap; }
 </style>
 </head>
 <body>
 <div class="poster">
-  <div class="blob blob1"></div><div class="blob blob2"></div>
+  <div class="ring ring1"></div><div class="ring ring2"></div>
   <div class="top">
     <div class="logo"><div class="logo-icon">🏦</div><div><div class="logo-name">BankyKit</div><div class="logo-sub">Loan Management</div></div></div>
     <div class="top-right">sales@bankykit.com<br>+254 791 334 234</div>
   </div>
   <div class="hero">
-    <div class="kicker">For Shylocks &amp; Money Lenders</div>
-    <div class="headline">Your Borrowers<br>Know You Don't<br>Have <em>Proof.</em><br>Until Now.</div>
-    <div class="sub">Digital records, SMS history, M-Pesa timestamps — every loan backed with evidence, automatically.</div>
+    <div class="pill">Your Whole Loan Book. One App.</div>
+    <div class="headline">Every<br>Shilling.<br><em>Accounted</em><br>For.</div>
+    <div class="sub">Finally see your total interest earned, outstanding balances, and repayment history — all in one place, updated in real time.</div>
   </div>
-  <div class="compare">
-    <div class="col col-bad">
-      <div class="col-label">❌ Without</div>
-      <div class="col-item"><div class="ci">📓</div>Notebook lost — can't prove the debt</div>
-      <div class="col-item"><div class="ci">📵</div>No answer — no way to prove reminder was sent</div>
-      <div class="col-item"><div class="ci">💸</div>Interest miscalculated — you lose</div>
-    </div>
-    <div class="col col-good">
-      <div class="col-label">✅ With BankyKit</div>
-      <div class="col-item"><div class="ci">📋</div>Digital record — can't be denied</div>
-      <div class="col-item"><div class="ci">💬</div>Auto SMS sent — timestamp proof</div>
-      <div class="col-item"><div class="ci">📈</div>Interest auto-calculated — every shilling</div>
-    </div>
+  <div class="cards">
+    <div class="card"><div class="card-icon">💰</div><div class="card-title">Interest Tracker</div><div class="card-desc">See exactly how much you've earned this month vs last month</div></div>
+    <div class="card"><div class="card-icon">📱</div><div class="card-title">Works on Phone</div><div class="card-desc">Manage your entire loan book from your smartphone anywhere</div></div>
+    <div class="card"><div class="card-icon">📆</div><div class="card-title">Repayment Schedule</div><div class="card-desc">Auto-generated for every loan — no manual work</div></div>
+    <div class="card"><div class="card-icon">🤝</div><div class="card-title">SACCO Ready</div><div class="card-desc">Handles individual lenders all the way to full SACCOs</div></div>
   </div>
-  <div class="stats">
-    <div class="stat"><div class="stat-val">Auto</div><div class="stat-desc">SMS reminders sent before &amp; on due date</div></div>
-    <div class="stat"><div class="stat-val">M-Pesa</div><div class="stat-desc">Collect &amp; record payments automatically</div></div>
-    <div class="stat"><div class="stat-val">PDF</div><div class="stat-desc">Statement for every borrower</div></div>
+  <div class="quote-block">
+    <div class="quote-text">"I used to guess how much my loan book was worth. Now I know — down to the last shilling."</div>
+    <div class="quote-name">— Samuel K., Nakuru</div>
   </div>
   <div class="price-block">
     <div>
-      <div class="price-label">Starting from</div>
-      <div class="price-amount">KES 4,999<span>/mo</span></div>
-      <div class="price-note">14-day free trial · no card required</div>
+      <div class="price-label">Start from</div>
+      <div class="price-val">KES 4,999<span>/mo</span></div>
+      <div class="price-note">No setup fee · cancel anytime</div>
     </div>
-    <div class="trial-pill"><div class="tl">FREE TRIAL</div><div class="td">14</div><div class="ts">days</div></div>
+    <div class="free-box"><div class="fl">FREE TRIAL</div><div class="fd">14</div><div class="fs">days</div></div>
   </div>
   <div class="cta">
-    <div class="cta-text">Protect your money with digital records<span>demo.bankykit.com</span></div>
-    <div class="cta-badge">Try Free →</div>
+    <div class="cta-text">See your loan book clearly, starting today<span>demo.bankykit.com</span></div>
+    <div class="cta-btn">Try Free →</div>
   </div>
 </div>
 </body>
