@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BankyKit WA 1</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:1080px; height:1920px; overflow:hidden; }
+.poster {
+  width:1080px; height:1920px;
+  background:linear-gradient(160deg,#064E3B 0%,#065F46 45%,#047857 100%);
+  font-family:"Poppins",sans-serif; position:relative; overflow:hidden;
+  display:flex; flex-direction:column; justify-content:space-between; padding:80px 80px;
+}
+.poster::before {
+  content:""; position:absolute; inset:0;
+  background-image:radial-gradient(rgba(255,255,255,0.055) 2px, transparent 2px);
+  background-size:36px 36px; pointer-events:none;
+}
+.arc { position:absolute; border-radius:50%; pointer-events:none; }
+.arc1 { width:800px; height:800px; bottom:-300px; right:-200px; border:90px solid rgba(255,255,255,0.05); }
+.arc2 { width:440px; height:440px; top:-130px; left:-120px; border:58px solid rgba(255,255,255,0.04); }
+
+.top { position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between; }
+.logo { display:flex; align-items:center; gap:18px; }
+.logo-icon { width:70px; height:70px; border-radius:18px; background:rgba(255,255,255,0.14); border:2px solid rgba(255,255,255,0.26); display:flex; align-items:center; justify-content:center; font-size:34px; }
+.logo-name { font-size:34px; font-weight:800; color:#fff; }
+.logo-sub  { font-size:16px; color:rgba(255,255,255,0.48); margin-top:2px; }
+.top-right { font-size:18px; color:rgba(255,255,255,0.40); text-align:right; line-height:1.8; }
+
+.hero { position:relative; z-index:5; }
+.pill { display:inline-block; background:rgba(110,231,183,0.15); border:1px solid rgba(110,231,183,0.28); color:#6EE7B7; font-size:18px; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:12px 28px; border-radius:100px; margin-bottom:28px; }
+.headline { font-size:104px; font-weight:900; color:#fff; line-height:1.0; letter-spacing:-4px; margin-bottom:24px; }
+.headline em { color:#6EE7B7; font-style:normal; }
+.sub { font-size:26px; color:rgba(255,255,255,0.62); line-height:1.55; }
+
+.pain-box { position:relative; z-index:5; background:rgba(0,0,0,0.22); border:1px solid rgba(255,255,255,0.09); border-radius:28px; padding:40px 44px; }
+.pain-label { font-size:16px; font-weight:700; color:rgba(255,255,255,0.45); letter-spacing:2px; text-transform:uppercase; margin-bottom:20px; }
+.pain-item { display:flex; align-items:flex-start; gap:18px; margin-bottom:18px; font-size:24px; color:rgba(255,255,255,0.72); line-height:1.4; }
+.pain-item:last-child { margin-bottom:0; }
+.pi { font-size:28px; flex-shrink:0; }
+
+.feats { position:relative; z-index:5; display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.feat { display:flex; align-items:center; gap:18px; background:rgba(0,0,0,0.20); border:1px solid rgba(255,255,255,0.08); border-radius:22px; padding:26px 28px; }
+.feat-icon { font-size:38px; flex-shrink:0; }
+.feat-name { font-size:22px; font-weight:700; color:#fff; line-height:1.2; }
+.feat-desc { font-size:17px; color:rgba(255,255,255,0.48); margin-top:3px; }
+
+.price-block { position:relative; z-index:5; background:rgba(0,0,0,0.22); border:2px solid rgba(110,231,183,0.28); border-radius:30px; padding:44px 50px; display:flex; align-items:center; justify-content:space-between; }
+.price-label { font-size:18px; color:rgba(255,255,255,0.48); text-transform:uppercase; letter-spacing:2px; margin-bottom:8px; }
+.price-amount { font-size:72px; font-weight:900; color:#fff; letter-spacing:-3px; line-height:1; }
+.price-amount span { font-size:28px; font-weight:500; color:rgba(255,255,255,0.50); }
+.price-note { font-size:18px; color:rgba(255,255,255,0.38); margin-top:6px; }
+.trial-badge { background:rgba(110,231,183,0.15); border:1px solid rgba(110,231,183,0.28); border-radius:22px; padding:20px 28px; text-align:center; }
+.tl { font-size:16px; color:#6EE7B7; font-weight:700; letter-spacing:1.5px; }
+.td { font-size:64px; font-weight:900; color:#fff; line-height:1; }
+.ts { font-size:16px; color:rgba(255,255,255,0.48); }
+
+.cta { position:relative; z-index:5; background:#fff; border-radius:28px; padding:36px 44px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.cta-text { font-size:28px; font-weight:800; color:#064E3B; line-height:1.2; }
+.cta-text span { font-size:20px; font-weight:500; color:#065F46; display:block; margin-top:4px; }
+.cta-badge { background:#064E3B; color:#6EE7B7; font-size:22px; font-weight:800; padding:20px 36px; border-radius:100px; white-space:nowrap; }
+</style>
+</head>
+<body>
+<div class="poster">
+  <div class="arc arc1"></div><div class="arc arc2"></div>
+  <div class="top">
+    <div class="logo"><div class="logo-icon">🏦</div><div><div class="logo-name">BankyKit</div><div class="logo-sub">Loan Management</div></div></div>
+    <div class="top-right">sales@bankykit.com<br>+254 791 334 234</div>
+  </div>
+  <div class="hero">
+    <div class="pill">For Money Lenders &amp; Shylocks</div>
+    <div class="headline">Stop Chasing<br><em>Borrowers.</em><br>Let the System<br>Do It.</div>
+    <div class="sub">Track every loan, collect via M-Pesa, send auto SMS reminders on due dates — automatically.</div>
+  </div>
+  <div class="pain-box">
+    <div class="pain-label">Sound familiar?</div>
+    <div class="pain-item"><div class="pi">😤</div> Borrower not picking up — 3 weeks overdue with excuses</div>
+    <div class="pain-item"><div class="pi">📓</div> Notebook missing — can't remember what they owe</div>
+    <div class="pain-item"><div class="pi">💸</div> Forgot to add interest for two months — lost money</div>
+  </div>
+  <div class="feats">
+    <div class="feat"><div class="feat-icon">📋</div><div><div class="feat-name">Loan Register</div><div class="feat-desc">Every borrower tracked</div></div></div>
+    <div class="feat"><div class="feat-icon">💬</div><div><div class="feat-name">Auto SMS</div><div class="feat-desc">Reminders on due date</div></div></div>
+    <div class="feat"><div class="feat-icon">💚</div><div><div class="feat-name">M-Pesa</div><div class="feat-desc">Collect &amp; record payments</div></div></div>
+    <div class="feat"><div class="feat-icon">🔴</div><div><div class="feat-name">Overdue Alerts</div><div class="feat-desc">Know who's late instantly</div></div></div>
+  </div>
+  <div class="price-block">
+    <div>
+      <div class="price-label">Starting from</div>
+      <div class="price-amount">KES 4,999<span>/mo</span></div>
+      <div class="price-note">Annual: KES 47,990/yr</div>
+    </div>
+    <div class="trial-badge"><div class="tl">FREE TRIAL</div><div class="td">14</div><div class="ts">days</div></div>
+  </div>
+  <div class="cta">
+    <div class="cta-text">Start tracking your loans today<span>demo.bankykit.com</span></div>
+    <div class="cta-badge">Get Started →</div>
+  </div>
+</div>
+</body>
+</html>

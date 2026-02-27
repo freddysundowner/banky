@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BankyKit FB 2</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:1200px; height:628px; overflow:hidden; }
+.poster {
+  width:1200px; height:628px;
+  background:#0B1120;
+  font-family:"Poppins",sans-serif; position:relative; overflow:hidden; display:flex;
+}
+.poster::before {
+  content:""; position:absolute; inset:0;
+  background-image:radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size:22px 22px; pointer-events:none;
+}
+.blob { position:absolute; border-radius:50%; pointer-events:none; background:radial-gradient(circle, rgba(4,120,87,0.32) 0%, transparent 70%); }
+.blob1 { width:700px; height:700px; bottom:-280px; right:150px; }
+.blob2 { width:380px; height:380px; top:-120px; left:-60px; opacity:.5; }
+
+/* LEFT big headline side */
+.left {
+  width:560px; flex-shrink:0; padding:44px 48px;
+  display:flex; flex-direction:column; justify-content:space-between;
+  position:relative; z-index:5;
+}
+.logo { display:flex; align-items:center; gap:10px; }
+.logo-icon { width:40px; height:40px; border-radius:10px; background:rgba(4,120,87,0.3); border:1.5px solid rgba(52,211,153,0.35); display:flex; align-items:center; justify-content:center; font-size:20px; }
+.logo-name { font-size:18px; font-weight:800; color:#fff; }
+.logo-sub  { font-size:9px; color:rgba(255,255,255,0.40); margin-top:1px; }
+.kicker { font-size:9px; font-weight:700; color:#34D399; letter-spacing:2px; text-transform:uppercase; margin-bottom:10px; }
+.headline { font-size:52px; font-weight:900; color:#fff; line-height:1.0; letter-spacing:-2px; margin-bottom:12px; }
+.headline em { color:#34D399; font-style:normal; }
+.sub { font-size:12px; color:rgba(255,255,255,0.56); line-height:1.6; margin-bottom:20px; max-width:440px; }
+.tag-row { display:flex; gap:8px; flex-wrap:wrap; }
+.tag { background:rgba(52,211,153,0.10); border:1px solid rgba(52,211,153,0.20); color:#34D399; font-size:9px; font-weight:700; padding:5px 12px; border-radius:100px; }
+
+/* RIGHT */
+.right { flex:1; padding:24px 28px 24px 20px; position:relative; z-index:5; display:flex; flex-direction:column; justify-content:space-between; border-left:1px solid rgba(255,255,255,0.07); }
+.pain-box { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:16px 18px; }
+.pain-label { font-size:8px; font-weight:700; color:#F87171; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:8px; }
+.pain-item { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:10px; color:rgba(255,255,255,0.65); }
+.pain-item:last-child { margin-bottom:0; }
+.pain-icon { font-size:13px; }
+
+.solve-box { background:rgba(4,120,87,0.12); border:1px solid rgba(52,211,153,0.18); border-radius:14px; padding:16px 18px; }
+.solve-label { font-size:8px; font-weight:700; color:#34D399; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:8px; }
+.solve-item { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-size:10px; color:rgba(255,255,255,0.75); }
+.solve-item:last-child { margin-bottom:0; }
+
+.bottom { display:flex; align-items:center; justify-content:space-between; }
+.price-block {}
+.price-label { font-size:8px; color:rgba(255,255,255,0.40); letter-spacing:1px; text-transform:uppercase; margin-bottom:2px; }
+.price { font-size:28px; font-weight:900; color:#fff; letter-spacing:-1px; line-height:1; }
+.price span { font-size:11px; color:rgba(255,255,255,0.45); }
+.price-note { font-size:8.5px; color:rgba(255,255,255,0.35); margin-top:2px; }
+.cta-btn { background:linear-gradient(135deg,#047857,#065F46); border:1.5px solid rgba(52,211,153,0.35); color:#fff; border-radius:100px; font-size:11px; font-weight:800; padding:12px 22px; white-space:nowrap; text-align:center; }
+.cta-btn span { font-size:8px; color:rgba(255,255,255,0.55); display:block; margin-top:2px; }
+</style>
+</head>
+<body>
+<div class="poster">
+  <div class="blob blob1"></div><div class="blob blob2"></div>
+  <div class="left">
+    <div class="logo"><div class="logo-icon">🏦</div><div><div class="logo-name">BankyKit</div><div class="logo-sub">Loan Management Software</div></div></div>
+    <div>
+      <div class="kicker">The Problem With Notebooks</div>
+      <div class="headline">Your Borrowers<br>Are <em>Smarter</em><br>Than Your Records.</div>
+      <div class="sub">When all you have is a notebook, borrowers deny, delay, and disappear. BankyKit keeps digital records, sends SMS proof, and collects via M-Pesa — automatically.</div>
+      <div class="tag-row">
+        <div class="tag">📋 Digital Records</div>
+        <div class="tag">💬 Auto SMS</div>
+        <div class="tag">💚 M-Pesa</div>
+        <div class="tag">🔴 Overdue Alerts</div>
+      </div>
+    </div>
+    <div style="font-size:9px;color:rgba(255,255,255,0.30)">sales@bankykit.com &nbsp;|&nbsp; +254 791 334 234</div>
+  </div>
+  <div class="right">
+    <div class="pain-box">
+      <div class="pain-label">❌ Without BankyKit</div>
+      <div class="pain-item"><div class="pain-icon">📓</div>"My notebook got lost — I can't remember what they owe"</div>
+      <div class="pain-item"><div class="pain-icon">📵</div>"Borrower not picking up. 3 weeks overdue."</div>
+      <div class="pain-item"><div class="pain-icon">💸</div>"I forgot to charge interest for two months"</div>
+    </div>
+    <div class="solve-box">
+      <div class="solve-label">✅ With BankyKit</div>
+      <div class="solve-item"><div class="pain-icon">🔔</div>Auto SMS sent 3 days before due date — every time</div>
+      <div class="solve-item"><div class="pain-icon">💚</div>M-Pesa payments recorded with timestamp &amp; proof</div>
+      <div class="solve-item"><div class="pain-icon">📊</div>Interest auto-calculated — never miss a shilling</div>
+    </div>
+    <div class="bottom">
+      <div class="price-block">
+        <div class="price-label">Starting from</div>
+        <div class="price">KES 4,999<span>/mo</span></div>
+        <div class="price-note">14-day free trial · no card required</div>
+      </div>
+      <div class="cta-btn">Start Free Trial<span>demo.bankykit.com</span></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
