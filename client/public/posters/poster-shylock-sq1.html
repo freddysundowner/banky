@@ -6,67 +6,62 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
-html, body { width:1080px; height:1080px; overflow:hidden; }
+html, body { width:600px; height:600px; overflow:hidden; }
 .poster {
-  width:1080px; height:1080px;
+  width:600px; height:600px;
   background:linear-gradient(145deg, #064E3B 0%, #065F46 55%, #047857 100%);
   font-family:"Poppins",sans-serif; position:relative; overflow:hidden;
-  display:flex; flex-direction:column; justify-content:space-between; padding:56px 64px;
+  display:flex; flex-direction:column; justify-content:space-between; padding:30px 36px;
 }
 .poster::before {
   content:""; position:absolute; inset:0;
   background-image:radial-gradient(rgba(255,255,255,0.055) 1.5px, transparent 1.5px);
-  background-size:30px 30px; pointer-events:none;
+  background-size:18px 18px; pointer-events:none;
 }
 .arc { position:absolute; border-radius:50%; pointer-events:none; }
-.arc1 { width:600px; height:600px; bottom:-220px; right:-160px; border:70px solid rgba(255,255,255,0.05); }
-.arc2 { width:350px; height:350px; top:-100px; left:-80px; border:45px solid rgba(255,255,255,0.04); }
+.arc1 { width:340px; height:340px; bottom:-120px; right:-90px; border:40px solid rgba(255,255,255,0.05); }
+.arc2 { width:200px; height:200px; top:-60px; left:-50px; border:26px solid rgba(255,255,255,0.04); }
 
-/* TOP */
 .top { position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between; }
-.logo { display:flex; align-items:center; gap:12px; }
+.logo { display:flex; align-items:center; gap:8px; }
 .logo-icon {
-  width:48px; height:48px; border-radius:12px;
-  background:rgba(255,255,255,0.14); border:2px solid rgba(255,255,255,0.25);
-  display:flex; align-items:center; justify-content:center; font-size:22px;
+  width:28px; height:28px; border-radius:7px;
+  background:rgba(255,255,255,0.14); border:1.5px solid rgba(255,255,255,0.25);
+  display:flex; align-items:center; justify-content:center; font-size:13px;
 }
-.logo-name { font-size:20px; font-weight:800; color:#fff; }
-.logo-sub  { font-size:9.5px; color:rgba(255,255,255,0.50); }
+.logo-name { font-size:13px; font-weight:800; color:#fff; }
 .pill {
   background:rgba(110,231,183,0.15); border:1px solid rgba(110,231,183,0.28);
-  color:#6EE7B7; font-size:10px; font-weight:700; letter-spacing:1.5px;
-  text-transform:uppercase; padding:6px 14px; border-radius:100px;
+  color:#6EE7B7; font-size:7px; font-weight:700; letter-spacing:1.5px;
+  text-transform:uppercase; padding:4px 10px; border-radius:100px;
 }
 
-/* MIDDLE */
 .mid { position:relative; z-index:5; }
-.headline { font-size:72px; font-weight:900; color:#fff; line-height:1.0; letter-spacing:-2.5px; margin-bottom:14px; }
+.headline { font-size:42px; font-weight:900; color:#fff; line-height:1.02; letter-spacing:-1.5px; margin-bottom:8px; }
 .headline em { color:#6EE7B7; font-style:normal; }
-.sub { font-size:16px; color:rgba(255,255,255,0.64); line-height:1.55; max-width:780px; }
+.sub { font-size:10px; color:rgba(255,255,255,0.62); line-height:1.55; max-width:420px; }
 
-/* FEATURES ROW */
-.feats { position:relative; z-index:5; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.feats { position:relative; z-index:5; display:grid; grid-template-columns:1fr 1fr; gap:7px; }
 .feat {
-  display:flex; align-items:center; gap:12px;
+  display:flex; align-items:center; gap:8px;
   background:rgba(0,0,0,0.18); border:1px solid rgba(255,255,255,0.08);
-  border-radius:14px; padding:14px 16px;
+  border-radius:10px; padding:9px 11px;
 }
-.feat-icon { font-size:24px; flex-shrink:0; }
-.feat-name { font-size:13.5px; font-weight:700; color:#fff; }
-.feat-desc { font-size:10.5px; color:rgba(255,255,255,0.50); margin-top:1px; }
+.feat-icon { font-size:15px; flex-shrink:0; }
+.feat-name { font-size:9px; font-weight:700; color:#fff; }
+.feat-desc { font-size:7.5px; color:rgba(255,255,255,0.50); margin-top:1px; }
 
-/* BOTTOM */
 .bottom { position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between; }
-.price { }
-.price-label { font-size:10px; color:rgba(255,255,255,0.50); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:4px; }
-.price-amount { font-size:38px; font-weight:900; color:#fff; letter-spacing:-1.5px; line-height:1; }
-.price-amount span { font-size:15px; font-weight:500; color:rgba(255,255,255,0.55); }
-.price-note { font-size:10.5px; color:rgba(255,255,255,0.40); margin-top:3px; }
+.price-label { font-size:7px; color:rgba(255,255,255,0.50); text-transform:uppercase; letter-spacing:1px; margin-bottom:2px; }
+.price-amount { font-size:24px; font-weight:900; color:#fff; letter-spacing:-1px; line-height:1; }
+.price-amount span { font-size:10px; font-weight:500; color:rgba(255,255,255,0.55); }
+.price-note { font-size:7.5px; color:rgba(255,255,255,0.40); margin-top:2px; }
 .cta-btn {
   background:#fff; color:#064E3B; border-radius:100px;
-  font-size:14px; font-weight:800; padding:16px 32px; white-space:nowrap;
+  font-size:9px; font-weight:800; padding:10px 20px; white-space:nowrap;
+  text-align:center;
 }
-.cta-btn span { font-size:10px; color:#065F46; display:block; font-weight:500; margin-top:1px; }
+.cta-btn span { font-size:7px; color:#065F46; display:block; font-weight:500; margin-top:1px; }
 </style>
 </head>
 <body>
@@ -79,7 +74,6 @@ html, body { width:1080px; height:1080px; overflow:hidden; }
       <div class="logo-icon">🏦</div>
       <div>
         <div class="logo-name">BankyKit</div>
-        <div class="logo-sub">Loan Management</div>
       </div>
     </div>
     <div class="pill">For Money Lenders</div>
@@ -122,7 +116,7 @@ html, body { width:1080px; height:1080px; overflow:hidden; }
   </div>
 
   <div class="bottom">
-    <div class="price">
+    <div>
       <div class="price-label">Starting from</div>
       <div class="price-amount">KES 4,999<span>/mo</span></div>
       <div class="price-note">14-day free trial · demo.bankykit.com</div>
