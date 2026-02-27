@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BankyKit – Instagram</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:600px; height:600px; overflow:hidden; }
+.poster {
+  width:600px; height:600px;
+  background:#0B1120;
+  font-family:"Poppins",sans-serif; position:relative; overflow:hidden;
+  display:flex; flex-direction:column; justify-content:space-between; padding:28px 32px;
+}
+.poster::before {
+  content:""; position:absolute; inset:0;
+  background-image:radial-gradient(rgba(255,255,255,0.045) 1px, transparent 1px);
+  background-size:16px 16px; pointer-events:none;
+}
+.blob { position:absolute; border-radius:50%; pointer-events:none; background:radial-gradient(circle, rgba(4,120,87,0.35) 0%, transparent 70%); }
+.blob1 { width:380px; height:380px; bottom:-110px; right:-80px; }
+.blob2 { width:220px; height:220px; top:-70px; left:-50px; opacity:.55; }
+
+.top { position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between; }
+.logo { display:flex; align-items:center; gap:8px; }
+.logo-icon {
+  width:30px; height:30px; border-radius:8px;
+  background:rgba(4,120,87,0.3); border:1.5px solid rgba(52,211,153,0.35);
+  display:flex; align-items:center; justify-content:center; font-size:14px;
+}
+.logo-name { font-size:14px; font-weight:800; color:#fff; }
+.ig-tag { font-size:9px; color:#34D399; font-weight:600; }
+
+.hero { position:relative; z-index:5; }
+.kicker { font-size:8px; font-weight:700; color:#34D399; letter-spacing:2px; text-transform:uppercase; margin-bottom:8px; }
+.headline { font-size:40px; font-weight:900; color:#fff; line-height:1.02; letter-spacing:-1.5px; margin-bottom:8px; }
+.headline em { color:#34D399; font-style:normal; }
+.sub { font-size:10px; color:rgba(255,255,255,0.56); line-height:1.55; max-width:460px; }
+
+.stats { position:relative; z-index:5; display:flex; gap:8px; }
+.stat {
+  flex:1; background:rgba(4,120,87,0.14); border:1px solid rgba(52,211,153,0.18);
+  border-radius:10px; padding:12px 14px;
+}
+.stat-val { font-size:20px; font-weight:900; color:#34D399; line-height:1; margin-bottom:3px; }
+.stat-desc { font-size:8px; color:rgba(255,255,255,0.52); line-height:1.35; }
+
+.feats { position:relative; z-index:5; display:grid; grid-template-columns:1fr 1fr; gap:7px; }
+.feat {
+  display:flex; align-items:center; gap:8px;
+  background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07);
+  border-radius:10px; padding:9px 11px;
+}
+.feat-icon { font-size:15px; flex-shrink:0; }
+.feat-name { font-size:9px; font-weight:700; color:#fff; }
+.feat-desc { font-size:7.5px; color:rgba(255,255,255,0.45); margin-top:1px; }
+
+.bottom { position:relative; z-index:5; display:flex; align-items:flex-end; justify-content:space-between; }
+.price-row { display:flex; align-items:baseline; gap:5px; margin-bottom:2px; }
+.price-amount { font-size:26px; font-weight:900; color:#fff; letter-spacing:-1px; }
+.price-period { font-size:10px; color:rgba(255,255,255,0.45); }
+.price-note { font-size:7.5px; color:rgba(255,255,255,0.36); }
+.cta-btn {
+  background:linear-gradient(135deg, #047857, #065F46);
+  border:1.5px solid rgba(52,211,153,0.35);
+  color:#fff; border-radius:100px;
+  font-size:9px; font-weight:800; padding:10px 18px; white-space:nowrap; text-align:center;
+}
+.cta-btn span { font-size:7px; color:rgba(255,255,255,0.60); display:block; margin-top:1px; }
+</style>
+</head>
+<body>
+<div class="poster">
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+
+  <div class="top">
+    <div class="logo">
+      <div class="logo-icon">🏦</div>
+      <div><div class="logo-name">BankyKit</div></div>
+    </div>
+    <div class="ig-tag">@bankykit</div>
+  </div>
+
+  <div class="hero">
+    <div class="kicker">For Shylocks &amp; Money Lenders</div>
+    <div class="headline">Your Money.<br>Your <em>Records.</em><br>Your Control.</div>
+    <div class="sub">Never lose track of who owes you. Auto SMS reminders, M-Pesa repayments, overdue alerts — all automated.</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-val">Auto</div><div class="stat-desc">SMS sent before &amp; on due date</div></div>
+    <div class="stat"><div class="stat-val">M-Pesa</div><div class="stat-desc">Collect repayments automatically</div></div>
+    <div class="stat"><div class="stat-val">0</div><div class="stat-desc">Borrowers can claim they forgot</div></div>
+  </div>
+
+  <div class="feats">
+    <div class="feat"><div class="feat-icon">📋</div><div><div class="feat-name">Loan Register</div><div class="feat-desc">All borrowers, one place</div></div></div>
+    <div class="feat"><div class="feat-icon">📈</div><div><div class="feat-name">Interest Calculator</div><div class="feat-desc">Auto-computed always</div></div></div>
+    <div class="feat"><div class="feat-icon">🔴</div><div><div class="feat-name">Overdue Alerts</div><div class="feat-desc">Know who's late instantly</div></div></div>
+    <div class="feat"><div class="feat-icon">📄</div><div><div class="feat-name">Loan Statements</div><div class="feat-desc">PDF for any borrower</div></div></div>
+  </div>
+
+  <div class="bottom">
+    <div>
+      <div class="price-row">
+        <div class="price-amount">KES 4,999</div>
+        <div class="price-period">/month</div>
+      </div>
+      <div class="price-note">14-day free trial — no card required</div>
+    </div>
+    <div class="cta-btn">
+      Get Started Free
+      <span>demo.bankykit.com</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>
