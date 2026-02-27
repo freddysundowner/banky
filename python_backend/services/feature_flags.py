@@ -30,6 +30,7 @@ class Feature(str, Enum):
     CUSTOM_REPORTS = "custom_reports"
     MPESA_INTEGRATION = "mpesa_integration"
     BANK_INTEGRATION = "bank_integration"
+    CRM = "crm"
 
 BASELINE_FEATURES: Set[str] = {
     Feature.CORE_BANKING, Feature.MEMBERS, Feature.SAVINGS, Feature.SHARES, Feature.LOANS
@@ -222,7 +223,8 @@ def get_feature_category(feature: Feature) -> str:
         "reporting": [Feature.ANALYTICS, Feature.ANALYTICS_EXPORT, Feature.CUSTOM_REPORTS],
         "advanced": [Feature.MULTIPLE_BRANCHES, Feature.API_ACCESS, Feature.WHITE_LABEL],
         "integrations": [Feature.MPESA_INTEGRATION, Feature.BANK_INTEGRATION],
-        "security": [Feature.AUDIT_LOGS]
+        "security": [Feature.AUDIT_LOGS],
+        "crm": [Feature.CRM]
     }
     
     for category, features in categories.items():

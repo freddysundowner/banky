@@ -98,6 +98,7 @@ import HRManagement from "@/components/hr-management";
 import LeaveManagement from "@/components/leave-management";
 import ExpensesManagement from "@/components/expenses-management";
 import AuditLogs from "@/components/audit-logs";
+import CRMManagement from "@/components/crm";
 import TellerStation from "@/components/teller-station";
 import FloatManagement from "@/components/float-management";
 import { TicketingKiosk } from "@/components/ticketing-kiosk";
@@ -156,7 +157,7 @@ const updateOrgSchema = z.object({
 type CreateOrgFormData = z.infer<typeof createOrgSchema>;
 type UpdateOrgFormData = z.infer<typeof updateOrgSchema>;
 
-type NavSection = "dashboard" | "teller" | "teller-services" | "float-management" | "ticketing-kiosk" | "queue-display" | "branches" | "staff" | "members" | "loan-products" | "loans" | "transactions" | "repayments" | "fixed-deposits" | "chart-of-accounts" | "journal-entries" | "opening-balances" | "dividends" | "reports" | "analytics" | "sms" | "defaults" | "hr" | "leaves" | "expenses" | "audit" | "settings" | "my-account" | "upgrade";
+type NavSection = "dashboard" | "teller" | "teller-services" | "float-management" | "ticketing-kiosk" | "queue-display" | "branches" | "staff" | "members" | "loan-products" | "loans" | "transactions" | "repayments" | "fixed-deposits" | "chart-of-accounts" | "journal-entries" | "opening-balances" | "dividends" | "reports" | "analytics" | "sms" | "defaults" | "hr" | "leaves" | "expenses" | "audit" | "crm" | "settings" | "my-account" | "upgrade";
 
 const weekDays = [
   { value: "monday", label: "Monday" },
@@ -195,6 +196,7 @@ const navItems = [
   { title: "Leave Management", value: "leaves" as NavSection, icon: Calendar, permissions: ["leave:read"], feature: "leave_management" },
   { title: "Expenses", value: "expenses" as NavSection, icon: Receipt, permissions: ["expenses:read"], feature: "expenses" },
   { title: "Audit Logs", value: "audit" as NavSection, icon: ScrollText, permissions: ["audit:read"], feature: "audit_logs" },
+  { title: "CRM", value: "crm" as NavSection, icon: Users, permissions: ["members:read"], feature: "crm" },
   { title: "Settings", value: "settings" as NavSection, icon: Settings, permissions: ["settings:read"], adminOnly: true },
   { title: "My Account", value: "my-account" as NavSection, icon: UserCircle, permissions: [], alwaysShow: true },
 ];
@@ -1158,6 +1160,10 @@ export default function Home() {
 
             {activeSection === "audit" && selectedOrg && (
               <AuditLogs organizationId={selectedOrg.id} />
+            )}
+
+            {activeSection === "crm" && selectedOrg && (
+              <CRMManagement organizationId={selectedOrg.id} />
             )}
 
             {activeSection === "my-account" && selectedOrg && (

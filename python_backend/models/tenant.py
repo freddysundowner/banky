@@ -1369,3 +1369,71 @@ class MobileSession(TenantBase):
 
     member = relationship("Member", foreign_keys=[member_id])
 
+
+# ─── CRM Module ───────────────────────────────────────────────────────────────
+
+class CrmContact(TenantBase):
+    """CRM contacts — prospects and leads before they become members."""
+    __tablename__ = "crm_contacts"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    first_name = Column(String(100), nullable=False)
+    last_name = Column(String(100), nullable=False)
+    phone = Column(String(50))
+    email = Column(String(255))
+    source = Column(String(50))  # referral, walk_in, facebook, whatsapp, instagram, website, other
+    referred_by = Column(String(200))
+    interest = Column(String(100))  # personal_loan, group_loan, chama_membership, sacco_membership, other
+    estimated_amount = Column(Numeric(15, 2))
+    status = Column(String(50), default="new")  # new, contacted, qualified, converted, lost
+    lost_reason = Column(String(200))
+    notes = Column(Text)
+    member_id = Column(String)
+    converted_at = Column(DateTime)
+    assigned_to_id = Column(String, ForeignKey("staff.id"))
+    created_by_id = Column(String, ForeignKey("staff.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    assigned_to = relationship("Staff", foreign_keys=[assigned_to_id])
+    created_by = relationship("Staff", foreign_keys=[created_by_id])
+    interactions = relationship("CrmInteraction", back_populates="contact", cascade="all, delete-orphan")
+    followups = relationship("CrmFollowUp", back_populates="contact", cascade="all, delete-orphan")
+
+
+class CrmInteraction(TenantBase):
+    """Log of every touchpoint with a CRM contact."""
+    __tablename__ = "crm_interactions"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    contact_id = Column(String, ForeignKey("crm_contacts.id"), nullable=False)
+    interaction_type = Column(String(50), nullable=False)  # call, visit, whatsapp, sms, email, meeting
+    interaction_date = Column(DateTime, nullable=False, default=datetime.utcnow)
+    notes = Column(Text, nullable=False)
+    outcome = Column(String(50))  # positive, neutral, follow_up_needed, not_interested
+    created_by_id = Column(String, ForeignKey("staff.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    contact = relationship("CrmContact", back_populates="interactions")
+    created_by = relationship("Staff", foreign_keys=[created_by_id])
+
+
+class CrmFollowUp(TenantBase):
+    """Scheduled follow-up tasks for CRM contacts."""
+    __tablename__ = "crm_followups"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    contact_id = Column(String, ForeignKey("crm_contacts.id"), nullable=False)
+    description = Column(Text, nullable=False)
+    due_date = Column(DateTime, nullable=False)
+    status = Column(String(50), default="pending")  # pending, done
+    assigned_to_id = Column(String, ForeignKey("staff.id"))
+    created_by_id = Column(String, ForeignKey("staff.id"))
+    completed_at = Column(DateTime)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    contact = relationship("CrmContact", back_populates="followups")
+    assigned_to = relationship("Staff", foreign_keys=[assigned_to_id])
+    created_by = relationship("Staff", foreign_keys=[created_by_id])
+
