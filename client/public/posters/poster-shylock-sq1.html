@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BankyKit – Shylock Square 1</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:1080px; height:1080px; overflow:hidden; }
+.poster {
+  width:1080px; height:1080px;
+  background:linear-gradient(145deg, #064E3B 0%, #065F46 55%, #047857 100%);
+  font-family:"Poppins",sans-serif; position:relative; overflow:hidden;
+  display:flex; flex-direction:column; justify-content:space-between; padding:56px 64px;
+}
+.poster::before {
+  content:""; position:absolute; inset:0;
+  background-image:radial-gradient(rgba(255,255,255,0.055) 1.5px, transparent 1.5px);
+  background-size:30px 30px; pointer-events:none;
+}
+.arc { position:absolute; border-radius:50%; pointer-events:none; }
+.arc1 { width:600px; height:600px; bottom:-220px; right:-160px; border:70px solid rgba(255,255,255,0.05); }
+.arc2 { width:350px; height:350px; top:-100px; left:-80px; border:45px solid rgba(255,255,255,0.04); }
+
+/* TOP */
+.top { position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between; }
+.logo { display:flex; align-items:center; gap:12px; }
+.logo-icon {
+  width:48px; height:48px; border-radius:12px;
+  background:rgba(255,255,255,0.14); border:2px solid rgba(255,255,255,0.25);
+  display:flex; align-items:center; justify-content:center; font-size:22px;
+}
+.logo-name { font-size:20px; font-weight:800; color:#fff; }
+.logo-sub  { font-size:9.5px; color:rgba(255,255,255,0.50); }
+.pill {
+  background:rgba(110,231,183,0.15); border:1px solid rgba(110,231,183,0.28);
+  color:#6EE7B7; font-size:10px; font-weight:700; letter-spacing:1.5px;
+  text-transform:uppercase; padding:6px 14px; border-radius:100px;
+}
+
+/* MIDDLE */
+.mid { position:relative; z-index:5; }
+.headline { font-size:72px; font-weight:900; color:#fff; line-height:1.0; letter-spacing:-2.5px; margin-bottom:14px; }
+.headline em { color:#6EE7B7; font-style:normal; }
+.sub { font-size:16px; color:rgba(255,255,255,0.64); line-height:1.55; max-width:780px; }
+
+/* FEATURES ROW */
+.feats { position:relative; z-index:5; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.feat {
+  display:flex; align-items:center; gap:12px;
+  background:rgba(0,0,0,0.18); border:1px solid rgba(255,255,255,0.08);
+  border-radius:14px; padding:14px 16px;
+}
+.feat-icon { font-size:24px; flex-shrink:0; }
+.feat-name { font-size:13.5px; font-weight:700; color:#fff; }
+.feat-desc { font-size:10.5px; color:rgba(255,255,255,0.50); margin-top:1px; }
+
+/* BOTTOM */
+.bottom { position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between; }
+.price { }
+.price-label { font-size:10px; color:rgba(255,255,255,0.50); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:4px; }
+.price-amount { font-size:38px; font-weight:900; color:#fff; letter-spacing:-1.5px; line-height:1; }
+.price-amount span { font-size:15px; font-weight:500; color:rgba(255,255,255,0.55); }
+.price-note { font-size:10.5px; color:rgba(255,255,255,0.40); margin-top:3px; }
+.cta-btn {
+  background:#fff; color:#064E3B; border-radius:100px;
+  font-size:14px; font-weight:800; padding:16px 32px; white-space:nowrap;
+}
+.cta-btn span { font-size:10px; color:#065F46; display:block; font-weight:500; margin-top:1px; }
+</style>
+</head>
+<body>
+<div class="poster">
+  <div class="arc arc1"></div>
+  <div class="arc arc2"></div>
+
+  <div class="top">
+    <div class="logo">
+      <div class="logo-icon">🏦</div>
+      <div>
+        <div class="logo-name">BankyKit</div>
+        <div class="logo-sub">Loan Management</div>
+      </div>
+    </div>
+    <div class="pill">For Money Lenders</div>
+  </div>
+
+  <div class="mid">
+    <div class="headline">Stop Chasing<br><em>Borrowers.</em></div>
+    <div class="sub">Track every loan, collect via M-Pesa, send auto SMS reminders — all from your phone.</div>
+  </div>
+
+  <div class="feats">
+    <div class="feat">
+      <div class="feat-icon">📋</div>
+      <div>
+        <div class="feat-name">Loan Register</div>
+        <div class="feat-desc">All borrowers in one place</div>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">💬</div>
+      <div>
+        <div class="feat-name">Auto SMS Reminders</div>
+        <div class="feat-desc">Sent on due date automatically</div>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">💚</div>
+      <div>
+        <div class="feat-name">M-Pesa Collection</div>
+        <div class="feat-desc">Pay &amp; record via M-Pesa</div>
+      </div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🔴</div>
+      <div>
+        <div class="feat-name">Overdue Alerts</div>
+        <div class="feat-desc">Know who's late instantly</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <div class="price">
+      <div class="price-label">Starting from</div>
+      <div class="price-amount">KES 4,999<span>/mo</span></div>
+      <div class="price-note">14-day free trial · demo.bankykit.com</div>
+    </div>
+    <div class="cta-btn">
+      Get Started →
+      <span>sales@bankykit.com</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>
