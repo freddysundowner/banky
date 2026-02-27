@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BankyKit IG 4</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:1080px; height:1080px; overflow:hidden; }
+.poster {
+  width:1080px; height:1080px; background:#0B1120;
+  font-family:"Poppins",sans-serif; position:relative; overflow:hidden;
+  display:flex; flex-direction:column; justify-content:space-between; padding:64px 72px;
+}
+.poster::before { content:""; position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.04) 1.5px, transparent 1.5px); background-size:28px 28px; pointer-events:none; }
+.blob { position:absolute; border-radius:50%; pointer-events:none; background:radial-gradient(circle, rgba(4,120,87,0.30) 0%, transparent 70%); }
+.blob1 { width:680px; height:680px; bottom:-220px; right:-140px; }
+.blob2 { width:380px; height:380px; top:-120px; left:-80px; opacity:.55; }
+
+.top { position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between; }
+.logo { display:flex; align-items:center; gap:14px; }
+.logo-icon { width:52px; height:52px; border-radius:13px; background:rgba(4,120,87,0.3); border:2px solid rgba(52,211,153,0.35); display:flex; align-items:center; justify-content:center; font-size:26px; }
+.logo-name { font-size:24px; font-weight:800; color:#fff; }
+.ig-handle { font-size:15px; color:#34D399; font-weight:600; }
+
+.hero { position:relative; z-index:5; }
+.kicker { font-size:13px; font-weight:700; color:#34D399; letter-spacing:2px; text-transform:uppercase; margin-bottom:14px; }
+.headline { font-size:76px; font-weight:900; color:#fff; line-height:1.0; letter-spacing:-3px; margin-bottom:14px; }
+.headline em { color:#34D399; font-style:normal; }
+.sub { font-size:18px; color:rgba(255,255,255,0.56); line-height:1.55; max-width:880px; }
+
+.testimonials { position:relative; z-index:5; display:flex; flex-direction:column; gap:14px; }
+.tcard { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:18px; padding:22px 26px; }
+.tcard-text { font-size:15px; color:rgba(255,255,255,0.78); line-height:1.55; font-style:italic; margin-bottom:10px; }
+.tcard-name { font-size:12px; color:#34D399; font-weight:700; }
+.tcard-role { font-size:11px; color:rgba(255,255,255,0.40); margin-top:1px; }
+
+.bottom { position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.price-row { display:flex; align-items:baseline; gap:8px; margin-bottom:4px; }
+.price-val { font-size:46px; font-weight:900; color:#fff; letter-spacing:-1.5px; line-height:1; }
+.price-period { font-size:18px; color:rgba(255,255,255,0.45); }
+.price-note { font-size:12px; color:rgba(255,255,255,0.36); }
+.cta-btn { background:linear-gradient(135deg,#047857,#065F46); border:2px solid rgba(52,211,153,0.35); color:#fff; border-radius:100px; font-size:16px; font-weight:800; padding:18px 36px; white-space:nowrap; text-align:center; }
+.cta-btn span { font-size:11px; color:rgba(255,255,255,0.60); display:block; margin-top:2px; }
+</style>
+</head>
+<body>
+<div class="poster">
+  <div class="blob blob1"></div><div class="blob blob2"></div>
+  <div class="top">
+    <div class="logo"><div class="logo-icon">🏦</div><div><div class="logo-name">BankyKit</div></div></div>
+    <div class="ig-handle">@bankykit</div>
+  </div>
+  <div class="hero">
+    <div class="kicker">Real Lenders. Real Results.</div>
+    <div class="headline">Trusted by<br>Lenders <em>Across</em><br>Kenya.</div>
+    <div class="sub">From individual money lenders to 200-member SACCOs — here's what BankyKit users are saying.</div>
+  </div>
+  <div class="testimonials">
+    <div class="tcard">
+      <div class="tcard-text">"I went from a notebook to managing 80 clients. My loan book grew 3× in one year because I finally had visibility."</div>
+      <div class="tcard-name">James M.</div>
+      <div class="tcard-role">Individual Lender, Nairobi</div>
+    </div>
+    <div class="tcard">
+      <div class="tcard-text">"Our chama had 32 members and constant arguments about contributions. BankyKit gave everyone transparency and the arguments stopped."</div>
+      <div class="tcard-name">Grace W.</div>
+      <div class="tcard-role">Chama Chairlady, Mombasa</div>
+    </div>
+    <div class="tcard">
+      <div class="tcard-text">"We were a small SACCO running on spreadsheets. Now every member has a statement and we've added 60 new members this year."</div>
+      <div class="tcard-name">Samuel K.</div>
+      <div class="tcard-role">SACCO Treasurer, Nakuru</div>
+    </div>
+  </div>
+  <div class="bottom">
+    <div>
+      <div class="price-row">
+        <div class="price-val">KES 4,999</div>
+        <div class="price-period">/month</div>
+      </div>
+      <div class="price-note">14-day free trial · no card required</div>
+    </div>
+    <div class="cta-btn">Join Them Free →<span>demo.bankykit.com</span></div>
+  </div>
+</div>
+</body>
+</html>

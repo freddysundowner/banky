@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BankyKit IG 3</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:1080px; height:1080px; overflow:hidden; }
+.poster {
+  width:1080px; height:1080px;
+  background:linear-gradient(145deg,#064E3B 0%,#065F46 55%,#047857 100%);
+  font-family:"Poppins",sans-serif; position:relative; overflow:hidden;
+  display:flex; flex-direction:column; justify-content:space-between; padding:64px 72px;
+}
+.poster::before { content:""; position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.055) 1.5px, transparent 1.5px); background-size:28px 28px; pointer-events:none; }
+.ring { position:absolute; border-radius:50%; pointer-events:none; }
+.ring1 { width:620px; height:620px; bottom:-240px; right:-160px; border:72px solid rgba(255,255,255,0.05); }
+.ring2 { width:330px; height:330px; top:-90px; left:-70px; border:44px solid rgba(255,255,255,0.04); }
+
+.top { position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between; }
+.logo { display:flex; align-items:center; gap:14px; }
+.logo-icon { width:52px; height:52px; border-radius:13px; background:rgba(255,255,255,0.14); border:2px solid rgba(255,255,255,0.26); display:flex; align-items:center; justify-content:center; font-size:26px; }
+.logo-name { font-size:24px; font-weight:800; color:#fff; }
+.ig-handle { font-size:15px; color:rgba(255,255,255,0.50); font-weight:600; }
+
+.hero { position:relative; z-index:5; }
+.pill { display:inline-block; background:rgba(110,231,183,0.15); border:1px solid rgba(110,231,183,0.28); color:#6EE7B7; font-size:13px; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:8px 18px; border-radius:100px; margin-bottom:16px; }
+.headline { font-size:76px; font-weight:900; color:#fff; line-height:1.0; letter-spacing:-3px; margin-bottom:14px; }
+.headline em { color:#6EE7B7; font-style:normal; }
+.sub { font-size:18px; color:rgba(255,255,255,0.62); line-height:1.55; max-width:880px; }
+
+.step-grid { position:relative; z-index:5; display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.step { background:rgba(0,0,0,0.18); border:1px solid rgba(255,255,255,0.09); border-radius:18px; padding:24px 26px; }
+.step-num { width:36px; height:36px; border-radius:50%; background:rgba(110,231,183,0.15); border:1.5px solid rgba(110,231,183,0.28); color:#6EE7B7; font-size:16px; font-weight:900; display:flex; align-items:center; justify-content:center; margin-bottom:12px; }
+.step-title { font-size:16px; font-weight:700; color:#fff; margin-bottom:4px; }
+.step-desc { font-size:12px; color:rgba(255,255,255,0.50); line-height:1.45; }
+
+.bottom { position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.price-label { font-size:11px; color:rgba(255,255,255,0.46); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:4px; }
+.price-val { font-size:46px; font-weight:900; color:#fff; letter-spacing:-1.5px; line-height:1; }
+.price-val span { font-size:18px; color:rgba(255,255,255,0.50); }
+.price-note { font-size:12px; color:rgba(255,255,255,0.38); margin-top:4px; }
+.cta-btn { background:#fff; color:#064E3B; border-radius:100px; font-size:16px; font-weight:800; padding:18px 36px; white-space:nowrap; text-align:center; }
+.cta-btn span { font-size:11px; color:#065F46; display:block; font-weight:500; margin-top:2px; }
+</style>
+</head>
+<body>
+<div class="poster">
+  <div class="ring ring1"></div><div class="ring ring2"></div>
+  <div class="top">
+    <div class="logo"><div class="logo-icon">🏦</div><div><div class="logo-name">BankyKit</div></div></div>
+    <div class="ig-handle">@bankykit</div>
+  </div>
+  <div class="hero">
+    <div class="pill">Up &amp; Running in Minutes</div>
+    <div class="headline">No IT.<br>No Setup<br><em>Headache.</em></div>
+    <div class="sub">Add your first borrower or chama member in under 60 seconds. BankyKit is built for people who lend money — not software engineers.</div>
+  </div>
+  <div class="step-grid">
+    <div class="step"><div class="step-num">1</div><div class="step-title">Sign up free</div><div class="step-desc">Create your account — no card, no IT team, no complex setup needed</div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-title">Add borrowers or members</div><div class="step-desc">Name, phone, amount, rate — done in under a minute</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-title">System sends reminders</div><div class="step-desc">SMS goes out automatically on every due date — nothing from you</div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-title">Collect via M-Pesa</div><div class="step-desc">Payments recorded the moment they arrive — full history always there</div></div>
+  </div>
+  <div class="bottom">
+    <div>
+      <div class="price-label">Starting from</div>
+      <div class="price-val">KES 4,999<span>/mo</span></div>
+      <div class="price-note">14-day free trial · no card required</div>
+    </div>
+    <div class="cta-btn">Start in Minutes →<span>demo.bankykit.com</span></div>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BankyKit WA 4</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:1080px; height:1920px; overflow:hidden; }
+.poster {
+  width:1080px; height:1920px; background:#0B1120;
+  font-family:"Poppins",sans-serif; position:relative; overflow:hidden;
+  display:flex; flex-direction:column; justify-content:space-between; padding:90px 86px;
+}
+.poster::before { content:""; position:absolute; inset:0; background-image:radial-gradient(rgba(255,255,255,0.04) 1.5px, transparent 1.5px); background-size:34px 34px; pointer-events:none; }
+.blob { position:absolute; border-radius:50%; pointer-events:none; background:radial-gradient(circle, rgba(4,120,87,0.30) 0%, transparent 70%); }
+.blob1 { width:900px; height:900px; top:-240px; right:-180px; }
+.blob2 { width:600px; height:600px; bottom:-200px; left:-100px; opacity:.38; }
+
+.top { position:relative; z-index:5; display:flex; align-items:center; justify-content:space-between; }
+.logo { display:flex; align-items:center; gap:18px; }
+.logo-icon { width:72px; height:72px; border-radius:18px; background:rgba(4,120,87,0.3); border:2px solid rgba(52,211,153,0.35); display:flex; align-items:center; justify-content:center; font-size:36px; }
+.logo-name { font-size:36px; font-weight:800; color:#fff; }
+.logo-sub  { font-size:16px; color:rgba(255,255,255,0.40); margin-top:2px; }
+.top-right { font-size:18px; color:rgba(255,255,255,0.36); text-align:right; line-height:1.8; }
+
+.hero { position:relative; z-index:5; }
+.kicker { font-size:19px; font-weight:700; color:#34D399; letter-spacing:2px; text-transform:uppercase; margin-bottom:20px; }
+.headline { font-size:104px; font-weight:900; color:#fff; line-height:0.97; letter-spacing:-4.5px; margin-bottom:26px; }
+.headline em { color:#34D399; font-style:normal; }
+.sub { font-size:27px; color:rgba(255,255,255,0.56); line-height:1.55; }
+
+.use-cases { position:relative; z-index:5; display:flex; flex-direction:column; gap:16px; }
+.uc { background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:26px; padding:32px 36px; }
+.uc-header { display:flex; align-items:center; gap:20px; margin-bottom:12px; }
+.uc-icon { font-size:40px; flex-shrink:0; }
+.uc-title { font-size:26px; font-weight:700; color:#fff; }
+.uc-points { display:flex; flex-direction:column; gap:7px; }
+.ucp { font-size:19px; color:rgba(255,255,255,0.60); display:flex; align-items:center; gap:12px; }
+.ucp-dot { width:7px; height:7px; border-radius:50%; background:#34D399; flex-shrink:0; }
+
+.highlight-banner { position:relative; z-index:5; background:rgba(52,211,153,0.10); border:1.5px solid rgba(52,211,153,0.22); border-radius:24px; padding:36px 42px; text-align:center; }
+.hb-main { font-size:38px; font-weight:800; color:#fff; margin-bottom:8px; }
+.hb-main em { color:#34D399; font-style:normal; }
+.hb-sub { font-size:22px; color:rgba(255,255,255,0.55); }
+
+.price-block { position:relative; z-index:5; background:rgba(4,120,87,0.12); border:2px solid rgba(52,211,153,0.25); border-radius:30px; padding:46px 52px; display:flex; align-items:center; justify-content:space-between; gap:24px; }
+.price-label { font-size:18px; color:rgba(255,255,255,0.44); text-transform:uppercase; letter-spacing:2px; margin-bottom:8px; }
+.price-val { font-size:76px; font-weight:900; color:#fff; letter-spacing:-3px; line-height:1; }
+.price-val span { font-size:28px; color:rgba(255,255,255,0.46); }
+.price-note { font-size:19px; color:rgba(255,255,255,0.36); margin-top:8px; }
+.trial-box { background:rgba(52,211,153,0.12); border:1.5px solid rgba(52,211,153,0.25); border-radius:22px; padding:22px 30px; text-align:center; flex-shrink:0; }
+.tl { font-size:17px; color:#34D399; font-weight:700; letter-spacing:1.5px; }
+.td { font-size:68px; font-weight:900; color:#fff; line-height:1; }
+.ts { font-size:17px; color:rgba(255,255,255,0.44); }
+
+.cta { position:relative; z-index:5; background:linear-gradient(135deg,#047857,#065F46); border:2px solid rgba(52,211,153,0.30); border-radius:28px; padding:42px 50px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
+.cta-text { font-size:30px; font-weight:800; color:#fff; line-height:1.3; }
+.cta-text span { font-size:20px; font-weight:500; color:rgba(255,255,255,0.58); display:block; margin-top:5px; }
+.cta-btn { background:#fff; color:#064E3B; font-size:23px; font-weight:800; padding:22px 40px; border-radius:100px; white-space:nowrap; }
+</style>
+</head>
+<body>
+<div class="poster">
+  <div class="blob blob1"></div><div class="blob blob2"></div>
+  <div class="top">
+    <div class="logo"><div class="logo-icon">🏦</div><div><div class="logo-name">BankyKit</div><div class="logo-sub">Savings · Loans · M-Pesa</div></div></div>
+    <div class="top-right">sales@bankykit.com<br>+254 791 334 234</div>
+  </div>
+  <div class="hero">
+    <div class="kicker">Lend with Confidence</div>
+    <div class="headline">From 5<br>Borrowers<br>to <em>500.</em><br>Same System.</div>
+    <div class="sub">Start small, scale big — BankyKit handles individual lenders, chamas, and full SACCOs without switching platforms.</div>
+  </div>
+  <div class="use-cases">
+    <div class="uc">
+      <div class="uc-header"><div class="uc-icon">👤</div><div class="uc-title">Individual Lender</div></div>
+      <div class="uc-points">
+        <div class="ucp"><div class="ucp-dot"></div>Personal loan book with M-Pesa collection</div>
+        <div class="ucp"><div class="ucp-dot"></div>Auto SMS to every borrower on due date</div>
+        <div class="ucp"><div class="ucp-dot"></div>Interest calculated — flat or reducing</div>
+      </div>
+    </div>
+    <div class="uc">
+      <div class="uc-header"><div class="uc-icon">👥</div><div class="uc-title">Chama / Group</div></div>
+      <div class="uc-points">
+        <div class="ucp"><div class="ucp-dot"></div>Member savings, rotation tracking, group loans</div>
+        <div class="ucp"><div class="ucp-dot"></div>Dividends calculated and split at year end</div>
+        <div class="ucp"><div class="ucp-dot"></div>M-Pesa contributions recorded automatically</div>
+      </div>
+    </div>
+    <div class="uc">
+      <div class="uc-header"><div class="uc-icon">🏦</div><div class="uc-title">SACCO</div></div>
+      <div class="uc-points">
+        <div class="ucp"><div class="ucp-dot"></div>Share capital, multiple loan products, member portal</div>
+        <div class="ucp"><div class="ucp-dot"></div>Full financial reporting and audit trail</div>
+        <div class="ucp"><div class="ucp-dot"></div>SMS and M-Pesa built in at every level</div>
+      </div>
+    </div>
+  </div>
+  <div class="highlight-banner">
+    <div class="hb-main">One system. <em>Every</em> lending need.</div>
+    <div class="hb-sub">No switching. No data loss. No extra cost.</div>
+  </div>
+  <div class="price-block">
+    <div>
+      <div class="price-label">Starting from</div>
+      <div class="price-val">KES 4,999<span>/mo</span></div>
+      <div class="price-note">No setup fee · cancel anytime</div>
+    </div>
+    <div class="trial-box"><div class="tl">FREE TRIAL</div><div class="td">14</div><div class="ts">days</div></div>
+  </div>
+  <div class="cta">
+    <div class="cta-text">Start today — any size, any type<span>demo.bankykit.com</span></div>
+    <div class="cta-btn">Get Started →</div>
+  </div>
+</div>
+</body>
+</html>
