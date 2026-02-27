@@ -168,7 +168,10 @@ export default function CRMManagement({ organizationId }: CRMProps) {
       if (statusFilter) params.set("status", statusFilter);
       return fetch(`/api/organizations/${organizationId}/crm/contacts?${params}`, {
         credentials: "include",
-      }).then((r) => r.json());
+      }).then(async (r) => {
+        if (!r.ok) throw new Error((await r.json().catch(() => null))?.detail || r.statusText || "Request failed");
+        return r.json();
+      });
     },
   });
 
