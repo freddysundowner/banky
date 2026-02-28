@@ -388,7 +388,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                                 <TrendingUp className="h-4 w-4 mr-2" /> Record Valuation
                               </DropdownMenuItem>
                               {item.status === "registered" && (
-                                <DropdownMenuItem onClick={() => lienMutation.mutate(item.id)}>
+                                <DropdownMenuItem onClick={() => { if (confirm(`Place a lien on "${item.description}"? This will lock the asset until explicitly released.`)) lienMutation.mutate(item.id); }}>
                                   <Lock className="h-4 w-4 mr-2" /> Place Lien
                                 </DropdownMenuItem>
                               )}
@@ -511,10 +511,15 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                   <CardHeader className="pb-2"><CardTitle className="text-base text-orange-600 flex items-center gap-2"><ShieldAlert className="h-4 w-4" /> Insurance Expiring in 30 Days ({alerts.summary.expiring_insurance_count})</CardTitle></CardHeader>
                   <CardContent className="p-0">
                     <Table>
-                      <TableHeader><TableRow><TableHead>Policy No.</TableHead><TableHead>Insurer</TableHead><TableHead>Collateral</TableHead><TableHead>Expiry</TableHead></TableRow></TableHeader>
+                      <TableHeader><TableRow><TableHead>Policy No.</TableHead><TableHead>Insurer</TableHead><TableHead>Collateral / Member</TableHead><TableHead>Expiry</TableHead></TableRow></TableHeader>
                       <TableBody>
                         {alerts.expiring_insurance.map((p: any) => (
-                          <TableRow key={p.id}><TableCell className="font-medium text-sm">{p.policy_number}</TableCell><TableCell className="text-sm">{p.insurer_name}</TableCell><TableCell className="text-sm">{p.collateral_item_id}</TableCell><TableCell className="text-sm text-orange-600">{p.expiry_date}</TableCell></TableRow>
+                          <TableRow key={p.id}>
+                            <TableCell className="font-medium text-sm">{p.policy_number}</TableCell>
+                            <TableCell className="text-sm">{p.insurer_name}</TableCell>
+                            <TableCell><div className="text-sm">{p.collateral_description ?? "—"}</div><div className="text-xs text-muted-foreground">{p.member_name ?? ""} {p.loan_number ? `· ${p.loan_number}` : ""}</div></TableCell>
+                            <TableCell className="text-sm text-orange-600">{p.expiry_date}</TableCell>
+                          </TableRow>
                         ))}
                       </TableBody>
                     </Table>
@@ -526,10 +531,15 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                   <CardHeader className="pb-2"><CardTitle className="text-base text-red-600 flex items-center gap-2"><AlertTriangle className="h-4 w-4" /> Expired Insurance ({alerts.summary.expired_insurance_count})</CardTitle></CardHeader>
                   <CardContent className="p-0">
                     <Table>
-                      <TableHeader><TableRow><TableHead>Policy No.</TableHead><TableHead>Insurer</TableHead><TableHead>Expired On</TableHead></TableRow></TableHeader>
+                      <TableHeader><TableRow><TableHead>Policy No.</TableHead><TableHead>Insurer</TableHead><TableHead>Collateral / Member</TableHead><TableHead>Expired On</TableHead></TableRow></TableHeader>
                       <TableBody>
                         {alerts.expired_insurance.map((p: any) => (
-                          <TableRow key={p.id}><TableCell className="font-medium text-sm">{p.policy_number}</TableCell><TableCell className="text-sm">{p.insurer_name}</TableCell><TableCell className="text-sm text-red-600">{p.expiry_date}</TableCell></TableRow>
+                          <TableRow key={p.id}>
+                            <TableCell className="font-medium text-sm">{p.policy_number}</TableCell>
+                            <TableCell className="text-sm">{p.insurer_name}</TableCell>
+                            <TableCell><div className="text-sm">{p.collateral_description ?? "—"}</div><div className="text-xs text-muted-foreground">{p.member_name ?? ""} {p.loan_number ? `· ${p.loan_number}` : ""}</div></TableCell>
+                            <TableCell className="text-sm text-red-600">{p.expiry_date}</TableCell>
+                          </TableRow>
                         ))}
                       </TableBody>
                     </Table>

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, desc
 from datetime import datetime, date, timedelta
 from typing import Optional
@@ -262,7 +262,14 @@ def update_collateral_type(
         ctype = tenant_session.query(CollateralType).filter(CollateralType.id == type_id).first()
         if not ctype:
             raise HTTPException(status_code=404, detail="Collateral type not found")
-        for k, v in body.dict(exclude_none=True).items():
+        updates = body.dict(exclude_none=True)
+        if ctype.is_system:
+            # System types: allow only ltv_percent, revaluation_months, requires_insurance, is_active
+            safe_fields = {"ltv_percent", "revaluation_months", "requires_insurance", "is_active"}
+            blocked = set(updates.keys()) - safe_fields
+            if blocked:
+                raise HTTPException(status_code=400, detail=f"System types: cannot change {', '.join(blocked)}")
+        for k, v in updates.items():
             setattr(ctype, k, v)
         tenant_session.commit()
         tenant_session.refresh(ctype)
@@ -315,7 +322,11 @@ def list_collateral_items(
     require_permission(membership, "loans:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
-        q = tenant_session.query(CollateralItem)
+        q = tenant_session.query(CollateralItem).options(
+            joinedload(CollateralItem.loan).joinedload(LoanApplication.member),
+            joinedload(CollateralItem.collateral_type),
+            joinedload(CollateralItem.insurance_policies),
+        )
         if loan_id:
             q = q.filter(CollateralItem.loan_id == loan_id)
         if status:
@@ -495,6 +506,10 @@ def place_lien(
         item = tenant_session.query(CollateralItem).filter(CollateralItem.id == item_id).first()
         if not item:
             raise HTTPException(status_code=404, detail="Collateral item not found")
+        if item.status == "under_lien":
+            raise HTTPException(status_code=400, detail="Item is already under lien")
+        if item.status in ("released", "liquidated"):
+            raise HTTPException(status_code=400, detail=f"Cannot place lien on a {item.status} item")
         item.status = "under_lien"
         item.lien_date = datetime.utcnow()
         item.updated_at = datetime.utcnow()
@@ -521,6 +536,8 @@ def release_collateral(
         item = tenant_session.query(CollateralItem).filter(CollateralItem.id == item_id).first()
         if not item:
             raise HTTPException(status_code=404, detail="Collateral item not found")
+        if item.status != "under_lien":
+            raise HTTPException(status_code=400, detail=f"Only items under lien can be released (current status: {item.status})")
         item.status = "released"
         item.release_date = datetime.utcnow()
         item.release_notes = body.release_notes
@@ -548,6 +565,8 @@ def liquidate_collateral(
         item = tenant_session.query(CollateralItem).filter(CollateralItem.id == item_id).first()
         if not item:
             raise HTTPException(status_code=404, detail="Collateral item not found")
+        if item.status not in ("under_lien", "defaulted"):
+            raise HTTPException(status_code=400, detail=f"Only items under lien or defaulted can be liquidated (current status: {item.status})")
         item.status = "liquidated"
         item.liquidation_date = datetime.utcnow()
         item.liquidation_amount = body.liquidation_amount
@@ -575,7 +594,9 @@ def list_all_insurance(
     require_permission(membership, "loans:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
-        q = tenant_session.query(CollateralInsurance)
+        q = tenant_session.query(CollateralInsurance).options(
+            joinedload(CollateralInsurance.collateral_item).joinedload(CollateralItem.loan).joinedload(LoanApplication.member),
+        )
         if expiring_days is not None:
             cutoff = date.today() + timedelta(days=expiring_days)
             q = q.filter(
@@ -723,22 +744,35 @@ def get_collateral_alerts(
             CollateralItem.status == "under_lien",
         ).all()
 
-        expiring_insurance = tenant_session.query(CollateralInsurance).filter(
+        ins_options = joinedload(CollateralInsurance.collateral_item).joinedload(CollateralItem.loan).joinedload(LoanApplication.member)
+
+        expiring_insurance = tenant_session.query(CollateralInsurance).options(ins_options).filter(
             CollateralInsurance.expiry_date >= today,
             CollateralInsurance.expiry_date <= insurance_soon,
             CollateralInsurance.status == "active",
         ).all()
 
-        expired_insurance = tenant_session.query(CollateralInsurance).filter(
+        expired_insurance = tenant_session.query(CollateralInsurance).options(ins_options).filter(
             CollateralInsurance.expiry_date < today,
             CollateralInsurance.status == "active",
         ).all()
 
+        def enrich_insurance(p):
+            d = insurance_to_dict(p)
+            item = p.collateral_item
+            if item:
+                loan = item.loan
+                member = loan.member if loan else None
+                d["collateral_description"] = item.description
+                d["loan_number"] = loan.application_number if loan else None
+                d["member_name"] = f"{member.first_name} {member.last_name}" if member else None
+            return d
+
         return {
             "overdue_revaluation": [item_to_dict(i) for i in overdue_revaluation],
             "due_soon_revaluation": [item_to_dict(i) for i in due_soon_revaluation],
-            "expiring_insurance": [insurance_to_dict(p) for p in expiring_insurance],
-            "expired_insurance": [insurance_to_dict(p) for p in expired_insurance],
+            "expiring_insurance": [enrich_insurance(p) for p in expiring_insurance],
+            "expired_insurance": [enrich_insurance(p) for p in expired_insurance],
             "summary": {
                 "overdue_revaluation_count": len(overdue_revaluation),
                 "due_soon_revaluation_count": len(due_soon_revaluation),

@@ -4,7 +4,7 @@ from models.master import Organization, OrganizationMember
 from models.tenant import TenantBase
 
 _migrated_tenants = set()
-_migration_version = 28  # Increment to force re-migration
+_migration_version = 29  # Increment to force re-migration
 
 def _get_db_migration_version(engine):
     """Check the migration version stored in the tenant database"""
@@ -920,6 +920,14 @@ def run_tenant_schema_migration(engine):
             CREATE INDEX IF NOT EXISTS idx_mobile_sessions_member
             ON mobile_sessions(member_id)
         """))
+
+        # Collateral indexes (v29)
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_collateral_items_loan ON collateral_items(loan_id)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_collateral_items_status ON collateral_items(status)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_collateral_items_type ON collateral_items(collateral_type_id)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_collateral_items_revaluation ON collateral_items(next_revaluation_date)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_collateral_insurance_item ON collateral_insurance(collateral_item_id)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_collateral_insurance_expiry ON collateral_insurance(expiry_date, status)"))
 
         conn.commit()
     
