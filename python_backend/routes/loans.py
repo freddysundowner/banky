@@ -6,7 +6,7 @@ from decimal import Decimal
 from datetime import datetime, timedelta
 from models.database import get_db
 from models.master import Organization
-from models.tenant import LoanApplication, LoanProduct, Member, LoanGuarantor, LoanExtraCharge, Transaction, Staff, LoanInstalment, CollateralItem, CollateralType
+from models.tenant import LoanApplication, LoanProduct, Member, LoanGuarantor, LoanExtraCharge, Transaction, Staff, LoanInstalment, CollateralItem, CollateralType, CollateralInsurance
 from schemas.tenant import LoanApplicationCreate, LoanApplicationUpdate, LoanApplicationResponse, LoanApplicationAction, LoanDisbursement, LoanGuarantorCreate
 from routes.auth import get_current_user
 from middleware.demo_guard import require_not_demo
@@ -836,6 +836,31 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
                             status_code=400,
                             detail=f"Cannot disburse: Collateral LTV-adjusted value (KES {total_ltv_value:,.2f}) is below the required {min_coverage}% coverage (KES {required_value:,.2f})."
                         )
+
+                # Insurance check: block disbursement if any collateral type requires
+                # insurance but the item has no active, non-expired policy.
+                today = datetime.utcnow().date()
+                uninsured = []
+                for item in collateral_items:
+                    if not item.collateral_type.requires_insurance:
+                        continue
+                    active_policy = (
+                        tenant_session.query(CollateralInsurance)
+                        .filter(
+                            CollateralInsurance.collateral_item_id == item.id,
+                            CollateralInsurance.status == "active",
+                            CollateralInsurance.expiry_date >= today,
+                        )
+                        .first()
+                    )
+                    if not active_policy:
+                        uninsured.append(item.description)
+                if uninsured:
+                    items_list = ", ".join(f'"{d}"' for d in uninsured)
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Cannot disburse: The following collateral item(s) require an active insurance policy before disbursement: {items_list}."
+                    )
         
         if data.disbursement_method == "mpesa":
             if not data.disbursement_phone:
