@@ -288,153 +288,148 @@ export default function Dashboard({ organizationId, organizationName, onNavigate
           </div>
         )}
 
-        <div>
-          <div className="flex items-center justify-between mb-2 md:mb-3">
-            <h2 className="text-base md:text-lg font-semibold flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              Recent Members
-            </h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs text-muted-foreground hover:text-foreground gap-1"
-              onClick={() => onNavigate?.("members")}
-              data-testid="link-view-all-members"
-            >
-              View all <ChevronRight className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-          <Card>
-            <CardContent className="p-0">
-              {membersLoading ? (
-                <div className="divide-y">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-3 px-4 py-3">
-                      <div className="h-8 w-8 rounded-full bg-muted flex-shrink-0" />
-                      <div className="flex-1 space-y-1">
-                        <Skeleton className="h-3.5 w-32" />
-                        <Skeleton className="h-3 w-20" />
+        <div className="grid gap-4 md:gap-6 grid-cols-1 lg:grid-cols-2">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm font-semibold flex items-center gap-2">
+                <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                Recent Members
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground hover:text-foreground gap-1 h-7"
+                onClick={() => onNavigate?.("members")}
+                data-testid="link-view-all-members"
+              >
+                View all <ChevronRight className="h-3 w-3" />
+              </Button>
+            </div>
+            <Card>
+              <CardContent className="p-0">
+                {membersLoading ? (
+                  <div className="divide-y">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="flex items-center gap-2.5 px-3 py-2">
+                        <div className="h-7 w-7 rounded-full bg-muted flex-shrink-0" />
+                        <div className="flex-1 space-y-1">
+                          <Skeleton className="h-3 w-28" />
+                          <Skeleton className="h-2.5 w-16" />
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              ) : recentMembersData?.items?.length ? (
-                <div className="divide-y">
-                  {recentMembersData.items.map((member) => (
-                    <div key={member.id} className="flex items-center gap-3 px-4 py-3" data-testid={`row-member-${member.id}`}>
-                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs font-semibold text-primary">
-                          {member.first_name[0]}{member.last_name[0]}
-                        </span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{member.first_name} {member.last_name}</p>
-                        <p className="text-xs text-muted-foreground">{member.member_number}</p>
-                      </div>
-                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] px-1.5 py-0 ${
-                            member.status === "active"
-                              ? "border-green-400 text-green-700 dark:text-green-400"
-                              : member.status === "pending"
-                              ? "border-yellow-400 text-yellow-700 dark:text-yellow-400"
-                              : "border-muted text-muted-foreground"
-                          }`}
-                        >
-                          {member.status}
-                        </Badge>
-                        <span className="text-[10px] text-muted-foreground">
-                          {member.created_at
-                            ? formatDistanceToNow(new Date(member.created_at + (member.created_at.endsWith("Z") ? "" : "Z")), { addSuffix: true })
-                            : ""}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <UserPlus className="h-8 w-8 text-muted-foreground/40 mb-2" />
-                  <p className="text-sm text-muted-foreground">No members yet</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-2 md:mb-3">
-            <h2 className="text-base md:text-lg font-semibold flex items-center gap-2">
-              <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
-              Recent Transactions
-            </h2>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-xs text-muted-foreground hover:text-foreground gap-1"
-              onClick={() => onNavigate?.("transactions")}
-              data-testid="link-view-all-transactions"
-            >
-              View all <ChevronRight className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-          <Card>
-            <CardContent className="p-0">
-              {txLoading ? (
-                <div className="divide-y">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} className="flex items-center gap-3 px-4 py-3">
-                      <div className="flex-1 space-y-1">
-                        <Skeleton className="h-3.5 w-48" />
-                        <Skeleton className="h-3 w-28" />
-                      </div>
-                      <Skeleton className="h-4 w-20" />
-                    </div>
-                  ))}
-                </div>
-              ) : recentTxData?.items?.length ? (
-                <div className="divide-y">
-                  {recentTxData.items.map((tx) => {
-                    const isCredit = tx.transaction_type === "deposit" || tx.transaction_type === "share_purchase" || tx.transaction_type === "repayment";
-                    return (
-                      <div key={tx.id} className="flex items-center gap-3 px-4 py-3" data-testid={`row-tx-${tx.id}`}>
-                        <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${isCredit ? "bg-green-100 dark:bg-green-950" : "bg-red-100 dark:bg-red-950"}`}>
-                          {isCredit
-                            ? <ArrowDownRight className="h-4 w-4 text-green-600 dark:text-green-400" />
-                            : <ArrowUpRight className="h-4 w-4 text-red-600 dark:text-red-400" />
-                          }
+                    ))}
+                  </div>
+                ) : recentMembersData?.items?.length ? (
+                  <div className="divide-y">
+                    {recentMembersData.items.map((member) => (
+                      <div key={member.id} className="flex items-center gap-2.5 px-3 py-2" data-testid={`row-member-${member.id}`}>
+                        <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <span className="text-[10px] font-semibold text-primary">
+                            {member.first_name[0]}{member.last_name[0]}
+                          </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate capitalize">{tx.transaction_type.replace(/_/g, " ")}</p>
-                          <p className="text-xs text-muted-foreground">
-                            <span className="capitalize">{tx.account_type.replace(/_/g, " ")}</span>
-                            {tx.payment_method && <span> · {tx.payment_method.replace(/_/g, " ")}</span>}
-                            <span> · {tx.transaction_number}</span>
-                          </p>
+                          <p className="text-xs font-medium truncate">{member.first_name} {member.last_name}</p>
+                          <p className="text-[10px] text-muted-foreground">{member.member_number}</p>
                         </div>
-                        <div className="text-right flex-shrink-0">
-                          <p className={`text-sm font-semibold ${isCredit ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
-                            {isCredit ? "+" : "-"}{formatAmount(tx.amount)}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground">
-                            {tx.created_at
-                              ? formatDistanceToNow(new Date(tx.created_at + (tx.created_at.endsWith("Z") ? "" : "Z")), { addSuffix: true })
+                        <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                          <span className={`text-[10px] font-medium ${
+                            member.status === "active" ? "text-green-600 dark:text-green-400"
+                            : member.status === "pending" ? "text-yellow-600 dark:text-yellow-400"
+                            : "text-muted-foreground"
+                          }`}>{member.status}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {member.created_at
+                              ? formatDistanceToNow(new Date(member.created_at + (member.created_at.endsWith("Z") ? "" : "Z")), { addSuffix: true })
                               : ""}
-                          </p>
+                          </span>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <ArrowUpRight className="h-8 w-8 text-muted-foreground/40 mb-2" />
-                  <p className="text-sm text-muted-foreground">No transactions yet</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-6 text-center">
+                    <UserPlus className="h-7 w-7 text-muted-foreground/40 mb-1.5" />
+                    <p className="text-xs text-muted-foreground">No members yet</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm font-semibold flex items-center gap-2">
+                <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground" />
+                Recent Transactions
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground hover:text-foreground gap-1 h-7"
+                onClick={() => onNavigate?.("transactions")}
+                data-testid="link-view-all-transactions"
+              >
+                View all <ChevronRight className="h-3 w-3" />
+              </Button>
+            </div>
+            <Card>
+              <CardContent className="p-0">
+                {txLoading ? (
+                  <div className="divide-y">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <div key={i} className="flex items-center gap-2.5 px-3 py-2">
+                        <div className="flex-1 space-y-1">
+                          <Skeleton className="h-3 w-40" />
+                          <Skeleton className="h-2.5 w-24" />
+                        </div>
+                        <Skeleton className="h-3 w-16" />
+                      </div>
+                    ))}
+                  </div>
+                ) : recentTxData?.items?.length ? (
+                  <div className="divide-y">
+                    {recentTxData.items.map((tx) => {
+                      const isCredit = tx.transaction_type === "deposit" || tx.transaction_type === "share_purchase" || tx.transaction_type === "repayment";
+                      return (
+                        <div key={tx.id} className="flex items-center gap-2.5 px-3 py-2" data-testid={`row-tx-${tx.id}`}>
+                          <div className={`h-7 w-7 rounded-full flex items-center justify-center flex-shrink-0 ${isCredit ? "bg-green-100 dark:bg-green-950" : "bg-red-100 dark:bg-red-950"}`}>
+                            {isCredit
+                              ? <ArrowDownRight className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+                              : <ArrowUpRight className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+                            }
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium truncate capitalize">{tx.transaction_type.replace(/_/g, " ")}</p>
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              <span className="capitalize">{tx.account_type.replace(/_/g, " ")}</span>
+                              {tx.payment_method && <span> · {tx.payment_method.replace(/_/g, " ")}</span>}
+                              <span> · {tx.transaction_number}</span>
+                            </p>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className={`text-xs font-semibold ${isCredit ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                              {isCredit ? "+" : "-"}{formatAmount(tx.amount)}
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {tx.created_at
+                                ? formatDistanceToNow(new Date(tx.created_at + (tx.created_at.endsWith("Z") ? "" : "Z")), { addSuffix: true })
+                                : ""}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-6 text-center">
+                    <ArrowUpRight className="h-7 w-7 text-muted-foreground/40 mb-1.5" />
+                    <p className="text-xs text-muted-foreground">No transactions yet</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
       </div>
