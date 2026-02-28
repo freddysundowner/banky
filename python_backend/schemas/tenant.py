@@ -346,6 +346,8 @@ class LoanProductCreate(BaseModel):
     deduct_interest_upfront: Optional[bool] = False
     allow_multiple_loans: Optional[bool] = True
     require_good_standing: Optional[bool] = False
+    requires_collateral: Optional[bool] = False
+    min_ltv_coverage: Optional[Decimal] = Decimal("0")
 
 class LoanProductUpdate(BaseModel):
     name: Optional[str] = None
@@ -374,6 +376,8 @@ class LoanProductUpdate(BaseModel):
     deduct_interest_upfront: Optional[bool] = None
     allow_multiple_loans: Optional[bool] = None
     require_good_standing: Optional[bool] = None
+    requires_collateral: Optional[bool] = None
+    min_ltv_coverage: Optional[Decimal] = None
     is_active: Optional[bool] = None
 
 class LoanProductResponse(BaseModel):
@@ -405,6 +409,8 @@ class LoanProductResponse(BaseModel):
     deduct_interest_upfront: Optional[bool] = False
     allow_multiple_loans: Optional[bool] = True
     require_good_standing: Optional[bool] = False
+    requires_collateral: Optional[bool] = False
+    min_ltv_coverage: Optional[Decimal] = Decimal("0")
     is_active: bool
     created_at: Optional[datetime] = None
     

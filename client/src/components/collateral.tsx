@@ -31,7 +31,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Shield, Plus, Search, MoreHorizontal, AlertTriangle, CheckCircle2,
   Clock, FileText, Trash2, Edit, TrendingUp, Lock, Unlock, DollarSign,
-  ShieldAlert, ShieldCheck, Settings,
+  ShieldAlert, ShieldCheck, Settings, X,
 } from "lucide-react";
 
 interface CollateralProps {
@@ -676,9 +676,10 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                       className={selectedLoanLabel ? "bg-muted text-foreground font-medium" : ""}
                     />
                     {selectedLoanLabel && (
-                      <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs px-1"
-                        onClick={() => { setSelectedLoanLabel(""); setLoanSearch(""); field.onChange(""); setLoanDropdownOpen(false); }}>
-                        ✕
+                      <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                        onClick={() => { setSelectedLoanLabel(""); setLoanSearch(""); field.onChange(""); setLoanDropdownOpen(false); }}
+                        data-testid="button-clear-loan">
+                        <X className="h-3 w-3" />
                       </button>
                     )}
                     {loanDropdownOpen && loanSearch.length >= 1 && (
