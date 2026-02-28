@@ -206,6 +206,7 @@ async def list_loans(org_id: str, status: str = None, member_id: str = None, bra
             loan_dict["member_name"] = f"{member.first_name} {member.last_name}" if member else ""
             loan_dict["member_first_name"] = member.first_name if member else ""
             loan_dict["member_last_name"] = member.last_name if member else ""
+            loan_dict["member_id_number"] = member.id_number if member else ""
             loan_dict["product_name"] = product.name if product else ""
             loan_dict["repayment_frequency"] = getattr(product, 'repayment_frequency', 'monthly') if product else "monthly"
             loan_dict["created_by_name"] = f"{created_by.first_name} {created_by.last_name}" if created_by else None

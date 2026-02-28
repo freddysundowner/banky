@@ -699,6 +699,8 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                               setSelectedLoanLabel(`${loan.application_number} — ${loan.member_name}`);
                               setLoanSearch("");
                               setLoanDropdownOpen(false);
+                              if (loan.member_name) itemForm.setValue("owner_name", loan.member_name);
+                              if (loan.member_id_number) itemForm.setValue("owner_id_number", loan.member_id_number);
                             }}
                           >
                             <span className="font-medium">{loan.application_number}</span>
@@ -721,10 +723,18 @@ export default function CollateralManagement({ organizationId }: CollateralProps
               )} />
               <div className="grid grid-cols-2 gap-3">
                 <FormField control={itemForm.control} name="owner_name" render={({ field }) => (
-                  <FormItem><FormLabel>Owner Name</FormLabel><FormControl><Input {...field} data-testid="input-collateral-owner" /></FormControl><FormMessage /></FormItem>
+                  <FormItem>
+                    <FormLabel>Owner Name</FormLabel>
+                    <FormControl><Input {...field} data-testid="input-collateral-owner" placeholder="Auto-filled from loan" /></FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )} />
                 <FormField control={itemForm.control} name="owner_id_number" render={({ field }) => (
-                  <FormItem><FormLabel>Owner ID No.</FormLabel><FormControl><Input {...field} data-testid="input-collateral-owner-id" /></FormControl><FormMessage /></FormItem>
+                  <FormItem>
+                    <FormLabel>Owner ID No.</FormLabel>
+                    <FormControl><Input {...field} data-testid="input-collateral-owner-id" placeholder="Auto-filled from loan" /></FormControl>
+                    <FormMessage />
+                  </FormItem>
                 )} />
               </div>
               <FormField control={itemForm.control} name="description" render={({ field }) => (
@@ -732,10 +742,20 @@ export default function CollateralManagement({ organizationId }: CollateralProps
               )} />
               <div className="grid grid-cols-2 gap-3">
                 <FormField control={itemForm.control} name="document_ref" render={({ field }) => (
-                  <FormItem><FormLabel>Document Ref No.</FormLabel><FormControl><Input {...field} data-testid="input-collateral-doc-ref" placeholder="Title deed, logbook no." /></FormControl><FormMessage /></FormItem>
+                  <FormItem>
+                    <FormLabel>Ownership Document No.</FormLabel>
+                    <FormControl><Input {...field} data-testid="input-collateral-doc-ref" placeholder="e.g. logbook no., title deed no." /></FormControl>
+                    <p className="text-xs text-muted-foreground">The serial/ref no. on the ownership document</p>
+                    <FormMessage />
+                  </FormItem>
                 )} />
                 <FormField control={itemForm.control} name="declared_value" render={({ field }) => (
-                  <FormItem><FormLabel>Declared Value (KES)</FormLabel><FormControl><Input type="number" {...field} data-testid="input-collateral-declared-value" /></FormControl><FormMessage /></FormItem>
+                  <FormItem>
+                    <FormLabel>Owner's Declared Value (KES)</FormLabel>
+                    <FormControl><Input type="number" {...field} data-testid="input-collateral-declared-value" placeholder="0" /></FormControl>
+                    <p className="text-xs text-muted-foreground">Owner's estimate before formal appraisal</p>
+                    <FormMessage />
+                  </FormItem>
                 )} />
               </div>
               <DialogFooter>
