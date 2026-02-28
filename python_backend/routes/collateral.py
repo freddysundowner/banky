@@ -161,7 +161,7 @@ def item_to_dict(item: CollateralItem, include_insurance: bool = False) -> dict:
         "valuer_id": item.valuer_id,
         "valuer_name": item.valuer.name if item.valuer else item.valuer_name,
         "valuation_document_path": item.valuation_document_path,
-        "valuation_document_url": f"/uploads/valuations/{item.valuation_document_path}" if item.valuation_document_path else None,
+        "valuation_document_url": f"/api/uploads/valuations/{item.valuation_document_path}" if item.valuation_document_path else None,
         "valuation_date": item.valuation_date.isoformat() if item.valuation_date else None,
         "next_revaluation_date": item.next_revaluation_date.isoformat() if item.next_revaluation_date else None,
         "revaluation_status": revaluation_status,
@@ -204,7 +204,7 @@ def insurance_to_dict(p: CollateralInsurance) -> dict:
         "status": computed_status,
         "notes": p.notes,
         "document_path": p.document_path,
-        "document_url": f"/uploads/valuations/{p.document_path}" if p.document_path else None,
+        "document_url": f"/api/uploads/valuations/{p.document_path}" if p.document_path else None,
         "created_at": p.created_at.isoformat() if p.created_at else None,
     }
 
@@ -986,7 +986,7 @@ async def upload_insurance_document(
         policy.updated_at = datetime.utcnow()
         tenant_session.commit()
         tenant_session.refresh(policy)
-        return {"document_path": filename, "document_url": f"/uploads/valuations/{filename}"}
+        return {"document_path": filename, "document_url": f"/api/uploads/valuations/{filename}"}
     finally:
         tenant_session.close()
         tenant_ctx.close()
@@ -1318,7 +1318,7 @@ async def upload_valuation_document(
         item.updated_at = datetime.utcnow()
         tenant_session.commit()
         tenant_session.refresh(item)
-        return {"valuation_document_path": filename, "valuation_document_url": f"/uploads/valuations/{filename}"}
+        return {"valuation_document_path": filename, "valuation_document_url": f"/api/uploads/valuations/{filename}"}
     finally:
         tenant_session.close()
         tenant_ctx.close()

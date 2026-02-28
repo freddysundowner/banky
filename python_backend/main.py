@@ -1244,6 +1244,7 @@ async def get_public_docs_config():
 valuations_upload_dir = Path(__file__).parent / "uploads" / "valuations"
 valuations_upload_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads/valuations", StaticFiles(directory=str(valuations_upload_dir)), name="valuation_uploads")
+app.mount("/api/uploads/valuations", StaticFiles(directory=str(valuations_upload_dir)), name="valuation_uploads_api")
 
 if DIST_PATH.exists():
     assets_path = DIST_PATH / "assets"
