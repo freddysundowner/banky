@@ -205,12 +205,16 @@ export default function CollateralManagement({ organizationId }: CollateralProps
     return () => clearTimeout(t);
   }, [loanSearch]);
 
-  const loanSearchQuery = useQuery<any>({
+  const loanSearchQuery = useQuery<any[]>({
     queryKey: [`/api/organizations/${organizationId}/loans`, "collateral-picker", loanSearchDebounced],
     queryFn: () =>
       fetch(`/api/organizations/${organizationId}/loans?search=${encodeURIComponent(loanSearchDebounced)}&status=active&per_page=20`, { credentials: "include" })
         .then(r => r.json())
-        .then(d => d.items ?? d ?? []),
+        .then(d => {
+          if (Array.isArray(d)) return d;
+          if (Array.isArray(d?.items)) return d.items;
+          return [];
+        }),
     enabled: showAddItem && loanSearchDebounced.length >= 1,
   });
 
@@ -682,10 +686,10 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                         {loanSearchQuery.isLoading && (
                           <div className="px-3 py-2 text-sm text-muted-foreground">Searching...</div>
                         )}
-                        {!loanSearchQuery.isLoading && (loanSearchQuery.data ?? []).length === 0 && (
+                        {!loanSearchQuery.isLoading && (Array.isArray(loanSearchQuery.data) ? loanSearchQuery.data : []).length === 0 && (
                           <div className="px-3 py-2 text-sm text-muted-foreground">No active loans found</div>
                         )}
-                        {(loanSearchQuery.data ?? []).map((loan: any) => (
+                        {(Array.isArray(loanSearchQuery.data) ? loanSearchQuery.data : []).map((loan: any) => (
                           <button
                             key={loan.id}
                             type="button"
@@ -932,9 +936,23 @@ export default function CollateralManagement({ organizationId }: CollateralProps
         <DialogContent className="max-w-md">
           <DialogHeader><DialogTitle>{editType ? "Edit Collateral Type" : "Add Collateral Type"}</DialogTitle></DialogHeader>
           <Form {...typeForm}>
-            <form onSubmit={typeForm.handleSubmit(d => editType ? updateTypeMutation.mutate({ id: editType.id, data: d }) : addTypeMutation.mutate(d))} className="space-y-3">
+            <form onSubmit={typeForm.handleSubmit(d => {
+              if (editType) {
+                const data = editType.is_system
+                  ? (({ name, description, ...rest }) => rest)(d)
+                  : d;
+                updateTypeMutation.mutate({ id: editType.id, data });
+              } else {
+                addTypeMutation.mutate(d);
+              }
+            })} className="space-y-3">
+              {editType?.is_system && (
+                <p className="text-xs text-muted-foreground bg-muted rounded px-3 py-2">
+                  System type — name and description cannot be changed.
+                </p>
+              )}
               <FormField control={typeForm.control} name="name" render={({ field }) => (
-                <FormItem><FormLabel>Type Name</FormLabel><FormControl><Input {...field} data-testid="input-type-name" placeholder="e.g. Motor Vehicle Logbook" /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Type Name</FormLabel><FormControl><Input {...field} data-testid="input-type-name" placeholder="e.g. Motor Vehicle Logbook" disabled={!!editType?.is_system} className={editType?.is_system ? "opacity-50 cursor-not-allowed" : ""} /></FormControl><FormMessage /></FormItem>
               )} />
               <div className="grid grid-cols-2 gap-3">
                 <FormField control={typeForm.control} name="ltv_percent" render={({ field }) => (
@@ -945,7 +963,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                 )} />
               </div>
               <FormField control={typeForm.control} name="description" render={({ field }) => (
-                <FormItem><FormLabel>Description (optional)</FormLabel><FormControl><Input {...field} data-testid="input-type-description" /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Description (optional)</FormLabel><FormControl><Input {...field} data-testid="input-type-description" disabled={!!editType?.is_system} className={editType?.is_system ? "opacity-50 cursor-not-allowed" : ""} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={typeForm.control} name="requires_insurance" render={({ field }) => (
                 <FormItem className="flex items-center justify-between rounded-lg border p-3">
