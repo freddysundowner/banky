@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Receipt, Plus, Check, X, Clock, Building2, FolderOpen, Pencil, Trash2, RefreshCw, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
@@ -77,7 +77,7 @@ interface Expense {
 }
 
 export default function ExpensesManagement({ organizationId }: ExpensesManagementProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { currency, symbol, formatAmount } = useCurrency(organizationId);
   const { hasPermission } = useResourcePermissions(organizationId, RESOURCES.EXPENSES);
   const canRead = hasPermission("expenses:read");

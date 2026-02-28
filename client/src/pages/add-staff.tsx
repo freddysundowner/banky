@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { getErrorMessage } from "@/lib/error-utils";
 import { ArrowLeft, Building2, User, Users, Mail, IdCard, Shield, FileUp, Trash2, Upload, FileText, CheckCircle } from "lucide-react";
@@ -88,7 +88,7 @@ const STAFF_DOCUMENT_TYPES = [
 ];
 
 export default function AddStaffPage({ organizationId, onBack }: AddStaffPageProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [createdStaffId, setCreatedStaffId] = useState<string | null>(null);

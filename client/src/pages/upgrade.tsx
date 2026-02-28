@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Check, Loader2, Sparkles, Crown, Mail, Send, Smartphone, CheckCircle2, CreditCard, Globe } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient } from "@/lib/queryClient";
 
 interface Plan {
@@ -133,7 +133,7 @@ function getAllPlanFeatures(plan: Plan): string[] {
 }
 
 export default function UpgradePage({ organizationId }: UpgradePageProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const [showContactDialog, setShowContactDialog] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);

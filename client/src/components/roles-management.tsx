@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { RefreshButton } from "@/components/refresh-button";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,7 +65,7 @@ const PERMISSION_GROUPS = {
 };
 
 export default function RolesManagement({ organizationId }: RolesManagementProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const [viewMode, setViewMode] = useState<"list" | "form" | "docs">("list");
   const [editing, setEditing] = useState<Role | null>(null);
   const [formName, setFormName] = useState("");

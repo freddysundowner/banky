@@ -32,7 +32,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import {
   Building2,
@@ -59,7 +59,7 @@ const branchSchema = z.object({
 type BranchFormData = z.infer<typeof branchSchema>;
 
 export default function BranchManagement({ organizationId }: BranchManagementProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const [showBranchDialog, setShowBranchDialog] = useState(false);
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
   const [deletingBranch, setDeletingBranch] = useState<Branch | null>(null);

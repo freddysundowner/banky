@@ -43,7 +43,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { getErrorMessage } from "@/lib/error-utils";
 import { UserPlus, Check, X, Trash2, Shield, AlertTriangle, TrendingUp, Wallet, Users, ChevronsUpDown } from "lucide-react";
@@ -131,7 +131,7 @@ const relationshipOptions = [
 ];
 
 export default function Guarantors({ organizationId, loanId, loanStatus, loanAmount = 0 }: GuarantorsProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const [showDialog, setShowDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState<Guarantor | null>(null);
   const [rejectReason, setRejectReason] = useState("");

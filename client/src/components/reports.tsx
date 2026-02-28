@@ -10,7 +10,7 @@ import {
   DollarSign,
   FileText,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 
 import { FiltersBar } from "./reports/filters-bar";
 import { SummaryTab } from "./reports/summary-tab";
@@ -39,7 +39,7 @@ const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
 const fmt = (d: Date) => d.toISOString().split("T")[0];
 
 export default function Reports({ organizationId }: ReportsProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const queryClient = useQueryClient();
   const { formatAmount: formatCurrency } = useCurrency(organizationId);
 

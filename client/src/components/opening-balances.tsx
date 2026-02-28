@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,7 +61,7 @@ function formatCurrency(amount: number): string {
 }
 
 export default function OpeningBalances({ organizationId }: { organizationId: string }) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const [showConfirm, setShowConfirm] = useState(false);
   const [effectiveDate, setEffectiveDate] = useState(
     new Date().toISOString().split("T")[0]

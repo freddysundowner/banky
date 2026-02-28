@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -156,7 +156,7 @@ function StatCard({ label, value, icon: Icon, color }: { label: string; value: n
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function CollateralManagement({ organizationId }: CollateralProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const [activeTab, setActiveTab] = useState("register");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");

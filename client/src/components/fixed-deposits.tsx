@@ -45,7 +45,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { useResourcePermissions, RESOURCES } from "@/hooks/use-resource-permissions";
 import { useCurrency } from "@/hooks/use-currency";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -164,7 +164,7 @@ function getStatusBadge(status: string) {
 }
 
 export default function FixedDeposits({ organizationId }: FixedDepositsProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { canWrite } = useResourcePermissions(organizationId, RESOURCES.FIXED_DEPOSITS);
   const { currency, symbol, formatAmount } = useCurrency(organizationId);
   const [activeTab, setActiveTab] = useState("deposits");

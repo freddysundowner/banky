@@ -43,7 +43,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { CreditCard, Plus, Pencil, Trash2, ArrowLeft } from "lucide-react";
 import type { LoanProduct } from "@shared/tenant-types";
@@ -104,7 +104,7 @@ const formatPercent = (value: string | number | undefined): string => {
 };
 
 export default function LoanProducts({ organizationId }: LoanProductsProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [editingProduct, setEditingProduct] = useState<LoanProduct | null>(null);
   const [deleting, setDeleting] = useState<LoanProduct | null>(null);

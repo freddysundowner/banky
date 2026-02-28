@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { useResourcePermissions, RESOURCES } from "@/hooks/use-resource-permissions";
 import { useCurrency } from "@/hooks/use-currency";
 import { Loader2, Plus, CheckCircle, XCircle, Send, Eye, Percent, Users, DollarSign } from "lucide-react";
@@ -64,7 +64,7 @@ export function Dividends({ organizationId }: { organizationId: string }) {
     notes: ""
   });
   
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const queryClient = useQueryClient();
 
   const { data: dividends, isLoading } = useQuery<DividendDeclaration[]>({

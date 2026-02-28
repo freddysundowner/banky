@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { RefreshButton } from "@/components/refresh-button";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { useResourcePermissions, RESOURCES } from "@/hooks/use-resource-permissions";
 import { useCurrency } from "@/hooks/use-currency";
 import { PageHeader } from "@/components/page-header";
@@ -128,7 +128,7 @@ interface ChartOfAccountsProps {
 }
 
 export default function ChartOfAccounts({ organizationId }: ChartOfAccountsProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { canWrite } = useResourcePermissions(organizationId, RESOURCES.CHART_OF_ACCOUNTS);
   const [activeTab, setActiveTab] = useState("accounts");
   const [showCreateDialog, setShowCreateDialog] = useState(false);

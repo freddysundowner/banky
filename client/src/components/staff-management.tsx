@@ -42,7 +42,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { getErrorMessage } from "@/lib/error-utils";
 import { Users, Plus, Pencil, Trash2, Mail, Phone, Lock, Unlock, KeyRound, UserX, UserCheck, MoreHorizontal, ArrowLeft, Building2, User, IdCard, Search, ChevronLeft, ChevronRight, Loader2, UserPlus, LinkIcon, CheckCircle2 } from "lucide-react";
@@ -95,7 +95,7 @@ interface EditStaffPageProps {
 }
 
 function EditStaffPage({ organizationId, staffData, onBack }: EditStaffPageProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { user } = useAuth();
   const [approvalPin, setApprovalPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
@@ -737,7 +737,7 @@ function EditStaffPage({ organizationId, staffData, onBack }: EditStaffPageProps
 }
 
 export default function StaffManagement({ organizationId }: StaffManagementProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { user } = useAuth();
   const [showAddPage, setShowAddPage] = useState(false);
   const [showEditPage, setShowEditPage] = useState(false);

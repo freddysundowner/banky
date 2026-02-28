@@ -32,7 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { 
   Users, Lock, Unlock, Star, Plus, UserCheck, UserX, AlertCircle, DollarSign,
@@ -149,7 +149,7 @@ interface HRSummary {
 }
 
 export default function HRManagement({ organizationId }: HRManagementProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { formatAmount } = useCurrency(organizationId);
   const [activeTab, setActiveTab] = useState("overview");
   const [showLeaveDialog, setShowLeaveDialog] = useState(false);

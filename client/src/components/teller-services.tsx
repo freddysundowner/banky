@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { useFeatures } from "@/hooks/use-features";
 import { useCurrency } from "@/hooks/use-currency";
 import { RefreshButton } from "@/components/refresh-button";
@@ -99,7 +99,7 @@ function MpesaLog({ organizationId }: { organizationId: string }) {
   const [creditDialogOpen, setCreditDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState("");
   const [memberSearch, setMemberSearch] = useState("");
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { currency, symbol, formatAmount } = useCurrency(organizationId);
   const queryClient = useQueryClient();
 
@@ -313,7 +313,7 @@ function ChequeDeposits({ organizationId }: { organizationId: string }) {
     account_type: "savings",
     notes: ""
   });
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const queryClient = useQueryClient();
 
   const { data: cheques = [], isLoading } = useQuery({
@@ -569,7 +569,7 @@ function BankTransfers({ organizationId }: { organizationId: string }) {
     account_type: "savings",
     notes: ""
   });
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const queryClient = useQueryClient();
 
   const { data: transfers = [], isLoading } = useQuery({
@@ -824,7 +824,7 @@ function BankTransfers({ organizationId }: { organizationId: string }) {
 
 function QueueManagement({ organizationId }: { organizationId: string }) {
   const [selectedBranch, setSelectedBranch] = useState("");
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const queryClient = useQueryClient();
 
   const { data: branches = [] } = useQuery({

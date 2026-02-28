@@ -45,7 +45,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { getErrorMessage } from "@/lib/error-utils";
 import { 
@@ -202,7 +202,7 @@ interface MemberDocument {
 }
 
 function MemberDocumentsSection({ organizationId, memberId }: { organizationId: string; memberId: string }) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [uploadDocType, setUploadDocType] = useState("");
   const [uploadDescription, setUploadDescription] = useState("");
@@ -506,7 +506,7 @@ function MemberDocumentsSection({ organizationId, memberId }: { organizationId: 
 }
 
 export default function MemberManagement({ organizationId, prefillContact, onPrefillConsumed }: MemberManagementProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { user } = useAuth();
   const { currency, symbol, formatAmount } = useCurrency(organizationId);
   const { canWrite, hasPermission } = useResourcePermissions(organizationId, RESOURCES.MEMBERS);

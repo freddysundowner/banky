@@ -34,7 +34,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useResourcePermissions, RESOURCES } from "@/hooks/use-resource-permissions";
 import { usePermissions } from "@/hooks/use-permissions";
@@ -167,7 +167,7 @@ type WithdrawalFormData = z.infer<typeof withdrawalSchema>;
 type RepaymentFormData = z.infer<typeof repaymentSchema>;
 
 export default function TellerStation({ organizationId }: TellerStationProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { canRead, canWrite, isLoading: permissionsLoading } = useResourcePermissions(organizationId, RESOURCES.TELLER_STATION);
   const { isAdmin } = usePermissions(organizationId);
   const { hasFeature } = useFeatures(organizationId);

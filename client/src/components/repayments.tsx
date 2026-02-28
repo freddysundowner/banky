@@ -45,7 +45,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Skeleton } from "@/components/ui/skeleton";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Receipt, Plus, Calendar, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { useResourcePermissions, RESOURCES } from "@/hooks/use-resource-permissions";
@@ -113,7 +113,7 @@ const repaymentSchema = z.object({
 type RepaymentFormData = z.infer<typeof repaymentSchema>;
 
 export default function Repayments({ organizationId }: RepaymentsProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { currency, symbol, formatAmount } = useCurrency(organizationId);
   const [showDialog, setShowDialog] = useState(false);
   const [loanSearchOpen, setLoanSearchOpen] = useState(false);

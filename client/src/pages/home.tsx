@@ -55,7 +55,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { NotificationCenter } from "@/components/notification-center";
 import {
@@ -275,7 +275,7 @@ function SidebarUpgradeFooter({ plan, isTrial, trialDaysRemaining, onUpgrade }: 
 
 export default function Home() {
   const { user, logout, isLoading: authLoading } = useAuth();
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { platform_name: platformName, deployment_mode } = useBranding();
   const isSaasMode = deployment_mode === 'saas';
   const [showCreateDialog, setShowCreateDialog] = useState(false);

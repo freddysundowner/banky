@@ -44,7 +44,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { getErrorMessage } from "@/lib/error-utils";
 import { FileText, Plus, Check, X, Banknote, Eye, ArrowLeft, Pencil, Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronsUpDown, AlertTriangle, Clock, CheckCircle2, AlertCircle, Search, SlidersHorizontal, CalendarDays, RotateCcw, Shield, ShieldAlert } from "lucide-react";
@@ -571,7 +571,7 @@ const statusColors: Record<string, "default" | "secondary" | "destructive" | "ou
 type ViewMode = "list" | "new" | "edit" | "view";
 
 export default function LoanApplications({ organizationId }: LoanApplicationsProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { currency, symbol, formatAmount } = useCurrency(organizationId);
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [showRejectDialog, setShowRejectDialog] = useState<LoanApplication | null>(null);

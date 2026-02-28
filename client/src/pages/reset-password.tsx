@@ -15,7 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { Landmark, Eye, EyeOff } from "lucide-react";
 import { useBranding } from "@/context/BrandingContext";
@@ -31,7 +31,7 @@ const resetPasswordSchema = z.object({
 type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
 export default function ResetPassword() {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { platform_name, guide_url } = useBranding();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);

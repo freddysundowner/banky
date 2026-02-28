@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { RefreshButton } from "@/components/refresh-button";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { useResourcePermissions, RESOURCES } from "@/hooks/use-resource-permissions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -88,7 +88,7 @@ interface NewLine {
 }
 
 export default function JournalEntries({ organizationId }: JournalEntriesProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { canWrite } = useResourcePermissions(organizationId, RESOURCES.JOURNAL_ENTRIES);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);

@@ -43,7 +43,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { MessageSquare, Plus, Send, FileText, AlertCircle, Users, Loader2 } from "lucide-react";
 import { useResourcePermissions, RESOURCES } from "@/hooks/use-resource-permissions";
@@ -103,7 +103,7 @@ type TemplateFormData = z.infer<typeof templateSchema>;
 type BulkSMSFormData = z.infer<typeof bulkSMSSchema>;
 
 export default function SMSNotifications({ organizationId }: SMSNotificationsProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { symbol } = useCurrency(organizationId);
   const [showSMSDialog, setShowSMSDialog] = useState(false);
   const [showTemplateDialog, setShowTemplateDialog] = useState(false);

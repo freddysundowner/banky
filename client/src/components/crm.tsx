@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -143,7 +143,7 @@ function StatCard({ label, value, icon: Icon, color }: { label: string; value: n
 // ── Main CRM component ────────────────────────────────────────────────────────
 
 export default function CRMManagement({ organizationId, onConvertToMember }: CRMProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [activeTab, setActiveTab] = useState("contacts");

@@ -32,7 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Calendar, Check, X, Clock, Plus, Search, Users, Building2, RefreshCw, Settings, Pencil, ChevronRight, ChevronLeft, ArrowLeft } from "lucide-react";
 import { useResourcePermissions, RESOURCES } from "@/hooks/use-resource-permissions";
@@ -98,7 +98,7 @@ interface LeaveBalance {
 }
 
 export default function LeaveManagement({ organizationId }: LeaveManagementProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { hasPermission } = useResourcePermissions(organizationId, RESOURCES.LEAVE);
   const canRead = hasPermission("leave:read");
   const canWrite = hasPermission("leave:write");

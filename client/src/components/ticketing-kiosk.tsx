@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { 
@@ -34,7 +34,7 @@ const SERVICE_TYPES = [
 ];
 
 export function TicketingKiosk({ organizationId, organizationName, branchId: propBranchId, branchName: propBranchName, isAdmin, onBack, onLogout }: TicketingKioskProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const [selectedBranchId, setSelectedBranchId] = useState<string | null>(propBranchId || null);
 
   const { data: branches } = useQuery<{ id: string; name: string }[]>({

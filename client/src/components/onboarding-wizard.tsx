@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +31,7 @@ interface OnboardingWizardProps {
 
 
 export function OnboardingWizard({ organizationId, organizationName, onComplete, onFinalize }: OnboardingWizardProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
 

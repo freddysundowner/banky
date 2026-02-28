@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { RefreshButton } from "@/components/refresh-button";
 import { AlertTriangle, Phone, Calendar, FileWarning, AlertCircle, Clock, CheckCircle2 } from "lucide-react";
@@ -98,7 +98,7 @@ interface Staff {
 }
 
 export default function DefaultsCollections({ organizationId }: DefaultsCollectionsProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { currency, symbol, formatAmount } = useCurrency(organizationId);
   const [selectedDefault, setSelectedDefault] = useState<LoanDefault | null>(null);
   const [collectionNotes, setCollectionNotes] = useState("");

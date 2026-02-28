@@ -43,7 +43,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useResourcePermissions, RESOURCES } from "@/hooks/use-resource-permissions";
 import { 
@@ -199,7 +199,7 @@ type ReplenishFormData = z.infer<typeof replenishSchema>;
 type VaultDepositFormData = z.infer<typeof vaultDepositSchema>;
 
 export default function FloatManagement({ organizationId }: FloatManagementProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { canWrite } = useResourcePermissions(organizationId, RESOURCES.FLOAT_MANAGEMENT);
   const { currency, symbol, formatAmount } = useCurrency(organizationId);
   const [allocateOpen, setAllocateOpen] = useState(false);

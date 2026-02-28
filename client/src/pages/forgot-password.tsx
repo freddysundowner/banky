@@ -15,7 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { Landmark } from "lucide-react";
 import { useBranding } from "@/context/BrandingContext";
@@ -27,7 +27,7 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 export default function ForgotPassword() {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { platform_name, guide_url } = useBranding();
   const [submitted, setSubmitted] = useState(false);
 

@@ -14,7 +14,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Landmark, Eye, EyeOff, ShieldCheck, Users, CreditCard, BarChart3, Lock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
@@ -47,7 +47,7 @@ const FEATURES = [
 
 export default function Login() {
   const [, navigate] = useLocation();
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { platform_name, guide_url } = useBranding();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);

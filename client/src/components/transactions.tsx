@@ -41,7 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { ArrowDownLeft, ArrowUpRight, Plus, Wallet, AlertCircle, ChevronsUpDown, Check, ChevronLeft, ChevronRight, Loader2, Printer, Eye, Download } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -102,7 +102,7 @@ const transactionSchema = z.object({
 type TransactionFormData = z.infer<typeof transactionSchema>;
 
 export default function Transactions({ organizationId }: TransactionsProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { currency, symbol, formatAmount } = useCurrency(organizationId);
   const [showDialog, setShowDialog] = useState(false);
   const [memberSearchOpen, setMemberSearchOpen] = useState(false);

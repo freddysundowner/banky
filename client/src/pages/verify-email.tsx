@@ -3,7 +3,7 @@ import { Link, useLocation, useSearch } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { Landmark, CheckCircle, XCircle, Mail, Loader2 } from "lucide-react";
 import { useBranding } from "@/context/BrandingContext";
@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 export default function VerifyEmail() {
   const [, navigate] = useLocation();
   const searchString = useSearch();
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const { platform_name } = useBranding();
   const { user } = useAuth();
   const queryClient = useQueryClient();

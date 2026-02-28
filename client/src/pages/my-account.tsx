@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,7 @@ interface MyAccountPageProps {
 }
 
 export default function MyAccountPage({ organizationId }: MyAccountPageProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const [profileData, setProfileData] = useState({ first_name: '', last_name: '', phone: '' });
   const [passwordData, setPasswordData] = useState({ current_password: '', new_password: '', confirm_password: '' });
   const [pinData, setPinData] = useState({ new_pin: '', confirm_pin: '' });

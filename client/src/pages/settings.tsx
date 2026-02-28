@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
+import { useAppDialog } from "@/hooks/use-app-dialog";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -81,7 +81,7 @@ function ToggleRow({ label, description, checked, onChange, testId }: {
 }
 
 function RunDeductionButton({ organizationId }: { organizationId: string }) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const mutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", `/api/organizations/${organizationId}/trigger-auto-deduction`);
@@ -215,7 +215,7 @@ function UsageDashboard({ organizationId }: { organizationId: string }) {
 }
 
 function DeleteOrganizationSection({ organizationId }: { organizationId: string }) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const [confirmName, setConfirmName] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
@@ -674,7 +674,7 @@ function HoursSection({ getBoolValue, updateSetting, getValue }: any) {
 }
 
 export default function SettingsPage({ organizationId, isOwner }: SettingsPageProps) {
-  const { toast } = useToast();
+  const { toast } = useAppDialog();
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [hasChanges, setHasChanges] = useState(false);
   const [staffEmailDomain, setStaffEmailDomain] = useState("");
