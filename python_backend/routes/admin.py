@@ -276,7 +276,7 @@ def list_organizations(admin: AdminUser = Depends(require_admin), db: Session = 
     return result
 
 @router.post("/organizations")
-def create_organization(data: dict, admin: AdminUser = Depends(require_admin), db: Session = Depends(get_db)):
+async def create_organization(data: dict, admin: AdminUser = Depends(require_admin), db: Session = Depends(get_db)):
     """Create a new organization from admin panel"""
     name = data.get("name", "").strip()
     code = data.get("code", "").strip().upper()
@@ -358,13 +358,21 @@ def create_organization(data: dict, admin: AdminUser = Depends(require_admin), d
                 db.add(sub)
         
         db.commit()
-        
+
+        try:
+            from services.local_tenant import local_tenant_service
+            result = await local_tenant_service.create_tenant_database(str(org.id), name)
+            org.connection_string = result["connection_string"]
+            db.commit()
+        except Exception as tenant_err:
+            print(f"[admin] Tenant DB provisioning failed for {org.id}: {tenant_err}")
+
         return {
             "success": True,
             "message": f"Organization '{name}' created successfully",
             "organization_id": str(org.id)
         }
-        
+
     except Exception as e:
         db.rollback()
         import traceback
