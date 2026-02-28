@@ -267,27 +267,29 @@ async def get_institution_health(org_id: str, user=Depends(get_current_user), db
             loan_to_deposit_ratio = 0
         
         today = date.today()
-        month_start = today.replace(day=1)
-        
-        month_repayments = tenant_session.query(func.sum(LoanRepayment.amount)).filter(
-            func.date(LoanRepayment.payment_date) >= month_start
+        rolling_start = today - timedelta(days=30)
+
+        rolling_repayments = tenant_session.query(func.sum(LoanRepayment.amount)).filter(
+            func.date(LoanRepayment.payment_date) >= rolling_start
         ).scalar() or Decimal("0")
-        
+
         expected_monthly = sum(l.monthly_repayment or Decimal("0") for l in loans)
-        
+
         if expected_monthly > 0:
-            collection_efficiency = float(month_repayments / expected_monthly * 100)
+            collection_efficiency = float(rolling_repayments / expected_monthly * 100)
         else:
-            collection_efficiency = 100
-        
+            # No monthly repayment configured — treat as unmeasurable, penalise conservatively
+            collection_efficiency = 0
+
         health_score = 100
         if par_ratio > 5:
-            health_score -= min(30, par_ratio * 2)
+            # No cap: higher PAR = proportionally larger hit (max theoretical loss = 200pts, clamped to 0)
+            health_score -= par_ratio * 2
         if loan_to_deposit_ratio > 80:
             health_score -= (loan_to_deposit_ratio - 80) / 2
         if collection_efficiency < 80:
             health_score -= (80 - collection_efficiency) / 2
-        
+
         health_score = max(0, min(100, health_score))
         
         return {
