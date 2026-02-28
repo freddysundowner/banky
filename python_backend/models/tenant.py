@@ -242,7 +242,11 @@ class LoanProduct(TenantBase):
     # Loan eligibility rules
     allow_multiple_loans = Column(Boolean, default=True)
     require_good_standing = Column(Boolean, default=False)
-    
+
+    # Collateral requirements
+    requires_collateral = Column(Boolean, default=False)
+    min_ltv_coverage = Column(Numeric(5, 2), default=0)  # % of loan amount that must be covered by LTV-adjusted collateral value
+
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     

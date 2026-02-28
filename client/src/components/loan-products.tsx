@@ -80,6 +80,8 @@ const productSchema = z.object({
   deduct_interest_upfront: z.boolean().default(false),
   allow_multiple_loans: z.boolean().default(true),
   require_good_standing: z.boolean().default(false),
+  requires_collateral: z.boolean().default(false),
+  min_ltv_coverage: z.string().default("0"),
   is_active: z.boolean().default(true),
 });
 
@@ -146,6 +148,8 @@ export default function LoanProducts({ organizationId }: LoanProductsProps) {
       deduct_interest_upfront: false,
       allow_multiple_loans: true,
       require_good_standing: false,
+      requires_collateral: false,
+      min_ltv_coverage: "0",
       is_active: true,
     },
   });
@@ -247,6 +251,8 @@ export default function LoanProducts({ organizationId }: LoanProductsProps) {
       deduct_interest_upfront: (product as any).deduct_interest_upfront || false,
       allow_multiple_loans: (product as any).allow_multiple_loans !== false,
       require_good_standing: (product as any).require_good_standing || false,
+      requires_collateral: (product as any).requires_collateral || false,
+      min_ltv_coverage: String(parseFloat((product as any).min_ltv_coverage) || 0),
       is_active: product.is_active,
     });
     setViewMode("edit");
@@ -583,6 +589,37 @@ export default function LoanProducts({ organizationId }: LoanProductsProps) {
 
             <Card>
               <CardHeader>
+                <CardTitle>Collateral Requirements</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField control={form.control} name="requires_collateral" render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel>Requires Collateral</FormLabel>
+                      <FormDescription>Loan cannot be approved or disbursed without registered collateral</FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch checked={field.value} onCheckedChange={field.onChange} data-testid="switch-product-requires-collateral" />
+                    </FormControl>
+                  </FormItem>
+                )} />
+                <FormField control={form.control} name="min_ltv_coverage" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Minimum LTV Coverage (%)</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="number" step="5" min="0" max="200" placeholder="0" data-testid="input-product-min-ltv-coverage" />
+                    </FormControl>
+                    <FormDescription>
+                      Minimum collateral coverage required as a % of the loan amount, based on each collateral type's LTV ratio. E.g., 100 means collateral LTV value must equal or exceed the loan amount. Set to 0 to only require presence of collateral without a value threshold.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
                 <CardTitle>Shares-Based Eligibility</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -667,7 +704,15 @@ export default function LoanProducts({ organizationId }: LoanProductsProps) {
                   {products.map((product) => (
                     <TableRow key={product.id} data-testid={`row-product-${product.id}`}>
                       <TableCell className="font-medium">
-                        <div>{product.name}</div>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {product.name}
+                          {(product as any).requires_collateral && (
+                            <Badge variant="outline" className="text-xs border-amber-500 text-amber-600">Collateral</Badge>
+                          )}
+                          {product.requires_guarantor && (
+                            <Badge variant="outline" className="text-xs border-blue-500 text-blue-600">Guarantor</Badge>
+                          )}
+                        </div>
                         <div className="text-xs text-muted-foreground sm:hidden">{product.code || ""}</div>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">{product.code || "-"}</TableCell>

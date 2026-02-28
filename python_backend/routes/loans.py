@@ -6,7 +6,7 @@ from decimal import Decimal
 from datetime import datetime, timedelta
 from models.database import get_db
 from models.master import Organization
-from models.tenant import LoanApplication, LoanProduct, Member, LoanGuarantor, LoanExtraCharge, Transaction, Staff, LoanInstalment
+from models.tenant import LoanApplication, LoanProduct, Member, LoanGuarantor, LoanExtraCharge, Transaction, Staff, LoanInstalment, CollateralItem, CollateralType
 from schemas.tenant import LoanApplicationCreate, LoanApplicationUpdate, LoanApplicationResponse, LoanApplicationAction, LoanDisbursement, LoanGuarantorCreate
 from routes.auth import get_current_user
 from middleware.demo_guard import require_not_demo
@@ -674,7 +674,34 @@ async def process_loan_action(org_id: str, loan_id: str, data: LoanApplicationAc
                         status_code=400, 
                         detail="This loan requires at least one accepted guarantor before approval. Please add and get guarantors to accept first."
                     )
-            
+
+            # Check collateral requirements
+            if product and product.requires_collateral:
+                collateral_items = (
+                    tenant_session.query(CollateralItem)
+                    .join(CollateralType, CollateralItem.collateral_type_id == CollateralType.id)
+                    .filter(CollateralItem.loan_id == loan.id)
+                    .all()
+                )
+                if not collateral_items:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="This loan product requires collateral. Please register at least one collateral item before approving."
+                    )
+                min_coverage = float(product.min_ltv_coverage or 0)
+                if min_coverage > 0:
+                    total_ltv_value = sum(
+                        float(item.appraised_value or item.declared_value or 0)
+                        * float(item.collateral_type.ltv_percent or 0) / 100
+                        for item in collateral_items
+                    )
+                    required_value = float(loan.amount) * min_coverage / 100
+                    if total_ltv_value < required_value:
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Collateral coverage is insufficient. Required LTV-adjusted value: KES {required_value:,.2f} ({min_coverage}% of loan). Current: KES {total_ltv_value:,.2f}. Please add more collateral or get existing items appraised."
+                        )
+
             loan.status = "approved"
             loan.approved_at = datetime.utcnow()
             loan.reviewed_by_id = current_staff.id if current_staff else None
@@ -780,6 +807,33 @@ async def disburse_loan(org_id: str, loan_id: str, data: LoanDisbursement, user=
                         status_code=400,
                         detail=f"Cannot disburse: Loan amount exceeds eligible limit. Maximum ({member_shares:,.2f} × {shares_multiplier}x): {max_eligible_amount:,.2f}"
                     )
+
+            # Collateral check at disbursement (safety net)
+            if product.requires_collateral:
+                collateral_items = (
+                    tenant_session.query(CollateralItem)
+                    .join(CollateralType, CollateralItem.collateral_type_id == CollateralType.id)
+                    .filter(CollateralItem.loan_id == loan.id)
+                    .all()
+                )
+                if not collateral_items:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Cannot disburse: This loan product requires collateral but none is registered against this loan."
+                    )
+                min_coverage = float(product.min_ltv_coverage or 0)
+                if min_coverage > 0:
+                    total_ltv_value = sum(
+                        float(item.appraised_value or item.declared_value or 0)
+                        * float(item.collateral_type.ltv_percent or 0) / 100
+                        for item in collateral_items
+                    )
+                    required_value = float(loan.amount) * min_coverage / 100
+                    if total_ltv_value < required_value:
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Cannot disburse: Collateral LTV-adjusted value (KES {total_ltv_value:,.2f}) is below the required {min_coverage}% coverage (KES {required_value:,.2f})."
+                        )
         
         if data.disbursement_method == "mpesa":
             if not data.disbursement_phone:
