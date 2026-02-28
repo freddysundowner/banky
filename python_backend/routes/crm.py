@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, desc
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from models.database import get_db
 from models.tenant import CrmContact, CrmInteraction, CrmFollowUp, Staff
@@ -16,6 +16,10 @@ router = APIRouter()
 
 # ── Pydantic schemas ──────────────────────────────────────────────────────────
 
+def _empty_str_to_none(v):
+    """Coerce empty strings to None for optional FK fields."""
+    return v if v else None
+
 class ContactCreate(BaseModel):
     first_name: str
     last_name: str
@@ -27,6 +31,10 @@ class ContactCreate(BaseModel):
     estimated_amount: Optional[float] = None
     notes: Optional[str] = None
     assigned_to_id: Optional[str] = None
+
+    @field_validator("assigned_to_id", mode="before")
+    @classmethod
+    def clean_assigned_to(cls, v): return _empty_str_to_none(v)
 
 class ContactUpdate(BaseModel):
     first_name: Optional[str] = None
@@ -42,6 +50,10 @@ class ContactUpdate(BaseModel):
     notes: Optional[str] = None
     assigned_to_id: Optional[str] = None
 
+    @field_validator("assigned_to_id", mode="before")
+    @classmethod
+    def clean_assigned_to(cls, v): return _empty_str_to_none(v)
+
 class InteractionCreate(BaseModel):
     interaction_type: str
     interaction_date: Optional[datetime] = None
@@ -54,11 +66,19 @@ class FollowUpCreate(BaseModel):
     due_date: datetime
     assigned_to_id: Optional[str] = None
 
+    @field_validator("assigned_to_id", mode="before")
+    @classmethod
+    def clean_assigned_to(cls, v): return _empty_str_to_none(v)
+
 class FollowUpUpdate(BaseModel):
     description: Optional[str] = None
     due_date: Optional[datetime] = None
     status: Optional[str] = None
     assigned_to_id: Optional[str] = None
+
+    @field_validator("assigned_to_id", mode="before")
+    @classmethod
+    def clean_assigned_to(cls, v): return _empty_str_to_none(v)
 
 class ConvertRequest(BaseModel):
     member_id: Optional[str] = None
@@ -237,7 +257,7 @@ def create_contact(
             interest=body.interest,
             estimated_amount=body.estimated_amount,
             notes=body.notes,
-            assigned_to_id=body.assigned_to_id,
+            assigned_to_id=body.assigned_to_id or None,
             created_by_id=staff.id if staff else None,
         )
         tenant_session.add(contact)
@@ -510,7 +530,7 @@ def create_followup(
             contact_id=body.contact_id,
             description=body.description,
             due_date=body.due_date,
-            assigned_to_id=body.assigned_to_id,
+            assigned_to_id=body.assigned_to_id or None,
             created_by_id=staff.id if staff else None,
         )
         tenant_session.add(followup)
