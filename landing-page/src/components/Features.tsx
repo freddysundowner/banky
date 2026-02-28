@@ -24,6 +24,8 @@ import {
   Phone,
   Map,
   Award,
+  Package,
+  PhoneCall,
   type LucideIcon
 } from 'lucide-react';
 
@@ -38,7 +40,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Users, DollarSign, CreditCard, Wallet, UserPlus, BookOpen,
   LayoutGrid, Bell, Shield, BarChart3, Building2, Database,
   Briefcase, Smartphone, Globe, Lock, Settings, TrendingUp,
-  PieChart, FileText, Mail, Phone, Map, Award,
+  PieChart, FileText, Mail, Phone, Map, Award, Package, PhoneCall,
 };
 
 const defaultFeatures: FeatureItem[] = [
@@ -55,6 +57,8 @@ const defaultFeatures: FeatureItem[] = [
   { icon: 'BarChart3', title: 'Real-time Analytics', description: 'Live dashboards showing portfolio performance, loan arrears, member growth, and financial health. Generate regulator reports in one click.', color: 'lime' },
   { icon: 'Building2', title: 'Multi-Branch Operations', description: 'Manage headquarters, branches, and satellite offices from one platform. Role-based access ensures staff see only what they need.', color: 'amber' },
   { icon: 'Briefcase', title: 'HR & Payroll', description: 'Manage employee records, process payroll, track leave, and handle statutory deductions -- with automatic journal entries to your books.', color: 'rose' },
+  { icon: 'Package', title: 'Collateral Management', description: 'Register and track every asset pledged as loan security. Record valuations, monitor LTV coverage, manage insurance policies, and get alerts when collateral falls below required levels.', color: 'amber' },
+  { icon: 'PhoneCall', title: 'CRM & Lead Management', description: 'Turn prospects into members. Log calls, emails, and meetings, schedule follow-ups, track pipeline stages, and convert contacts to full member accounts in one click.', color: 'teal' },
   { icon: 'Database', title: 'Isolated & Secure', description: "Every organization gets its own dedicated database. Your data never mixes with anyone else's. Bank-grade encryption at rest and in transit.", color: 'violet' },
 ];
 
