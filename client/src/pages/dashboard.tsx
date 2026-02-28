@@ -5,12 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { RefreshButton } from "@/components/refresh-button";
 import {
-  Users,
   TrendingUp,
-  Building2,
-  UserCog,
-  Wallet,
-  PiggyBank,
   AlertTriangle,
   CircleDollarSign,
   ArrowUpRight,
@@ -49,12 +44,7 @@ interface CollateralAlerts {
 }
 
 interface DashboardAnalytics {
-  total_members: number;
-  total_staff: number;
-  total_branches: number;
   collateral_deficient_count: number;
-  total_savings: number;
-  total_shares: number;
   total_disbursed: number;
   total_outstanding: number;
   total_repaid: number;
@@ -63,7 +53,7 @@ interface DashboardAnalytics {
 }
 
 export default function Dashboard({ organizationId, organizationName, onNavigate }: DashboardProps) {
-  const { symbol, formatAmount } = useCurrency(organizationId);
+  const { formatAmount } = useCurrency(organizationId);
   const [deficientDismissed, setDeficientDismissed] = useState(false);
   const { data, isLoading, error } = useQuery<DashboardAnalytics>({
     queryKey: ["/api/organizations", organizationId, "analytics", "dashboard"],
@@ -134,58 +124,6 @@ export default function Dashboard({ organizationId, organizationName, onNavigate
       </div>
 
       <div className="space-y-4 md:space-y-6">
-        <div>
-          <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-3">Organization</h2>
-          <div className="grid gap-3 md:gap-4 grid-cols-3">
-            <StatCard
-              label="Members"
-              value={data?.total_members}
-              icon={Users}
-              color="text-blue-600"
-              bgColor="bg-blue-50 dark:bg-blue-950"
-              isLoading={isLoading}
-            />
-            <StatCard
-              label="Staff"
-              value={data?.total_staff}
-              icon={UserCog}
-              color="text-indigo-600"
-              bgColor="bg-indigo-50 dark:bg-indigo-950"
-              isLoading={isLoading}
-            />
-            <StatCard
-              label="Branches"
-              value={data?.total_branches}
-              icon={Building2}
-              color="text-slate-600"
-              bgColor="bg-slate-50 dark:bg-slate-900"
-              isLoading={isLoading}
-            />
-          </div>
-        </div>
-
-        <div>
-          <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-3">Member Funds</h2>
-          <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2">
-            <StatCard
-              label="Total Savings"
-              value={data ? formatAmount(data.total_savings) : undefined}
-              icon={PiggyBank}
-              color="text-green-600"
-              bgColor="bg-green-50 dark:bg-green-950"
-              isLoading={isLoading}
-            />
-            <StatCard
-              label="Total Shares"
-              value={data ? formatAmount(data.total_shares) : undefined}
-              icon={Wallet}
-              color="text-teal-600"
-              bgColor="bg-teal-50 dark:bg-teal-950"
-              isLoading={isLoading}
-            />
-          </div>
-        </div>
-
         <div>
           <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-3">Loan Portfolio</h2>
           <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
