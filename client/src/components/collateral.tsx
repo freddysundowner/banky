@@ -27,6 +27,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import {
   Shield, Plus, Search, MoreHorizontal, AlertTriangle, CheckCircle2,
   Clock, FileText, Trash2, Edit, TrendingUp, Lock, Unlock, DollarSign,
@@ -945,6 +946,21 @@ export default function CollateralManagement({ organizationId }: CollateralProps
               </div>
               <FormField control={typeForm.control} name="description" render={({ field }) => (
                 <FormItem><FormLabel>Description (optional)</FormLabel><FormControl><Input {...field} data-testid="input-type-description" /></FormControl><FormMessage /></FormItem>
+              )} />
+              <FormField control={typeForm.control} name="requires_insurance" render={({ field }) => (
+                <FormItem className="flex items-center justify-between rounded-lg border p-3">
+                  <div>
+                    <FormLabel className="text-sm font-medium">Requires Insurance</FormLabel>
+                    <p className="text-xs text-muted-foreground mt-0.5">Collateral items of this type must have an active insurance policy</p>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      data-testid="switch-type-requires-insurance"
+                      checked={field.value ?? false}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
               )} />
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => { setShowAddType(false); setEditType(null); }}>Cancel</Button>
