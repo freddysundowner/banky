@@ -1255,8 +1255,8 @@ async def cancel_loan(org_id: str, loan_id: str, user=Depends(get_current_user),
 
 # Alias routes for frontend compatibility - loan-applications maps to loans
 @router.get("/{org_id}/loan-applications")
-async def list_loan_applications(org_id: str, status: str = None, member_id: str = None, branch_id: str = None, page: int = 1, page_size: int = 20, search: str = None, product_id: str = None, date_from: str = None, date_to: str = None, user=Depends(get_current_user), db: Session = Depends(get_db)):
-    return await list_loans(org_id, status, member_id, branch_id, page, page_size, search, product_id, date_from, date_to, user, db)
+async def list_loan_applications(org_id: str, status: str = None, statuses: str = None, member_id: str = None, branch_id: str = None, page: int = 1, page_size: int = 20, search: str = None, product_id: str = None, date_from: str = None, date_to: str = None, user=Depends(get_current_user), db: Session = Depends(get_db)):
+    return await list_loans(org_id, status=status, statuses=statuses, member_id=member_id, branch_id=branch_id, page=page, page_size=page_size, search=search, product_id=product_id, date_from=date_from, date_to=date_to, user=user, db=db)
 
 @router.post("/{org_id}/loan-applications")
 async def create_loan_application(org_id: str, data: LoanApplicationCreate, user=Depends(get_current_user), db: Session = Depends(get_db)):
