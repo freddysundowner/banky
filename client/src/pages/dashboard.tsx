@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { RefreshButton } from "@/components/refresh-button";
 import {
   Users,
@@ -20,6 +21,7 @@ import {
   CheckCircle2,
   XCircle,
   ShieldAlert,
+  X,
 } from "lucide-react";
 import { useCurrency } from "@/hooks/use-currency";
 
@@ -48,6 +50,7 @@ interface DashboardAnalytics {
 
 export default function Dashboard({ organizationId, organizationName }: DashboardProps) {
   const { symbol, formatAmount } = useCurrency(organizationId);
+  const [deficientDismissed, setDeficientDismissed] = useState(false);
   const { data, isLoading, error } = useQuery<DashboardAnalytics>({
     queryKey: ["/api/organizations", organizationId, "analytics", "dashboard"],
     queryFn: async () => {
@@ -79,6 +82,24 @@ export default function Dashboard({ organizationId, organizationName }: Dashboar
 
   return (
     <div className="space-y-4 md:space-y-6">
+      {data && data.collateral_deficient_count > 0 && !deficientDismissed && (
+        <div className="flex items-center gap-3 rounded-lg border border-amber-400/60 bg-amber-50 dark:bg-amber-950/30 px-4 py-2.5 text-amber-800 dark:text-amber-300" data-testid="banner-collateral-deficient">
+          <ShieldAlert className="h-4 w-4 flex-shrink-0" />
+          <span className="text-sm flex-1">
+            <span className="font-semibold">{data.collateral_deficient_count} {data.collateral_deficient_count === 1 ? "loan" : "loans"}</span> with collateral coverage below the required minimum — review required.
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/40 flex-shrink-0"
+            onClick={() => setDeficientDismissed(true)}
+            data-testid="button-dismiss-deficient-banner"
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div>
           <h1 className="text-xl md:text-2xl font-bold">Dashboard</h1>
@@ -180,7 +201,7 @@ export default function Dashboard({ organizationId, organizationName }: Dashboar
 
         <div>
           <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-3">Loan Applications</h2>
-          <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
             <StatCard
               label="Total"
               value={data?.total_loans}
@@ -213,14 +234,6 @@ export default function Dashboard({ organizationId, organizationName }: Dashboar
               bgColor="bg-blue-50 dark:bg-blue-950"
               isLoading={isLoading}
             />
-            <StatCard
-              label="Collateral Deficient"
-              value={data?.collateral_deficient_count}
-              icon={ShieldAlert}
-              color="text-red-600"
-              bgColor="bg-red-50 dark:bg-red-950"
-              isLoading={isLoading}
-            />
           </div>
         </div>
 
@@ -245,26 +258,6 @@ export default function Dashboard({ organizationId, organizationName }: Dashboar
           </Card>
         )}
 
-        {data && data.collateral_deficient_count > 0 && (
-          <Card className="border-amber-500/50 bg-amber-50/60 dark:bg-amber-950/20">
-            <CardHeader className="pb-2 md:pb-3 px-4 md:px-6 pt-4 md:pt-6">
-              <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400 text-sm md:text-base">
-                <ShieldAlert className="h-4 w-4 md:h-5 md:w-5" />
-                Collateral Deficient Loans
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 md:px-6 pb-4 md:pb-6">
-              <div className="flex items-center gap-3 md:gap-4">
-                <div>
-                  <p className="text-2xl md:text-3xl font-bold text-amber-700 dark:text-amber-400" data-testid="text-collateral-deficient-count">{data.collateral_deficient_count}</p>
-                  <p className="text-xs md:text-sm text-muted-foreground">
-                    {data.collateral_deficient_count === 1 ? "loan" : "loans"} with collateral coverage below the required minimum — review required
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
     </div>
   );
