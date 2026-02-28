@@ -516,14 +516,21 @@ def record_valuation(
                     is_deficient = coverage_pct < min_ltv
                     was_deficient = bool(loan.collateral_deficient)
                     loan.collateral_deficient = is_deficient
-                    if is_deficient and not was_deficient:
+                    if is_deficient:
                         from routes.notifications import create_notification
                         notif_title = f"Collateral Deficient: {loan.application_number}"
-                        notif_msg = (
-                            f"Collateral coverage for loan {loan.application_number} has dropped to "
-                            f"{coverage_pct:.1f}% against the required {min_ltv:.1f}%. "
-                            f"Immediate review required."
-                        )
+                        if not was_deficient:
+                            notif_msg = (
+                                f"Collateral coverage for loan {loan.application_number} has dropped to "
+                                f"{coverage_pct:.1f}% against the required {min_ltv:.1f}%. "
+                                f"Immediate review required."
+                            )
+                        else:
+                            notif_msg = (
+                                f"Revaluation recorded for loan {loan.application_number} — coverage remains "
+                                f"at {coverage_pct:.1f}%, below the required {min_ltv:.1f}%. "
+                                f"Action still required."
+                            )
                         notif_link = f"/loans/{loan.id}"
                         target_roles = ["loan_officer", "manager", "admin"]
                         staff_list = tenant_session.query(Staff).filter(
