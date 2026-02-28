@@ -1535,6 +1535,7 @@ class CollateralInsurance(TenantBase):
     expiry_date = Column(Date, nullable=False)
     status = Column(String(30), default="active")  # active, expired, lapsed, cancelled
     notes = Column(Text)
+    document_path = Column(String(500), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

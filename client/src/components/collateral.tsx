@@ -31,7 +31,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Shield, Plus, Search, MoreHorizontal, AlertTriangle, CheckCircle2,
   Clock, FileText, Trash2, Edit, TrendingUp, Lock, Unlock, DollarSign,
-  ShieldAlert, ShieldCheck, Settings, X, Upload, Building2, ExternalLink,
+  ShieldAlert, ShieldCheck, Settings, X, Upload, Building2, ExternalLink, Loader2,
 } from "lucide-react";
 
 interface CollateralProps {
@@ -381,6 +381,27 @@ export default function CollateralManagement({ organizationId }: CollateralProps
     onError: (e: any) => toast({ title: "Failed", description: e.message, variant: "destructive" }),
   });
 
+  const insuranceFileRef = useRef<HTMLInputElement>(null);
+  const [uploadingInsuranceId, setUploadingInsuranceId] = useState<string | null>(null);
+
+  const uploadInsuranceDocument = async (policyId: string, file: File) => {
+    setUploadingInsuranceId(policyId);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`/api/organizations/${organizationId}/collateral/insurance/${policyId}/upload-document`, { method: "POST", body: fd, credentials: "include" });
+      if (!res.ok) { const err = await res.json(); throw new Error(err.detail || "Upload failed"); }
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/collateral/insurance`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/collateral/items`] });
+      toast({ title: "Policy document uploaded" });
+    } catch (e: any) {
+      toast({ title: "Upload failed", description: e.message, variant: "destructive" });
+    } finally {
+      setUploadingInsuranceId(null);
+      if (insuranceFileRef.current) insuranceFileRef.current.value = "";
+    }
+  };
+
   const addTypeMutation = useMutation({
     mutationFn: (data: any) => apiRequest("POST", `/api/organizations/${organizationId}/collateral/types`, { ...data, ltv_percent: parseFloat(data.ltv_percent), revaluation_months: parseInt(data.revaluation_months || "24") }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/collateral/types`] }); setShowAddType(false); typeForm.reset(); toast({ title: "Collateral type added" }); },
@@ -572,12 +593,13 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                       <TableHead>Sum Insured</TableHead>
                       <TableHead>Expiry</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="w-10"></TableHead>
+                      <TableHead>Document</TableHead>
+                      <TableHead className="w-20"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {(insuranceQuery.data ?? []).length === 0 ? (
-                      <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-10">No insurance policies yet. Add policies from the Register tab using the Actions menu.</TableCell></TableRow>
+                      <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-10">No insurance policies yet. Add policies from the Register tab using the Actions menu.</TableCell></TableRow>
                     ) : (insuranceQuery.data ?? []).map((p: any) => (
                       <TableRow key={p.id} data-testid={`row-insurance-${p.id}`}>
                         <TableCell className="font-medium text-sm">{p.policy_number}</TableCell>
@@ -591,9 +613,25 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                         <TableCell className="text-sm">{p.expiry_date}</TableCell>
                         <TableCell><StatusBadge status={p.status} /></TableCell>
                         <TableCell>
-                          <Button variant="ghost" size="icon" className="text-destructive" onClick={() => { if (confirm("Delete this insurance policy?")) deleteInsuranceMutation.mutate(p.id); }}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {p.document_url ? (
+                            <a href={p.document_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-blue-600 hover:underline" data-testid={`link-insurance-doc-${p.id}`}>
+                              <ExternalLink className="h-3 w-3" /> View Policy
+                            </a>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">No document</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" title="Upload policy document" data-testid={`button-upload-insurance-${p.id}`}
+                              disabled={uploadingInsuranceId === p.id}
+                              onClick={() => { setUploadingInsuranceId(p.id); insuranceFileRef.current?.click(); }}>
+                              {uploadingInsuranceId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                            </Button>
+                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => { if (confirm("Delete this insurance policy?")) deleteInsuranceMutation.mutate(p.id); }}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -814,6 +852,10 @@ export default function CollateralManagement({ organizationId }: CollateralProps
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Hidden file input for insurance document upload */}
+      <input ref={insuranceFileRef} type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+        onChange={e => { const f = e.target.files?.[0]; if (f && uploadingInsuranceId) uploadInsuranceDocument(uploadingInsuranceId, f); }} />
 
       {/* ── Add / Edit Valuer Dialog ──────────────────────────────────────────── */}
       {(showAddValuer || !!editValuer) && (
@@ -1241,7 +1283,15 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                   <div className="space-y-1">
                     {itemDetailQuery.data.insurance_policies.map((p: any) => (
                       <div key={p.id} className="flex justify-between items-center rounded-lg border px-3 py-2">
-                        <div><div className="font-medium">{p.policy_number}</div><div className="text-xs text-muted-foreground">{p.insurer_name} · Expires {p.expiry_date}</div></div>
+                        <div>
+                          <div className="font-medium">{p.policy_number}</div>
+                          <div className="text-xs text-muted-foreground">{p.insurer_name} · Expires {p.expiry_date}</div>
+                          {p.document_url && (
+                            <a href={p.document_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-blue-600 hover:underline mt-0.5">
+                              <ExternalLink className="h-3 w-3" /> View Policy Document
+                            </a>
+                          )}
+                        </div>
                         <StatusBadge status={p.status} />
                       </div>
                     ))}

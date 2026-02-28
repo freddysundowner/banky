@@ -957,6 +957,9 @@ def run_tenant_schema_migration(engine):
 
         # v34: Backfill collateral_deficient (handled in Python below)
 
+        # v35: Insurance policy document upload
+        conn.execute(text("ALTER TABLE collateral_insurance ADD COLUMN IF NOT EXISTS document_path VARCHAR(500)"))
+
         conn.commit()
     
     try:

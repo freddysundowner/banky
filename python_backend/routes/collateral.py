@@ -203,6 +203,8 @@ def insurance_to_dict(p: CollateralInsurance) -> dict:
         "expiry_date": p.expiry_date.isoformat() if p.expiry_date else None,
         "status": computed_status,
         "notes": p.notes,
+        "document_path": p.document_path,
+        "document_url": f"/uploads/valuations/{p.document_path}" if p.document_path else None,
         "created_at": p.created_at.isoformat() if p.created_at else None,
     }
 
@@ -944,6 +946,47 @@ def delete_insurance(
         tenant_session.delete(policy)
         tenant_session.commit()
         return {"message": "Insurance policy deleted"}
+    finally:
+        tenant_session.close()
+        tenant_ctx.close()
+
+
+@router.post("/{organization_id}/collateral/insurance/{policy_id}/upload-document", dependencies=[Depends(require_not_demo)])
+async def upload_insurance_document(
+    organization_id: str,
+    policy_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
+    require_permission(membership, "loans:write", db)
+    tenant_session = tenant_ctx.create_session()
+    try:
+        policy = tenant_session.query(CollateralInsurance).filter(CollateralInsurance.id == policy_id).first()
+        if not policy:
+            raise HTTPException(status_code=404, detail="Insurance policy not found")
+
+        ext = Path(file.filename).suffix.lower() if file.filename else ".pdf"
+        allowed = {".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"}
+        if ext not in allowed:
+            raise HTTPException(status_code=400, detail="File type not allowed. Use PDF, image, or Word document.")
+
+        filename = f"{organization_id}_ins_{policy_id}_{uuid.uuid4().hex}{ext}"
+        dest = UPLOADS_DIR / filename
+        with dest.open("wb") as buf:
+            shutil.copyfileobj(file.file, buf)
+
+        if policy.document_path and policy.document_path != filename:
+            old = UPLOADS_DIR / policy.document_path
+            if old.exists():
+                old.unlink(missing_ok=True)
+
+        policy.document_path = filename
+        policy.updated_at = datetime.utcnow()
+        tenant_session.commit()
+        tenant_session.refresh(policy)
+        return {"document_path": filename, "document_url": f"/uploads/valuations/{filename}"}
     finally:
         tenant_session.close()
         tenant_ctx.close()
