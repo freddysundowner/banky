@@ -1437,3 +1437,79 @@ class CrmFollowUp(TenantBase):
     assigned_to = relationship("Staff", foreign_keys=[assigned_to_id])
     created_by = relationship("Staff", foreign_keys=[created_by_id])
 
+
+
+# ── Collateral Management ─────────────────────────────────────────────────────
+
+class CollateralType(TenantBase):
+    """Admin-configurable collateral types with LTV settings."""
+    __tablename__ = "collateral_types"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    name = Column(String(100), nullable=False)
+    ltv_percent = Column(Numeric(5, 2), nullable=False, default=70)
+    revaluation_months = Column(Integer, default=24)
+    requires_insurance = Column(Boolean, default=False)
+    description = Column(Text)
+    is_system = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    items = relationship("CollateralItem", back_populates="collateral_type")
+
+
+class CollateralItem(TenantBase):
+    """A pledged asset registered against a loan."""
+    __tablename__ = "collateral_items"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    loan_id = Column(String, ForeignKey("loan_applications.id"), nullable=False)
+    collateral_type_id = Column(String, ForeignKey("collateral_types.id"), nullable=False)
+    owner_name = Column(String(200), nullable=False)
+    owner_id_number = Column(String(100))
+    description = Column(Text, nullable=False)
+    document_ref = Column(String(200))
+    declared_value = Column(Numeric(15, 2))
+    appraised_value = Column(Numeric(15, 2))
+    ltv_override = Column(Numeric(5, 2))
+    lending_limit = Column(Numeric(15, 2))
+    valuer_name = Column(String(200))
+    valuation_date = Column(Date)
+    next_revaluation_date = Column(Date)
+    status = Column(String(50), default="registered")  # registered, under_lien, released, defaulted, liquidated
+    lien_date = Column(DateTime)
+    release_date = Column(DateTime)
+    release_notes = Column(Text)
+    liquidation_date = Column(DateTime)
+    liquidation_amount = Column(Numeric(15, 2))
+    liquidation_notes = Column(Text)
+    created_by_id = Column(String, ForeignKey("staff.id"))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    loan = relationship("LoanApplication", foreign_keys=[loan_id])
+    collateral_type = relationship("CollateralType", back_populates="items")
+    created_by = relationship("Staff", foreign_keys=[created_by_id])
+    insurance_policies = relationship("CollateralInsurance", back_populates="collateral_item", cascade="all, delete-orphan")
+
+
+class CollateralInsurance(TenantBase):
+    """Insurance policy covering a pledged collateral item."""
+    __tablename__ = "collateral_insurance"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    collateral_item_id = Column(String, ForeignKey("collateral_items.id"), nullable=False)
+    policy_number = Column(String(100), nullable=False)
+    insurer_name = Column(String(200), nullable=False)
+    policy_type = Column(String(50))  # comprehensive, third_party, fire, property, life, other
+    sum_insured = Column(Numeric(15, 2))
+    premium_amount = Column(Numeric(15, 2))
+    premium_frequency = Column(String(30))  # annual, semi_annual, quarterly, monthly
+    start_date = Column(Date, nullable=False)
+    expiry_date = Column(Date, nullable=False)
+    status = Column(String(30), default="active")  # active, expired, lapsed, cancelled
+    notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    collateral_item = relationship("CollateralItem", back_populates="insurance_policies")

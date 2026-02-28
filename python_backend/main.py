@@ -43,6 +43,7 @@ from routes.admin import router as admin_router
 from routes.demo_data import router as demo_data_router
 from routes.features import router as features_router
 from routes.crm import router as crm_router
+from routes.collateral import router as collateral_router
 from routes.notifications import router as notifications_router
 from routes.exports import router as exports_router
 from routes.subscription_payments import router as subscription_payments_router
@@ -72,12 +73,12 @@ def build_frontend():
 
 DEFAULT_PLAN_FEATURES = {
     "starter": ["core_banking", "members", "savings", "shares", "loans", "audit_logs", "mpesa_integration"],
-    "growth": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "analytics", "sms_notifications", "expenses", "leave_management", "multiple_branches", "audit_logs", "accounting", "mpesa_integration", "crm"],
-    "professional": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "fixed_deposits", "dividends", "analytics", "analytics_export", "sms_notifications", "bulk_sms", "expenses", "leave_management", "payroll", "accounting", "multiple_branches", "api_access", "white_label", "custom_reports", "mpesa_integration", "audit_logs", "crm"],
+    "growth": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "analytics", "sms_notifications", "expenses", "leave_management", "multiple_branches", "audit_logs", "accounting", "mpesa_integration", "crm", "collateral"],
+    "professional": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "fixed_deposits", "dividends", "analytics", "analytics_export", "sms_notifications", "bulk_sms", "expenses", "leave_management", "payroll", "accounting", "multiple_branches", "api_access", "white_label", "custom_reports", "mpesa_integration", "audit_logs", "crm", "collateral"],
     "basic": ["core_banking", "members", "savings", "shares", "loans", "audit_logs", "mpesa_integration"],
-    "standard": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "analytics", "sms_notifications", "expenses", "leave_management", "multiple_branches", "audit_logs", "accounting", "mpesa_integration", "crm"],
-    "premium": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "fixed_deposits", "dividends", "analytics", "analytics_export", "sms_notifications", "bulk_sms", "expenses", "leave_management", "payroll", "accounting", "multiple_branches", "mpesa_integration", "bank_integration", "audit_logs", "crm"],
-    "enterprise": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "fixed_deposits", "dividends", "analytics", "analytics_export", "sms_notifications", "bulk_sms", "expenses", "leave_management", "payroll", "accounting", "multiple_branches", "api_access", "white_label", "custom_reports", "mpesa_integration", "bank_integration", "audit_logs", "crm"],
+    "standard": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "analytics", "sms_notifications", "expenses", "leave_management", "multiple_branches", "audit_logs", "accounting", "mpesa_integration", "crm", "collateral"],
+    "premium": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "fixed_deposits", "dividends", "analytics", "analytics_export", "sms_notifications", "bulk_sms", "expenses", "leave_management", "payroll", "accounting", "multiple_branches", "mpesa_integration", "bank_integration", "audit_logs", "crm", "collateral"],
+    "enterprise": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "fixed_deposits", "dividends", "analytics", "analytics_export", "sms_notifications", "bulk_sms", "expenses", "leave_management", "payroll", "accounting", "multiple_branches", "api_access", "white_label", "custom_reports", "mpesa_integration", "bank_integration", "audit_logs", "crm", "collateral"],
 }
 
 def seed_default_plans():
@@ -521,6 +522,7 @@ app.include_router(accounting_router, prefix="/api/organizations", tags=["Accoun
 app.include_router(admin_router, prefix="/api", tags=["Admin"])
 app.include_router(demo_data_router, prefix="/api", tags=["Admin"])
 app.include_router(crm_router, prefix="/api/organizations", tags=["CRM"])
+app.include_router(collateral_router, prefix="/api/organizations", tags=["Collateral"])
 app.include_router(features_router, prefix="/api/organizations", tags=["Features"])
 app.include_router(notifications_router, prefix="/api/organizations", tags=["Notifications"])
 app.include_router(exports_router, prefix="/api/organizations", tags=["Data Export"])

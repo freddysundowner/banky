@@ -31,6 +31,7 @@ class Feature(str, Enum):
     MPESA_INTEGRATION = "mpesa_integration"
     BANK_INTEGRATION = "bank_integration"
     CRM = "crm"
+    COLLATERAL = "collateral"
 
 BASELINE_FEATURES: Set[str] = {
     Feature.CORE_BANKING, Feature.MEMBERS, Feature.SAVINGS, Feature.SHARES, Feature.LOANS
@@ -224,7 +225,8 @@ def get_feature_category(feature: Feature) -> str:
         "advanced": [Feature.MULTIPLE_BRANCHES, Feature.API_ACCESS, Feature.WHITE_LABEL],
         "integrations": [Feature.MPESA_INTEGRATION, Feature.BANK_INTEGRATION],
         "security": [Feature.AUDIT_LOGS],
-        "crm": [Feature.CRM]
+        "crm": [Feature.CRM],
+        "collateral": [Feature.COLLATERAL]
     }
     
     for category, features in categories.items():
