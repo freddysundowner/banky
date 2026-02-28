@@ -293,7 +293,15 @@ async def register(data: UserRegister, request: Request, response: Response, db:
             db.add(subscription)
         
         db.commit()
-    
+
+        try:
+            from services.local_tenant import local_tenant_service
+            tenant_result = await local_tenant_service.create_tenant_database(str(org.id), org_name)
+            org.connection_string = tenant_result["connection_string"]
+            db.commit()
+        except Exception as tenant_err:
+            print(f"[register] Tenant DB provisioning failed for {org.id}: {tenant_err}")
+
     token = create_session(db, user.id)
     response.set_cookie(
         key=SESSION_COOKIE_NAME,
