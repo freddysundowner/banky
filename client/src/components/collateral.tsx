@@ -164,6 +164,7 @@ export default function CollateralManagement({ organizationId, initialTab, highl
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
+  const [insuranceSearch, setInsuranceSearch] = useState("");
 
   const [showAddItem, setShowAddItem] = useState(false);
   const [loanSearch, setLoanSearch] = useState("");
@@ -598,7 +599,19 @@ export default function CollateralManagement({ organizationId, initialTab, highl
         {/* ── Insurance Tab ─────────────────────────────────────────────────────── */}
         <TabsContent value="insurance" className="mt-4">
           <Card>
-            <CardHeader><CardTitle className="text-base">All Insurance Policies</CardTitle></CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
+              <CardTitle className="text-base">All Insurance Policies</CardTitle>
+              <div className="relative w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by member, policy no., collateral…"
+                  className="pl-8 h-8 text-sm"
+                  value={insuranceSearch}
+                  onChange={e => setInsuranceSearch(e.target.value)}
+                  data-testid="input-insurance-search"
+                />
+              </div>
+            </CardHeader>
             <CardContent className="p-0">
               {insuranceQuery.isLoading ? (
                 <div className="p-4 space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-14 w-full" />)}</div>
@@ -618,9 +631,22 @@ export default function CollateralManagement({ organizationId, initialTab, highl
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {(insuranceQuery.data ?? []).length === 0 ? (
-                      <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-10">No insurance policies yet. Add policies from the Register tab using the Actions menu.</TableCell></TableRow>
-                    ) : (insuranceQuery.data ?? []).map((p: any) => (
+                    {(() => {
+                      const q = insuranceSearch.toLowerCase();
+                      const filtered = (insuranceQuery.data ?? []).filter((p: any) =>
+                        !q ||
+                        p.policy_number?.toLowerCase().includes(q) ||
+                        p.insurer_name?.toLowerCase().includes(q) ||
+                        p.collateral_description?.toLowerCase().includes(q) ||
+                        p.member_name?.toLowerCase().includes(q) ||
+                        p.loan_number?.toLowerCase().includes(q)
+                      );
+                      if (filtered.length === 0) return (
+                        <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-10">
+                          {insuranceSearch ? "No policies match your search." : "No insurance policies yet. Add policies from the Register tab using the Actions menu."}
+                        </TableCell></TableRow>
+                      );
+                      return filtered.map((p: any) => (
                       <TableRow
                         key={p.id}
                         ref={p.id === highlightPolicyId ? highlightRef : undefined}
@@ -648,18 +674,23 @@ export default function CollateralManagement({ organizationId, initialTab, highl
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" title="Add new policy to this collateral item" data-testid={`button-add-policy-insurance-${p.id}`}
+                              onClick={() => { setShowAddInsurance({ id: p.collateral_item_id, description: p.collateral_description }); insuranceForm.reset(); }}>
+                              <ShieldCheck className="h-4 w-4 text-green-600" />
+                            </Button>
                             <Button variant="ghost" size="icon" title="Upload policy document" data-testid={`button-upload-insurance-${p.id}`}
                               disabled={uploadingInsuranceId === p.id}
                               onClick={() => { setUploadingInsuranceId(p.id); insuranceFileRef.current?.click(); }}>
                               {uploadingInsuranceId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                             </Button>
-                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => openConfirm("Delete Policy", `Delete insurance policy "${p.policy_number}"? This cannot be undone.`, () => deleteInsuranceMutation.mutate(p.id))}>
+                            <Button variant="ghost" size="icon" className="text-destructive" title="Delete policy" onClick={() => openConfirm("Delete Policy", `Delete insurance policy "${p.policy_number}"? This cannot be undone.`, () => deleteInsuranceMutation.mutate(p.id))}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </TableCell>
                       </TableRow>
-                    ))}
+                      ));
+                    })()}
                   </TableBody>
                 </Table>
               )}
