@@ -38,12 +38,26 @@ interface CollateralAlertItem {
   collateral_type_name: string | null;
 }
 
+interface InsuranceAlertItem {
+  id: string;
+  policy_number: string;
+  insurer_name: string;
+  expiry_date: string;
+  collateral_description: string | null;
+  loan_number: string | null;
+  member_name: string | null;
+}
+
 interface CollateralAlerts {
   overdue_revaluation: CollateralAlertItem[];
   due_soon_revaluation: CollateralAlertItem[];
+  expiring_insurance: InsuranceAlertItem[];
+  expired_insurance: InsuranceAlertItem[];
   summary: {
     overdue_revaluation_count: number;
     due_soon_revaluation_count: number;
+    expiring_insurance_count: number;
+    expired_insurance_count: number;
   };
 }
 
@@ -229,6 +243,70 @@ export default function Dashboard({ organizationId, organizationName, onNavigate
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {collateralAlerts && (collateralAlerts.summary.expired_insurance_count > 0 || collateralAlerts.summary.expiring_insurance_count > 0) && (
+          <div>
+            <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-3 flex items-center gap-2">
+              <ShieldAlert className="h-4 w-4 text-muted-foreground" />
+              Insurance Expiry Alerts
+              <Badge variant="destructive" className="text-xs">
+                {collateralAlerts.summary.expired_insurance_count + collateralAlerts.summary.expiring_insurance_count}
+              </Badge>
+            </h2>
+            <div className="space-y-3">
+              {collateralAlerts.expired_insurance.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => onNavigate?.("collateral")}
+                  className="w-full text-left"
+                  data-testid={`alert-expired-insurance-${p.id}`}
+                >
+                  <Card className="border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors cursor-pointer">
+                    <CardContent className="flex items-center gap-3 px-4 py-3">
+                      <ShieldAlert className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-red-800 dark:text-red-200 truncate">
+                          {p.collateral_description ?? "Policy"} — {p.insurer_name}
+                        </p>
+                        <p className="text-xs text-red-600 dark:text-red-400">
+                          {p.member_name && <span>{p.member_name} · </span>}
+                          {p.loan_number && <span>Loan {p.loan_number} · </span>}
+                          <span className="font-medium">Policy #{p.policy_number} expired {p.expiry_date}</span>
+                        </p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-red-400 flex-shrink-0" />
+                    </CardContent>
+                  </Card>
+                </button>
+              ))}
+              {collateralAlerts.expiring_insurance.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => onNavigate?.("collateral")}
+                  className="w-full text-left"
+                  data-testid={`alert-expiring-insurance-${p.id}`}
+                >
+                  <Card className="border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-950/50 transition-colors cursor-pointer">
+                    <CardContent className="flex items-center gap-3 px-4 py-3">
+                      <ShieldAlert className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-amber-800 dark:text-amber-200 truncate">
+                          {p.collateral_description ?? "Policy"} — {p.insurer_name}
+                        </p>
+                        <p className="text-xs text-amber-600 dark:text-amber-400">
+                          {p.member_name && <span>{p.member_name} · </span>}
+                          {p.loan_number && <span>Loan {p.loan_number} · </span>}
+                          <span className="font-medium">Policy #{p.policy_number} expires {p.expiry_date}</span>
+                        </p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-amber-400 flex-shrink-0" />
+                    </CardContent>
+                  </Card>
+                </button>
+              ))}
+            </div>
+          </div>
         )}
 
         {collateralAlerts && (collateralAlerts.summary.overdue_revaluation_count > 0 || collateralAlerts.summary.due_soon_revaluation_count > 0) && (
