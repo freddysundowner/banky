@@ -849,13 +849,13 @@ def get_collateral_alerts(
 
         overdue_revaluation = tenant_session.query(CollateralItem).filter(
             CollateralItem.next_revaluation_date < today,
-            CollateralItem.status == "under_lien",
+            CollateralItem.status.notin_(["released", "liquidated"]),
         ).all()
 
         due_soon_revaluation = tenant_session.query(CollateralItem).filter(
             CollateralItem.next_revaluation_date >= today,
             CollateralItem.next_revaluation_date <= soon,
-            CollateralItem.status == "under_lien",
+            CollateralItem.status.notin_(["released", "liquidated"]),
         ).all()
 
         ins_options = joinedload(CollateralInsurance.collateral_item).joinedload(CollateralItem.loan).joinedload(LoanApplication.member)
