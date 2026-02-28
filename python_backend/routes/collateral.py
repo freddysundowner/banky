@@ -502,8 +502,10 @@ def record_valuation(
         item.updated_at = datetime.utcnow()
 
         # --- Collateral deficiency check and revaluation notification ---
+        print(f"[VALUATE DEBUG] item.loan_id={item.loan_id!r}, old_appraised_value={old_appraised_value!r}, new={body.appraised_value!r}")
         if item.loan_id:
             loan = tenant_session.query(LoanApplication).filter(LoanApplication.id == item.loan_id).first()
+            print(f"[VALUATE DEBUG] loan found={loan is not None}, status={loan.status if loan else 'N/A'}")
             if loan:
                 from routes.notifications import create_notification
                 product = tenant_session.query(LoanProduct).filter(LoanProduct.id == loan.loan_product_id).first()
@@ -535,6 +537,7 @@ def record_valuation(
                 was_deficient = bool(loan.collateral_deficient)
                 active_statuses = ["approved", "disbursed", "under_review", "restructured", "defaulted"]
                 new_value = float(body.appraised_value)
+                print(f"[VALUATE DEBUG] staff_list count={len(staff_list)}, min_ltv={min_ltv!r}, loan.status={loan.status!r}, active={loan.status in active_statuses}, old={old_appraised_value!r}, new={new_value!r}")
 
                 # Always notify on first valuation or value drop for active loans
                 if loan.status in active_statuses:
@@ -559,6 +562,7 @@ def record_valuation(
                             f"was revalued from {old_appraised_value:,.2f} to {new_value:,.2f} "
                             f"(a drop of {drop_pct:.1f}%). Review may be required."
                         )
+                        print(f"[VALUATE DEBUG] VALUE DROP detected, creating {len(staff_list)} notifications")
                         for s in staff_list:
                             create_notification(
                                 tenant_session,
@@ -568,6 +572,8 @@ def record_valuation(
                                 link=notif_link,
                                 staff_id=s.id,
                             )
+                    else:
+                        print(f"[VALUATE DEBUG] No notification: new={new_value} >= old={old_appraised_value}")
 
                 if min_ltv and loan_amount > 0:
                     # LTV threshold configured — run deficiency check
