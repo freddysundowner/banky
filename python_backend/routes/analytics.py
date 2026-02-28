@@ -5,7 +5,7 @@ from typing import List
 from decimal import Decimal
 from datetime import datetime, date, timedelta
 from models.database import get_db
-from models.tenant import Member, LoanApplication, LoanRepayment, Transaction, Branch, Staff, LoanDefault
+from models.tenant import Member, LoanApplication, LoanRepayment, Transaction, Branch, Staff, LoanDefault, CollateralItem, LoanProduct
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission
 
@@ -51,7 +51,12 @@ async def get_dashboard_analytics(org_id: str, user=Depends(get_current_user), d
         default_count = tenant_session.query(func.count(LoanDefault.id)).filter(
             LoanDefault.status.in_(["overdue", "in_collection"])
         ).scalar() or 0
-        
+
+        collateral_deficient_count = tenant_session.query(func.count(LoanApplication.id)).filter(
+            LoanApplication.collateral_deficient == True,
+            LoanApplication.status.in_(["disbursed", "approved", "defaulted", "restructured"])
+        ).scalar() or 0
+
         return {
             "total_members": total_members,
             "total_staff": total_staff,
@@ -66,6 +71,7 @@ async def get_dashboard_analytics(org_id: str, user=Depends(get_current_user), d
             "total_outstanding": float(total_outstanding),
             "total_repaid": float(total_repaid),
             "default_count": default_count,
+            "collateral_deficient_count": collateral_deficient_count,
             "collection_rate": float(total_repaid / total_disbursed * 100) if total_disbursed else 0
         }
     finally:

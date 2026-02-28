@@ -4,7 +4,7 @@ from models.master import Organization, OrganizationMember
 from models.tenant import TenantBase
 
 _migrated_tenants = set()
-_migration_version = 33  # Increment to force re-migration
+_migration_version = 34  # Increment to force re-migration
 
 def _get_db_migration_version(engine):
     """Check the migration version stored in the tenant database"""
@@ -955,6 +955,8 @@ def run_tenant_schema_migration(engine):
         # v33: Collateral deficient flag on loan applications
         conn.execute(text("ALTER TABLE loan_applications ADD COLUMN IF NOT EXISTS collateral_deficient BOOLEAN DEFAULT FALSE"))
 
+        # v34: Backfill collateral_deficient (handled in Python below)
+
         conn.commit()
     
     try:
@@ -982,6 +984,35 @@ def run_tenant_schema_migration(engine):
         session.close()
     except Exception as e:
         print(f"Instalment backfill error: {e}")
+
+    try:
+        from sqlalchemy.orm import Session as OrmSession
+        from models.tenant import LoanApplication, LoanProduct, CollateralItem
+        session = OrmSession(bind=engine)
+        active_loans = session.query(LoanApplication).filter(
+            LoanApplication.status.in_(["disbursed", "approved", "defaulted", "restructured"])
+        ).all()
+        changed = 0
+        for loan in active_loans:
+            product = session.query(LoanProduct).filter(LoanProduct.id == loan.loan_product_id).first()
+            min_ltv = float(product.min_ltv_coverage or 0) if product else 0
+            if min_ltv > 0 and float(loan.amount) > 0:
+                items = session.query(CollateralItem).filter(
+                    CollateralItem.loan_id == str(loan.id),
+                    CollateralItem.status.notin_(["released", "liquidated"])
+                ).all()
+                total_lending = sum(float(ci.lending_limit or 0) for ci in items)
+                coverage_pct = (total_lending / float(loan.amount)) * 100
+                is_deficient = coverage_pct < min_ltv
+                if loan.collateral_deficient != is_deficient:
+                    loan.collateral_deficient = is_deficient
+                    changed += 1
+        if changed:
+            session.commit()
+            print(f"[Backfill] Updated collateral_deficient flag on {changed} loan(s)")
+        session.close()
+    except Exception as e:
+        print(f"Collateral deficiency backfill error: {e}")
 
 _engine_cache = {}
 _session_factory_cache = {}
