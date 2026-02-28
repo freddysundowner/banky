@@ -26,7 +26,7 @@ import { formatDistanceToNow } from "date-fns";
 interface DashboardProps {
   organizationId: string;
   organizationName: string;
-  onNavigate?: (section: string) => void;
+  onNavigate?: (section: string, meta?: { tab?: string; id?: string }) => void;
 }
 
 interface CollateralAlertItem {
@@ -326,7 +326,7 @@ export default function Dashboard({ organizationId, organizationName, onNavigate
               {collateralAlerts.expired_insurance.map((p) => (
                 <button
                   key={p.id}
-                  onClick={() => onNavigate?.("collateral")}
+                  onClick={() => onNavigate?.("collateral", { tab: "insurance", id: p.id })}
                   className="w-full text-left"
                   data-testid={`alert-expired-insurance-${p.id}`}
                 >
@@ -351,7 +351,7 @@ export default function Dashboard({ organizationId, organizationName, onNavigate
               {collateralAlerts.expiring_insurance.map((p) => (
                 <button
                   key={p.id}
-                  onClick={() => onNavigate?.("collateral")}
+                  onClick={() => onNavigate?.("collateral", { tab: "insurance", id: p.id })}
                   className="w-full text-left"
                   data-testid={`alert-expiring-insurance-${p.id}`}
                 >

@@ -292,6 +292,7 @@ export default function Home() {
     return "dashboard";
   });
   const [isSectionInitialized, setIsSectionInitialized] = useState(false);
+  const [collateralNav, setCollateralNav] = useState<{ tab?: string; id?: string } | null>(null);
   const [emailBannerDismissed, setEmailBannerDismissed] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [crmPrefill, setCrmPrefill] = useState<{ first_name: string; last_name: string; phone?: string; email?: string } | null>(null);
@@ -1066,7 +1067,7 @@ export default function Home() {
             ) : (
             <>
             {activeSection === "dashboard" && selectedOrg && (
-              <Dashboard organizationId={selectedOrg.id} organizationName={selectedOrg.name} onNavigate={(section) => setActiveSection(section as any)} />
+              <Dashboard organizationId={selectedOrg.id} organizationName={selectedOrg.name} onNavigate={(section, meta) => { setCollateralNav(meta ?? null); setActiveSection(section as any); }} />
             )}
 
             {activeSection === "teller" && selectedOrg && (
@@ -1184,7 +1185,7 @@ export default function Home() {
             )}
 
             {activeSection === "collateral" && selectedOrg && (
-              <CollateralManagement organizationId={selectedOrg.id} />
+              <CollateralManagement organizationId={selectedOrg.id} initialTab={collateralNav?.tab} highlightPolicyId={collateralNav?.id} />
             )}
 
             {activeSection === "my-account" && selectedOrg && (

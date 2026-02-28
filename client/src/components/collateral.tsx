@@ -40,6 +40,8 @@ import {
 
 interface CollateralProps {
   organizationId: string;
+  initialTab?: string;
+  highlightPolicyId?: string;
 }
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
@@ -155,9 +157,10 @@ function StatCard({ label, value, icon: Icon, color }: { label: string; value: n
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-export default function CollateralManagement({ organizationId }: CollateralProps) {
+export default function CollateralManagement({ organizationId, initialTab, highlightPolicyId }: CollateralProps) {
   const { toast } = useAppDialog();
-  const [activeTab, setActiveTab] = useState("register");
+  const [activeTab, setActiveTab] = useState(initialTab ?? "register");
+  const highlightRef = useRef<HTMLTableRowElement>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
@@ -168,6 +171,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
   const [loanDropdownOpen, setLoanDropdownOpen] = useState(false);
   const [selectedLoanLabel, setSelectedLoanLabel] = useState("");
   const loanSearchRef = useRef<HTMLDivElement>(null);
+
   const [showValuate, setShowValuate] = useState<any>(null);
   const [showRelease, setShowRelease] = useState<any>(null);
   const [showLiquidate, setShowLiquidate] = useState<any>(null);
@@ -214,8 +218,16 @@ export default function CollateralManagement({ organizationId }: CollateralProps
 
   const insuranceQuery = useQuery<any[]>({
     queryKey: [`/api/organizations/${organizationId}/collateral/insurance`],
-    enabled: activeTab === "insurance",
+    enabled: activeTab === "insurance" || !!highlightPolicyId,
   });
+
+  useEffect(() => {
+    if (highlightPolicyId && highlightRef.current) {
+      setTimeout(() => {
+        highlightRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 300);
+    }
+  }, [highlightPolicyId, insuranceQuery.data]);
 
   const alertsQuery = useQuery<any>({
     queryKey: [`/api/organizations/${organizationId}/collateral/alerts`],
@@ -609,7 +621,12 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                     {(insuranceQuery.data ?? []).length === 0 ? (
                       <TableRow><TableCell colSpan={9} className="text-center text-muted-foreground py-10">No insurance policies yet. Add policies from the Register tab using the Actions menu.</TableCell></TableRow>
                     ) : (insuranceQuery.data ?? []).map((p: any) => (
-                      <TableRow key={p.id} data-testid={`row-insurance-${p.id}`}>
+                      <TableRow
+                        key={p.id}
+                        ref={p.id === highlightPolicyId ? highlightRef : undefined}
+                        data-testid={`row-insurance-${p.id}`}
+                        className={p.id === highlightPolicyId ? "ring-2 ring-inset ring-amber-400 bg-amber-50 dark:bg-amber-950/30" : ""}
+                      >
                         <TableCell className="font-medium text-sm">{p.policy_number}</TableCell>
                         <TableCell className="text-sm">{p.insurer_name}</TableCell>
                         <TableCell>
