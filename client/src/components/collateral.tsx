@@ -507,7 +507,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                               <DropdownMenuItem onClick={() => { setShowItemDetail(item); }}>
                                 <FileText className="h-4 w-4 mr-2" /> View Details
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => { setShowValuate(item); setSelectedValuerLabel(item.valuer_name ?? ""); setValuerSearch(""); setValuationFile(null); valuationForm.reset({ appraised_value: item.appraised_value ? String(item.appraised_value) : "", valuer_id: item.valuer_id ?? "", valuation_date: "", next_revaluation_date: "", ltv_override: item.ltv_override ? String(item.ltv_override) : "" }); }}>
+                              <DropdownMenuItem onClick={() => { setShowValuate(item); setSelectedValuerLabel(item.valuer_name ?? ""); setValuerSearch(""); setValuationFile(null); valuationForm.reset({ appraised_value: item.appraised_value ? String(item.appraised_value) : "", valuer_id: item.valuer_id ?? "", valuation_date: new Date().toISOString().slice(0, 10), next_revaluation_date: item.next_revaluation_date ? item.next_revaluation_date.slice(0, 10) : "", ltv_override: item.ltv_override ? String(item.ltv_override) : "" }); }}>
                                 <TrendingUp className="h-4 w-4 mr-2" /> Record Valuation
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => { setShowEditRevalDate(item); revalDateForm.reset({ next_revaluation_date: item.next_revaluation_date ?? "" }); }} data-testid={`button-edit-reval-date-${item.id}`}>
