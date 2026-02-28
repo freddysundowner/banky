@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { RefreshButton } from "@/components/refresh-button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   TrendingUp,
   AlertTriangle,
@@ -22,6 +23,19 @@ import {
 } from "lucide-react";
 import { useCurrency } from "@/hooks/use-currency";
 import { formatDistanceToNow } from "date-fns";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from "recharts";
 
 interface DashboardProps {
   organizationId: string;
@@ -68,6 +82,16 @@ interface DashboardAnalytics {
   total_repaid: number;
   default_count: number;
   collection_rate: number;
+  pending_loans: number;
+  approved_loans: number;
+  disbursed_loans: number;
+}
+
+interface TrendsData {
+  period: string;
+  applications: Record<string, number>;
+  disbursements: Record<string, { count: number; amount: number }>;
+  collections: Record<string, { count: number; amount: number }>;
 }
 
 interface RecentMember {
@@ -102,9 +126,12 @@ interface HealthData {
   };
 }
 
+const CHART_COLORS = ["#f59e0b", "#3b82f6", "#22c55e", "#ef4444", "#8b5cf6"];
+
 export default function Dashboard({ organizationId, organizationName, onNavigate }: DashboardProps) {
   const { formatAmount } = useCurrency(organizationId);
   const [deficientDismissed, setDeficientDismissed] = useState(false);
+  const [trendPeriod, setTrendPeriod] = useState("monthly");
   const { data, isLoading, error } = useQuery<DashboardAnalytics>({
     queryKey: ["/api/organizations", organizationId, "analytics", "dashboard"],
     queryFn: async () => {
@@ -157,6 +184,38 @@ export default function Dashboard({ organizationId, organizationName, onNavigate
       return res.json();
     },
   });
+
+  const { data: trendsData, isLoading: trendsLoading } = useQuery<TrendsData>({
+    queryKey: ["/api/organizations", organizationId, "analytics", "trends", trendPeriod],
+    queryFn: async () => {
+      const res = await fetch(`/api/organizations/${organizationId}/analytics/trends?period=${trendPeriod}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch trends");
+      return res.json();
+    },
+  });
+
+  const getTrendChartData = () => {
+    if (!trendsData) return [];
+    const allPeriods = new Set([
+      ...Object.keys(trendsData.applications),
+      ...Object.keys(trendsData.disbursements),
+      ...Object.keys(trendsData.collections),
+    ]);
+    return Array.from(allPeriods).sort().map(period => ({
+      period,
+      disbursements: trendsData.disbursements[period]?.amount || 0,
+      collections: trendsData.collections[period]?.amount || 0,
+    }));
+  };
+
+  const getLoanStatusData = () => {
+    if (!data) return [];
+    return [
+      { name: "Pending", value: data.pending_loans ?? 0, color: "#f59e0b" },
+      { name: "Approved", value: data.approved_loans ?? 0, color: "#3b82f6" },
+      { name: "Disbursed", value: data.disbursed_loans ?? 0, color: "#22c55e" },
+    ].filter(d => d.value > 0);
+  };
 
   if (error) {
     return (
@@ -576,6 +635,97 @@ export default function Dashboard({ organizationId, organizationName, onNavigate
               </CardContent>
             </Card>
           </div>
+        </div>
+
+        <div className="grid gap-4 md:gap-6 grid-cols-1 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <CardHeader className="pb-2 flex flex-row items-start justify-between">
+              <div>
+                <CardTitle className="text-sm font-semibold">Trend Analysis</CardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">Applications, disbursements, and collections over time</p>
+              </div>
+              <Select value={trendPeriod} onValueChange={setTrendPeriod}>
+                <SelectTrigger className="h-8 w-32 text-xs" data-testid="select-trend-period">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="daily">Daily</SelectItem>
+                </SelectContent>
+              </Select>
+            </CardHeader>
+            <CardContent>
+              {trendsLoading ? (
+                <Skeleton className="h-48 w-full" />
+              ) : getTrendChartData().length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-48 text-center">
+                  <TrendingUp className="h-8 w-8 text-muted-foreground/40 mb-2" />
+                  <p className="text-xs text-muted-foreground">No trend data available</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={200}>
+                  <BarChart data={getTrendChartData()} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="period" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10 }} width={48} tickFormatter={(v) => formatAmount(v)} />
+                    <Tooltip formatter={(value: number) => formatAmount(value)} />
+                    <Legend iconSize={10} wrapperStyle={{ fontSize: 11 }} />
+                    <Bar dataKey="disbursements" name="Disbursements" fill="#3b82f6" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="collections" name="Collections" fill="#22c55e" radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-semibold">Loan Status</CardTitle>
+              <p className="text-xs text-muted-foreground">Distribution by status</p>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <Skeleton className="h-48 w-full" />
+              ) : getLoanStatusData().length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-48 text-center">
+                  <CircleDollarSign className="h-8 w-8 text-muted-foreground/40 mb-2" />
+                  <p className="text-xs text-muted-foreground">No loan data available</p>
+                </div>
+              ) : (
+                <div>
+                  <ResponsiveContainer width="100%" height={160}>
+                    <PieChart>
+                      <Pie
+                        data={getLoanStatusData()}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={45}
+                        outerRadius={70}
+                        paddingAngle={3}
+                        dataKey="value"
+                        label={({ name, value }) => `${name}: ${value}`}
+                        labelLine={false}
+                      >
+                        {getLoanStatusData().map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center mt-1">
+                    {getLoanStatusData().map((item) => (
+                      <span key={item.name} className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                        <span className="inline-block w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+                        {item.name}: {item.value}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
       </div>
