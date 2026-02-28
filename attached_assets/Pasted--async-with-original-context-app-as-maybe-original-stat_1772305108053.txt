@@ -1,0 +1,1030 @@
+ async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/python_backend/main.py", line 437, in lifespan
+7|bankykit-demo-api  |     Base.metadata.create_all(bind=engine)
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/sql/schema.py", line 5928, in create_all
+7|bankykit-demo-api  |     bind._run_ddl_visitor(
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3259, in _run_ddl_visitor
+7|bankykit-demo-api  |     with self.begin() as conn:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 137, in __enter__
+7|bankykit-demo-api  |     return next(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3249, in begin
+7|bankykit-demo-api  |     with self.connect() as conn:
+7|bankykit-demo-api  |          ^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3285, in connect
+7|bankykit-demo-api  |     return self._connection_cls(self)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+7|bankykit-demo-api  |     Connection._handle_dbapi_exception_noconnection(
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2448, in _handle_dbapi_exception_noconnection
+7|bankykit-demo-api  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+7|bankykit-demo-api  |     self._dbapi_connection = engine.raw_connection()
+7|bankykit-demo-api  |                              ^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3309, in raw_connection
+7|bankykit-demo-api  |     return self.pool.connect()
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+7|bankykit-demo-api  |     return _ConnectionFairy._checkout(self)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+7|bankykit-demo-api  |     fairy = _ConnectionRecord.checkout(pool)
+7|bankykit-demo-api  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+7|bankykit-demo-api  |     rec = pool._do_get()
+7|bankykit-demo-api  |           ^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+7|bankykit-demo-api  |     with util.safe_reraise():
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+7|bankykit-demo-api  |     raise exc_value.with_traceback(exc_tb)
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+7|bankykit-demo-api  |     return self._create_connection()
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+7|bankykit-demo-api  |     return _ConnectionRecord(self)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+7|bankykit-demo-api  |     self.__connect()
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+7|bankykit-demo-api  |     with util.safe_reraise():
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+7|bankykit-demo-api  |     raise exc_value.with_traceback(exc_tb)
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+7|bankykit-demo-api  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+7|bankykit-demo-api  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+7|bankykit-demo-api  |     return dialect.connect(*cargs, **cparams)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+7|bankykit-demo-api  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+7|bankykit-demo-api  |     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  | sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "127.0.0.1", port 5432 failed: fe_sendauth: no password supplied
+7|bankykit-demo-api  | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+7|bankykit-demo-api  | ERROR:    Application startup failed. Exiting.
+7|bankykit-demo-api  | INFO:     Started server process [265416]
+7|bankykit-demo-api  | INFO:     Waiting for application startup.
+7|bankykit-demo-api  | ERROR:    Traceback (most recent call last):
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+7|bankykit-demo-api  |     self._dbapi_connection = engine.raw_connection()
+7|bankykit-demo-api  |                              ^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3309, in raw_connection
+7|bankykit-demo-api  |     return self.pool.connect()
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+7|bankykit-demo-api  |     return _ConnectionFairy._checkout(self)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+7|bankykit-demo-api  |     fairy = _ConnectionRecord.checkout(pool)
+7|bankykit-demo-api  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+7|bankykit-demo-api  |     rec = pool._do_get()
+7|bankykit-demo-api  |           ^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+7|bankykit-demo-api  |     with util.safe_reraise():
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+7|bankykit-demo-api  |     raise exc_value.with_traceback(exc_tb)
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+7|bankykit-demo-api  |     return self._create_connection()
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+7|bankykit-demo-api  |     return _ConnectionRecord(self)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+7|bankykit-demo-api  |     self.__connect()
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+7|bankykit-demo-api  |     with util.safe_reraise():
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+7|bankykit-demo-api  |     raise exc_value.with_traceback(exc_tb)
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+7|bankykit-demo-api  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+7|bankykit-demo-api  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+7|bankykit-demo-api  |     return dialect.connect(*cargs, **cparams)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+7|bankykit-demo-api  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+7|bankykit-demo-api  |     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  | psycopg2.OperationalError: connection to server at "127.0.0.1", port 5432 failed: fe_sendauth: no password supplied
+7|bankykit-demo-api  | The above exception was the direct cause of the following exception:
+7|bankykit-demo-api  | Traceback (most recent call last):
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/starlette/routing.py", line 694, in lifespan
+7|bankykit-demo-api  |     async with self.lifespan_context(app) as maybe_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/python_backend/main.py", line 437, in lifespan
+7|bankykit-demo-api  |     Base.metadata.create_all(bind=engine)
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/sql/schema.py", line 5928, in create_all
+7|bankykit-demo-api  |     bind._run_ddl_visitor(
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3259, in _run_ddl_visitor
+7|bankykit-demo-api  |     with self.begin() as conn:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 137, in __enter__
+7|bankykit-demo-api  |     return next(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3249, in begin
+7|bankykit-demo-api  |     with self.connect() as conn:
+7|bankykit-demo-api  |          ^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3285, in connect
+7|bankykit-demo-api  |     return self._connection_cls(self)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+7|bankykit-demo-api  |     Connection._handle_dbapi_exception_noconnection(
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2448, in _handle_dbapi_exception_noconnection
+7|bankykit-demo-api  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+7|bankykit-demo-api  |     self._dbapi_connection = engine.raw_connection()
+7|bankykit-demo-api  |                              ^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3309, in raw_connection
+7|bankykit-demo-api  |     return self.pool.connect()
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+7|bankykit-demo-api  |     return _ConnectionFairy._checkout(self)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+7|bankykit-demo-api  |     fairy = _ConnectionRecord.checkout(pool)
+7|bankykit-demo-api  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+7|bankykit-demo-api  |     rec = pool._do_get()
+7|bankykit-demo-api  |           ^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+7|bankykit-demo-api  |     with util.safe_reraise():
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+7|bankykit-demo-api  |     raise exc_value.with_traceback(exc_tb)
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+7|bankykit-demo-api  |     return self._create_connection()
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+7|bankykit-demo-api  |     return _ConnectionRecord(self)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+7|bankykit-demo-api  |     self.__connect()
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+7|bankykit-demo-api  |     with util.safe_reraise():
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+7|bankykit-demo-api  |     raise exc_value.with_traceback(exc_tb)
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+7|bankykit-demo-api  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+7|bankykit-demo-api  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+7|bankykit-demo-api  |     return dialect.connect(*cargs, **cparams)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+7|bankykit-demo-api  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+7|bankykit-demo-api  |     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  | sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "127.0.0.1", port 5432 failed: fe_sendauth: no password supplied
+7|bankykit-demo-api  | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+7|bankykit-demo-api  | ERROR:    Application startup failed. Exiting.
+7|bankykit-demo-api  | INFO:     Waiting for child process [265414]
+7|bankykit-demo-api  | INFO:     Child process [265414] died
+7|bankykit-demo-api  | INFO:     Waiting for child process [265416]
+7|bankykit-demo-api  | INFO:     Child process [265416] died
+7|bankykit-demo-api  | INFO:     Started server process [265444]
+7|bankykit-demo-api  | INFO:     Waiting for application startup.
+7|bankykit-demo-api  | ERROR:    Traceback (most recent call last):
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+7|bankykit-demo-api  |     self._dbapi_connection = engine.raw_connection()
+7|bankykit-demo-api  |                              ^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3309, in raw_connection
+7|bankykit-demo-api  |     return self.pool.connect()
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+7|bankykit-demo-api  |     return _ConnectionFairy._checkout(self)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+7|bankykit-demo-api  |     fairy = _ConnectionRecord.checkout(pool)
+7|bankykit-demo-api  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+7|bankykit-demo-api  |     rec = pool._do_get()
+7|bankykit-demo-api  |           ^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+7|bankykit-demo-api  |     with util.safe_reraise():
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+7|bankykit-demo-api  |     raise exc_value.with_traceback(exc_tb)
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+7|bankykit-demo-api  |     return self._create_connection()
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+7|bankykit-demo-api  |     return _ConnectionRecord(self)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+7|bankykit-demo-api  |     self.__connect()
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+7|bankykit-demo-api  |     with util.safe_reraise():
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+7|bankykit-demo-api  |     raise exc_value.with_traceback(exc_tb)
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+7|bankykit-demo-api  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+7|bankykit-demo-api  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+7|bankykit-demo-api  |     return dialect.connect(*cargs, **cparams)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+7|bankykit-demo-api  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+7|bankykit-demo-api  |     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  | psycopg2.OperationalError: connection to server at "127.0.0.1", port 5432 failed: fe_sendauth: no password supplied
+7|bankykit-demo-api  | The above exception was the direct cause of the following exception:
+7|bankykit-demo-api  | Traceback (most recent call last):
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/starlette/routing.py", line 694, in lifespan
+7|bankykit-demo-api  |     async with self.lifespan_context(app) as maybe_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/python_backend/main.py", line 437, in lifespan
+7|bankykit-demo-api  |     Base.metadata.create_all(bind=engine)
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/sql/schema.py", line 5928, in create_all
+7|bankykit-demo-api  |     bind._run_ddl_visitor(
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3259, in _run_ddl_visitor
+7|bankykit-demo-api  |     with self.begin() as conn:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 137, in __enter__
+7|bankykit-demo-api  |     return next(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3249, in begin
+7|bankykit-demo-api  |     with self.connect() as conn:
+7|bankykit-demo-api  |          ^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3285, in connect
+7|bankykit-demo-api  |     return self._connection_cls(self)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+7|bankykit-demo-api  |     Connection._handle_dbapi_exception_noconnection(
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2448, in _handle_dbapi_exception_noconnection
+7|bankykit-demo-api  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+7|bankykit-demo-api  |     self._dbapi_connection = engine.raw_connection()
+7|bankykit-demo-api  |                              ^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3309, in raw_connection
+7|bankykit-demo-api  |     return self.pool.connect()
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+7|bankykit-demo-api  |     return _ConnectionFairy._checkout(self)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+7|bankykit-demo-api  |     fairy = _ConnectionRecord.checkout(pool)
+7|bankykit-demo-api  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+7|bankykit-demo-api  |     rec = pool._do_get()
+7|bankykit-demo-api  |           ^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+7|bankykit-demo-api  |     with util.safe_reraise():
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+7|bankykit-demo-api  |     raise exc_value.with_traceback(exc_tb)
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+7|bankykit-demo-api  |     return self._create_connection()
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+7|bankykit-demo-api  |     return _ConnectionRecord(self)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+7|bankykit-demo-api  |     self.__connect()
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+7|bankykit-demo-api  |     with util.safe_reraise():
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+7|bankykit-demo-api  |     raise exc_value.with_traceback(exc_tb)
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+7|bankykit-demo-api  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+7|bankykit-demo-api  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+7|bankykit-demo-api  |     return dialect.connect(*cargs, **cparams)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+7|bankykit-demo-api  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+7|bankykit-demo-api  |     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  | sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "127.0.0.1", port 5432 failed: fe_sendauth: no password supplied
+7|bankykit-demo-api  | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+7|bankykit-demo-api  | ERROR:    Application startup failed. Exiting.
+7|bankykit-demo-api  | INFO:     Started server process [265447]
+7|bankykit-demo-api  | INFO:     Waiting for application startup.
+7|bankykit-demo-api  | ERROR:    Traceback (most recent call last):
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+7|bankykit-demo-api  |     self._dbapi_connection = engine.raw_connection()
+7|bankykit-demo-api  |                              ^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3309, in raw_connection
+7|bankykit-demo-api  |     return self.pool.connect()
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+7|bankykit-demo-api  |     return _ConnectionFairy._checkout(self)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+7|bankykit-demo-api  |     fairy = _ConnectionRecord.checkout(pool)
+7|bankykit-demo-api  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+7|bankykit-demo-api  |     rec = pool._do_get()
+7|bankykit-demo-api  |           ^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+7|bankykit-demo-api  |     with util.safe_reraise():
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+7|bankykit-demo-api  |     raise exc_value.with_traceback(exc_tb)
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+7|bankykit-demo-api  |     return self._create_connection()
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+7|bankykit-demo-api  |     return _ConnectionRecord(self)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+7|bankykit-demo-api  |     self.__connect()
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+7|bankykit-demo-api  |     with util.safe_reraise():
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+7|bankykit-demo-api  |     raise exc_value.with_traceback(exc_tb)
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+7|bankykit-demo-api  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+7|bankykit-demo-api  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+7|bankykit-demo-api  |     return dialect.connect(*cargs, **cparams)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+7|bankykit-demo-api  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+7|bankykit-demo-api  |     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  | psycopg2.OperationalError: connection to server at "127.0.0.1", port 5432 failed: fe_sendauth: no password supplied
+7|bankykit-demo-api  | The above exception was the direct cause of the following exception:
+7|bankykit-demo-api  | Traceback (most recent call last):
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/starlette/routing.py", line 694, in lifespan
+7|bankykit-demo-api  |     async with self.lifespan_context(app) as maybe_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/fastapi/routing.py", line 201, in merged_lifespan
+7|bankykit-demo-api  |     async with original_context(app) as maybe_original_state:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 210, in __aenter__
+7|bankykit-demo-api  |     return await anext(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/python_backend/main.py", line 437, in lifespan
+7|bankykit-demo-api  |     Base.metadata.create_all(bind=engine)
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/sql/schema.py", line 5928, in create_all
+7|bankykit-demo-api  |     bind._run_ddl_visitor(
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3259, in _run_ddl_visitor
+7|bankykit-demo-api  |     with self.begin() as conn:
+7|bankykit-demo-api  |   File "/usr/lib/python3.12/contextlib.py", line 137, in __enter__
+7|bankykit-demo-api  |     return next(self.gen)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3249, in begin
+7|bankykit-demo-api  |     with self.connect() as conn:
+7|bankykit-demo-api  |          ^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3285, in connect
+7|bankykit-demo-api  |     return self._connection_cls(self)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 145, in __init__
+7|bankykit-demo-api  |     Connection._handle_dbapi_exception_noconnection(
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2448, in _handle_dbapi_exception_noconnection
+7|bankykit-demo-api  |     raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 143, in __init__
+7|bankykit-demo-api  |     self._dbapi_connection = engine.raw_connection()
+7|bankykit-demo-api  |                              ^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 3309, in raw_connection
+7|bankykit-demo-api  |     return self.pool.connect()
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 447, in connect
+7|bankykit-demo-api  |     return _ConnectionFairy._checkout(self)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 1264, in _checkout
+7|bankykit-demo-api  |     fairy = _ConnectionRecord.checkout(pool)
+7|bankykit-demo-api  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 711, in checkout
+7|bankykit-demo-api  |     rec = pool._do_get()
+7|bankykit-demo-api  |           ^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 177, in _do_get
+7|bankykit-demo-api  |     with util.safe_reraise():
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+7|bankykit-demo-api  |     raise exc_value.with_traceback(exc_tb)
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+7|bankykit-demo-api  |     return self._create_connection()
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+7|bankykit-demo-api  |     return _ConnectionRecord(self)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+7|bankykit-demo-api  |     self.__connect()
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+7|bankykit-demo-api  |     with util.safe_reraise():
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+7|bankykit-demo-api  |     raise exc_value.with_traceback(exc_tb)
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+7|bankykit-demo-api  |     self.dbapi_connection = connection = pool._invoke_creator(self)
+7|bankykit-demo-api  |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+7|bankykit-demo-api  |     return dialect.connect(*cargs, **cparams)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+7|bankykit-demo-api  |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+7|bankykit-demo-api  |     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+7|bankykit-demo-api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+7|bankykit-demo-api  | sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "127.0.0.1", port 5432 failed: fe_sendauth: no password supplied
+7|bankykit-demo-api  | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+7|bankykit-demo-api  | ERROR:    Application startup failed. Exiting.
