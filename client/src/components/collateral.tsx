@@ -668,8 +668,12 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                       value={selectedLoanLabel || loanSearch}
                       onChange={e => {
                         setLoanSearch(e.target.value);
-                        setSelectedLoanLabel("");
-                        field.onChange("");
+                        if (selectedLoanLabel) {
+                          setSelectedLoanLabel("");
+                          field.onChange("");
+                          itemForm.setValue("owner_name", "");
+                          itemForm.setValue("owner_id_number", "");
+                        }
                         setLoanDropdownOpen(true);
                       }}
                       onFocus={() => { if (!selectedLoanLabel) setLoanDropdownOpen(true); }}
@@ -677,7 +681,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                     />
                     {selectedLoanLabel && (
                       <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
-                        onClick={() => { setSelectedLoanLabel(""); setLoanSearch(""); field.onChange(""); setLoanDropdownOpen(false); }}
+                        onClick={() => { setSelectedLoanLabel(""); setLoanSearch(""); field.onChange(""); setLoanDropdownOpen(false); itemForm.setValue("owner_name", ""); itemForm.setValue("owner_id_number", ""); }}
                         data-testid="button-clear-loan">
                         <X className="h-3 w-3" />
                       </button>

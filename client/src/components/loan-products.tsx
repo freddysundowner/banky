@@ -81,7 +81,7 @@ const productSchema = z.object({
   allow_multiple_loans: z.boolean().default(true),
   require_good_standing: z.boolean().default(false),
   requires_collateral: z.boolean().default(false),
-  min_ltv_coverage: z.string().default("0"),
+  min_ltv_coverage: z.coerce.number().min(0).max(500).default(0),
   is_active: z.boolean().default(true),
 });
 
@@ -149,7 +149,7 @@ export default function LoanProducts({ organizationId }: LoanProductsProps) {
       allow_multiple_loans: true,
       require_good_standing: false,
       requires_collateral: false,
-      min_ltv_coverage: "0",
+      min_ltv_coverage: 0,
       is_active: true,
     },
   });
@@ -252,7 +252,7 @@ export default function LoanProducts({ organizationId }: LoanProductsProps) {
       allow_multiple_loans: (product as any).allow_multiple_loans !== false,
       require_good_standing: (product as any).require_good_standing || false,
       requires_collateral: (product as any).requires_collateral || false,
-      min_ltv_coverage: String(parseFloat((product as any).min_ltv_coverage) || 0),
+      min_ltv_coverage: parseFloat((product as any).min_ltv_coverage) || 0,
       is_active: product.is_active,
     });
     setViewMode("edit");

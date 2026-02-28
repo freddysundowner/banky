@@ -47,7 +47,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { getErrorMessage } from "@/lib/error-utils";
-import { FileText, Plus, Check, X, Banknote, Eye, ArrowLeft, Pencil, Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronsUpDown, AlertTriangle, Clock, CheckCircle2, AlertCircle, Search, SlidersHorizontal, CalendarDays, RotateCcw } from "lucide-react";
+import { FileText, Plus, Check, X, Banknote, Eye, ArrowLeft, Pencil, Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronsUpDown, AlertTriangle, Clock, CheckCircle2, AlertCircle, Search, SlidersHorizontal, CalendarDays, RotateCcw, Shield } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
@@ -736,7 +736,18 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
       if (!res.ok) throw new Error("Failed to fetch loan products");
       return res.json();
     },
-    enabled: needsFormData,
+    enabled: needsFormData || !!selectedLoan,
+  });
+
+  const { data: selectedLoanCollateral, isLoading: collateralLoading } = useQuery<any[]>({
+    queryKey: ["/api/organizations", organizationId, "collateral/items", selectedLoan?.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/organizations/${organizationId}/collateral/items?loan_id=${selectedLoan!.id}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch collateral");
+      const d = await res.json();
+      return Array.isArray(d) ? d : d?.items ?? [];
+    },
+    enabled: !!selectedLoan,
   });
 
   const { data: members } = useQuery<Member[]>({
@@ -1371,6 +1382,23 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
             <TabsTrigger value="payments">Payments</TabsTrigger>
             <TabsTrigger value="schedule">Schedule</TabsTrigger>
             <TabsTrigger value="guarantors">Guarantors</TabsTrigger>
+            <TabsTrigger value="collateral" data-testid="tab-collateral">
+              Collateral
+              {(() => {
+                const lp = products?.find((p: any) => p.id === (selectedLoan as any).loan_product_id);
+                if (!(lp as any)?.requires_collateral) return null;
+                const loanAmt = parseFloat((selectedLoan as any).amount || "0");
+                const minLtv = parseFloat((lp as any).min_ltv_coverage || "0");
+                const totalLtvValue = (selectedLoanCollateral || []).reduce((sum: number, item: any) => {
+                  const val = parseFloat(item.appraised_value || item.declared_value || "0");
+                  const ltv = parseFloat(item.collateral_type?.ltv_percent || "0") / 100;
+                  return sum + val * ltv;
+                }, 0);
+                const coverage = loanAmt > 0 ? (totalLtvValue / loanAmt) * 100 : 0;
+                const satisfied = coverage >= minLtv;
+                return <span className={`ml-1.5 text-xs font-semibold ${satisfied ? "text-green-600" : "text-amber-600"}`}>{satisfied ? "✓" : "!"}</span>;
+              })()}
+            </TabsTrigger>
             <TabsTrigger value="restructure">Restructuring</TabsTrigger>
           </TabsList>
           <TabsContent value="payments" className="mt-4">
@@ -1386,6 +1414,73 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
               loanStatus={selectedLoan.status}
               loanAmount={Number(selectedLoan.amount)}
             />
+          </TabsContent>
+          <TabsContent value="collateral" className="mt-4">
+            {(() => {
+              const lp = products?.find((p: any) => p.id === (selectedLoan as any).loan_product_id) as any;
+              const requiresCollateral = lp?.requires_collateral;
+              const minLtv = parseFloat(lp?.min_ltv_coverage || "0");
+              const loanAmt = parseFloat((selectedLoan as any).amount || "0");
+              const items = selectedLoanCollateral || [];
+              const totalLtvValue = items.reduce((sum: number, item: any) => {
+                const val = parseFloat(item.appraised_value || item.declared_value || "0");
+                const ltv = parseFloat(item.collateral_type?.ltv_percent || "0") / 100;
+                return sum + val * ltv;
+              }, 0);
+              const coveragePct = loanAmt > 0 ? (totalLtvValue / loanAmt) * 100 : 0;
+              const satisfied = coveragePct >= minLtv;
+              return (
+                <div className="space-y-4">
+                  {requiresCollateral && (
+                    <div className={`flex items-start gap-3 p-4 rounded-lg border ${satisfied ? "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800" : "bg-amber-50 dark:bg-amber-950 border-amber-200 dark:border-amber-800"}`}>
+                      <Shield className={`h-5 w-5 mt-0.5 shrink-0 ${satisfied ? "text-green-600" : "text-amber-600"}`} />
+                      <div className="flex-1">
+                        <div className={`font-medium ${satisfied ? "text-green-700 dark:text-green-300" : "text-amber-700 dark:text-amber-300"}`}>
+                          {satisfied ? "Collateral requirement satisfied" : "Collateral required for this loan"}
+                        </div>
+                        <div className="text-sm text-muted-foreground mt-1">
+                          Required: {minLtv}% LTV coverage &nbsp;·&nbsp; Registered LTV value: {totalLtvValue.toLocaleString(undefined, {maximumFractionDigits: 0})} &nbsp;·&nbsp; Coverage: {coveragePct.toFixed(1)}% {satisfied ? "✓" : `(${(minLtv - coveragePct).toFixed(1)}% short)`}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {collateralLoading ? (
+                    <div className="space-y-2"><Skeleton className="h-12 w-full" /><Skeleton className="h-12 w-full" /></div>
+                  ) : items.length === 0 ? (
+                    <div className="text-center py-10 text-muted-foreground">
+                      <Shield className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                      <p>No collateral registered for this loan.</p>
+                      {requiresCollateral && <p className="text-sm mt-1 text-amber-600">Register collateral in the Collateral module before approving.</p>}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {items.map((item: any) => {
+                        const appraisedVal = parseFloat(item.appraised_value || "0");
+                        const declaredVal = parseFloat(item.declared_value || "0");
+                        const ltvPct = parseFloat(item.collateral_type?.ltv_percent || "0");
+                        const effectiveVal = appraisedVal || declaredVal;
+                        const ltvVal = effectiveVal * (ltvPct / 100);
+                        return (
+                          <div key={item.id} className="flex items-center justify-between p-3 rounded-lg border bg-card" data-testid={`collateral-item-${item.id}`}>
+                            <div className="flex items-center gap-3">
+                              <Shield className="h-4 w-4 text-muted-foreground shrink-0" />
+                              <div>
+                                <div className="font-medium text-sm">{item.description || item.collateral_type?.name || "—"}</div>
+                                <div className="text-xs text-muted-foreground">{item.collateral_type?.name} · {item.owner_name} {item.document_ref ? `· ${item.document_ref}` : ""}</div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-sm font-semibold">{ltvVal.toLocaleString(undefined, {maximumFractionDigits: 0})} <span className="text-xs text-muted-foreground">LTV value</span></div>
+                              <div className="text-xs text-muted-foreground">{appraisedVal ? `Appraised: ${appraisedVal.toLocaleString()}` : `Declared: ${declaredVal.toLocaleString()}`} @ {ltvPct}%</div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </TabsContent>
           <TabsContent value="restructure" className="mt-4">
             <LoanRestructuring
