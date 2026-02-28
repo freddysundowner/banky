@@ -92,6 +92,16 @@ interface RecentTransaction {
   created_at: string;
 }
 
+interface HealthData {
+  health_score: number;
+  health_status: string;
+  metrics: {
+    par_ratio: number;
+    loan_to_deposit_ratio: number;
+    collection_efficiency: number;
+  };
+}
+
 export default function Dashboard({ organizationId, organizationName, onNavigate }: DashboardProps) {
   const { formatAmount } = useCurrency(organizationId);
   const [deficientDismissed, setDeficientDismissed] = useState(false);
@@ -102,6 +112,15 @@ export default function Dashboard({ organizationId, organizationName, onNavigate
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to fetch dashboard data");
+      return res.json();
+    },
+  });
+
+  const { data: healthData } = useQuery<HealthData>({
+    queryKey: ["/api/organizations", organizationId, "analytics", "institution-health"],
+    queryFn: async () => {
+      const res = await fetch(`/api/organizations/${organizationId}/analytics/institution-health`, { credentials: "include" });
+      if (!res.ok) return null;
       return res.json();
     },
   });
@@ -184,6 +203,55 @@ export default function Dashboard({ organizationId, organizationName, onNavigate
         </div>
         <RefreshButton organizationId={organizationId} />
       </div>
+
+      {healthData && (
+        <Card className={`border-l-4 ${
+          healthData.health_status === "excellent" ? "border-l-green-500 bg-green-50/50 dark:bg-green-950/20" :
+          healthData.health_status === "good" ? "border-l-blue-500 bg-blue-50/50 dark:bg-blue-950/20" :
+          healthData.health_status === "fair" ? "border-l-yellow-500 bg-yellow-50/50 dark:bg-yellow-950/20" :
+          "border-l-red-500 bg-red-50/50 dark:bg-red-950/20"
+        }`} data-testid="card-institution-health">
+          <CardContent className="py-3 px-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className={`text-4xl font-bold ${
+                  healthData.health_status === "excellent" ? "text-green-600" :
+                  healthData.health_status === "good" ? "text-blue-600" :
+                  healthData.health_status === "fair" ? "text-yellow-600" :
+                  "text-red-600"
+                }`}>
+                  {healthData.health_score}
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">Institution Health Score</p>
+                  <Badge variant={
+                    healthData.health_status === "excellent" ? "default" :
+                    healthData.health_status === "good" ? "secondary" :
+                    healthData.health_status === "fair" ? "outline" :
+                    "destructive"
+                  } className="text-xs mt-0.5">
+                    {healthData.health_status.toUpperCase()}
+                  </Badge>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-6 text-sm">
+                <div>
+                  <p className="text-muted-foreground text-xs">PAR Ratio</p>
+                  <p className="font-semibold">{(healthData.metrics.par_ratio ?? 0).toFixed(1)}%</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Loan/Deposit Ratio</p>
+                  <p className="font-semibold">{(healthData.metrics.loan_to_deposit_ratio ?? 0).toFixed(1)}%</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Collection Efficiency</p>
+                  <p className="font-semibold">{(healthData.metrics.collection_efficiency ?? 0).toFixed(1)}%</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="space-y-4 md:space-y-6">
         <div>
