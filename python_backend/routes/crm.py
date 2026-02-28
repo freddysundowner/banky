@@ -163,6 +163,51 @@ def get_staff_from_user(tenant_session, user_email: str):
 
 # ── CRM Stats ─────────────────────────────────────────────────────────────────
 
+@router.get("/{organization_id}/crm/staff-stats")
+def get_crm_staff_stats(
+    organization_id: str,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
+    require_permission(membership, "members:read", db)
+    tenant_session = tenant_ctx.create_session()
+    try:
+        now = datetime.utcnow()
+        staff_members = tenant_session.query(Staff).filter(Staff.is_active == True).all()
+        result = []
+        for s in staff_members:
+            contacts = tenant_session.query(CrmContact).filter(CrmContact.assigned_to_id == s.id).all()
+            total = len(contacts)
+            if total == 0:
+                continue
+            by_status = {}
+            for c in contacts:
+                by_status[c.status] = by_status.get(c.status, 0) + 1
+            followups = tenant_session.query(CrmFollowUp).filter(CrmFollowUp.assigned_to_id == s.id).all()
+            pending = sum(1 for f in followups if f.status == "pending")
+            overdue = sum(1 for f in followups if f.status == "pending" and f.due_date and f.due_date < now)
+            result.append({
+                "staff_id": s.id,
+                "name": f"{s.first_name} {s.last_name}",
+                "email": s.email,
+                "total_contacts": total,
+                "new": by_status.get("new", 0),
+                "contacted": by_status.get("contacted", 0),
+                "qualified": by_status.get("qualified", 0),
+                "converted": by_status.get("converted", 0),
+                "lost": by_status.get("lost", 0),
+                "pending_followups": pending,
+                "overdue_followups": overdue,
+                "conversion_rate": round(by_status.get("converted", 0) / total * 100, 1) if total > 0 else 0,
+            })
+        result.sort(key=lambda x: x["converted"], reverse=True)
+        return result
+    finally:
+        tenant_session.close()
+        tenant_ctx.close()
+
+
 @router.get("/{organization_id}/crm/stats")
 def get_crm_stats(
     organization_id: str,

@@ -63,6 +63,8 @@ import {
   Trash2,
   Edit,
   PhoneCall,
+  TrendingUp,
+  Award,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -146,6 +148,7 @@ export default function CRMManagement({ organizationId, onConvertToMember }: CRM
   const { toast } = useAppDialog();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [staffFilter, setStaffFilter] = useState("");
   const [activeTab, setActiveTab] = useState("contacts");
 
   const [showAddContact, setShowAddContact] = useState(false);
@@ -162,11 +165,12 @@ export default function CRMManagement({ organizationId, onConvertToMember }: CRM
   });
 
   const contactsQuery = useQuery<any[]>({
-    queryKey: [`/api/organizations/${organizationId}/crm/contacts`, search, statusFilter],
+    queryKey: [`/api/organizations/${organizationId}/crm/contacts`, search, statusFilter, staffFilter],
     queryFn: () => {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
       if (statusFilter) params.set("status", statusFilter);
+      if (staffFilter) params.set("assigned_to_id", staffFilter);
       return fetch(`/api/organizations/${organizationId}/crm/contacts?${params}`, {
         credentials: "include",
       }).then(async (r) => {
@@ -174,6 +178,10 @@ export default function CRMManagement({ organizationId, onConvertToMember }: CRM
         return r.json();
       });
     },
+  });
+
+  const staffStatsQuery = useQuery<any[]>({
+    queryKey: [`/api/organizations/${organizationId}/crm/staff-stats`],
   });
 
   const interactionsQuery = useQuery<any[]>({
@@ -392,6 +400,7 @@ export default function CRMManagement({ organizationId, onConvertToMember }: CRM
           <TabsTrigger value="contacts" data-testid="tab-contacts">Contacts</TabsTrigger>
           <TabsTrigger value="interactions" data-testid="tab-interactions">Interactions</TabsTrigger>
           <TabsTrigger value="followups" data-testid="tab-followups">Follow-ups</TabsTrigger>
+          <TabsTrigger value="by-staff" data-testid="tab-by-staff">By Staff</TabsTrigger>
         </TabsList>
 
         {/* ── Contacts tab ──────────────────────────────────────────────────── */}
@@ -418,6 +427,17 @@ export default function CRMManagement({ organizationId, onConvertToMember }: CRM
                 <SelectItem value="qualified">Qualified</SelectItem>
                 <SelectItem value="converted">Converted</SelectItem>
                 <SelectItem value="lost">Lost</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={staffFilter} onValueChange={setStaffFilter}>
+              <SelectTrigger className="w-44" data-testid="select-crm-staff-filter">
+                <SelectValue placeholder="All staff" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All staff</SelectItem>
+                {(staffStatsQuery.data ?? []).map((s: any) => (
+                  <SelectItem key={s.staff_id} value={s.staff_id}>{s.name}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Button data-testid="button-add-contact" onClick={() => { setShowAddContact(true); contactForm.reset(); }}>
@@ -644,6 +664,68 @@ export default function CRMManagement({ organizationId, onConvertToMember }: CRM
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* ── By Staff tab ──────────────────────────────────────────────────── */}
+        <TabsContent value="by-staff" className="mt-4 space-y-4">
+          {staffStatsQuery.isLoading ? (
+            <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32 w-full" />)}</div>
+          ) : (staffStatsQuery.data ?? []).length === 0 ? (
+            <Card><CardContent className="py-12 text-center text-muted-foreground">No staff have contacts assigned yet.</CardContent></Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {(staffStatsQuery.data ?? []).map((s: any, idx: number) => (
+                <Card key={s.staff_id} data-testid={`card-staff-crm-${s.staff_id}`}>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {idx === 0 && <Award className="h-4 w-4 text-yellow-500" />}
+                        <CardTitle className="text-base">{s.name}</CardTitle>
+                      </div>
+                      <div className="flex items-center gap-1 text-sm font-semibold text-green-600 dark:text-green-400">
+                        <TrendingUp className="h-4 w-4" />
+                        {s.conversion_rate}% conversion
+                      </div>
+                    </div>
+                    {s.email && <p className="text-xs text-muted-foreground">{s.email}</p>}
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="grid grid-cols-5 gap-2 text-center mb-3">
+                      {[
+                        { label: "New", value: s.new, color: "text-blue-600 dark:text-blue-400" },
+                        { label: "Contacted", value: s.contacted, color: "text-yellow-600 dark:text-yellow-400" },
+                        { label: "Qualified", value: s.qualified, color: "text-purple-600 dark:text-purple-400" },
+                        { label: "Converted", value: s.converted, color: "text-green-600 dark:text-green-400" },
+                        { label: "Lost", value: s.lost, color: "text-red-600 dark:text-red-400" },
+                      ].map(({ label, value, color }) => (
+                        <div key={label} className="bg-muted/50 rounded p-2">
+                          <div className={`text-lg font-bold ${color}`}>{value}</div>
+                          <div className="text-xs text-muted-foreground">{label}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex gap-4 text-xs text-muted-foreground border-t pt-2">
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {s.pending_followups} pending follow-ups
+                      </span>
+                      {s.overdue_followups > 0 && (
+                        <span className="flex items-center gap-1 text-red-500">
+                          <AlertCircle className="h-3 w-3" /> {s.overdue_followups} overdue
+                        </span>
+                      )}
+                      <button
+                        className="ml-auto text-primary hover:underline text-xs"
+                        data-testid={`button-view-staff-contacts-${s.staff_id}`}
+                        onClick={() => { setStaffFilter(s.staff_id); setActiveTab("contacts"); }}
+                      >
+                        View contacts →
+                      </button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
 
