@@ -843,6 +843,7 @@ class ValuerCreate(BaseModel):
     license_number: Optional[str] = None
     contact_phone: Optional[str] = None
     contact_email: Optional[str] = None
+    location: Optional[str] = None
     physical_address: Optional[str] = None
     notes: Optional[str] = None
     is_active: bool = True
@@ -852,6 +853,7 @@ class ValuerUpdate(BaseModel):
     license_number: Optional[str] = None
     contact_phone: Optional[str] = None
     contact_email: Optional[str] = None
+    location: Optional[str] = None
     physical_address: Optional[str] = None
     notes: Optional[str] = None
     is_active: Optional[bool] = None
@@ -863,6 +865,7 @@ def valuer_to_dict(v: Valuer) -> dict:
         "license_number": v.license_number,
         "contact_phone": v.contact_phone,
         "contact_email": v.contact_email,
+        "location": v.location,
         "physical_address": v.physical_address,
         "notes": v.notes,
         "is_active": v.is_active,

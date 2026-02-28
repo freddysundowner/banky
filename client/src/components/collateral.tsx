@@ -63,6 +63,7 @@ const valuerFormSchema = z.object({
   license_number: z.string().optional(),
   contact_phone: z.string().optional(),
   contact_email: z.string().optional(),
+  location: z.string().optional(),
   physical_address: z.string().optional(),
   notes: z.string().optional(),
 });
@@ -277,7 +278,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
 
   const itemForm = useForm({ resolver: zodResolver(itemSchema), defaultValues: { loan_id: "", collateral_type_id: "", owner_name: "", owner_id_number: "", description: "", document_ref: "", declared_value: "" } });
   const valuationForm = useForm({ resolver: zodResolver(valuationSchema), defaultValues: { appraised_value: "", valuer_id: "", valuation_date: "", next_revaluation_date: "", ltv_override: "" } });
-  const valuerForm = useForm({ resolver: zodResolver(valuerFormSchema), defaultValues: { name: "", license_number: "", contact_phone: "", contact_email: "", physical_address: "", notes: "" } });
+  const valuerForm = useForm({ resolver: zodResolver(valuerFormSchema), defaultValues: { name: "", license_number: "", contact_phone: "", contact_email: "", location: "", physical_address: "", notes: "" } });
   const releaseForm = useForm({ resolver: zodResolver(releaseSchema), defaultValues: { release_notes: "" } });
   const liquidationForm = useForm({ resolver: zodResolver(liquidationSchema), defaultValues: { liquidation_amount: "", liquidation_notes: "" } });
   const insuranceForm = useForm({ resolver: zodResolver(insuranceSchema), defaultValues: { policy_number: "", insurer_name: "", policy_type: "", sum_insured: "", premium_amount: "", premium_frequency: "", start_date: "", expiry_date: "", notes: "" } });
@@ -754,8 +755,8 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                     <TableRow>
                       <TableHead>Name</TableHead>
                       <TableHead>License No.</TableHead>
+                      <TableHead>Location</TableHead>
                       <TableHead>Phone</TableHead>
-                      <TableHead>Email</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="w-12"></TableHead>
                     </TableRow>
@@ -765,8 +766,8 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                       <TableRow key={v.id} data-testid={`row-valuer-${v.id}`}>
                         <TableCell className="font-medium text-sm">{v.name}</TableCell>
                         <TableCell className="text-sm">{v.license_number ?? <span className="text-muted-foreground">—</span>}</TableCell>
+                        <TableCell className="text-sm">{v.location ?? <span className="text-muted-foreground">—</span>}</TableCell>
                         <TableCell className="text-sm">{v.contact_phone ?? <span className="text-muted-foreground">—</span>}</TableCell>
-                        <TableCell className="text-sm">{v.contact_email ?? <span className="text-muted-foreground">—</span>}</TableCell>
                         <TableCell><Badge variant={v.is_active ? "default" : "secondary"}>{v.is_active ? "Active" : "Inactive"}</Badge></TableCell>
                         <TableCell>
                           <DropdownMenu>
@@ -774,7 +775,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                               <Button variant="ghost" size="icon" className="h-7 w-7" data-testid={`menu-valuer-${v.id}`}><MoreHorizontal className="h-4 w-4" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => { setEditValuer(v); valuerForm.reset({ name: v.name, license_number: v.license_number ?? "", contact_phone: v.contact_phone ?? "", contact_email: v.contact_email ?? "", physical_address: v.physical_address ?? "", notes: v.notes ?? "" }); }}>
+                              <DropdownMenuItem onClick={() => { setEditValuer(v); valuerForm.reset({ name: v.name, license_number: v.license_number ?? "", contact_phone: v.contact_phone ?? "", contact_email: v.contact_email ?? "", location: v.location ?? "", physical_address: v.physical_address ?? "", notes: v.notes ?? "" }); }}>
                                 <Edit className="h-4 w-4 mr-2" /> Edit
                               </DropdownMenuItem>
                               <DropdownMenuItem className="text-destructive" onClick={() => { if (confirm(`Remove "${v.name}" from the registry?`)) deleteValuerMutation.mutate(v.id); }}>
@@ -813,6 +814,9 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                 </div>
                 <FormField control={valuerForm.control} name="contact_email" render={({ field }) => (
                   <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} data-testid="input-valuer-email" /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={valuerForm.control} name="location" render={({ field }) => (
+                  <FormItem><FormLabel>Location <span className="text-muted-foreground font-normal">(town / area)</span></FormLabel><FormControl><Input {...field} data-testid="input-valuer-location" placeholder="e.g. Nairobi CBD, Westlands" /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={valuerForm.control} name="physical_address" render={({ field }) => (
                   <FormItem><FormLabel>Physical Address</FormLabel><FormControl><Textarea {...field} rows={2} data-testid="input-valuer-address" /></FormControl><FormMessage /></FormItem>
