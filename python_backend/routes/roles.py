@@ -38,6 +38,8 @@ AVAILABLE_PERMISSIONS = [
     "salary_deductions:read", "salary_deductions:write",
     "settings:read", "settings:write",
     "roles:read", "roles:write",
+    "crm:read", "crm:write",
+    "collateral:read", "collateral:write",
 ]
 
 DEFAULT_ROLES = [
@@ -60,7 +62,8 @@ DEFAULT_ROLES = [
             "restructure:read", "restructure:write", "sms:read", "sms:write",
             "reports:read", "analytics:read",
             "float_management:read", "float_management:write", "shortage_approval:write",
-            "salary_deductions:read"
+            "salary_deductions:read",
+            "crm:read", "crm:write", "collateral:read", "collateral:write"
         ]
     },
     {
@@ -72,7 +75,8 @@ DEFAULT_ROLES = [
             "members:read", "members:write",
             "transactions:read", "transactions:write",
             "repayments:read", "loan_products:read", "loan_products:write",
-            "restructure:read", "restructure:write"
+            "restructure:read", "restructure:write",
+            "collateral:read", "collateral:write", "crm:read"
         ]
     },
     {
@@ -103,7 +107,8 @@ DEFAULT_ROLES = [
             "loans:read", "loans:approve", "loans:reject",
             "repayments:read", "guarantors:read",
             "defaults:read", "restructure:read",
-            "reports:read", "analytics:read"
+            "reports:read", "analytics:read",
+            "collateral:read"
         ]
     },
     {
@@ -115,7 +120,8 @@ DEFAULT_ROLES = [
             "loans:read", "transactions:read", "transactions:write",
             "repayments:read", "repayments:write",
             "defaults:read", "defaults:write",
-            "reports:read", "analytics:read"
+            "reports:read", "analytics:read",
+            "collateral:read"
         ]
     },
     {
@@ -126,7 +132,8 @@ DEFAULT_ROLES = [
             "branches:read", "members:read", "staff:read", "loan_products:read",
             "loans:read", "transactions:read", "repayments:read",
             "defaults:read", "restructure:read",
-            "reports:read", "analytics:read", "audit:read"
+            "reports:read", "analytics:read", "audit:read",
+            "collateral:read"
         ]
     },
     {
@@ -156,7 +163,8 @@ DEFAULT_ROLES = [
         "permissions": [
             "branches:read", "members:read",
             "staff:read", "loan_products:read", "loans:read",
-            "leave:read", "leave:write"
+            "leave:read", "leave:write",
+            "crm:read", "collateral:read"
         ]
     }
 ]
@@ -177,6 +185,16 @@ def seed_default_roles(tenant_session):
             for perm in role_data["permissions"]:
                 role_perm = RolePermission(role_id=role.id, permission=perm)
                 tenant_session.add(role_perm)
+        else:
+            # Patch existing system roles with any missing permissions from the definition
+            # (except wildcard roles which already have everything)
+            existing_perms = {p.permission for p in existing_role.permissions}
+            if "*" not in existing_perms:
+                defined_perms = role_data["permissions"]
+                for perm in defined_perms:
+                    if perm not in existing_perms:
+                        role_perm = RolePermission(role_id=existing_role.id, permission=perm)
+                        tenant_session.add(role_perm)
     
     tenant_session.commit()
 

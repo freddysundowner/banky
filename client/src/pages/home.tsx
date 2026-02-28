@@ -197,8 +197,8 @@ const navItems = [
   { title: "Leave Management", value: "leaves" as NavSection, icon: Calendar, permissions: ["leave:read"], feature: "leave_management" },
   { title: "Expenses", value: "expenses" as NavSection, icon: Receipt, permissions: ["expenses:read"], feature: "expenses" },
   { title: "Audit Logs", value: "audit" as NavSection, icon: ScrollText, permissions: ["audit:read"], feature: "audit_logs" },
-  { title: "CRM", value: "crm" as NavSection, icon: Users, permissions: ["members:read"], feature: "crm" },
-  { title: "Collateral & Insurance", value: "collateral" as NavSection, icon: Shield, permissions: ["loans:read"], feature: "collateral" },
+  { title: "CRM", value: "crm" as NavSection, icon: Users, permissions: ["crm:read"], feature: "crm" },
+  { title: "Collateral & Insurance", value: "collateral" as NavSection, icon: Shield, permissions: ["collateral:read"], feature: "collateral" },
   { title: "Settings", value: "settings" as NavSection, icon: Settings, permissions: ["settings:read"], adminOnly: true },
   { title: "My Account", value: "my-account" as NavSection, icon: UserCircle, permissions: [], alwaysShow: true },
 ];

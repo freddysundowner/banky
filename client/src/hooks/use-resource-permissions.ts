@@ -44,4 +44,6 @@ export const RESOURCES = {
   EXPENSES: "expenses",
   SETTINGS: "settings",
   ROLES: "roles",
+  CRM: "crm",
+  COLLATERAL: "collateral",
 } as const;

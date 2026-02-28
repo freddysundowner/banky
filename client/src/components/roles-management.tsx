@@ -62,6 +62,8 @@ const PERMISSION_GROUPS = {
   "Expenses": ["expenses:read", "expenses:write", "expenses:approve"],
   "Settings": ["settings:read", "settings:write"],
   "Roles": ["roles:read", "roles:write"],
+  "CRM": ["crm:read", "crm:write"],
+  "Collateral & Insurance": ["collateral:read", "collateral:write"],
 };
 
 export default function RolesManagement({ organizationId }: RolesManagementProps) {

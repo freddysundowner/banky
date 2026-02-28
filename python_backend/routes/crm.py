@@ -170,7 +170,7 @@ def get_crm_staff_stats(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "members:read", db)
+    require_permission(membership, "crm:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
         now = datetime.utcnow()
@@ -215,7 +215,7 @@ def get_crm_stats(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "members:read", db)
+    require_permission(membership, "crm:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
         now = datetime.utcnow()
@@ -255,7 +255,7 @@ def list_contacts(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "members:read", db)
+    require_permission(membership, "crm:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
         q = tenant_session.query(CrmContact)
@@ -288,7 +288,7 @@ def create_contact(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "members:write", db)
+    require_permission(membership, "crm:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         staff = get_staff_from_user(tenant_session, current_user.email)
@@ -322,7 +322,7 @@ def get_contact(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "members:read", db)
+    require_permission(membership, "crm:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
         contact = tenant_session.query(CrmContact).filter(CrmContact.id == contact_id).first()
@@ -343,7 +343,7 @@ def update_contact(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "members:write", db)
+    require_permission(membership, "crm:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         contact = tenant_session.query(CrmContact).filter(CrmContact.id == contact_id).first()
@@ -368,7 +368,7 @@ def delete_contact(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "members:write", db)
+    require_permission(membership, "crm:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         contact = tenant_session.query(CrmContact).filter(CrmContact.id == contact_id).first()
@@ -391,7 +391,7 @@ def convert_contact(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "members:write", db)
+    require_permission(membership, "crm:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         contact = tenant_session.query(CrmContact).filter(CrmContact.id == contact_id).first()
@@ -419,7 +419,7 @@ def list_interactions(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "members:read", db)
+    require_permission(membership, "crm:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
         interactions = tenant_session.query(CrmInteraction).filter(
@@ -438,7 +438,7 @@ def list_all_interactions(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "members:read", db)
+    require_permission(membership, "crm:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
         interactions = (
@@ -468,7 +468,7 @@ def create_interaction(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "members:write", db)
+    require_permission(membership, "crm:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         contact = tenant_session.query(CrmContact).filter(CrmContact.id == contact_id).first()
@@ -502,7 +502,7 @@ def delete_interaction(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "members:write", db)
+    require_permission(membership, "crm:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         interaction = tenant_session.query(CrmInteraction).filter(
@@ -529,7 +529,7 @@ def list_followups(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "members:read", db)
+    require_permission(membership, "crm:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
         now = datetime.utcnow()
@@ -562,7 +562,7 @@ def create_followup(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "members:write", db)
+    require_permission(membership, "crm:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         contact = tenant_session.query(CrmContact).filter(
@@ -596,7 +596,7 @@ def update_followup(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "members:write", db)
+    require_permission(membership, "crm:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         followup = tenant_session.query(CrmFollowUp).filter(
@@ -628,7 +628,7 @@ def delete_followup(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "members:write", db)
+    require_permission(membership, "crm:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         followup = tenant_session.query(CrmFollowUp).filter(

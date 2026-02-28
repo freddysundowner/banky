@@ -231,6 +231,7 @@ def run_pending_migrations_sync():
     from models.database import get_db
     from models.master import Organization
     from services.tenant_context import TenantContext
+    from routes.roles import seed_default_roles
     
     db = next(get_db())
     try:
@@ -238,7 +239,15 @@ def run_pending_migrations_sync():
         for org in orgs:
             try:
                 print(f"Running migrations for tenant: {org.name}")
-                TenantContext(org.connection_string)
+                ctx = TenantContext(org.connection_string)
+                tenant_session = ctx.create_session()
+                try:
+                    seed_default_roles(tenant_session)
+                except Exception as seed_err:
+                    print(f"Role seed error for {org.name}: {seed_err}")
+                finally:
+                    tenant_session.close()
+                    ctx.close()
                 print(f"Migration complete for tenant: {org.name}")
             except Exception as e:
                 print(f"Error migrating tenant {org.name}: {e}")

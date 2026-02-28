@@ -223,7 +223,7 @@ def list_collateral_types(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "members:read", db)
+    require_permission(membership, "collateral:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
         types = tenant_session.query(CollateralType).order_by(CollateralType.name).all()
@@ -330,7 +330,7 @@ def list_collateral_items(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:read", db)
+    require_permission(membership, "collateral:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
         q = tenant_session.query(CollateralItem).options(
@@ -365,7 +365,7 @@ def get_collateral_item(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:read", db)
+    require_permission(membership, "collateral:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
         item = tenant_session.query(CollateralItem).filter(CollateralItem.id == item_id).first()
@@ -385,7 +385,7 @@ def create_collateral_item(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:write", db)
+    require_permission(membership, "collateral:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         loan = tenant_session.query(LoanApplication).filter(LoanApplication.id == body.loan_id).first()
@@ -434,7 +434,7 @@ def update_collateral_item(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:write", db)
+    require_permission(membership, "collateral:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         item = tenant_session.query(CollateralItem).filter(CollateralItem.id == item_id).first()
@@ -459,7 +459,7 @@ def delete_collateral_item(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:write", db)
+    require_permission(membership, "collateral:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         item = tenant_session.query(CollateralItem).filter(CollateralItem.id == item_id).first()
@@ -486,7 +486,7 @@ def record_valuation(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:write", db)
+    require_permission(membership, "collateral:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         item = tenant_session.query(CollateralItem).filter(CollateralItem.id == item_id).first()
@@ -626,7 +626,7 @@ def place_lien(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:write", db)
+    require_permission(membership, "collateral:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         item = tenant_session.query(CollateralItem).filter(CollateralItem.id == item_id).first()
@@ -671,7 +671,7 @@ def release_collateral(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:write", db)
+    require_permission(membership, "collateral:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         item = tenant_session.query(CollateralItem).filter(CollateralItem.id == item_id).first()
@@ -700,7 +700,7 @@ def liquidate_collateral(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:write", db)
+    require_permission(membership, "collateral:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         item = tenant_session.query(CollateralItem).filter(CollateralItem.id == item_id).first()
@@ -732,7 +732,7 @@ def list_all_insurance(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:read", db)
+    require_permission(membership, "collateral:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
         q = tenant_session.query(CollateralInsurance).options(
@@ -773,7 +773,7 @@ def list_item_insurance(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:read", db)
+    require_permission(membership, "collateral:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
         item = tenant_session.query(CollateralItem).filter(CollateralItem.id == item_id).first()
@@ -794,7 +794,7 @@ def add_insurance(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:write", db)
+    require_permission(membership, "collateral:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         item = tenant_session.query(CollateralItem).filter(CollateralItem.id == item_id).first()
@@ -863,7 +863,7 @@ def update_insurance(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:write", db)
+    require_permission(membership, "collateral:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         policy = tenant_session.query(CollateralInsurance).filter(CollateralInsurance.id == policy_id).first()
@@ -937,7 +937,7 @@ def delete_insurance(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:write", db)
+    require_permission(membership, "collateral:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         policy = tenant_session.query(CollateralInsurance).filter(CollateralInsurance.id == policy_id).first()
@@ -960,7 +960,7 @@ async def upload_insurance_document(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:write", db)
+    require_permission(membership, "collateral:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         policy = tenant_session.query(CollateralInsurance).filter(CollateralInsurance.id == policy_id).first()
@@ -1001,7 +1001,7 @@ def get_collateral_alerts(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:read", db)
+    require_permission(membership, "collateral:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
         today = date.today()
@@ -1146,7 +1146,7 @@ def get_collateral_stats(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:read", db)
+    require_permission(membership, "collateral:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
         total = tenant_session.query(CollateralItem).count()
@@ -1241,7 +1241,7 @@ def list_valuers(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:read", db)
+    require_permission(membership, "collateral:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
         q = tenant_session.query(Valuer)
@@ -1265,7 +1265,7 @@ def create_valuer(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:write", db)
+    require_permission(membership, "collateral:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         v = Valuer(**body.model_dump())
@@ -1286,7 +1286,7 @@ def update_valuer(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:write", db)
+    require_permission(membership, "collateral:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         v = tenant_session.query(Valuer).filter(Valuer.id == valuer_id).first()
@@ -1309,7 +1309,7 @@ def delete_valuer(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:write", db)
+    require_permission(membership, "collateral:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         v = tenant_session.query(Valuer).filter(Valuer.id == valuer_id).first()
@@ -1339,7 +1339,7 @@ async def upload_valuation_document(
     current_user=Depends(get_current_user),
 ):
     tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
-    require_permission(membership, "loans:write", db)
+    require_permission(membership, "collateral:write", db)
     tenant_session = tenant_ctx.create_session()
     try:
         item = tenant_session.query(CollateralItem).filter(CollateralItem.id == item_id).first()
