@@ -6,9 +6,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshButton } from "@/components/refresh-button";
 import {
   Users,
-  Banknote,
   TrendingUp,
-  FileText,
   Building2,
   UserCog,
   Wallet,
@@ -18,7 +16,6 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Clock,
-  CheckCircle2,
   XCircle,
   ShieldAlert,
   Shield,
@@ -55,10 +52,6 @@ interface DashboardAnalytics {
   total_members: number;
   total_staff: number;
   total_branches: number;
-  total_loans: number;
-  pending_loans: number;
-  approved_loans: number;
-  disbursed_loans: number;
   collateral_deficient_count: number;
   total_savings: number;
   total_shares: number;
@@ -224,44 +217,6 @@ export default function Dashboard({ organizationId, organizationName, onNavigate
               label="Collection Rate"
               value={data ? `${data.collection_rate.toFixed(1)}%` : undefined}
               icon={TrendingUp}
-              color="text-blue-600"
-              bgColor="bg-blue-50 dark:bg-blue-950"
-              isLoading={isLoading}
-            />
-          </div>
-        </div>
-
-        <div>
-          <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-3">Loan Applications</h2>
-          <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
-            <StatCard
-              label="Total"
-              value={data?.total_loans}
-              icon={FileText}
-              color="text-purple-600"
-              bgColor="bg-purple-50 dark:bg-purple-950"
-              isLoading={isLoading}
-            />
-            <StatCard
-              label="Pending"
-              value={data?.pending_loans}
-              icon={Clock}
-              color="text-yellow-600"
-              bgColor="bg-yellow-50 dark:bg-yellow-950"
-              isLoading={isLoading}
-            />
-            <StatCard
-              label="Approved"
-              value={data?.approved_loans}
-              icon={CheckCircle2}
-              color="text-green-600"
-              bgColor="bg-green-50 dark:bg-green-950"
-              isLoading={isLoading}
-            />
-            <StatCard
-              label="Disbursed"
-              value={data?.disbursed_loans}
-              icon={Banknote}
               color="text-blue-600"
               bgColor="bg-blue-50 dark:bg-blue-950"
               isLoading={isLoading}
