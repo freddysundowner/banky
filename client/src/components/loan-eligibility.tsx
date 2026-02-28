@@ -17,6 +17,7 @@ import {
   RefreshCw,
   ChevronRight,
   User,
+  UserPlus,
   CreditCard,
   ShieldCheck,
   AlertTriangle,
@@ -63,11 +64,12 @@ interface EligibilityCheck {
 
 interface EligibilityResult {
   eligible: boolean;
+  is_prospect: boolean;
   checks: EligibilityCheck[];
   member: {
-    id: string;
+    id: string | null;
     name: string;
-    member_number: string;
+    member_number: string | null;
     status: string;
     savings_balance: number;
     shares_balance: number;
@@ -98,10 +100,23 @@ interface EligibilityResult {
   max_eligible_amount: number | null;
 }
 
+type CheckMode = "member" | "prospect";
+
 export default function LoanEligibility({ organizationId }: LoanEligibilityProps) {
   const { formatAmount, symbol } = useCurrency(organizationId);
+  const [mode, setMode] = useState<CheckMode>("member");
+
+  // Member mode state
   const [memberSearch, setMemberSearch] = useState("");
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+
+  // Prospect mode state
+  const [prospectName, setProspectName] = useState("");
+  const [manualSavings, setManualSavings] = useState("");
+  const [manualShares, setManualShares] = useState("");
+  const [manualDeposits, setManualDeposits] = useState("");
+
+  // Shared state
   const [selectedProductId, setSelectedProductId] = useState("");
   const [amount, setAmount] = useState("");
   const [termMonths, setTermMonths] = useState("");
@@ -127,33 +142,53 @@ export default function LoanEligibility({ organizationId }: LoanEligibilityProps
       if (!res.ok) throw new Error("Failed to fetch members");
       return res.json();
     },
-    enabled: memberSearch.length >= 2 || memberSearch.length === 0,
+    enabled: mode === "member" && (memberSearch.length >= 2 || memberSearch.length === 0),
   });
 
   const checkMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", `/api/organizations/${organizationId}/loans/eligibility-check`, {
-        member_id: selectedMember?.id,
+      const payload: Record<string, unknown> = {
         loan_product_id: selectedProductId,
         amount: parseFloat(amount) || 0,
         term_months: parseInt(termMonths) || 12,
         collateral_value: parseFloat(collateralValue) || 0,
-      });
+      };
+      if (mode === "member" && selectedMember) {
+        payload.member_id = selectedMember.id;
+      } else {
+        payload.prospect_name = prospectName || "Prospect";
+        payload.manual_savings = parseFloat(manualSavings) || 0;
+        payload.manual_shares = parseFloat(manualShares) || 0;
+        payload.manual_deposits = parseFloat(manualDeposits) || 0;
+      }
+      const res = await apiRequest("POST", `/api/organizations/${organizationId}/loans/eligibility-check`, payload);
       return res.json();
     },
     onSuccess: (data) => setResult(data),
   });
 
   const selectedProduct = products?.find(p => p.id === selectedProductId);
-  const canCheck = selectedMember && selectedProductId && parseFloat(amount) > 0 && parseInt(termMonths) > 0;
+  const canCheck = selectedProductId && parseFloat(amount) > 0 && parseInt(termMonths) > 0 &&
+    (mode === "prospect" || selectedMember !== null);
 
   const handleReset = () => {
     setSelectedMember(null);
     setMemberSearch("");
+    setProspectName("");
+    setManualSavings("");
+    setManualShares("");
+    setManualDeposits("");
     setSelectedProductId("");
     setAmount("");
     setTermMonths("");
     setCollateralValue("");
+    setResult(null);
+  };
+
+  const handleSwitchMode = (newMode: CheckMode) => {
+    setMode(newMode);
+    setSelectedMember(null);
+    setMemberSearch("");
     setResult(null);
   };
 
@@ -180,75 +215,145 @@ export default function LoanEligibility({ organizationId }: LoanEligibilityProps
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <User className="h-4 w-4 text-primary" /> Client / Member
+                  <User className="h-4 w-4 text-primary" /> Client
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {selectedMember ? (
-                  <div className="flex items-center justify-between rounded-lg border bg-muted/40 p-3">
-                    <div>
-                      <p className="font-medium text-sm">{selectedMember.first_name} {selectedMember.last_name}</p>
-                      <p className="text-xs text-muted-foreground">{selectedMember.member_number}</p>
-                      <Badge
-                        variant={selectedMember.status === "active" ? "default" : "secondary"}
-                        className="mt-1 text-[10px] h-4"
+                <div className="flex rounded-lg border p-1 gap-1" data-testid="toggle-check-mode">
+                  <button
+                    className={`flex-1 flex items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors ${mode === "member" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                    onClick={() => handleSwitchMode("member")}
+                    data-testid="button-mode-member"
+                  >
+                    <User className="h-3.5 w-3.5" /> Existing Member
+                  </button>
+                  <button
+                    className={`flex-1 flex items-center justify-center gap-1.5 rounded-md py-1.5 text-xs font-medium transition-colors ${mode === "prospect" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                    onClick={() => handleSwitchMode("prospect")}
+                    data-testid="button-mode-prospect"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" /> Prospect / New Client
+                  </button>
+                </div>
+
+                {mode === "member" ? (
+                  selectedMember ? (
+                    <div className="flex items-center justify-between rounded-lg border bg-muted/40 p-3">
+                      <div>
+                        <p className="font-medium text-sm">{selectedMember.first_name} {selectedMember.last_name}</p>
+                        <p className="text-xs text-muted-foreground">{selectedMember.member_number}</p>
+                        <Badge
+                          variant={selectedMember.status === "active" ? "default" : "secondary"}
+                          className="mt-1 text-[10px] h-4"
+                        >
+                          {selectedMember.status}
+                        </Badge>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => { setSelectedMember(null); setMemberSearch(""); setResult(null); }}
+                        data-testid="button-change-member"
                       >
-                        {selectedMember.status}
-                      </Badge>
+                        Change
+                      </Button>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs"
-                      onClick={() => { setSelectedMember(null); setMemberSearch(""); setResult(null); }}
-                      data-testid="button-change-member"
-                    >
-                      Change
-                    </Button>
-                  </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                        <Input
+                          placeholder="Search by name or member number..."
+                          className="pl-8 text-sm"
+                          value={memberSearch}
+                          onChange={e => setMemberSearch(e.target.value)}
+                          data-testid="input-member-search"
+                        />
+                      </div>
+                      {membersLoading ? (
+                        <div className="space-y-2">
+                          {[1,2,3].map(i => <Skeleton key={i} className="h-10 w-full" />)}
+                        </div>
+                      ) : (
+                        <div className="border rounded-md divide-y max-h-52 overflow-y-auto">
+                          {(membersData?.items || []).length === 0 ? (
+                            <p className="text-xs text-muted-foreground text-center py-4">No members found</p>
+                          ) : (
+                            (membersData?.items || []).map(m => (
+                              <button
+                                key={m.id}
+                                className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-muted/50 transition-colors"
+                                onClick={() => setSelectedMember(m)}
+                                data-testid={`button-select-member-${m.id}`}
+                              >
+                                <div>
+                                  <p className="text-sm font-medium">{m.first_name} {m.last_name}</p>
+                                  <p className="text-xs text-muted-foreground">{m.member_number}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className={`text-[10px] font-medium ${m.status === "active" ? "text-green-600" : "text-amber-600"}`}>
+                                    {m.status}
+                                  </span>
+                                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                                </div>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
                 ) : (
-                  <div className="space-y-2">
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-xs">Client Name (optional)</Label>
                       <Input
-                        placeholder="Search by name or member number..."
-                        className="pl-8 text-sm"
-                        value={memberSearch}
-                        onChange={e => setMemberSearch(e.target.value)}
-                        data-testid="input-member-search"
+                        placeholder="e.g. John Kamau"
+                        className="mt-1 text-sm"
+                        value={prospectName}
+                        onChange={e => setProspectName(e.target.value)}
+                        data-testid="input-prospect-name"
                       />
                     </div>
-                    {membersLoading ? (
-                      <div className="space-y-2">
-                        {[1,2,3].map(i => <Skeleton key={i} className="h-10 w-full" />)}
+                    <p className="text-[10px] text-muted-foreground">
+                      Enter the client's approximate financial position to estimate eligibility. These values are not verified against any account.
+                    </p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <Label className="text-xs">Savings ({symbol})</Label>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          className="mt-1 text-sm"
+                          value={manualSavings}
+                          onChange={e => { setManualSavings(e.target.value); setResult(null); }}
+                          data-testid="input-manual-savings"
+                        />
                       </div>
-                    ) : (
-                      <div className="border rounded-md divide-y max-h-52 overflow-y-auto">
-                        {(membersData?.items || []).length === 0 ? (
-                          <p className="text-xs text-muted-foreground text-center py-4">No members found</p>
-                        ) : (
-                          (membersData?.items || []).map(m => (
-                            <button
-                              key={m.id}
-                              className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-muted/50 transition-colors"
-                              onClick={() => setSelectedMember(m)}
-                              data-testid={`button-select-member-${m.id}`}
-                            >
-                              <div>
-                                <p className="text-sm font-medium">{m.first_name} {m.last_name}</p>
-                                <p className="text-xs text-muted-foreground">{m.member_number}</p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <span className={`text-[10px] font-medium ${m.status === "active" ? "text-green-600" : "text-amber-600"}`}>
-                                  {m.status}
-                                </span>
-                                <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                              </div>
-                            </button>
-                          ))
-                        )}
+                      <div>
+                        <Label className="text-xs">Shares ({symbol})</Label>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          className="mt-1 text-sm"
+                          value={manualShares}
+                          onChange={e => { setManualShares(e.target.value); setResult(null); }}
+                          data-testid="input-manual-shares"
+                        />
                       </div>
-                    )}
+                      <div>
+                        <Label className="text-xs">Deposits ({symbol})</Label>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          className="mt-1 text-sm"
+                          value={manualDeposits}
+                          onChange={e => { setManualDeposits(e.target.value); setResult(null); }}
+                          data-testid="input-manual-deposits"
+                        />
+                      </div>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -368,13 +473,23 @@ export default function LoanEligibility({ organizationId }: LoanEligibilityProps
               )}
               <div>
                 <h2 className={`text-lg font-bold ${result.eligible ? "text-green-700 dark:text-green-300" : "text-red-600 dark:text-red-400"}`}>
-                  {result.eligible ? "Eligible for Loan" : "Not Currently Eligible"}
+                  {result.eligible ? "Likely Eligible for Loan" : "Not Currently Eligible"}
                 </h2>
-                <p className="text-sm text-muted-foreground">
-                  {result.member.name} · {result.member.member_number} · {result.product.name}
+                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                  {result.member.name}
+                  {result.member.member_number && <span>· {result.member.member_number}</span>}
+                  · {result.product.name}
+                  {result.is_prospect && (
+                    <Badge variant="secondary" className="text-[10px] h-4 ml-1">Prospect estimate</Badge>
+                  )}
                 </p>
               </div>
             </div>
+            {result.is_prospect && (
+              <p className="text-xs text-muted-foreground mt-3 border-t pt-3">
+                This is a preliminary estimate based on manually entered figures. Final eligibility will be determined once the client has an active member account and formal application is submitted.
+              </p>
+            )}
           </div>
 
           <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
@@ -436,7 +551,9 @@ export default function LoanEligibility({ organizationId }: LoanEligibilityProps
             <div className="space-y-3">
               <Card>
                 <CardHeader className="pb-2 pt-4 px-4">
-                  <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Member Snapshot</CardTitle>
+                  <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                    {result.is_prospect ? "Entered Figures" : "Member Snapshot"}
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 pb-4 space-y-2">
                   <div className="flex justify-between text-xs">

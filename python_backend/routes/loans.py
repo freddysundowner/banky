@@ -623,33 +623,60 @@ async def check_loan_eligibility(
     require_any_permission(membership, ["loans:read", "loans:write"], db)
     tenant_session = tenant_ctx.create_session()
     try:
-        member_id = payload.get("member_id")
+        member_id = payload.get("member_id")  # optional
         product_id = payload.get("loan_product_id")
         amount = Decimal(str(payload.get("amount", 0)))
         term_months = int(payload.get("term_months", 12))
         collateral_value = Decimal(str(payload.get("collateral_value", 0)))
+        # Manual financial inputs (used when no member account exists)
+        manual_savings = Decimal(str(payload.get("manual_savings", 0)))
+        manual_shares = Decimal(str(payload.get("manual_shares", 0)))
+        manual_deposits = Decimal(str(payload.get("manual_deposits", 0)))
+        prospect_name = payload.get("prospect_name", "Prospect")
 
-        member = tenant_session.query(Member).filter(Member.id == member_id).first()
-        if not member:
-            raise HTTPException(status_code=404, detail="Member not found")
+        # Load member from DB if provided
+        member = None
+        if member_id:
+            member = tenant_session.query(Member).filter(Member.id == member_id).first()
+            if not member:
+                raise HTTPException(status_code=404, detail="Member not found")
 
         product = tenant_session.query(LoanProduct).filter(LoanProduct.id == product_id).first()
         if not product:
             raise HTTPException(status_code=404, detail="Loan product not found")
 
+        # Resolve balances — from DB if member exists, otherwise from manual inputs
+        if member:
+            eff_savings = member.savings_balance or Decimal("0")
+            eff_shares = member.shares_balance or Decimal("0")
+            eff_deposits = member.deposits_balance or Decimal("0")
+        else:
+            eff_savings = manual_savings
+            eff_shares = manual_shares
+            eff_deposits = manual_deposits
+
         checks = []
         all_passed = True
 
-        # 1. Member active
-        is_active = member.status == "active"
-        checks.append({
-            "key": "member_status",
-            "label": "Member Status",
-            "passed": is_active,
-            "message": "Member is active and in good standing." if is_active else f"Member status is '{member.status}'. Only active members can apply.",
-        })
-        if not is_active:
-            all_passed = False
+        # 1. Member active (only when a member is linked)
+        if member:
+            is_active = member.status == "active"
+            checks.append({
+                "key": "member_status",
+                "label": "Member Status",
+                "passed": is_active,
+                "message": "Member is active and in good standing." if is_active else f"Member status is '{member.status}'. Only active members can apply.",
+            })
+            if not is_active:
+                all_passed = False
+        else:
+            checks.append({
+                "key": "member_status",
+                "label": "Member Status",
+                "passed": True,
+                "message": "Prospect check — membership status not verified. Client will need to be registered as an active member before applying.",
+                "informational": True,
+            })
 
         # 2. Amount within product range
         in_range = product.min_amount <= amount <= product.max_amount
@@ -676,7 +703,7 @@ async def check_loan_eligibility(
             all_passed = False
 
         # 4. Shares-based eligibility
-        shares_balance = member.shares_balance or Decimal("0")
+        shares_balance = eff_shares
         shares_multiplier = product.shares_multiplier or Decimal("0")
         min_shares_req = product.min_shares_required or Decimal("0")
         max_from_shares = shares_balance * shares_multiplier if shares_multiplier > 0 else None
@@ -705,18 +732,18 @@ async def check_loan_eligibility(
                 all_passed = False
 
         # 5. Savings balance info (informational)
-        savings_total = (member.savings_balance or Decimal("0")) + (member.deposits_balance or Decimal("0"))
+        savings_total = eff_savings + eff_deposits
         checks.append({
             "key": "savings_info",
             "label": "Savings & Deposits",
             "passed": True,
-            "message": f"Member has {float(savings_total):,.2f} in savings and deposits (shares: {float(shares_balance):,.2f}).",
+            "message": f"Client has {float(savings_total):,.2f} in savings and deposits (shares: {float(shares_balance):,.2f}).",
             "informational": True,
         })
 
-        # 6. Multiple loans check
+        # 6. Multiple loans check (only for existing members)
         active_loan_statuses = ["pending", "approved", "disbursed", "defaulted", "restructured"]
-        if not product.allow_multiple_loans:
+        if member and not product.allow_multiple_loans:
             existing = tenant_session.query(LoanApplication).filter(
                 LoanApplication.member_id == member_id,
                 LoanApplication.loan_product_id == product_id,
@@ -732,9 +759,17 @@ async def check_loan_eligibility(
             })
             if not no_conflict:
                 all_passed = False
+        elif not member and not product.allow_multiple_loans:
+            checks.append({
+                "key": "multiple_loans",
+                "label": "Active Loans",
+                "passed": True,
+                "message": "Prospect check — cannot verify existing loans without a member account. Will be checked on application.",
+                "informational": True,
+            })
 
-        # 7. Good standing check
-        if product.require_good_standing:
+        # 7. Good standing check (only for existing members)
+        if member and product.require_good_standing:
             active_loans = tenant_session.query(LoanApplication).filter(
                 LoanApplication.member_id == member_id,
                 LoanApplication.status.in_(["disbursed", "defaulted", "restructured"])
@@ -758,6 +793,14 @@ async def check_loan_eligibility(
             })
             if overdue:
                 all_passed = False
+        elif not member and product.require_good_standing:
+            checks.append({
+                "key": "good_standing",
+                "label": "Good Standing",
+                "passed": True,
+                "message": "Prospect check — good standing cannot be verified without a member account. Will be checked on application.",
+                "informational": True,
+            })
 
         # 8. Collateral check
         if product.requires_collateral and float(product.min_ltv_coverage or 0) > 0:
@@ -806,15 +849,16 @@ async def check_loan_eligibility(
 
         return {
             "eligible": all_passed,
+            "is_prospect": member is None,
             "checks": checks,
             "member": {
-                "id": member.id,
-                "name": f"{member.first_name} {member.last_name}",
-                "member_number": member.member_number,
-                "status": member.status,
-                "savings_balance": float(member.savings_balance or 0),
-                "shares_balance": float(shares_balance),
-                "deposits_balance": float(member.deposits_balance or 0),
+                "id": member.id if member else None,
+                "name": f"{member.first_name} {member.last_name}" if member else prospect_name,
+                "member_number": member.member_number if member else None,
+                "status": member.status if member else "prospect",
+                "savings_balance": float(eff_savings),
+                "shares_balance": float(eff_shares),
+                "deposits_balance": float(eff_deposits),
             },
             "product": {
                 "id": product.id,
