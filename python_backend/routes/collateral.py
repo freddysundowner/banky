@@ -502,19 +502,12 @@ def record_valuation(
         item.updated_at = datetime.utcnow()
 
         # --- Collateral deficiency check and revaluation notification ---
-        print(f"[VALUATE DEBUG] item.loan_id={item.loan_id!r}, old_appraised_value={old_appraised_value!r}, new={body.appraised_value!r}")
         if item.loan_id:
             loan = tenant_session.query(LoanApplication).filter(LoanApplication.id == item.loan_id).first()
-            print(f"[VALUATE DEBUG] loan found={loan is not None}, status={loan.status if loan else 'N/A'}")
             if loan:
                 from routes.notifications import create_notification
                 product = tenant_session.query(LoanProduct).filter(LoanProduct.id == loan.loan_product_id).first()
                 notif_link = f"/?section=loans"
-                target_roles = ["loan_officer", "manager", "admin", "owner"]
-                staff_list = tenant_session.query(Staff).filter(
-                    Staff.role.in_(target_roles),
-                    Staff.is_active == True
-                ).all()
 
                 # Resolve min_ltv — treat None and 0 distinctly: 0 means "no minimum set"
                 min_ltv = None
@@ -537,43 +530,36 @@ def record_valuation(
                 was_deficient = bool(loan.collateral_deficient)
                 active_statuses = ["approved", "disbursed", "under_review", "restructured", "defaulted"]
                 new_value = float(body.appraised_value)
-                print(f"[VALUATE DEBUG] staff_list count={len(staff_list)}, min_ltv={min_ltv!r}, loan.status={loan.status!r}, active={loan.status in active_statuses}, old={old_appraised_value!r}, new={new_value!r}")
 
-                # Always notify on first valuation or value drop for active loans
+                # Always broadcast on first valuation or value drop for active loans
+                # staff_id=None means broadcast — visible to all org users regardless of Staff table state
                 if loan.status in active_statuses:
                     if old_appraised_value is None:
-                        reval_msg = (
-                            f"Collateral '{item.description}' for loan {loan.application_number} "
-                            f"has been valuated at {new_value:,.2f}."
+                        create_notification(
+                            tenant_session,
+                            title=f"Collateral Revalued: {loan.application_number}",
+                            message=(
+                                f"Collateral '{item.description}' for loan {loan.application_number} "
+                                f"has been valuated at {new_value:,.2f}."
+                            ),
+                            notification_type="info",
+                            link=notif_link,
+                            staff_id=None,
                         )
-                        for s in staff_list:
-                            create_notification(
-                                tenant_session,
-                                title=f"Collateral Revalued: {loan.application_number}",
-                                message=reval_msg,
-                                notification_type="info",
-                                link=notif_link,
-                                staff_id=s.id,
-                            )
                     elif new_value < old_appraised_value:
                         drop_pct = ((old_appraised_value - new_value) / old_appraised_value * 100)
-                        reval_msg = (
-                            f"Collateral '{item.description}' for loan {loan.application_number} "
-                            f"was revalued from {old_appraised_value:,.2f} to {new_value:,.2f} "
-                            f"(a drop of {drop_pct:.1f}%). Review may be required."
+                        create_notification(
+                            tenant_session,
+                            title=f"Collateral Value Dropped: {loan.application_number}",
+                            message=(
+                                f"Collateral '{item.description}' for loan {loan.application_number} "
+                                f"was revalued from {old_appraised_value:,.2f} to {new_value:,.2f} "
+                                f"(a drop of {drop_pct:.1f}%). Review may be required."
+                            ),
+                            notification_type="warning",
+                            link=notif_link,
+                            staff_id=None,
                         )
-                        print(f"[VALUATE DEBUG] VALUE DROP detected, creating {len(staff_list)} notifications")
-                        for s in staff_list:
-                            create_notification(
-                                tenant_session,
-                                title=f"Collateral Value Dropped: {loan.application_number}",
-                                message=reval_msg,
-                                notification_type="warning",
-                                link=notif_link,
-                                staff_id=s.id,
-                            )
-                    else:
-                        print(f"[VALUATE DEBUG] No notification: new={new_value} >= old={old_appraised_value}")
 
                 if min_ltv and loan_amount > 0:
                     # LTV threshold configured — run deficiency check
@@ -593,15 +579,14 @@ def record_valuation(
                                 f"at {coverage_pct:.1f}%, below the required {min_ltv:.1f}%. "
                                 f"Action still required."
                             )
-                        for s in staff_list:
-                            create_notification(
-                                tenant_session,
-                                title=f"Collateral Deficient: {loan.application_number}",
-                                message=notif_msg,
-                                notification_type="warning",
-                                link=notif_link,
-                                staff_id=s.id,
-                            )
+                        create_notification(
+                            tenant_session,
+                            title=f"Collateral Deficient: {loan.application_number}",
+                            message=notif_msg,
+                            notification_type="warning",
+                            link=notif_link,
+                            staff_id=None,
+                        )
                     elif was_deficient and not is_deficient:
                         loan.collateral_deficient = False
                         create_notification(
