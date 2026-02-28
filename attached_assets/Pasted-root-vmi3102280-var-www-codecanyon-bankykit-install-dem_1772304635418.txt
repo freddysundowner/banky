@@ -1,0 +1,66 @@
+root@vmi3102280:/var/www/codecanyon/bankykit# ./install-demo.sh 
+
+================================================================
+  BankyKit - Bank & Sacco Management System
+  Installer
+================================================================
+
+  Platform: linux
+
+>>> Step 1/6: Checking prerequisites...
+    [OK] Node.js v20.20.0
+    [OK] Python 3.12.3 (using python3.12)
+
+>>> Step 2/6: Setting up environment...
+    [SKIP] .env already exists (your settings are preserved)
+
+>>> Step 3/6: Installing frontend dependencies...
+
+To address all issues, run:
+  npm audit fix
+
+Run `npm audit` for details.
+    [OK] Node.js dependencies installed
+
+>>> Step 4/6: Installing Python backend dependencies...
+    [SKIP] Virtual environment already exists (Python 3.12.3)
+Requirement already satisfied: fastapi==0.129.0 in ./venv/lib/python3.12/site-packages (from -r python_backend/requirements.txt (line 1)) (0.129.0)
+Requirement already satisfied: uvicorn==0.41.0 in ./venv/lib/python3.12/site-packages (from -r python_backend/requirements.txt (line 2)) (0.41.0)
+Requirement already satisfied: sqlalchemy==2.0.46 in ./venv/lib/python3.12/site-packages (from -r python_backend/requirements.txt (line 3)) (2.0.46)
+Requirement already satisfied: psycopg2-binary==2.9.11 in ./venv/lib/python3.12/site-packages (from -r python_backend/requirements.txt (line 4)) (2.9.11)
+Requirement already satisfied: pydantic==2.12.5 in ./venv/lib/python3.12/site-packages (from -r python_backend/requirements.txt (line 5)) (2.12.5)
+Requirement already satisfied: python-dotenv==1.2.1 in ./venv/lib/python3.12/site-packages (from -r python_backend/requirements.txt (line 6)) (1.2.1)
+Requirement already satisfied: python-dateutil==2.9.0.post0 in ./venv/lib/python3.12/site-packages (from -r python_backend/requirements.txt (line 7)) (2.9.0.post0)
+Requirement already satisfied: python-multipart==0.0.22 in ./venv/lib/python3.12/site-packages (from -r python_backend/requirements.txt (line 8)) (0.0.22)
+Requirement already satisfied: bcrypt==5.0.0 in ./venv/lib/python3.12/site-packages (from -r python_backend/requirements.txt (line 9)) (5.0.0)
+Requirement already satisfied: httpx==0.28.1 in ./venv/lib/python3.12/site-packages (from -r python_backend/requirements.txt (line 10)) (0.28.1)
+Requirement already satisfied: requests==2.32.5 in ./venv/lib/python3.12/site-packages (from -r python_backend/requirements.txt (line 11)) (2.32.5)
+Requirement already satisfied: stripe==14.3.0 in ./venv/lib/python3.12/site-packages (from -r python_backend/requirements.txt (line 12)) (14.3.0)
+Requirement already satisfied: reportlab==4.4.10 in ./venv/lib/python3.12/site-packages (from -r python_backend/requirements.txt (line 13)) (4.4.10)
+Requirement already satisfied: pypdf==6.7.1 in ./venv/lib/python3.12/site-packages (from -r python_backend/requirements.txt (line 14)) (6.7.1)
+Requirement already satisfied: email-validator==2.3.0 in ./venv/lib/python3.12/site-packages (from -r python_backend/requirements.txt (line 15)) (2.3.0)
+Requirement already satisfied: starlette<1.0.0,>=0.40.0 in ./venv/lib/python3.12/site-packages (from fastapi==0.129.0->-r python_backend/requirements.txt (line 1)) (0.52.1)
+Requirement already satisfied: typing-extensions>=4.8.0 in ./venv/lib/python3.12/site-packages (from fastapi==0.129.0->-r python_backend/requirements.txt (line 1)) (4.15.0)
+Requirement already satisfied: typing-inspection>=0.4.2 in ./venv/lib/python3.12/site-packages (from fastapi==0.129.0->-r python_backend/requirements.txt (line 1)) (0.4.2)
+Requirement already satisfied: annotated-doc>=0.0.2 in ./venv/lib/python3.12/site-packages (from fastapi==0.129.0->-r python_backend/requirements.txt (line 1)) (0.0.4)
+Requirement already satisfied: click>=7.0 in ./venv/lib/python3.12/site-packages (from uvicorn==0.41.0->-r python_backend/requirements.txt (line 2)) (8.3.1)
+Requirement already satisfied: h11>=0.8 in ./venv/lib/python3.12/site-packages (from uvicorn==0.41.0->-r python_backend/requirements.txt (line 2)) (0.16.0)
+Requirement already satisfied: greenlet>=1 in ./venv/lib/python3.12/site-packages (from sqlalchemy==2.0.46->-r python_backend/requirements.txt (line 3)) (3.3.2)
+Requirement already satisfied: annotated-types>=0.6.0 in ./venv/lib/python3.12/site-packages (from pydantic==2.12.5->-r python_backend/requirements.txt (line 5)) (0.7.0)
+Requirement already satisfied: pydantic-core==2.41.5 in ./venv/lib/python3.12/site-packages (from pydantic==2.12.5->-r python_backend/requirements.txt (line 5)) (2.41.5)
+Requirement already satisfied: six>=1.5 in ./venv/lib/python3.12/site-packages (from python-dateutil==2.9.0.post0->-r python_backend/requirements.txt (line 7)) (1.17.0)
+Requirement already satisfied: anyio in ./venv/lib/python3.12/site-packages (from httpx==0.28.1->-r python_backend/requirements.txt (line 10)) (4.12.1)
+Requirement already satisfied: certifi in ./venv/lib/python3.12/site-packages (from httpx==0.28.1->-r python_backend/requirements.txt (line 10)) (2026.2.25)
+Requirement already satisfied: httpcore==1.* in ./venv/lib/python3.12/site-packages (from httpx==0.28.1->-r python_backend/requirements.txt (line 10)) (1.0.9)
+Requirement already satisfied: idna in ./venv/lib/python3.12/site-packages (from httpx==0.28.1->-r python_backend/requirements.txt (line 10)) (3.11)
+Requirement already satisfied: charset_normalizer<4,>=2 in ./venv/lib/python3.12/site-packages (from requests==2.32.5->-r python_backend/requirements.txt (line 11)) (3.4.4)
+Requirement already satisfied: urllib3<3,>=1.21.1 in ./venv/lib/python3.12/site-packages (from requests==2.32.5->-r python_backend/requirements.txt (line 11)) (2.6.3)
+Requirement already satisfied: pillow>=9.0.0 in ./venv/lib/python3.12/site-packages (from reportlab==4.4.10->-r python_backend/requirements.txt (line 13)) (12.1.1)
+Requirement already satisfied: dnspython>=2.0.0 in ./venv/lib/python3.12/site-packages (from email-validator==2.3.0->-r python_backend/requirements.txt (line 15)) (2.8.0)
+    [OK] Python dependencies installed
+
+>>> Step 5/6: Setting up database...
+    [OK] PostgreSQL 16.11
+    [WARN] PostgreSQL requires password — setting it automatically...
+    [ERROR] Cannot locate pg_hba.conf. Please set the postgres password manually:
+    [ERROR]   sudo -u postgres psql -c "ALTER USER
