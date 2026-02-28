@@ -1066,7 +1066,7 @@ export default function Home() {
             ) : (
             <>
             {activeSection === "dashboard" && selectedOrg && (
-              <Dashboard organizationId={selectedOrg.id} organizationName={selectedOrg.name} />
+              <Dashboard organizationId={selectedOrg.id} organizationName={selectedOrg.name} onNavigate={(section) => setActiveSection(section as any)} />
             )}
 
             {activeSection === "teller" && selectedOrg && (

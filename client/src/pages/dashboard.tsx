@@ -21,13 +21,34 @@ import {
   CheckCircle2,
   XCircle,
   ShieldAlert,
+  Shield,
   X,
+  ChevronRight,
 } from "lucide-react";
 import { useCurrency } from "@/hooks/use-currency";
 
 interface DashboardProps {
   organizationId: string;
   organizationName: string;
+  onNavigate?: (section: string) => void;
+}
+
+interface CollateralAlertItem {
+  id: string;
+  description: string;
+  member_name: string | null;
+  loan_number: string | null;
+  next_revaluation_date: string | null;
+  collateral_type_name: string | null;
+}
+
+interface CollateralAlerts {
+  overdue_revaluation: CollateralAlertItem[];
+  due_soon_revaluation: CollateralAlertItem[];
+  summary: {
+    overdue_revaluation_count: number;
+    due_soon_revaluation_count: number;
+  };
 }
 
 interface DashboardAnalytics {
@@ -48,7 +69,7 @@ interface DashboardAnalytics {
   collection_rate: number;
 }
 
-export default function Dashboard({ organizationId, organizationName }: DashboardProps) {
+export default function Dashboard({ organizationId, organizationName, onNavigate }: DashboardProps) {
   const { symbol, formatAmount } = useCurrency(organizationId);
   const [deficientDismissed, setDeficientDismissed] = useState(false);
   const { data, isLoading, error } = useQuery<DashboardAnalytics>({
@@ -58,6 +79,17 @@ export default function Dashboard({ organizationId, organizationName }: Dashboar
         credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to fetch dashboard data");
+      return res.json();
+    },
+  });
+
+  const { data: collateralAlerts } = useQuery<CollateralAlerts>({
+    queryKey: ["/api/organizations", organizationId, "collateral", "alerts"],
+    queryFn: async () => {
+      const res = await fetch(`/api/organizations/${organizationId}/collateral/alerts`, {
+        credentials: "include",
+      });
+      if (!res.ok) return null;
       return res.json();
     },
   });
@@ -256,6 +288,63 @@ export default function Dashboard({ organizationId, organizationName }: Dashboar
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {collateralAlerts && (collateralAlerts.summary.overdue_revaluation_count > 0 || collateralAlerts.summary.due_soon_revaluation_count > 0) && (
+          <div>
+            <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-3 flex items-center gap-2">
+              <Shield className="h-4 w-4 text-muted-foreground" />
+              Collateral Revaluation Alerts
+            </h2>
+            <div className="space-y-3">
+              {collateralAlerts.overdue_revaluation.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => onNavigate?.("collateral")}
+                  className="w-full text-left"
+                  data-testid={`alert-overdue-${item.id}`}
+                >
+                  <Card className="border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/50 transition-colors cursor-pointer">
+                    <CardContent className="flex items-center gap-3 px-4 py-3">
+                      <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-red-800 dark:text-red-200 truncate">{item.description}</p>
+                        <p className="text-xs text-red-600 dark:text-red-400">
+                          {item.member_name && <span>{item.member_name} · </span>}
+                          {item.loan_number && <span>Loan {item.loan_number} · </span>}
+                          <span className="font-medium">Overdue since {item.next_revaluation_date}</span>
+                        </p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-red-400 flex-shrink-0" />
+                    </CardContent>
+                  </Card>
+                </button>
+              ))}
+              {collateralAlerts.due_soon_revaluation.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => onNavigate?.("collateral")}
+                  className="w-full text-left"
+                  data-testid={`alert-due-soon-${item.id}`}
+                >
+                  <Card className="border-orange-300 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/30 hover:bg-orange-100 dark:hover:bg-orange-950/50 transition-colors cursor-pointer">
+                    <CardContent className="flex items-center gap-3 px-4 py-3">
+                      <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-orange-800 dark:text-orange-200 truncate">{item.description}</p>
+                        <p className="text-xs text-orange-600 dark:text-orange-400">
+                          {item.member_name && <span>{item.member_name} · </span>}
+                          {item.loan_number && <span>Loan {item.loan_number} · </span>}
+                          <span className="font-medium">Due {item.next_revaluation_date}</span>
+                        </p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-orange-400 flex-shrink-0" />
+                    </CardContent>
+                  </Card>
+                </button>
+              ))}
+            </div>
+          </div>
         )}
 
       </div>
