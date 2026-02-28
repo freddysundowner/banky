@@ -208,7 +208,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
   const loanSearchQuery = useQuery<any[]>({
     queryKey: [`/api/organizations/${organizationId}/loans`, "collateral-picker", loanSearchDebounced],
     queryFn: () =>
-      fetch(`/api/organizations/${organizationId}/loans?search=${encodeURIComponent(loanSearchDebounced)}&status=active&per_page=20`, { credentials: "include" })
+      fetch(`/api/organizations/${organizationId}/loans?search=${encodeURIComponent(loanSearchDebounced)}&statuses=pending,under_review,approved,disbursed,defaulted,restructured&page_size=20`, { credentials: "include" })
         .then(r => r.json())
         .then(d => {
           if (Array.isArray(d)) return d;

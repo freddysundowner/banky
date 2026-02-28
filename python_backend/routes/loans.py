@@ -110,7 +110,7 @@ def generate_code(db: Session, prefix: str):
     return f"{prefix}{count + 1:04d}"
 
 @router.get("/{org_id}/loans")
-async def list_loans(org_id: str, status: str = None, member_id: str = None, branch_id: str = None, page: int = 1, page_size: int = 20, search: str = None, product_id: str = None, date_from: str = None, date_to: str = None, user=Depends(get_current_user), db: Session = Depends(get_db)):
+async def list_loans(org_id: str, status: str = None, statuses: str = None, member_id: str = None, branch_id: str = None, page: int = 1, page_size: int = 20, search: str = None, product_id: str = None, date_from: str = None, date_to: str = None, user=Depends(get_current_user), db: Session = Depends(get_db)):
     from routes.common import get_branch_filter
     
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
@@ -128,7 +128,10 @@ async def list_loans(org_id: str, status: str = None, member_id: str = None, bra
             branch_member_ids = [m.id for m in tenant_session.query(Member).filter(Member.branch_id == branch_id).all()]
             query = query.filter(LoanApplication.member_id.in_(branch_member_ids))
         
-        if status:
+        if statuses:
+            status_list = [s.strip() for s in statuses.split(",") if s.strip()]
+            query = query.filter(LoanApplication.status.in_(status_list))
+        elif status:
             query = query.filter(LoanApplication.status == status)
         if member_id:
             query = query.filter(LoanApplication.member_id == member_id)
