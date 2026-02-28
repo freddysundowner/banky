@@ -286,6 +286,7 @@ class LoanApplication(TenantBase):
     last_payment_date = Column(Date)
     is_restructured = Column(Boolean, default=False)
     interest_deducted_upfront = Column(Boolean, default=False)  # Track if interest was deducted at disbursement
+    collateral_deficient = Column(Boolean, default=False)
     original_loan_id = Column(String, ForeignKey("loan_applications.id"))
     created_by_id = Column(String, ForeignKey("staff.id"))
     reviewed_by_id = Column(String, ForeignKey("staff.id"))

@@ -580,6 +580,7 @@ class LoanApplicationResponse(BaseModel):
     last_payment_date: Optional[date] = None
     is_restructured: bool = False
     interest_deducted_upfront: bool = False
+    collateral_deficient: bool = False
     applied_at: datetime
     approved_at: Optional[datetime] = None
     rejected_at: Optional[datetime] = None

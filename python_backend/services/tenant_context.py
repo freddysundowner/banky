@@ -4,7 +4,7 @@ from models.master import Organization, OrganizationMember
 from models.tenant import TenantBase
 
 _migrated_tenants = set()
-_migration_version = 32  # Increment to force re-migration
+_migration_version = 33  # Increment to force re-migration
 
 def _get_db_migration_version(engine):
     """Check the migration version stored in the tenant database"""
@@ -951,6 +951,9 @@ def run_tenant_schema_migration(engine):
 
         # v32: Location field on valuers
         conn.execute(text("ALTER TABLE valuers ADD COLUMN IF NOT EXISTS location VARCHAR(200)"))
+
+        # v33: Collateral deficient flag on loan applications
+        conn.execute(text("ALTER TABLE loan_applications ADD COLUMN IF NOT EXISTS collateral_deficient BOOLEAN DEFAULT FALSE"))
 
         conn.commit()
     

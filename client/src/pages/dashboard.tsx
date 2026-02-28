@@ -19,6 +19,7 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  ShieldAlert,
 } from "lucide-react";
 import { useCurrency } from "@/hooks/use-currency";
 
@@ -35,6 +36,7 @@ interface DashboardAnalytics {
   pending_loans: number;
   approved_loans: number;
   disbursed_loans: number;
+  collateral_deficient_count: number;
   total_savings: number;
   total_shares: number;
   total_disbursed: number;
@@ -178,7 +180,7 @@ export default function Dashboard({ organizationId, organizationName }: Dashboar
 
         <div>
           <h2 className="text-base md:text-lg font-semibold mb-2 md:mb-3">Loan Applications</h2>
-          <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 md:gap-4 grid-cols-2 lg:grid-cols-5">
             <StatCard
               label="Total"
               value={data?.total_loans}
@@ -211,6 +213,14 @@ export default function Dashboard({ organizationId, organizationName }: Dashboar
               bgColor="bg-blue-50 dark:bg-blue-950"
               isLoading={isLoading}
             />
+            <StatCard
+              label="Collateral Deficient"
+              value={data?.collateral_deficient_count}
+              icon={ShieldAlert}
+              color="text-red-600"
+              bgColor="bg-red-50 dark:bg-red-950"
+              isLoading={isLoading}
+            />
           </div>
         </div>
 
@@ -228,6 +238,27 @@ export default function Dashboard({ organizationId, organizationName }: Dashboar
                   <p className="text-2xl md:text-3xl font-bold text-destructive">{data.default_count}</p>
                   <p className="text-xs md:text-sm text-muted-foreground">
                     {data.default_count === 1 ? "loan" : "loans"} currently overdue or in collection
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {data && data.collateral_deficient_count > 0 && (
+          <Card className="border-amber-500/50 bg-amber-50/60 dark:bg-amber-950/20">
+            <CardHeader className="pb-2 md:pb-3 px-4 md:px-6 pt-4 md:pt-6">
+              <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400 text-sm md:text-base">
+                <ShieldAlert className="h-4 w-4 md:h-5 md:w-5" />
+                Collateral Deficient Loans
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 md:px-6 pb-4 md:pb-6">
+              <div className="flex items-center gap-3 md:gap-4">
+                <div>
+                  <p className="text-2xl md:text-3xl font-bold text-amber-700 dark:text-amber-400" data-testid="text-collateral-deficient-count">{data.collateral_deficient_count}</p>
+                  <p className="text-xs md:text-sm text-muted-foreground">
+                    {data.collateral_deficient_count === 1 ? "loan" : "loans"} with collateral coverage below the required minimum — review required
                   </p>
                 </div>
               </div>

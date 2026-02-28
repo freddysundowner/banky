@@ -47,7 +47,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { getErrorMessage } from "@/lib/error-utils";
-import { FileText, Plus, Check, X, Banknote, Eye, ArrowLeft, Pencil, Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronsUpDown, AlertTriangle, Clock, CheckCircle2, AlertCircle, Search, SlidersHorizontal, CalendarDays, RotateCcw, Shield } from "lucide-react";
+import { FileText, Plus, Check, X, Banknote, Eye, ArrowLeft, Pencil, Download, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, ChevronsUpDown, AlertTriangle, Clock, CheckCircle2, AlertCircle, Search, SlidersHorizontal, CalendarDays, RotateCcw, Shield, ShieldAlert } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
@@ -2513,9 +2513,17 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                     <TableCell>{parseFloat(app.amount).toLocaleString()}</TableCell>
                     <TableCell className="hidden lg:table-cell">{(app as any).term_months} months</TableCell>
                     <TableCell>
-                      <Badge variant={statusColors[app.status] || "secondary"}>
-                        {app.status.replace("_", " ")}
-                      </Badge>
+                      <div className="flex flex-wrap gap-1">
+                        <Badge variant={statusColors[app.status] || "secondary"}>
+                          {app.status.replace("_", " ")}
+                        </Badge>
+                        {(app as any).collateral_deficient && (
+                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300 dark:bg-amber-950 dark:text-amber-400 dark:border-amber-700 gap-1" data-testid={`badge-collateral-deficient-${app.id}`}>
+                            <ShieldAlert className="h-3 w-3" />
+                            Deficient
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">

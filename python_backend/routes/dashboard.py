@@ -23,7 +23,11 @@ async def get_dashboard_stats(
         total_loans = tenant_session.query(LoanApplication).count()
         pending_loans = tenant_session.query(LoanApplication).filter(LoanApplication.status == 'pending').count()
         approved_loans = tenant_session.query(LoanApplication).filter(LoanApplication.status == 'approved').count()
-        
+        collateral_deficient_count = tenant_session.query(LoanApplication).filter(
+            LoanApplication.collateral_deficient == True,
+            LoanApplication.status.in_(['disbursed', 'defaulted', 'restructured', 'approved'])
+        ).count()
+
         return {
             "total_members": total_members,
             "total_staff": total_staff,
@@ -31,6 +35,7 @@ async def get_dashboard_stats(
             "total_loans": total_loans,
             "pending_loans": pending_loans,
             "approved_loans": approved_loans,
+            "collateral_deficient_count": collateral_deficient_count,
         }
     finally:
         tenant_session.close()

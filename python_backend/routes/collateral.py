@@ -8,7 +8,7 @@ import os, uuid, shutil
 from pathlib import Path
 
 from models.database import get_db
-from models.tenant import CollateralType, CollateralItem, CollateralInsurance, LoanApplication, Member, Staff, Valuer
+from models.tenant import CollateralType, CollateralItem, CollateralInsurance, LoanApplication, LoanProduct, Member, Staff, Valuer
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission
 from middleware.demo_guard import require_not_demo
@@ -499,6 +499,57 @@ def record_valuation(
             from dateutil.relativedelta import relativedelta
             item.next_revaluation_date = item.valuation_date + relativedelta(months=ctype.revaluation_months)
         item.updated_at = datetime.utcnow()
+
+        # --- Collateral deficiency check ---
+        if item.loan_id:
+            loan = tenant_session.query(LoanApplication).filter(LoanApplication.id == item.loan_id).first()
+            if loan:
+                product = tenant_session.query(LoanProduct).filter(LoanProduct.id == loan.loan_product_id).first()
+                min_ltv = float(product.min_ltv_coverage) if (product and product.min_ltv_coverage) else None
+                if min_ltv and float(loan.amount) > 0:
+                    all_items = tenant_session.query(CollateralItem).filter(
+                        CollateralItem.loan_id == loan.id,
+                        CollateralItem.status.notin_(["released", "liquidated"])
+                    ).all()
+                    total_lending = sum(float(ci.lending_limit or 0) for ci in all_items)
+                    coverage_pct = (total_lending / float(loan.amount)) * 100
+                    is_deficient = coverage_pct < min_ltv
+                    was_deficient = bool(loan.collateral_deficient)
+                    loan.collateral_deficient = is_deficient
+                    if is_deficient and not was_deficient:
+                        from routes.notifications import create_notification
+                        notif_title = f"Collateral Deficient: {loan.application_number}"
+                        notif_msg = (
+                            f"Collateral coverage for loan {loan.application_number} has dropped to "
+                            f"{coverage_pct:.1f}% against the required {min_ltv:.1f}%. "
+                            f"Immediate review required."
+                        )
+                        notif_link = f"/loans/{loan.id}"
+                        target_roles = ["loan_officer", "manager", "admin"]
+                        staff_list = tenant_session.query(Staff).filter(
+                            Staff.role.in_(target_roles),
+                            Staff.is_active == True
+                        ).all()
+                        for s in staff_list:
+                            create_notification(
+                                tenant_session,
+                                title=notif_title,
+                                message=notif_msg,
+                                notification_type="warning",
+                                link=notif_link,
+                                staff_id=s.id,
+                            )
+                    elif not is_deficient and was_deficient:
+                        from routes.notifications import create_notification
+                        create_notification(
+                            tenant_session,
+                            title=f"Collateral Restored: {loan.application_number}",
+                            message=f"Collateral coverage for loan {loan.application_number} is now {coverage_pct:.1f}%, meeting the required {min_ltv:.1f}%.",
+                            notification_type="success",
+                            link=f"/loans/{loan.id}",
+                            staff_id=None,
+                        )
+
         tenant_session.commit()
         tenant_session.refresh(item)
         return item_to_dict(item)
