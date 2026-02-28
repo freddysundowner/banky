@@ -482,6 +482,7 @@ def record_valuation(
             raise HTTPException(status_code=404, detail="Collateral item not found")
         ctype = item.collateral_type
         effective_ltv = body.ltv_override or float(ctype.ltv_percent if ctype else 70)
+        old_appraised_value = float(item.appraised_value) if item.appraised_value is not None else None
         item.appraised_value = body.appraised_value
         if body.valuer_id:
             valuer_obj = tenant_session.query(Valuer).filter(Valuer.id == body.valuer_id).first()
@@ -500,25 +501,45 @@ def record_valuation(
             item.next_revaluation_date = item.valuation_date + relativedelta(months=ctype.revaluation_months)
         item.updated_at = datetime.utcnow()
 
-        # --- Collateral deficiency check ---
+        # --- Collateral deficiency check and revaluation notification ---
         if item.loan_id:
             loan = tenant_session.query(LoanApplication).filter(LoanApplication.id == item.loan_id).first()
             if loan:
+                from routes.notifications import create_notification
                 product = tenant_session.query(LoanProduct).filter(LoanProduct.id == loan.loan_product_id).first()
-                min_ltv = float(product.min_ltv_coverage) if (product and product.min_ltv_coverage) else None
-                if min_ltv and float(loan.amount) > 0:
-                    all_items = tenant_session.query(CollateralItem).filter(
-                        CollateralItem.loan_id == loan.id,
-                        CollateralItem.status.notin_(["released", "liquidated"])
-                    ).all()
-                    total_lending = sum(float(ci.lending_limit or 0) for ci in all_items)
-                    coverage_pct = (total_lending / float(loan.amount)) * 100
+                notif_link = f"/loans/{loan.id}"
+                target_roles = ["loan_officer", "manager", "admin", "owner"]
+                staff_list = tenant_session.query(Staff).filter(
+                    Staff.role.in_(target_roles),
+                    Staff.is_active == True
+                ).all()
+
+                # Resolve min_ltv — treat None and 0 distinctly: 0 means "no minimum set"
+                min_ltv = None
+                if product and product.min_ltv_coverage is not None:
+                    try:
+                        val = float(product.min_ltv_coverage)
+                        if val > 0:
+                            min_ltv = val
+                    except (TypeError, ValueError):
+                        pass
+
+                all_items = tenant_session.query(CollateralItem).filter(
+                    CollateralItem.loan_id == loan.id,
+                    CollateralItem.status.notin_(["released", "liquidated"])
+                ).all()
+                total_lending = sum(float(ci.lending_limit or 0) for ci in all_items)
+                loan_amount = float(loan.amount) if loan.amount else 0
+                coverage_pct = (total_lending / loan_amount * 100) if loan_amount > 0 else 0
+
+                was_deficient = bool(loan.collateral_deficient)
+
+                if min_ltv and loan_amount > 0:
+                    # LTV threshold configured — run deficiency check
                     is_deficient = coverage_pct < min_ltv
-                    was_deficient = bool(loan.collateral_deficient)
                     loan.collateral_deficient = is_deficient
+
                     if is_deficient:
-                        from routes.notifications import create_notification
-                        notif_title = f"Collateral Deficient: {loan.application_number}"
                         if not was_deficient:
                             notif_msg = (
                                 f"Collateral coverage for loan {loan.application_number} has dropped to "
@@ -531,31 +552,44 @@ def record_valuation(
                                 f"at {coverage_pct:.1f}%, below the required {min_ltv:.1f}%. "
                                 f"Action still required."
                             )
-                        notif_link = f"/loans/{loan.id}"
-                        target_roles = ["loan_officer", "manager", "admin", "owner"]
-                        staff_list = tenant_session.query(Staff).filter(
-                            Staff.role.in_(target_roles),
-                            Staff.is_active == True
-                        ).all()
                         for s in staff_list:
                             create_notification(
                                 tenant_session,
-                                title=notif_title,
+                                title=f"Collateral Deficient: {loan.application_number}",
                                 message=notif_msg,
                                 notification_type="warning",
                                 link=notif_link,
                                 staff_id=s.id,
                             )
-                    elif not is_deficient and was_deficient:
-                        from routes.notifications import create_notification
+                    elif was_deficient and not is_deficient:
+                        loan.collateral_deficient = False
                         create_notification(
                             tenant_session,
                             title=f"Collateral Restored: {loan.application_number}",
                             message=f"Collateral coverage for loan {loan.application_number} is now {coverage_pct:.1f}%, meeting the required {min_ltv:.1f}%.",
                             notification_type="success",
-                            link=f"/loans/{loan.id}",
+                            link=notif_link,
                             staff_id=None,
                         )
+                else:
+                    # No LTV threshold configured — notify whenever value drops for a disbursed loan
+                    if loan.status == "disbursed" and old_appraised_value is not None:
+                        new_value = float(body.appraised_value)
+                        if new_value < old_appraised_value:
+                            drop_pct = ((old_appraised_value - new_value) / old_appraised_value * 100)
+                            for s in staff_list:
+                                create_notification(
+                                    tenant_session,
+                                    title=f"Collateral Value Dropped: {loan.application_number}",
+                                    message=(
+                                        f"Collateral '{item.description}' for loan {loan.application_number} "
+                                        f"was revalued from {old_appraised_value:,.2f} to {new_value:,.2f} "
+                                        f"(a drop of {drop_pct:.1f}%). Review may be required."
+                                    ),
+                                    notification_type="warning",
+                                    link=notif_link,
+                                    staff_id=s.id,
+                                )
 
         tenant_session.commit()
         tenant_session.refresh(item)
