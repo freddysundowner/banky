@@ -200,20 +200,6 @@ async def list_audit_logs(
         tenant_session.close()
         tenant_ctx.close()
 
-@router.get("/{org_id}/audit-logs/{log_id}")
-async def get_audit_log(org_id: str, log_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
-    tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
-    require_permission(membership, "audit:read", db)
-    tenant_session = tenant_ctx.create_session()
-    try:
-        log = tenant_session.query(AuditLog).filter(AuditLog.id == log_id).first()
-        if not log:
-            raise HTTPException(status_code=404, detail="Audit log not found")
-        return AuditLogResponse.model_validate(log)
-    finally:
-        tenant_session.close()
-        tenant_ctx.close()
-
 @router.get("/{org_id}/audit-logs/entity/{entity_type}/{entity_id}")
 async def get_entity_audit_trail(org_id: str, entity_type: str, entity_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
@@ -324,6 +310,20 @@ async def get_staff_activity(org_id: str, staff_id: str, days: int = 30, user=De
             "activity_by_date": by_date,
             "recent_activity": [AuditLogResponse.model_validate(l) for l in logs[:20]]
         }
+    finally:
+        tenant_session.close()
+        tenant_ctx.close()
+
+@router.get("/{org_id}/audit-logs/{log_id}")
+async def get_audit_log(org_id: str, log_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
+    tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
+    require_permission(membership, "audit:read", db)
+    tenant_session = tenant_ctx.create_session()
+    try:
+        log = tenant_session.query(AuditLog).filter(AuditLog.id == log_id).first()
+        if not log:
+            raise HTTPException(status_code=404, detail="Audit log not found")
+        return AuditLogResponse.model_validate(log)
     finally:
         tenant_session.close()
         tenant_ctx.close()

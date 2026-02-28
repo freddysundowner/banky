@@ -261,19 +261,25 @@ export default function RolesManagement({ organizationId }: RolesManagementProps
             <Accordion type="multiple" className="w-full">
               {Object.entries(PERMISSION_GROUPS).map(([group, perms]) => (
                 <AccordionItem key={group} value={group}>
-                  <AccordionTrigger className="text-sm">
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center">
+                    <div
+                      className="pl-4 flex-shrink-0"
+                      onClick={(e) => { e.stopPropagation(); toggleGroupPermissions(perms); }}
+                    >
                       <Checkbox
                         checked={perms.every(p => selectedPermissions.includes(p))}
                         onCheckedChange={() => toggleGroupPermissions(perms)}
-                        onClick={(e) => e.stopPropagation()}
                       />
-                      {group}
-                      <Badge variant="secondary" className="text-xs">
-                        {perms.filter(p => selectedPermissions.includes(p)).length}/{perms.length}
-                      </Badge>
                     </div>
-                  </AccordionTrigger>
+                    <AccordionTrigger className="flex-1 text-sm">
+                      <span className="flex items-center gap-2">
+                        {group}
+                        <Badge variant="secondary" className="text-xs">
+                          {perms.filter(p => selectedPermissions.includes(p)).length}/{perms.length}
+                        </Badge>
+                      </span>
+                    </AccordionTrigger>
+                  </div>
                   <AccordionContent>
                     <div className="grid grid-cols-2 gap-2 pl-6">
                       {perms.map(perm => (
