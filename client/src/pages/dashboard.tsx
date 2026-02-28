@@ -18,7 +18,6 @@ import {
   X,
   ChevronRight,
   Users,
-  Activity,
   UserPlus,
 } from "lucide-react";
 import { useCurrency } from "@/hooks/use-currency";
@@ -67,13 +66,16 @@ interface RecentMember {
   phone: string | null;
 }
 
-interface AuditLogEntry {
+interface RecentTransaction {
   id: string;
-  action: string;
-  entity_type: string;
-  details: string;
+  transaction_number: string;
+  member_id: string;
+  transaction_type: string;
+  account_type: string;
+  amount: number;
+  payment_method: string | null;
+  description: string | null;
   created_at: string;
-  staff: { first_name: string; last_name: string } | null;
 }
 
 export default function Dashboard({ organizationId, organizationName, onNavigate }: DashboardProps) {
@@ -112,10 +114,10 @@ export default function Dashboard({ organizationId, organizationName, onNavigate
     },
   });
 
-  const { data: auditData, isLoading: auditLoading } = useQuery<{ logs: AuditLogEntry[] }>({
-    queryKey: ["/api/organizations", organizationId, "audit-logs", "recent"],
+  const { data: recentTxData, isLoading: txLoading } = useQuery<{ items: RecentTransaction[] }>({
+    queryKey: ["/api/organizations", organizationId, "transactions", "recent"],
     queryFn: async () => {
-      const res = await fetch(`/api/organizations/${organizationId}/audit-logs?limit=6`, {
+      const res = await fetch(`/api/organizations/${organizationId}/transactions?page=1&page_size=8`, {
         credentials: "include",
       });
       if (!res.ok) return null;
@@ -286,139 +288,153 @@ export default function Dashboard({ organizationId, organizationName, onNavigate
           </div>
         )}
 
-        <div className="grid gap-4 md:gap-6 grid-cols-1 lg:grid-cols-2">
-          <div>
-            <div className="flex items-center justify-between mb-2 md:mb-3">
-              <h2 className="text-base md:text-lg font-semibold flex items-center gap-2">
-                <Users className="h-4 w-4 text-muted-foreground" />
-                Recent Members
-              </h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs text-muted-foreground hover:text-foreground gap-1"
-                onClick={() => onNavigate?.("members")}
-                data-testid="link-view-all-members"
-              >
-                View all <ChevronRight className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-            <Card>
-              <CardContent className="p-0">
-                {membersLoading ? (
-                  <div className="divide-y">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className="flex items-center gap-3 px-4 py-3">
-                        <div className="h-8 w-8 rounded-full bg-muted flex-shrink-0" />
-                        <div className="flex-1 space-y-1">
-                          <Skeleton className="h-3.5 w-32" />
-                          <Skeleton className="h-3 w-20" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : recentMembersData?.items?.length ? (
-                  <div className="divide-y">
-                    {recentMembersData.items.map((member) => (
-                      <div key={member.id} className="flex items-center gap-3 px-4 py-3" data-testid={`row-member-${member.id}`}>
-                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                          <span className="text-xs font-semibold text-primary">
-                            {member.first_name[0]}{member.last_name[0]}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{member.first_name} {member.last_name}</p>
-                          <p className="text-xs text-muted-foreground">{member.member_number}</p>
-                        </div>
-                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                          <Badge
-                            variant="outline"
-                            className={`text-[10px] px-1.5 py-0 ${
-                              member.status === "active"
-                                ? "border-green-400 text-green-700 dark:text-green-400"
-                                : member.status === "pending"
-                                ? "border-yellow-400 text-yellow-700 dark:text-yellow-400"
-                                : "border-muted text-muted-foreground"
-                            }`}
-                          >
-                            {member.status}
-                          </Badge>
-                          <span className="text-[10px] text-muted-foreground">
-                            {member.created_at
-                              ? formatDistanceToNow(new Date(member.created_at + (member.created_at.endsWith("Z") ? "" : "Z")), { addSuffix: true })
-                              : ""}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <UserPlus className="h-8 w-8 text-muted-foreground/40 mb-2" />
-                    <p className="text-sm text-muted-foreground">No members yet</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+        <div>
+          <div className="flex items-center justify-between mb-2 md:mb-3">
+            <h2 className="text-base md:text-lg font-semibold flex items-center gap-2">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              Recent Members
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground hover:text-foreground gap-1"
+              onClick={() => onNavigate?.("members")}
+              data-testid="link-view-all-members"
+            >
+              View all <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
           </div>
+          <Card>
+            <CardContent className="p-0">
+              {membersLoading ? (
+                <div className="divide-y">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 px-4 py-3">
+                      <div className="h-8 w-8 rounded-full bg-muted flex-shrink-0" />
+                      <div className="flex-1 space-y-1">
+                        <Skeleton className="h-3.5 w-32" />
+                        <Skeleton className="h-3 w-20" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : recentMembersData?.items?.length ? (
+                <div className="divide-y">
+                  {recentMembersData.items.map((member) => (
+                    <div key={member.id} className="flex items-center gap-3 px-4 py-3" data-testid={`row-member-${member.id}`}>
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <span className="text-xs font-semibold text-primary">
+                          {member.first_name[0]}{member.last_name[0]}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{member.first_name} {member.last_name}</p>
+                        <p className="text-xs text-muted-foreground">{member.member_number}</p>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] px-1.5 py-0 ${
+                            member.status === "active"
+                              ? "border-green-400 text-green-700 dark:text-green-400"
+                              : member.status === "pending"
+                              ? "border-yellow-400 text-yellow-700 dark:text-yellow-400"
+                              : "border-muted text-muted-foreground"
+                          }`}
+                        >
+                          {member.status}
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground">
+                          {member.created_at
+                            ? formatDistanceToNow(new Date(member.created_at + (member.created_at.endsWith("Z") ? "" : "Z")), { addSuffix: true })
+                            : ""}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <UserPlus className="h-8 w-8 text-muted-foreground/40 mb-2" />
+                  <p className="text-sm text-muted-foreground">No members yet</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-2 md:mb-3">
-              <h2 className="text-base md:text-lg font-semibold flex items-center gap-2">
-                <Activity className="h-4 w-4 text-muted-foreground" />
-                Recent Activity
-              </h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-xs text-muted-foreground hover:text-foreground gap-1"
-                onClick={() => onNavigate?.("audit")}
-                data-testid="link-view-all-activity"
-              >
-                View all <ChevronRight className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-            <Card>
-              <CardContent className="p-0">
-                {auditLoading ? (
-                  <div className="divide-y">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <div key={i} className="px-4 py-3 space-y-1">
+        <div>
+          <div className="flex items-center justify-between mb-2 md:mb-3">
+            <h2 className="text-base md:text-lg font-semibold flex items-center gap-2">
+              <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
+              Recent Transactions
+            </h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground hover:text-foreground gap-1"
+              onClick={() => onNavigate?.("transactions")}
+              data-testid="link-view-all-transactions"
+            >
+              View all <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+          <Card>
+            <CardContent className="p-0">
+              {txLoading ? (
+                <div className="divide-y">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 px-4 py-3">
+                      <div className="flex-1 space-y-1">
                         <Skeleton className="h-3.5 w-48" />
                         <Skeleton className="h-3 w-28" />
                       </div>
-                    ))}
-                  </div>
-                ) : auditData?.logs?.length ? (
-                  <div className="divide-y">
-                    {auditData.logs.map((log) => (
-                      <div key={log.id} className="px-4 py-3" data-testid={`row-activity-${log.id}`}>
-                        <p className="text-sm font-medium truncate">{log.details || log.action}</p>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          {log.staff && (
-                            <span className="text-xs text-muted-foreground">
-                              {log.staff.first_name} {log.staff.last_name}
-                            </span>
-                          )}
-                          {log.staff && <span className="text-xs text-muted-foreground">·</span>}
-                          <span className="text-xs text-muted-foreground">
-                            {log.created_at
-                              ? formatDistanceToNow(new Date(log.created_at + (log.created_at.endsWith("Z") ? "" : "Z")), { addSuffix: true })
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                  ))}
+                </div>
+              ) : recentTxData?.items?.length ? (
+                <div className="divide-y">
+                  {recentTxData.items.map((tx) => {
+                    const isCredit = tx.transaction_type === "deposit" || tx.transaction_type === "share_purchase" || tx.transaction_type === "repayment";
+                    return (
+                      <div key={tx.id} className="flex items-center gap-3 px-4 py-3" data-testid={`row-tx-${tx.id}`}>
+                        <div className={`h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 ${isCredit ? "bg-green-100 dark:bg-green-950" : "bg-red-100 dark:bg-red-950"}`}>
+                          {isCredit
+                            ? <ArrowDownRight className="h-4 w-4 text-green-600 dark:text-green-400" />
+                            : <ArrowUpRight className="h-4 w-4 text-red-600 dark:text-red-400" />
+                          }
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate capitalize">{tx.transaction_type.replace(/_/g, " ")}</p>
+                          <p className="text-xs text-muted-foreground">
+                            <span className="capitalize">{tx.account_type.replace(/_/g, " ")}</span>
+                            {tx.payment_method && <span> · {tx.payment_method.replace(/_/g, " ")}</span>}
+                            <span> · {tx.transaction_number}</span>
+                          </p>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <p className={`text-sm font-semibold ${isCredit ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                            {isCredit ? "+" : "-"}{formatAmount(tx.amount)}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {tx.created_at
+                              ? formatDistanceToNow(new Date(tx.created_at + (tx.created_at.endsWith("Z") ? "" : "Z")), { addSuffix: true })
                               : ""}
-                          </span>
+                          </p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-8 text-center">
-                    <Activity className="h-8 w-8 text-muted-foreground/40 mb-2" />
-                    <p className="text-sm text-muted-foreground">No recent activity</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <ArrowUpRight className="h-8 w-8 text-muted-foreground/40 mb-2" />
+                  <p className="text-sm text-muted-foreground">No transactions yet</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
       </div>
