@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { RefreshButton } from "@/components/refresh-button";
 import {
   TrendingUp,
@@ -16,8 +17,12 @@ import {
   Shield,
   X,
   ChevronRight,
+  Users,
+  Activity,
+  UserPlus,
 } from "lucide-react";
 import { useCurrency } from "@/hooks/use-currency";
+import { formatDistanceToNow } from "date-fns";
 
 interface DashboardProps {
   organizationId: string;
@@ -52,6 +57,25 @@ interface DashboardAnalytics {
   collection_rate: number;
 }
 
+interface RecentMember {
+  id: string;
+  first_name: string;
+  last_name: string;
+  member_number: string;
+  status: string;
+  created_at: string;
+  phone: string | null;
+}
+
+interface AuditLogEntry {
+  id: string;
+  action: string;
+  entity_type: string;
+  details: string;
+  created_at: string;
+  staff: { first_name: string; last_name: string } | null;
+}
+
 export default function Dashboard({ organizationId, organizationName, onNavigate }: DashboardProps) {
   const { formatAmount } = useCurrency(organizationId);
   const [deficientDismissed, setDeficientDismissed] = useState(false);
@@ -70,6 +94,28 @@ export default function Dashboard({ organizationId, organizationName, onNavigate
     queryKey: ["/api/organizations", organizationId, "collateral", "alerts"],
     queryFn: async () => {
       const res = await fetch(`/api/organizations/${organizationId}/collateral/alerts`, {
+        credentials: "include",
+      });
+      if (!res.ok) return null;
+      return res.json();
+    },
+  });
+
+  const { data: recentMembersData, isLoading: membersLoading } = useQuery<{ items: RecentMember[] }>({
+    queryKey: ["/api/organizations", organizationId, "members", "recent"],
+    queryFn: async () => {
+      const res = await fetch(`/api/organizations/${organizationId}/members?page=1&per_page=5`, {
+        credentials: "include",
+      });
+      if (!res.ok) return null;
+      return res.json();
+    },
+  });
+
+  const { data: auditData, isLoading: auditLoading } = useQuery<{ logs: AuditLogEntry[] }>({
+    queryKey: ["/api/organizations", organizationId, "audit-logs", "recent"],
+    queryFn: async () => {
+      const res = await fetch(`/api/organizations/${organizationId}/audit-logs?limit=6`, {
         credentials: "include",
       });
       if (!res.ok) return null;
@@ -239,6 +285,141 @@ export default function Dashboard({ organizationId, organizationName, onNavigate
             </div>
           </div>
         )}
+
+        <div className="grid gap-4 md:gap-6 grid-cols-1 lg:grid-cols-2">
+          <div>
+            <div className="flex items-center justify-between mb-2 md:mb-3">
+              <h2 className="text-base md:text-lg font-semibold flex items-center gap-2">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                Recent Members
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground hover:text-foreground gap-1"
+                onClick={() => onNavigate?.("members")}
+                data-testid="link-view-all-members"
+              >
+                View all <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            <Card>
+              <CardContent className="p-0">
+                {membersLoading ? (
+                  <div className="divide-y">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="flex items-center gap-3 px-4 py-3">
+                        <div className="h-8 w-8 rounded-full bg-muted flex-shrink-0" />
+                        <div className="flex-1 space-y-1">
+                          <Skeleton className="h-3.5 w-32" />
+                          <Skeleton className="h-3 w-20" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : recentMembersData?.items?.length ? (
+                  <div className="divide-y">
+                    {recentMembersData.items.map((member) => (
+                      <div key={member.id} className="flex items-center gap-3 px-4 py-3" data-testid={`row-member-${member.id}`}>
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <span className="text-xs font-semibold text-primary">
+                            {member.first_name[0]}{member.last_name[0]}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{member.first_name} {member.last_name}</p>
+                          <p className="text-xs text-muted-foreground">{member.member_number}</p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] px-1.5 py-0 ${
+                              member.status === "active"
+                                ? "border-green-400 text-green-700 dark:text-green-400"
+                                : member.status === "pending"
+                                ? "border-yellow-400 text-yellow-700 dark:text-yellow-400"
+                                : "border-muted text-muted-foreground"
+                            }`}
+                          >
+                            {member.status}
+                          </Badge>
+                          <span className="text-[10px] text-muted-foreground">
+                            {member.created_at
+                              ? formatDistanceToNow(new Date(member.created_at + (member.created_at.endsWith("Z") ? "" : "Z")), { addSuffix: true })
+                              : ""}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <UserPlus className="h-8 w-8 text-muted-foreground/40 mb-2" />
+                    <p className="text-sm text-muted-foreground">No members yet</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2 md:mb-3">
+              <h2 className="text-base md:text-lg font-semibold flex items-center gap-2">
+                <Activity className="h-4 w-4 text-muted-foreground" />
+                Recent Activity
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-muted-foreground hover:text-foreground gap-1"
+                onClick={() => onNavigate?.("audit")}
+                data-testid="link-view-all-activity"
+              >
+                View all <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            <Card>
+              <CardContent className="p-0">
+                {auditLoading ? (
+                  <div className="divide-y">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <div key={i} className="px-4 py-3 space-y-1">
+                        <Skeleton className="h-3.5 w-48" />
+                        <Skeleton className="h-3 w-28" />
+                      </div>
+                    ))}
+                  </div>
+                ) : auditData?.logs?.length ? (
+                  <div className="divide-y">
+                    {auditData.logs.map((log) => (
+                      <div key={log.id} className="px-4 py-3" data-testid={`row-activity-${log.id}`}>
+                        <p className="text-sm font-medium truncate">{log.details || log.action}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          {log.staff && (
+                            <span className="text-xs text-muted-foreground">
+                              {log.staff.first_name} {log.staff.last_name}
+                            </span>
+                          )}
+                          {log.staff && <span className="text-xs text-muted-foreground">·</span>}
+                          <span className="text-xs text-muted-foreground">
+                            {log.created_at
+                              ? formatDistanceToNow(new Date(log.created_at + (log.created_at.endsWith("Z") ? "" : "Z")), { addSuffix: true })
+                              : ""}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <Activity className="h-8 w-8 text-muted-foreground/40 mb-2" />
+                    <p className="text-sm text-muted-foreground">No recent activity</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
 
       </div>
     </div>
