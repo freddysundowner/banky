@@ -1,0 +1,67 @@
+root@vmi3102280:/var/www/codecanyon/bankykit-admin# pm2 logs bankykit-demo-api --lines 30 --nostream
+[TAILING] Tailing last 30 lines for [bankykit-demo-api] process (change the value with --lines option)
+/root/.pm2/logs/bankykit-demo-api-out.log last 30 lines:
+0|bankykit | Tenant migration error: (psycopg2.OperationalError) connection to server at "127.0.0.1", port 5432 failed: FATAL:  password authentication failed for user "postgres"
+0|bankykit | connection to server at "127.0.0.1", port 5432 failed: FATAL:  password authentication failed for user "postgres"
+0|bankykit | 
+0|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+0|bankykit | [TIMING] GET /api/admin/demo-data/status -> 200 in 174ms
+0|bankykit | INFO:     196.96.175.112:0 - "GET /api/admin/demo-data/status HTTP/1.1" 200 OK
+0|bankykit | [TIMING] POST /api/admin/demo-data/clean -> 500 in 42ms
+0|bankykit | INFO:     196.96.175.112:0 - "POST /api/admin/demo-data/clean HTTP/1.1" 500 Internal Server Error
+0|bankykit | Tenant migration error: (psycopg2.OperationalError) connection to server at "127.0.0.1", port 5432 failed: FATAL:  password authentication failed for user "postgres"
+0|bankykit | connection to server at "127.0.0.1", port 5432 failed: FATAL:  password authentication failed for user "postgres"
+0|bankykit | 
+0|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+0|bankykit | Tenant migration error: (psycopg2.OperationalError) connection to server at "127.0.0.1", port 5432 failed: FATAL:  password authentication failed for user "postgres"
+0|bankykit | connection to server at "127.0.0.1", port 5432 failed: FATAL:  password authentication failed for user "postgres"
+0|bankykit | 
+0|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+0|bankykit | [TIMING] GET /api/admin/demo-data/status -> 200 in 159ms
+0|bankykit | INFO:     196.96.175.112:0 - "GET /api/admin/demo-data/status HTTP/1.1" 200 OK
+0|bankykit | Tenant migration error: (psycopg2.OperationalError) connection to server at "127.0.0.1", port 5432 failed: FATAL:  password authentication failed for user "postgres"
+0|bankykit | connection to server at "127.0.0.1", port 5432 failed: FATAL:  password authentication failed for user "postgres"
+0|bankykit | 
+0|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+0|bankykit | Tenant migration error: (psycopg2.OperationalError) connection to server at "127.0.0.1", port 5432 failed: FATAL:  password authentication failed for user "postgres"
+0|bankykit | connection to server at "127.0.0.1", port 5432 failed: FATAL:  password authentication failed for user "postgres"
+0|bankykit | 
+0|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+0|bankykit | [TIMING] GET /api/admin/organizations -> 200 in 397ms
+0|bankykit | INFO:     196.96.175.112:0 - "GET /api/admin/organizations HTTP/1.1" 200 OK
+0|bankykit | INFO:     196.96.175.112:0 - "POST /api/admin/demo-data/reset HTTP/1.1" 500 Internal Server Error
+0|bankykit | INFO:     196.96.175.112:0 - "POST /api/admin/demo-data/reset HTTP/1.1" 500 Internal Server Error
+
+/root/.pm2/logs/bankykit-demo-api-error.log last 30 lines:
+0|bankykit |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+0|bankykit |     raise exc_value.with_traceback(exc_tb)
+0|bankykit |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py", line 175, in _do_get
+0|bankykit |     return self._create_connection()
+0|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^
+0|bankykit |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 388, in _create_connection
+0|bankykit |     return _ConnectionRecord(self)
+0|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^
+0|bankykit |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 673, in __init__
+0|bankykit |     self.__connect()
+0|bankykit |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 899, in __connect
+0|bankykit |     with util.safe_reraise():
+0|bankykit |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py", line 224, in __exit__
+0|bankykit |     raise exc_value.with_traceback(exc_tb)
+0|bankykit |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py", line 895, in __connect
+0|bankykit |     self.dbapi_connection = connection = pool._invoke_creator(self)
+0|bankykit |                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+0|bankykit |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py", line 661, in connect
+0|bankykit |     return dialect.connect(*cargs, **cparams)
+0|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+0|bankykit |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py", line 630, in connect
+0|bankykit |     return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
+0|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+0|bankykit |   File "/var/www/codecanyon/bankykit/venv/lib/python3.12/site-packages/psycopg2/__init__.py", line 122, in connect
+0|bankykit |     conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+0|bankykit |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+0|bankykit | sqlalchemy.exc.OperationalError: (psycopg2.OperationalError) connection to server at "127.0.0.1", port 5432 failed: FATAL:  password authentication failed for user "postgres"
+0|bankykit | connection to server at "127.0.0.1", port 5432 failed: FATAL:  password authentication failed for user "postgres"
+0|bankykit | 
+0|bankykit | (Background on this error at: https://sqlalche.me/e/20/e3q8)
+
+root@vmi3102280:/var/www/codecanyon/bankykit-admin# 
