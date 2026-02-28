@@ -94,6 +94,8 @@ import MemberStatementPage from "./member-statement-page";
 
 interface MemberManagementProps {
   organizationId: string;
+  prefillContact?: { first_name: string; last_name: string; phone?: string; email?: string } | null;
+  onPrefillConsumed?: () => void;
 }
 
 const memberSchema = z.object({
@@ -503,7 +505,7 @@ function MemberDocumentsSection({ organizationId, memberId }: { organizationId: 
   );
 }
 
-export default function MemberManagement({ organizationId }: MemberManagementProps) {
+export default function MemberManagement({ organizationId, prefillContact, onPrefillConsumed }: MemberManagementProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const { currency, symbol, formatAmount } = useCurrency(organizationId);
@@ -683,6 +685,18 @@ export default function MemberManagement({ organizationId }: MemberManagementPro
       form.setValue("branch_id", branches[0].id);
     }
   }, [hasOnlyOneBranch, branches, form]);
+
+  useEffect(() => {
+    if (!prefillContact) return;
+    resetForm();
+    form.setValue("first_name", prefillContact.first_name || "");
+    form.setValue("last_name", prefillContact.last_name || "");
+    if (prefillContact.phone) form.setValue("phone", prefillContact.phone);
+    if (prefillContact.email) form.setValue("email", prefillContact.email);
+    setViewMode("new");
+    setActiveTab("personal");
+    onPrefillConsumed?.();
+  }, [prefillContact]);
 
   const createMutation = useMutation({
     mutationFn: async (data: MemberFormData) => {

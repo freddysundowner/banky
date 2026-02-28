@@ -68,6 +68,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 interface CRMProps {
   organizationId: string;
+  onConvertToMember?: (contact: { first_name: string; last_name: string; phone?: string; email?: string }) => void;
 }
 
 // ── Schemas ──────────────────────────────────────────────────────────────────
@@ -141,7 +142,7 @@ function StatCard({ label, value, icon: Icon, color }: { label: string; value: n
 
 // ── Main CRM component ────────────────────────────────────────────────────────
 
-export default function CRMManagement({ organizationId }: CRMProps) {
+export default function CRMManagement({ organizationId, onConvertToMember }: CRMProps) {
   const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -227,8 +228,19 @@ export default function CRMManagement({ organizationId }: CRMProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/crm/contacts`] });
       queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/crm/stats`] });
+      const contact = showConvertDialog;
       setShowConvertDialog(null);
-      toast({ title: "Contact marked as converted", description: "You can now create them as a member." });
+      if (onConvertToMember && contact) {
+        const [first_name, ...rest] = (contact.full_name || "").trim().split(" ");
+        onConvertToMember({
+          first_name: first_name || contact.first_name || "",
+          last_name: rest.join(" ") || contact.last_name || "",
+          phone: contact.phone || "",
+          email: contact.email || "",
+        });
+      } else {
+        toast({ title: "Contact marked as converted", description: "You can now create them as a member." });
+      }
     },
     onError: () => toast({ title: "Conversion failed", variant: "destructive" }),
   });

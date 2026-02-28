@@ -290,6 +290,7 @@ export default function Home() {
   const [isSectionInitialized, setIsSectionInitialized] = useState(false);
   const [emailBannerDismissed, setEmailBannerDismissed] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [crmPrefill, setCrmPrefill] = useState<{ first_name: string; last_name: string; phone?: string; email?: string } | null>(null);
   const [showSetupProgress, setShowSetupProgress] = useState(false);
   const [setupOrgName, setSetupOrgName] = useState("");
   const [setupMode, setSetupMode] = useState<"full" | "finalize">("full");
@@ -1093,7 +1094,11 @@ export default function Home() {
             )}
 
             {activeSection === "members" && selectedOrg && (
-              <MemberManagement organizationId={selectedOrg.id} />
+              <MemberManagement
+                organizationId={selectedOrg.id}
+                prefillContact={crmPrefill}
+                onPrefillConsumed={() => setCrmPrefill(null)}
+              />
             )}
 
             {activeSection === "loan-products" && selectedOrg && (
@@ -1165,7 +1170,13 @@ export default function Home() {
             )}
 
             {activeSection === "crm" && selectedOrg && (
-              <CRMManagement organizationId={selectedOrg.id} />
+              <CRMManagement
+                organizationId={selectedOrg.id}
+                onConvertToMember={(contact) => {
+                  setCrmPrefill(contact);
+                  setActiveSection("members");
+                }}
+              />
             )}
 
             {activeSection === "collateral" && selectedOrg && (
