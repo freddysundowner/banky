@@ -212,6 +212,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
         .then(r => r.json())
         .then(d => {
           if (Array.isArray(d)) return d;
+          if (Array.isArray(d?.data)) return d.data;
           if (Array.isArray(d?.items)) return d.items;
           return [];
         }),
