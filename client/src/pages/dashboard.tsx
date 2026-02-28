@@ -454,17 +454,17 @@ function StatCard({
 }) {
   return (
     <Card className="overflow-hidden">
-      <CardContent className="flex items-center gap-2.5 md:gap-4 p-3 md:p-5">
-        <div className={`rounded-full p-2 md:p-3 ${bgColor} flex-shrink-0`}>
-          <Icon className={`h-4 w-4 md:h-5 md:w-5 ${color}`} />
+      <CardContent className="flex items-center gap-2 md:gap-3 p-2.5 md:p-4">
+        <div className={`rounded-full p-1.5 md:p-2.5 ${bgColor} flex-shrink-0`}>
+          <Icon className={`h-3.5 w-3.5 md:h-4 md:w-4 ${color}`} />
         </div>
         <div className="min-w-0 flex-1">
           {isLoading ? (
-            <Skeleton className="h-5 md:h-7 w-16 md:w-20 mb-0.5 md:mb-1" />
+            <Skeleton className="h-4 md:h-6 w-14 md:w-20 mb-0.5" />
           ) : (
-            <p className="text-base sm:text-lg md:text-2xl font-bold leading-tight">{value ?? 0}</p>
+            <p className="text-sm md:text-lg font-bold leading-tight">{value ?? 0}</p>
           )}
-          <p className="text-[11px] md:text-sm text-muted-foreground truncate">{label}</p>
+          <p className="text-[10px] md:text-xs text-muted-foreground truncate">{label}</p>
         </div>
       </CardContent>
     </Card>
