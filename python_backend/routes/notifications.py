@@ -58,7 +58,7 @@ def list_notifications(
                     "notification_type": n.notification_type,
                     "link": n.link,
                     "is_read": n.is_read,
-                    "created_at": n.created_at.isoformat() if n.created_at else None,
+                    "created_at": (n.created_at.isoformat() + "Z") if n.created_at else None,
                 }
                 for n in notifications
             ],
