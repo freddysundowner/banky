@@ -1,15 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, desc
 from datetime import datetime, date, timedelta
 from typing import Optional
 from pydantic import BaseModel
+import os, uuid, shutil
+from pathlib import Path
 
 from models.database import get_db
-from models.tenant import CollateralType, CollateralItem, CollateralInsurance, LoanApplication, Member, Staff
+from models.tenant import CollateralType, CollateralItem, CollateralInsurance, LoanApplication, Member, Staff, Valuer
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission
 from middleware.demo_guard import require_not_demo
+
+UPLOADS_DIR = Path(__file__).parent.parent / "uploads" / "valuations"
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 
 router = APIRouter()
 
@@ -62,7 +67,8 @@ class CollateralItemUpdate(BaseModel):
 
 class ValuationRecord(BaseModel):
     appraised_value: float
-    valuer_name: str
+    valuer_name: Optional[str] = None
+    valuer_id: Optional[str] = None
     valuation_date: Optional[date] = None
     next_revaluation_date: Optional[date] = None
     ltv_override: Optional[float] = None
@@ -152,7 +158,10 @@ def item_to_dict(item: CollateralItem, include_insurance: bool = False) -> dict:
         "declared_value": float(item.declared_value) if item.declared_value else None,
         "appraised_value": appraised,
         "lending_limit": lending_limit,
-        "valuer_name": item.valuer_name,
+        "valuer_id": item.valuer_id,
+        "valuer_name": item.valuer.name if item.valuer else item.valuer_name,
+        "valuation_document_path": item.valuation_document_path,
+        "valuation_document_url": f"/uploads/valuations/{item.valuation_document_path}" if item.valuation_document_path else None,
         "valuation_date": item.valuation_date.isoformat() if item.valuation_date else None,
         "next_revaluation_date": item.next_revaluation_date.isoformat() if item.next_revaluation_date else None,
         "revaluation_status": revaluation_status,
@@ -474,7 +483,13 @@ def record_valuation(
         ctype = item.collateral_type
         effective_ltv = body.ltv_override or float(ctype.ltv_percent if ctype else 70)
         item.appraised_value = body.appraised_value
-        item.valuer_name = body.valuer_name
+        if body.valuer_id:
+            valuer_obj = tenant_session.query(Valuer).filter(Valuer.id == body.valuer_id).first()
+            item.valuer_id = body.valuer_id
+            item.valuer_name = valuer_obj.name if valuer_obj else body.valuer_name
+        else:
+            item.valuer_id = None
+            item.valuer_name = body.valuer_name
         item.valuation_date = body.valuation_date or date.today()
         item.ltv_override = body.ltv_override
         item.lending_limit = round(body.appraised_value * effective_ltv / 100, 2)
@@ -816,6 +831,178 @@ def get_collateral_stats(
             "overdue_revaluation": overdue_revaluation,
             "expiring_insurance": expiring_insurance,
         }
+    finally:
+        tenant_session.close()
+        tenant_ctx.close()
+
+
+# ── Valuers Registry ──────────────────────────────────────────────────────────
+
+class ValuerCreate(BaseModel):
+    name: str
+    license_number: Optional[str] = None
+    contact_phone: Optional[str] = None
+    contact_email: Optional[str] = None
+    physical_address: Optional[str] = None
+    notes: Optional[str] = None
+    is_active: bool = True
+
+class ValuerUpdate(BaseModel):
+    name: Optional[str] = None
+    license_number: Optional[str] = None
+    contact_phone: Optional[str] = None
+    contact_email: Optional[str] = None
+    physical_address: Optional[str] = None
+    notes: Optional[str] = None
+    is_active: Optional[bool] = None
+
+def valuer_to_dict(v: Valuer) -> dict:
+    return {
+        "id": v.id,
+        "name": v.name,
+        "license_number": v.license_number,
+        "contact_phone": v.contact_phone,
+        "contact_email": v.contact_email,
+        "physical_address": v.physical_address,
+        "notes": v.notes,
+        "is_active": v.is_active,
+        "created_at": v.created_at.isoformat() if v.created_at else None,
+    }
+
+@router.get("/{organization_id}/collateral/valuers")
+def list_valuers(
+    organization_id: str,
+    search: Optional[str] = Query(None),
+    active_only: bool = Query(True),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
+    require_permission(membership, "loans:read", db)
+    tenant_session = tenant_ctx.create_session()
+    try:
+        q = tenant_session.query(Valuer)
+        if active_only:
+            q = q.filter(Valuer.is_active == True)
+        if search:
+            q = q.filter(or_(
+                Valuer.name.ilike(f"%{search}%"),
+                Valuer.license_number.ilike(f"%{search}%"),
+            ))
+        return [valuer_to_dict(v) for v in q.order_by(Valuer.name).all()]
+    finally:
+        tenant_session.close()
+        tenant_ctx.close()
+
+@router.post("/{organization_id}/collateral/valuers", dependencies=[Depends(require_not_demo)])
+def create_valuer(
+    organization_id: str,
+    body: ValuerCreate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
+    require_permission(membership, "loans:write", db)
+    tenant_session = tenant_ctx.create_session()
+    try:
+        v = Valuer(**body.model_dump())
+        tenant_session.add(v)
+        tenant_session.commit()
+        tenant_session.refresh(v)
+        return valuer_to_dict(v)
+    finally:
+        tenant_session.close()
+        tenant_ctx.close()
+
+@router.put("/{organization_id}/collateral/valuers/{valuer_id}", dependencies=[Depends(require_not_demo)])
+def update_valuer(
+    organization_id: str,
+    valuer_id: str,
+    body: ValuerUpdate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
+    require_permission(membership, "loans:write", db)
+    tenant_session = tenant_ctx.create_session()
+    try:
+        v = tenant_session.query(Valuer).filter(Valuer.id == valuer_id).first()
+        if not v:
+            raise HTTPException(status_code=404, detail="Valuer not found")
+        for field, value in body.model_dump(exclude_none=True).items():
+            setattr(v, field, value)
+        tenant_session.commit()
+        tenant_session.refresh(v)
+        return valuer_to_dict(v)
+    finally:
+        tenant_session.close()
+        tenant_ctx.close()
+
+@router.delete("/{organization_id}/collateral/valuers/{valuer_id}", dependencies=[Depends(require_not_demo)])
+def delete_valuer(
+    organization_id: str,
+    valuer_id: str,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
+    require_permission(membership, "loans:write", db)
+    tenant_session = tenant_ctx.create_session()
+    try:
+        v = tenant_session.query(Valuer).filter(Valuer.id == valuer_id).first()
+        if not v:
+            raise HTTPException(status_code=404, detail="Valuer not found")
+        in_use = tenant_session.query(CollateralItem).filter(CollateralItem.valuer_id == valuer_id).count()
+        if in_use:
+            v.is_active = False
+            tenant_session.commit()
+            return {"deactivated": True, "reason": "in_use"}
+        tenant_session.delete(v)
+        tenant_session.commit()
+        return {"deleted": True}
+    finally:
+        tenant_session.close()
+        tenant_ctx.close()
+
+
+# ── Valuation Document Upload ──────────────────────────────────────────────────
+
+@router.post("/{organization_id}/collateral/items/{item_id}/upload-document", dependencies=[Depends(require_not_demo)])
+async def upload_valuation_document(
+    organization_id: str,
+    item_id: str,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    tenant_ctx, membership = get_tenant_session_context(organization_id, current_user, db)
+    require_permission(membership, "loans:write", db)
+    tenant_session = tenant_ctx.create_session()
+    try:
+        item = tenant_session.query(CollateralItem).filter(CollateralItem.id == item_id).first()
+        if not item:
+            raise HTTPException(status_code=404, detail="Collateral item not found")
+
+        ext = Path(file.filename).suffix.lower() if file.filename else ".pdf"
+        allowed = {".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"}
+        if ext not in allowed:
+            raise HTTPException(status_code=400, detail="File type not allowed. Use PDF, image, or Word document.")
+
+        filename = f"{organization_id}_{item_id}_{uuid.uuid4().hex}{ext}"
+        dest = UPLOADS_DIR / filename
+        with dest.open("wb") as buf:
+            shutil.copyfileobj(file.file, buf)
+
+        if item.valuation_document_path and item.valuation_document_path != filename:
+            old = UPLOADS_DIR / item.valuation_document_path
+            if old.exists():
+                old.unlink(missing_ok=True)
+
+        item.valuation_document_path = filename
+        item.updated_at = datetime.utcnow()
+        tenant_session.commit()
+        tenant_session.refresh(item)
+        return {"valuation_document_path": filename, "valuation_document_url": f"/uploads/valuations/{filename}"}
     finally:
         tenant_session.close()
         tenant_ctx.close()

@@ -1462,6 +1462,23 @@ class CollateralType(TenantBase):
     items = relationship("CollateralItem", back_populates="collateral_type")
 
 
+class Valuer(TenantBase):
+    """Approved valuer companies or individuals."""
+    __tablename__ = "valuers"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    name = Column(String(200), nullable=False)
+    license_number = Column(String(100))
+    contact_phone = Column(String(50))
+    contact_email = Column(String(200))
+    physical_address = Column(Text)
+    notes = Column(Text)
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    items = relationship("CollateralItem", back_populates="valuer")
+
+
 class CollateralItem(TenantBase):
     """A pledged asset registered against a loan."""
     __tablename__ = "collateral_items"
@@ -1478,6 +1495,8 @@ class CollateralItem(TenantBase):
     ltv_override = Column(Numeric(5, 2))
     lending_limit = Column(Numeric(15, 2))
     valuer_name = Column(String(200))
+    valuer_id = Column(String, ForeignKey("valuers.id"), nullable=True)
+    valuation_document_path = Column(String, nullable=True)
     valuation_date = Column(Date)
     next_revaluation_date = Column(Date)
     status = Column(String(50), default="registered")  # registered, under_lien, released, defaulted, liquidated
@@ -1493,6 +1512,7 @@ class CollateralItem(TenantBase):
 
     loan = relationship("LoanApplication", foreign_keys=[loan_id])
     collateral_type = relationship("CollateralType", back_populates="items")
+    valuer = relationship("Valuer", foreign_keys=[valuer_id], back_populates="items")
     created_by = relationship("Staff", foreign_keys=[created_by_id])
     insurance_policies = relationship("CollateralInsurance", back_populates="collateral_item", cascade="all, delete-orphan")
 

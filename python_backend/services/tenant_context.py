@@ -4,7 +4,7 @@ from models.master import Organization, OrganizationMember
 from models.tenant import TenantBase
 
 _migrated_tenants = set()
-_migration_version = 30  # Increment to force re-migration
+_migration_version = 31  # Increment to force re-migration
 
 def _get_db_migration_version(engine):
     """Check the migration version stored in the tenant database"""
@@ -930,6 +930,24 @@ def run_tenant_schema_migration(engine):
         conn.execute(text("CREATE INDEX IF NOT EXISTS idx_collateral_items_revaluation ON collateral_items(next_revaluation_date)"))
         conn.execute(text("CREATE INDEX IF NOT EXISTS idx_collateral_insurance_item ON collateral_insurance(collateral_item_id)"))
         conn.execute(text("CREATE INDEX IF NOT EXISTS idx_collateral_insurance_expiry ON collateral_insurance(expiry_date, status)"))
+
+        # v31: Approved valuers registry + valuation document attachment
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS valuers (
+                id VARCHAR PRIMARY KEY,
+                name VARCHAR(200) NOT NULL,
+                license_number VARCHAR(100),
+                contact_phone VARCHAR(50),
+                contact_email VARCHAR(200),
+                physical_address TEXT,
+                notes TEXT,
+                is_active BOOLEAN DEFAULT TRUE,
+                created_at TIMESTAMP DEFAULT NOW()
+            )
+        """))
+        conn.execute(text("ALTER TABLE collateral_items ADD COLUMN IF NOT EXISTS valuer_id VARCHAR REFERENCES valuers(id)"))
+        conn.execute(text("ALTER TABLE collateral_items ADD COLUMN IF NOT EXISTS valuation_document_path VARCHAR"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS idx_collateral_items_valuer ON collateral_items(valuer_id)"))
 
         conn.commit()
     

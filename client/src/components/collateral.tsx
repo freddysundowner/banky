@@ -31,7 +31,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   Shield, Plus, Search, MoreHorizontal, AlertTriangle, CheckCircle2,
   Clock, FileText, Trash2, Edit, TrendingUp, Lock, Unlock, DollarSign,
-  ShieldAlert, ShieldCheck, Settings, X,
+  ShieldAlert, ShieldCheck, Settings, X, Upload, Building2, ExternalLink,
 } from "lucide-react";
 
 interface CollateralProps {
@@ -52,10 +52,19 @@ const itemSchema = z.object({
 
 const valuationSchema = z.object({
   appraised_value: z.string().min(1, "Appraised value required"),
-  valuer_name: z.string().min(1, "Valuer name required"),
+  valuer_id: z.string().optional(),
   valuation_date: z.string().optional(),
   next_revaluation_date: z.string().optional(),
   ltv_override: z.string().optional(),
+});
+
+const valuerFormSchema = z.object({
+  name: z.string().min(1, "Name required"),
+  license_number: z.string().optional(),
+  contact_phone: z.string().optional(),
+  contact_email: z.string().optional(),
+  physical_address: z.string().optional(),
+  notes: z.string().optional(),
 });
 
 const releaseSchema = z.object({
@@ -157,6 +166,15 @@ export default function CollateralManagement({ organizationId }: CollateralProps
   const [showItemDetail, setShowItemDetail] = useState<any>(null);
   const [showAddType, setShowAddType] = useState(false);
   const [editType, setEditType] = useState<any>(null);
+  const [valuerSearch, setValuerSearch] = useState("");
+  const [valuerSearchDebounced, setValuerSearchDebounced] = useState("");
+  const [valuerDropdownOpen, setValuerDropdownOpen] = useState(false);
+  const [selectedValuerLabel, setSelectedValuerLabel] = useState("");
+  const valuerSearchRef = useRef<HTMLDivElement>(null);
+  const valuationFileRef = useRef<HTMLInputElement>(null);
+  const [valuationFile, setValuationFile] = useState<File | null>(null);
+  const [showAddValuer, setShowAddValuer] = useState(false);
+  const [editValuer, setEditValuer] = useState<any>(null);
 
   // ── Queries ───────────────────────────────────────────────────────────────
 
@@ -220,9 +238,35 @@ export default function CollateralManagement({ organizationId }: CollateralProps
   });
 
   useEffect(() => {
+    const t = setTimeout(() => setValuerSearchDebounced(valuerSearch), 300);
+    return () => clearTimeout(t);
+  }, [valuerSearch]);
+
+  const valuerSearchQuery = useQuery<any[]>({
+    queryKey: [`/api/organizations/${organizationId}/collateral/valuers`, "picker", valuerSearchDebounced],
+    queryFn: () =>
+      fetch(`/api/organizations/${organizationId}/collateral/valuers?search=${encodeURIComponent(valuerSearchDebounced)}&active_only=true`, { credentials: "include" })
+        .then(r => r.json())
+        .then(d => Array.isArray(d) ? d : []),
+    enabled: !!showValuate && valuerSearchDebounced.length >= 1,
+  });
+
+  const valuersManagementQuery = useQuery<any[]>({
+    queryKey: [`/api/organizations/${organizationId}/collateral/valuers`, "management"],
+    queryFn: () =>
+      fetch(`/api/organizations/${organizationId}/collateral/valuers?active_only=false`, { credentials: "include" })
+        .then(r => r.json())
+        .then(d => Array.isArray(d) ? d : []),
+    enabled: activeTab === "valuers",
+  });
+
+  useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (loanSearchRef.current && !loanSearchRef.current.contains(e.target as Node)) {
         setLoanDropdownOpen(false);
+      }
+      if (valuerSearchRef.current && !valuerSearchRef.current.contains(e.target as Node)) {
+        setValuerDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -232,7 +276,8 @@ export default function CollateralManagement({ organizationId }: CollateralProps
   // ── Forms ─────────────────────────────────────────────────────────────────
 
   const itemForm = useForm({ resolver: zodResolver(itemSchema), defaultValues: { loan_id: "", collateral_type_id: "", owner_name: "", owner_id_number: "", description: "", document_ref: "", declared_value: "" } });
-  const valuationForm = useForm({ resolver: zodResolver(valuationSchema), defaultValues: { appraised_value: "", valuer_name: "", valuation_date: "", next_revaluation_date: "", ltv_override: "" } });
+  const valuationForm = useForm({ resolver: zodResolver(valuationSchema), defaultValues: { appraised_value: "", valuer_id: "", valuation_date: "", next_revaluation_date: "", ltv_override: "" } });
+  const valuerForm = useForm({ resolver: zodResolver(valuerFormSchema), defaultValues: { name: "", license_number: "", contact_phone: "", contact_email: "", physical_address: "", notes: "" } });
   const releaseForm = useForm({ resolver: zodResolver(releaseSchema), defaultValues: { release_notes: "" } });
   const liquidationForm = useForm({ resolver: zodResolver(liquidationSchema), defaultValues: { liquidation_amount: "", liquidation_notes: "" } });
   const insuranceForm = useForm({ resolver: zodResolver(insuranceSchema), defaultValues: { policy_number: "", insurer_name: "", policy_type: "", sum_insured: "", premium_amount: "", premium_frequency: "", start_date: "", expiry_date: "", notes: "" } });
@@ -247,9 +292,38 @@ export default function CollateralManagement({ organizationId }: CollateralProps
   });
 
   const valuateMutation = useMutation({
-    mutationFn: ({ id, data }: any) => apiRequest("POST", `/api/organizations/${organizationId}/collateral/items/${id}/valuate`, { ...data, appraised_value: parseFloat(data.appraised_value), ltv_override: data.ltv_override ? parseFloat(data.ltv_override) : undefined }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/collateral/items`] }); setShowValuate(null); toast({ title: "Valuation recorded" }); },
+    mutationFn: async ({ id, data }: any) => {
+      const payload: any = { appraised_value: parseFloat(data.appraised_value), ltv_override: data.ltv_override ? parseFloat(data.ltv_override) : undefined };
+      if (data.valuer_id) payload.valuer_id = data.valuer_id;
+      if (data.valuation_date) payload.valuation_date = data.valuation_date;
+      if (data.next_revaluation_date) payload.next_revaluation_date = data.next_revaluation_date;
+      await apiRequest("POST", `/api/organizations/${organizationId}/collateral/items/${id}/valuate`, payload);
+      if (valuationFile) {
+        const fd = new FormData();
+        fd.append("file", valuationFile);
+        await fetch(`/api/organizations/${organizationId}/collateral/items/${id}/upload-document`, { method: "POST", body: fd, credentials: "include" });
+      }
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/collateral/items`] }); setShowValuate(null); setValuationFile(null); if (valuationFileRef.current) valuationFileRef.current.value = ""; toast({ title: "Valuation recorded" }); },
     onError: (e: any) => toast({ title: "Failed to record valuation", description: e.message, variant: "destructive" }),
+  });
+
+  const createValuerMutation = useMutation({
+    mutationFn: (data: any) => apiRequest("POST", `/api/organizations/${organizationId}/collateral/valuers`, data),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/collateral/valuers`] }); setShowAddValuer(false); valuerForm.reset(); toast({ title: "Valuer added" }); },
+    onError: (e: any) => toast({ title: "Failed", description: e.message, variant: "destructive" }),
+  });
+
+  const updateValuerMutation = useMutation({
+    mutationFn: ({ id, data }: any) => apiRequest("PUT", `/api/organizations/${organizationId}/collateral/valuers/${id}`, data),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/collateral/valuers`] }); setEditValuer(null); toast({ title: "Valuer updated" }); },
+    onError: (e: any) => toast({ title: "Failed", description: e.message, variant: "destructive" }),
+  });
+
+  const deleteValuerMutation = useMutation({
+    mutationFn: (id: string) => apiRequest("DELETE", `/api/organizations/${organizationId}/collateral/valuers/${id}`, {}),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/collateral/valuers`] }); toast({ title: "Valuer removed" }); },
+    onError: (e: any) => toast({ title: "Failed", description: e.message, variant: "destructive" }),
   });
 
   const lienMutation = useMutation({
@@ -340,6 +414,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
             Alerts {alertCount > 0 && <span className="ml-1 bg-red-500 text-white text-xs rounded-full px-1">{alertCount}</span>}
           </TabsTrigger>
           <TabsTrigger value="types" data-testid="tab-collateral-types">Type Settings</TabsTrigger>
+          <TabsTrigger value="valuers" data-testid="tab-collateral-valuers"><Building2 className="h-3.5 w-3.5 mr-1" />Valuers</TabsTrigger>
         </TabsList>
 
         {/* ── Register Tab ─────────────────────────────────────────────────────── */}
@@ -419,7 +494,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                               <DropdownMenuItem onClick={() => { setShowItemDetail(item); }}>
                                 <FileText className="h-4 w-4 mr-2" /> View Details
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => { setShowValuate(item); valuationForm.reset({ appraised_value: item.appraised_value ? String(item.appraised_value) : "", valuer_name: item.valuer_name ?? "", valuation_date: "", next_revaluation_date: "", ltv_override: item.ltv_override ? String(item.ltv_override) : "" }); }}>
+                              <DropdownMenuItem onClick={() => { setShowValuate(item); setSelectedValuerLabel(item.valuer_name ?? ""); setValuerSearch(""); setValuationFile(null); valuationForm.reset({ appraised_value: item.appraised_value ? String(item.appraised_value) : "", valuer_id: item.valuer_id ?? "", valuation_date: "", next_revaluation_date: "", ltv_override: item.ltv_override ? String(item.ltv_override) : "" }); }}>
                                 <TrendingUp className="h-4 w-4 mr-2" /> Record Valuation
                               </DropdownMenuItem>
                               {item.status === "registered" && (
@@ -651,7 +726,111 @@ export default function CollateralManagement({ organizationId }: CollateralProps
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* ── Valuers Tab ──────────────────────────────────────────────────────── */}
+        <TabsContent value="valuers" className="space-y-4 mt-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold">Approved Valuers Registry</h3>
+              <p className="text-sm text-muted-foreground">Manage the list of approved valuation firms and individuals</p>
+            </div>
+            <Button size="sm" onClick={() => { valuerForm.reset(); setShowAddValuer(true); }} data-testid="button-add-valuer">
+              <Plus className="h-4 w-4 mr-1" /> Add Valuer
+            </Button>
+          </div>
+          <Card>
+            <CardContent className="p-0">
+              {valuersManagementQuery.isLoading ? (
+                <div className="p-4 space-y-2">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+              ) : (valuersManagementQuery.data ?? []).length === 0 ? (
+                <div className="p-8 text-center text-muted-foreground">
+                  <Building2 className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                  <p className="text-sm">No valuers registered yet.</p>
+                  <p className="text-xs mt-1">Add your first approved valuer to start linking them to valuation records.</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>License No.</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="w-12"></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(valuersManagementQuery.data ?? []).map((v: any) => (
+                      <TableRow key={v.id} data-testid={`row-valuer-${v.id}`}>
+                        <TableCell className="font-medium text-sm">{v.name}</TableCell>
+                        <TableCell className="text-sm">{v.license_number ?? <span className="text-muted-foreground">—</span>}</TableCell>
+                        <TableCell className="text-sm">{v.contact_phone ?? <span className="text-muted-foreground">—</span>}</TableCell>
+                        <TableCell className="text-sm">{v.contact_email ?? <span className="text-muted-foreground">—</span>}</TableCell>
+                        <TableCell><Badge variant={v.is_active ? "default" : "secondary"}>{v.is_active ? "Active" : "Inactive"}</Badge></TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" data-testid={`menu-valuer-${v.id}`}><MoreHorizontal className="h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => { setEditValuer(v); valuerForm.reset({ name: v.name, license_number: v.license_number ?? "", contact_phone: v.contact_phone ?? "", contact_email: v.contact_email ?? "", physical_address: v.physical_address ?? "", notes: v.notes ?? "" }); }}>
+                                <Edit className="h-4 w-4 mr-2" /> Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive" onClick={() => { if (confirm(`Remove "${v.name}" from the registry?`)) deleteValuerMutation.mutate(v.id); }}>
+                                <Trash2 className="h-4 w-4 mr-2" /> Remove
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
+
+      {/* ── Add / Edit Valuer Dialog ──────────────────────────────────────────── */}
+      {(showAddValuer || !!editValuer) && (
+        <Dialog open={showAddValuer || !!editValuer} onOpenChange={o => { if (!o) { setShowAddValuer(false); setEditValuer(null); } }}>
+          <DialogContent className="max-w-md">
+            <DialogHeader><DialogTitle>{editValuer ? "Edit Valuer" : "Add Approved Valuer"}</DialogTitle></DialogHeader>
+            <Form {...valuerForm}>
+              <form onSubmit={valuerForm.handleSubmit(d => editValuer ? updateValuerMutation.mutate({ id: editValuer.id, data: d }) : createValuerMutation.mutate(d))} className="space-y-3">
+                <FormField control={valuerForm.control} name="name" render={({ field }) => (
+                  <FormItem><FormLabel>Name / Firm</FormLabel><FormControl><Input {...field} data-testid="input-valuer-name-field" placeholder="e.g. ABC Valuers Ltd" /></FormControl><FormMessage /></FormItem>
+                )} />
+                <div className="grid grid-cols-2 gap-3">
+                  <FormField control={valuerForm.control} name="license_number" render={({ field }) => (
+                    <FormItem><FormLabel>License Number</FormLabel><FormControl><Input {...field} data-testid="input-valuer-license" placeholder="e.g. ISK/V/1234" /></FormControl><FormMessage /></FormItem>
+                  )} />
+                  <FormField control={valuerForm.control} name="contact_phone" render={({ field }) => (
+                    <FormItem><FormLabel>Phone</FormLabel><FormControl><Input {...field} data-testid="input-valuer-phone" /></FormControl><FormMessage /></FormItem>
+                  )} />
+                </div>
+                <FormField control={valuerForm.control} name="contact_email" render={({ field }) => (
+                  <FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" {...field} data-testid="input-valuer-email" /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={valuerForm.control} name="physical_address" render={({ field }) => (
+                  <FormItem><FormLabel>Physical Address</FormLabel><FormControl><Textarea {...field} rows={2} data-testid="input-valuer-address" /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={valuerForm.control} name="notes" render={({ field }) => (
+                  <FormItem><FormLabel>Notes</FormLabel><FormControl><Textarea {...field} rows={2} data-testid="input-valuer-notes" /></FormControl><FormMessage /></FormItem>
+                )} />
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => { setShowAddValuer(false); setEditValuer(null); }}>Cancel</Button>
+                  <Button type="submit" data-testid="button-submit-valuer" disabled={createValuerMutation.isPending || updateValuerMutation.isPending}>
+                    {createValuerMutation.isPending || updateValuerMutation.isPending ? "Saving…" : editValuer ? "Update Valuer" : "Add Valuer"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* ── Add Collateral Item Dialog ────────────────────────────────────────── */}
       <Dialog open={showAddItem} onOpenChange={(o) => { setShowAddItem(o); if (!o) { setLoanSearch(""); setSelectedLoanLabel(""); setLoanDropdownOpen(false); itemForm.reset(); } }}>
@@ -774,8 +953,8 @@ export default function CollateralManagement({ organizationId }: CollateralProps
       </Dialog>
 
       {/* ── Valuation Dialog ──────────────────────────────────────────────────── */}
-      <Dialog open={!!showValuate} onOpenChange={o => !o && setShowValuate(null)}>
-        <DialogContent className="max-w-md">
+      <Dialog open={!!showValuate} onOpenChange={o => { if (!o) { setShowValuate(null); setValuerSearch(""); setSelectedValuerLabel(""); setValuationFile(null); } }}>
+        <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Record Valuation — {showValuate?.description}</DialogTitle></DialogHeader>
           <Form {...valuationForm}>
             <form onSubmit={valuationForm.handleSubmit(d => valuateMutation.mutate({ id: showValuate?.id, data: d }))} className="space-y-3">
@@ -784,12 +963,53 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                   <FormItem><FormLabel>Appraised Value (KES)</FormLabel><FormControl><Input type="number" {...field} data-testid="input-appraised-value" /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={valuationForm.control} name="ltv_override" render={({ field }) => (
-                  <FormItem><FormLabel>LTV Override % (optional)</FormLabel><FormControl><Input type="number" {...field} data-testid="input-ltv-override" placeholder={`Default: type setting`} /></FormControl><FormMessage /></FormItem>
+                  <FormItem><FormLabel>LTV Override % (optional)</FormLabel><FormControl><Input type="number" {...field} data-testid="input-ltv-override" placeholder="Default: type setting" /></FormControl><FormMessage /></FormItem>
                 )} />
               </div>
-              <FormField control={valuationForm.control} name="valuer_name" render={({ field }) => (
-                <FormItem><FormLabel>Valuer Name / Firm</FormLabel><FormControl><Input {...field} data-testid="input-valuer-name" /></FormControl><FormMessage /></FormItem>
+
+              {/* Valuer picker */}
+              <FormField control={valuationForm.control} name="valuer_id" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Valuer / Firm <span className="text-muted-foreground font-normal">(from approved registry)</span></FormLabel>
+                  <div className="relative" ref={valuerSearchRef}>
+                    <div className="flex gap-2">
+                      <Input
+                        data-testid="input-valuer-search"
+                        placeholder="Search approved valuers…"
+                        value={valuerSearch}
+                        onChange={e => { setValuerSearch(e.target.value); setValuerDropdownOpen(true); if (!e.target.value) { field.onChange(""); setSelectedValuerLabel(""); } }}
+                        onFocus={() => setValuerDropdownOpen(true)}
+                        className={selectedValuerLabel ? "border-green-500" : ""}
+                      />
+                      {selectedValuerLabel && (
+                        <Button type="button" size="sm" variant="ghost" className="px-2" onClick={() => { field.onChange(""); setSelectedValuerLabel(""); setValuerSearch(""); }}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                    {selectedValuerLabel && !valuerDropdownOpen && (
+                      <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> {selectedValuerLabel}</p>
+                    )}
+                    {valuerDropdownOpen && valuerSearch.length >= 1 && (
+                      <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg max-h-44 overflow-y-auto">
+                        {valuerSearchQuery.isLoading && <div className="px-3 py-2 text-sm text-muted-foreground">Searching…</div>}
+                        {!valuerSearchQuery.isLoading && (valuerSearchQuery.data ?? []).length === 0 && (
+                          <div className="px-3 py-2 text-sm text-muted-foreground">No approved valuers found</div>
+                        )}
+                        {(valuerSearchQuery.data ?? []).map((v: any) => (
+                          <button key={v.id} type="button" className="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex flex-col"
+                            onMouseDown={() => { field.onChange(v.id); setSelectedValuerLabel(v.name); setValuerSearch(""); setValuerDropdownOpen(false); }}>
+                            <span className="font-medium">{v.name}</span>
+                            {v.license_number && <span className="text-muted-foreground text-xs">Lic: {v.license_number}</span>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <FormMessage />
+                </FormItem>
               )} />
+
               <div className="grid grid-cols-2 gap-3">
                 <FormField control={valuationForm.control} name="valuation_date" render={({ field }) => (
                   <FormItem><FormLabel>Valuation Date</FormLabel><FormControl><Input type="date" {...field} data-testid="input-valuation-date" /></FormControl><FormMessage /></FormItem>
@@ -798,9 +1018,28 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                   <FormItem><FormLabel>Next Revaluation Date</FormLabel><FormControl><Input type="date" {...field} data-testid="input-next-revaluation-date" /></FormControl><FormMessage /></FormItem>
                 )} />
               </div>
+
+              {/* Valuation document upload */}
+              <div className="space-y-1">
+                <p className="text-sm font-medium">Valuation Report <span className="text-muted-foreground font-normal">(optional — PDF, image, or Word)</span></p>
+                {showValuate?.valuation_document_url && !valuationFile && (
+                  <a href={showValuate.valuation_document_url} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline">
+                    <ExternalLink className="h-3 w-3" /> View current document
+                  </a>
+                )}
+                <label className="flex items-center gap-2 cursor-pointer border rounded-md px-3 py-2 text-sm text-muted-foreground hover:bg-accent transition-colors">
+                  <Upload className="h-4 w-4" />
+                  {valuationFile ? <span className="text-foreground font-medium">{valuationFile.name}</span> : <span>Click to attach valuation report…</span>}
+                  <input ref={valuationFileRef} type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                    onChange={e => setValuationFile(e.target.files?.[0] ?? null)} />
+                </label>
+                {valuationFile && <Button type="button" size="sm" variant="ghost" className="text-xs px-2 py-0 h-6" onClick={() => { setValuationFile(null); if (valuationFileRef.current) valuationFileRef.current.value = ""; }}>Remove</Button>}
+              </div>
+
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setShowValuate(null)}>Cancel</Button>
-                <Button type="submit" data-testid="button-submit-valuation" disabled={valuateMutation.isPending}>{valuateMutation.isPending ? "Saving..." : "Save Valuation"}</Button>
+                <Button type="submit" data-testid="button-submit-valuation" disabled={valuateMutation.isPending}>{valuateMutation.isPending ? "Saving…" : "Save Valuation"}</Button>
               </DialogFooter>
             </form>
           </Form>
