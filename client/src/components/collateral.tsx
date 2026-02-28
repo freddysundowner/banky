@@ -317,7 +317,12 @@ export default function CollateralManagement({ organizationId }: CollateralProps
         await fetch(`/api/organizations/${organizationId}/collateral/items/${id}/upload-document`, { method: "POST", body: fd, credentials: "include" });
       }
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/collateral/items`] }); setShowValuate(null); setValuationFile(null); if (valuationFileRef.current) valuationFileRef.current.value = ""; toast({ title: "Valuation recorded" }); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/collateral/items`] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "notifications"] });
+      queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/loan-applications`] });
+      setShowValuate(null); setValuationFile(null); if (valuationFileRef.current) valuationFileRef.current.value = ""; toast({ title: "Valuation recorded" });
+    },
     onError: (e: any) => toast({ title: "Failed to record valuation", description: e.message, variant: "destructive" }),
   });
 

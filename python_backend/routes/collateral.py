@@ -532,7 +532,7 @@ def record_valuation(
                                 f"Action still required."
                             )
                         notif_link = f"/loans/{loan.id}"
-                        target_roles = ["loan_officer", "manager", "admin"]
+                        target_roles = ["loan_officer", "manager", "admin", "owner"]
                         staff_list = tenant_session.query(Staff).filter(
                             Staff.role.in_(target_roles),
                             Staff.is_active == True
