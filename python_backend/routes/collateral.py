@@ -1021,16 +1021,32 @@ def get_collateral_alerts(
 
         ins_options = joinedload(CollateralInsurance.collateral_item).joinedload(CollateralItem.loan).joinedload(LoanApplication.member)
 
-        expiring_insurance = tenant_session.query(CollateralInsurance).options(ins_options).filter(
-            CollateralInsurance.expiry_date >= today,
-            CollateralInsurance.expiry_date <= insurance_soon,
-            CollateralInsurance.status == "active",
-        ).all()
+        # Collateral items that already have at least one healthy active policy (not expiring within 30 days)
+        covered_item_ids = {
+            row[0] for row in tenant_session.query(CollateralInsurance.collateral_item_id).filter(
+                CollateralInsurance.status == "active",
+                CollateralInsurance.expiry_date > insurance_soon,
+            ).all()
+        }
 
-        expired_insurance = tenant_session.query(CollateralInsurance).options(ins_options).filter(
-            CollateralInsurance.expiry_date < today,
-            CollateralInsurance.status == "active",
-        ).all()
+        expiring_insurance = [
+            p for p in tenant_session.query(CollateralInsurance).options(ins_options).filter(
+                CollateralInsurance.expiry_date >= today,
+                CollateralInsurance.expiry_date <= insurance_soon,
+                CollateralInsurance.status == "active",
+            ).all()
+            # Only alert if the item has no other policy that is still healthy
+            if p.collateral_item_id not in covered_item_ids
+        ]
+
+        expired_insurance = [
+            p for p in tenant_session.query(CollateralInsurance).options(ins_options).filter(
+                CollateralInsurance.expiry_date < today,
+                CollateralInsurance.status == "active",
+            ).all()
+            # Only alert if the item has no current valid policy
+            if p.collateral_item_id not in covered_item_ids
+        ]
 
         def enrich_insurance(p):
             d = insurance_to_dict(p)
@@ -1133,11 +1149,24 @@ def get_collateral_stats(
             CollateralItem.next_revaluation_date < today,
             CollateralItem.status == "under_lien",
         ).count()
-        expiring_insurance = tenant_session.query(CollateralInsurance).filter(
-            CollateralInsurance.expiry_date >= today,
-            CollateralInsurance.expiry_date <= today + timedelta(days=30),
-            CollateralInsurance.status == "active",
-        ).count()
+        soon = today + timedelta(days=30)
+        covered_ids = {
+            row[0] for row in tenant_session.query(CollateralInsurance.collateral_item_id).filter(
+                CollateralInsurance.status == "active",
+                CollateralInsurance.expiry_date > soon,
+            ).all()
+        }
+        expiring_insurance = sum(
+            1 for p in tenant_session.query(
+                CollateralInsurance.collateral_item_id,
+                CollateralInsurance.expiry_date,
+            ).filter(
+                CollateralInsurance.expiry_date >= today,
+                CollateralInsurance.expiry_date <= soon,
+                CollateralInsurance.status == "active",
+            ).all()
+            if p[0] not in covered_ids
+        )
         return {
             "total_items": total,
             "by_status": by_status,
