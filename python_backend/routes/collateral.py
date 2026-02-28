@@ -392,6 +392,16 @@ def create_collateral_item(
         ctype = tenant_session.query(CollateralType).filter(CollateralType.id == body.collateral_type_id).first()
         if not ctype:
             raise HTTPException(status_code=404, detail="Collateral type not found")
+        going_under_lien = loan.status in ["disbursed", "restructured"]
+        if going_under_lien and ctype.requires_insurance:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Insurance is required for '{ctype.name}' collateral. "
+                    "Save the collateral as 'registered' first (on an unapproved loan), "
+                    "add an insurance policy, then attach it to the loan."
+                ),
+            )
         item = CollateralItem(
             loan_id=body.loan_id,
             collateral_type_id=body.collateral_type_id,
@@ -400,8 +410,8 @@ def create_collateral_item(
             description=body.description,
             document_ref=body.document_ref,
             declared_value=body.declared_value,
-            status="under_lien" if loan.status in ["disbursed", "restructured"] else "registered",
-            lien_date=datetime.utcnow() if loan.status in ["disbursed", "restructured"] else None,
+            status="under_lien" if going_under_lien else "registered",
+            lien_date=datetime.utcnow() if going_under_lien else None,
             created_by_id=get_staff_id(tenant_session, current_user.email),
         )
         tenant_session.add(item)
@@ -624,6 +634,21 @@ def place_lien(
             raise HTTPException(status_code=400, detail="Item is already under lien")
         if item.status in ("released", "liquidated"):
             raise HTTPException(status_code=400, detail=f"Cannot place lien on a {item.status} item")
+        ctype = tenant_session.query(CollateralType).filter(CollateralType.id == item.collateral_type_id).first()
+        if ctype and ctype.requires_insurance:
+            active_policy = tenant_session.query(CollateralInsurance).filter(
+                CollateralInsurance.collateral_item_id == item_id,
+                CollateralInsurance.status == "active",
+                CollateralInsurance.expiry_date >= date.today(),
+            ).first()
+            if not active_policy:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"Cannot place lien: '{ctype.name}' requires an active, non-expired insurance policy. "
+                        "Please add a valid insurance policy before placing this item under lien."
+                    ),
+                )
         item.status = "under_lien"
         item.lien_date = datetime.utcnow()
         item.updated_at = datetime.utcnow()
@@ -777,6 +802,50 @@ def add_insurance(
         tenant_session.add(policy)
         tenant_session.commit()
         tenant_session.refresh(policy)
+
+        from routes.notifications import create_notification
+        today = date.today()
+        expiry = policy.expiry_date
+        link = "/?section=collateral"
+        desc = item.description or "collateral item"
+        if expiry and expiry < today:
+            create_notification(
+                tenant_session,
+                title=f"Insurance Expired: {desc}",
+                message=(
+                    f"The insurance policy (#{policy.policy_number}) for '{desc}' expired on "
+                    f"{expiry.strftime('%d %b %Y')}. Renew immediately to remain compliant."
+                ),
+                notification_type="warning",
+                link=link,
+                staff_id=None,
+            )
+        elif expiry and (expiry - today).days <= 30:
+            days_left = (expiry - today).days
+            create_notification(
+                tenant_session,
+                title=f"Insurance Expiring Soon: {desc}",
+                message=(
+                    f"Insurance policy (#{policy.policy_number}) for '{desc}' expires in {days_left} day(s) "
+                    f"on {expiry.strftime('%d %b %Y')}. Please renew before it lapses."
+                ),
+                notification_type="warning",
+                link=link,
+                staff_id=None,
+            )
+        else:
+            create_notification(
+                tenant_session,
+                title=f"Insurance Registered: {desc}",
+                message=(
+                    f"Insurance policy (#{policy.policy_number}) for '{desc}' has been registered. "
+                    f"It expires on {expiry.strftime('%d %b %Y') if expiry else 'N/A'}."
+                ),
+                notification_type="info",
+                link=link,
+                staff_id=None,
+            )
+        tenant_session.commit()
         return insurance_to_dict(policy)
     finally:
         tenant_session.close()
@@ -798,11 +867,60 @@ def update_insurance(
         policy = tenant_session.query(CollateralInsurance).filter(CollateralInsurance.id == policy_id).first()
         if not policy:
             raise HTTPException(status_code=404, detail="Insurance policy not found")
+        old_expiry = policy.expiry_date
         for k, v in body.dict(exclude_none=True).items():
             setattr(policy, k, v)
         policy.updated_at = datetime.utcnow()
         tenant_session.commit()
         tenant_session.refresh(policy)
+
+        new_expiry = policy.expiry_date
+        if new_expiry and new_expiry != old_expiry:
+            from routes.notifications import create_notification
+            item = tenant_session.query(CollateralItem).filter(CollateralItem.id == policy.collateral_item_id).first()
+            desc = item.description if item else "collateral item"
+            today = date.today()
+            link = "/?section=collateral"
+            if new_expiry < today:
+                create_notification(
+                    tenant_session,
+                    title=f"Insurance Expired: {desc}",
+                    message=(
+                        f"Insurance policy (#{policy.policy_number}) for '{desc}' was updated — "
+                        f"expiry date is {new_expiry.strftime('%d %b %Y')}, which has already passed. "
+                        "Renewal is required."
+                    ),
+                    notification_type="warning",
+                    link=link,
+                    staff_id=None,
+                )
+            elif (new_expiry - today).days <= 30:
+                days_left = (new_expiry - today).days
+                create_notification(
+                    tenant_session,
+                    title=f"Insurance Expiring Soon: {desc}",
+                    message=(
+                        f"Insurance policy (#{policy.policy_number}) for '{desc}' was updated — "
+                        f"it expires in {days_left} day(s) on {new_expiry.strftime('%d %b %Y')}."
+                    ),
+                    notification_type="warning",
+                    link=link,
+                    staff_id=None,
+                )
+            else:
+                create_notification(
+                    tenant_session,
+                    title=f"Insurance Renewed: {desc}",
+                    message=(
+                        f"Insurance policy (#{policy.policy_number}) for '{desc}' has been updated. "
+                        f"New expiry: {new_expiry.strftime('%d %b %Y')}."
+                    ),
+                    notification_type="info",
+                    link=link,
+                    staff_id=None,
+                )
+            tenant_session.commit()
+
         return insurance_to_dict(policy)
     finally:
         tenant_session.close()
@@ -881,6 +999,59 @@ def get_collateral_alerts(
                 d["loan_number"] = loan.application_number if loan else None
                 d["member_name"] = f"{member.first_name} {member.last_name}" if member else None
             return d
+
+        # Fire deduped notifications for expiring / expired insurance
+        # Only create a notification if one hasn't been sent in the last 7 days for the same policy
+        try:
+            from routes.notifications import create_notification
+            from models.tenant import InAppNotification
+            week_ago = datetime.utcnow() - timedelta(days=7)
+            link = "/?section=collateral"
+            for p in expiring_insurance:
+                tag = f"[ins:{p.id}]"
+                already = tenant_session.query(InAppNotification).filter(
+                    InAppNotification.title.contains(tag),
+                    InAppNotification.created_at >= week_ago,
+                ).first()
+                if not already:
+                    item = p.collateral_item
+                    desc = item.description if item else "collateral item"
+                    days_left = (p.expiry_date - today).days
+                    create_notification(
+                        tenant_session,
+                        title=f"Insurance Expiring Soon {tag}",
+                        message=(
+                            f"Insurance policy (#{p.policy_number}) for '{desc}' expires in {days_left} day(s) "
+                            f"on {p.expiry_date.strftime('%d %b %Y')}. Please renew before it lapses."
+                        ),
+                        notification_type="warning",
+                        link=link,
+                        staff_id=None,
+                    )
+            for p in expired_insurance:
+                tag = f"[ins:{p.id}]"
+                already = tenant_session.query(InAppNotification).filter(
+                    InAppNotification.title.contains(tag),
+                    InAppNotification.created_at >= week_ago,
+                ).first()
+                if not already:
+                    item = p.collateral_item
+                    desc = item.description if item else "collateral item"
+                    create_notification(
+                        tenant_session,
+                        title=f"Insurance Expired {tag}",
+                        message=(
+                            f"Insurance policy (#{p.policy_number}) for '{desc}' expired on "
+                            f"{p.expiry_date.strftime('%d %b %Y')} and is still marked active. "
+                            "Renew or update the policy status immediately."
+                        ),
+                        notification_type="warning",
+                        link=link,
+                        staff_id=None,
+                    )
+            tenant_session.commit()
+        except Exception:
+            pass
 
         return {
             "overdue_revaluation": [item_to_dict(i) for i in overdue_revaluation],

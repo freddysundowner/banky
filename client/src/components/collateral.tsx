@@ -282,6 +282,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
   // ── Forms ─────────────────────────────────────────────────────────────────
 
   const itemForm = useForm({ resolver: zodResolver(itemSchema), defaultValues: { loan_id: "", collateral_type_id: "", owner_name: "", owner_id_number: "", description: "", document_ref: "", declared_value: "" } });
+  const selectedTypeId = itemForm.watch("collateral_type_id");
   const valuationForm = useForm({ resolver: zodResolver(valuationSchema), defaultValues: { appraised_value: "", valuer_id: "", valuation_date: "", next_revaluation_date: "", ltv_override: "" } });
   const valuerForm = useForm({ resolver: zodResolver(valuerFormSchema), defaultValues: { name: "", license_number: "", contact_phone: "", contact_email: "", location: "", physical_address: "", notes: "" } });
   const releaseForm = useForm({ resolver: zodResolver(releaseSchema), defaultValues: { release_notes: "" } });
@@ -930,6 +931,14 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                   </Select><FormMessage />
                 </FormItem>
               )} />
+              {selectedTypeId && types.find(t => t.id === selectedTypeId)?.requires_insurance && (
+                <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
+                  <ShieldAlert className="h-4 w-4 mt-0.5 shrink-0" />
+                  <span>
+                    <strong>Insurance required.</strong> This collateral type must have an active insurance policy before it can be placed under lien. After saving, go to the item's insurance tab and add a valid policy.
+                  </span>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <FormField control={itemForm.control} name="owner_name" render={({ field }) => (
                   <FormItem>
