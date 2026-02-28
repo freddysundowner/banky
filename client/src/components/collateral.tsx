@@ -58,6 +58,10 @@ const valuationSchema = z.object({
   ltv_override: z.string().optional(),
 });
 
+const revalDateSchema = z.object({
+  next_revaluation_date: z.string().min(1, "Date required"),
+});
+
 const valuerFormSchema = z.object({
   name: z.string().min(1, "Name required"),
   license_number: z.string().optional(),
@@ -165,6 +169,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
   const [showLiquidate, setShowLiquidate] = useState<any>(null);
   const [showAddInsurance, setShowAddInsurance] = useState<any>(null);
   const [showItemDetail, setShowItemDetail] = useState<any>(null);
+  const [showEditRevalDate, setShowEditRevalDate] = useState<any>(null);
   const [showAddType, setShowAddType] = useState(false);
   const [editType, setEditType] = useState<any>(null);
   const [valuerSearch, setValuerSearch] = useState("");
@@ -283,6 +288,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
   const liquidationForm = useForm({ resolver: zodResolver(liquidationSchema), defaultValues: { liquidation_amount: "", liquidation_notes: "" } });
   const insuranceForm = useForm({ resolver: zodResolver(insuranceSchema), defaultValues: { policy_number: "", insurer_name: "", policy_type: "", sum_insured: "", premium_amount: "", premium_frequency: "", start_date: "", expiry_date: "", notes: "" } });
   const typeForm = useForm({ resolver: zodResolver(typeSchema), defaultValues: { name: "", ltv_percent: "", revaluation_months: "24", requires_insurance: false, description: "" } });
+  const revalDateForm = useForm({ resolver: zodResolver(revalDateSchema), defaultValues: { next_revaluation_date: "" } });
 
   // ── Mutations ─────────────────────────────────────────────────────────────
 
@@ -290,6 +296,12 @@ export default function CollateralManagement({ organizationId }: CollateralProps
     mutationFn: (data: any) => apiRequest("POST", `/api/organizations/${organizationId}/collateral/items`, { ...data, declared_value: data.declared_value ? parseFloat(data.declared_value) : undefined }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/collateral/items`] }); queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/collateral/stats`] }); setShowAddItem(false); itemForm.reset(); toast({ title: "Collateral item registered" }); },
     onError: (e: any) => toast({ title: "Failed to register collateral", description: e.message, variant: "destructive" }),
+  });
+
+  const updateRevalDateMutation = useMutation({
+    mutationFn: ({ id, data }: any) => apiRequest("PUT", `/api/organizations/${organizationId}/collateral/items/${id}`, { next_revaluation_date: data.next_revaluation_date }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/collateral/items`] }); setShowEditRevalDate(null); revalDateForm.reset(); toast({ title: "Revaluation date updated" }); },
+    onError: (e: any) => toast({ title: "Failed to update date", description: e.message, variant: "destructive" }),
   });
 
   const valuateMutation = useMutation({
@@ -497,6 +509,9 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => { setShowValuate(item); setSelectedValuerLabel(item.valuer_name ?? ""); setValuerSearch(""); setValuationFile(null); valuationForm.reset({ appraised_value: item.appraised_value ? String(item.appraised_value) : "", valuer_id: item.valuer_id ?? "", valuation_date: "", next_revaluation_date: "", ltv_override: item.ltv_override ? String(item.ltv_override) : "" }); }}>
                                 <TrendingUp className="h-4 w-4 mr-2" /> Record Valuation
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => { setShowEditRevalDate(item); revalDateForm.reset({ next_revaluation_date: item.next_revaluation_date ?? "" }); }} data-testid={`button-edit-reval-date-${item.id}`}>
+                                <Clock className="h-4 w-4 mr-2" /> Edit Revaluation Date
                               </DropdownMenuItem>
                               {item.status === "registered" && (
                                 <DropdownMenuItem onClick={() => { if (confirm(`Place a lien on "${item.description}"? This will lock the asset until explicitly released.`)) lienMutation.mutate(item.id); }}>
@@ -1085,6 +1100,31 @@ export default function CollateralManagement({ organizationId }: CollateralProps
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setShowLiquidate(null)}>Cancel</Button>
                 <Button type="submit" variant="destructive" data-testid="button-confirm-liquidate" disabled={liquidateMutation.isPending}>{liquidateMutation.isPending ? "Saving..." : "Record Liquidation"}</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Edit Revaluation Date Dialog ──────────────────────────────────────── */}
+      <Dialog open={!!showEditRevalDate} onOpenChange={o => !o && setShowEditRevalDate(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader><DialogTitle>Edit Revaluation Date</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground"><strong>{showEditRevalDate?.description}</strong></p>
+          <Form {...revalDateForm}>
+            <form onSubmit={revalDateForm.handleSubmit(d => updateRevalDateMutation.mutate({ id: showEditRevalDate?.id, data: d }))} className="space-y-3">
+              <FormField control={revalDateForm.control} name="next_revaluation_date" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Next Revaluation Date</FormLabel>
+                  <FormControl><Input type="date" {...field} data-testid="input-reval-date" /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setShowEditRevalDate(null)}>Cancel</Button>
+                <Button type="submit" data-testid="button-save-reval-date" disabled={updateRevalDateMutation.isPending}>
+                  {updateRevalDateMutation.isPending ? "Saving..." : "Save"}
+                </Button>
               </DialogFooter>
             </form>
           </Form>
