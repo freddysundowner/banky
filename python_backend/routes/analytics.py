@@ -5,7 +5,7 @@ from typing import List
 from decimal import Decimal
 from datetime import datetime, date, timedelta
 from models.database import get_db
-from models.tenant import Member, LoanApplication, LoanRepayment, Transaction, Branch, Staff, LoanDefault, CollateralItem, LoanProduct
+from models.tenant import Member, LoanApplication, LoanRepayment, LoanInstalment, Transaction, Branch, Staff, LoanDefault, CollateralItem, LoanProduct
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission
 
@@ -267,22 +267,27 @@ async def get_institution_health(org_id: str, user=Depends(get_current_user), db
             loan_to_deposit_ratio = 0
         
         today = date.today()
-        rolling_start = today - timedelta(days=30)
 
-        rolling_repayments = tenant_session.query(func.sum(LoanRepayment.amount)).filter(
-            func.date(LoanRepayment.payment_date) >= rolling_start
-        ).scalar() or Decimal("0")
-
-        expected_monthly = sum(l.monthly_repayment or Decimal("0") for l in loans)
-
-        if expected_monthly > 0:
-            collection_efficiency = float(rolling_repayments / expected_monthly * 100)
-        elif loans:
-            # Loans exist but none have monthly_repayment configured — penalise for missing data
-            collection_efficiency = 0
+        # Collection efficiency based on instalments that were actually due up to today
+        loan_ids = [l.id for l in loans]
+        if loan_ids:
+            due_row = tenant_session.query(
+                func.sum(LoanInstalment.expected_principal + LoanInstalment.expected_interest),
+                func.sum(LoanInstalment.paid_principal + LoanInstalment.paid_interest),
+            ).filter(
+                LoanInstalment.loan_id.in_(loan_ids),
+                LoanInstalment.due_date <= today,
+            ).first()
+            expected_due = Decimal(str(due_row[0] or 0))
+            actually_paid = Decimal(str(due_row[1] or 0))
+            if expected_due > 0:
+                collection_efficiency = float(actually_paid / expected_due * 100)
+            else:
+                # Loans exist but no instalments are due yet (e.g. freshly disbursed) — neutral
+                collection_efficiency = 80
         else:
-            # No active loans at all — nothing to collect, skip the CE penalty
-            collection_efficiency = 80  # neutral: no deduction
+            # No active loans — nothing to collect, neutral
+            collection_efficiency = 80
 
         health_score = 100
         if par_ratio > 5:
