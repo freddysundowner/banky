@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/popover";
 import { Bell, CheckCheck, Info, AlertTriangle, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 
 interface Notification {
   id: string;
@@ -56,8 +57,9 @@ const typeColors: Record<string, string> = {
   error: "text-destructive",
 };
 
-export function NotificationCenter({ organizationId }: { organizationId: string }) {
+export function NotificationCenter({ organizationId, onNavigate }: { organizationId: string; onNavigate?: (section: string) => void }) {
   const [open, setOpen] = useState(false);
+  const [, navigate] = useLocation();
 
   const { data, isLoading } = useQuery<NotificationsResponse>({
     queryKey: ["/api/organizations", organizationId, "notifications"],
@@ -139,8 +141,13 @@ export function NotificationCenter({ organizationId }: { organizationId: string 
                       markReadMutation.mutate(notification.id);
                     }
                     if (notification.link) {
-                      window.location.href = notification.link;
                       setOpen(false);
+                      const sectionMatch = notification.link.match(/[?&]section=([^&]+)/);
+                      if (sectionMatch && onNavigate) {
+                        onNavigate(sectionMatch[1]);
+                      } else {
+                        navigate(notification.link);
+                      }
                     }
                   }}
                   data-testid={`notification-item-${notification.id}`}

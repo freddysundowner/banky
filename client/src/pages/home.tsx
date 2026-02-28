@@ -285,6 +285,10 @@ export default function Home() {
     if (params.get("payment") === "success" || params.get("payment") === "cancelled") {
       return "upgrade";
     }
+    const sectionParam = params.get("section");
+    if (sectionParam) {
+      return sectionParam as NavSection;
+    }
     return "dashboard";
   });
   const [isSectionInitialized, setIsSectionInitialized] = useState(false);
@@ -991,7 +995,7 @@ export default function Home() {
               )}
               <div className="h-4 w-px bg-border hidden md:block" />
               {selectedOrg && (
-                <NotificationCenter organizationId={selectedOrg.id} />
+                <NotificationCenter organizationId={selectedOrg.id} onNavigate={(section) => setActiveSection(section as any)} />
               )}
               <div className="flex items-center gap-2">
                 <Avatar className="h-7 w-7">
