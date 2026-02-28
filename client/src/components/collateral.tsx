@@ -177,6 +177,8 @@ export default function CollateralManagement({ organizationId }: CollateralProps
   const [showAddType, setShowAddType] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; message: string; onConfirm: () => void }>({ open: false, title: "", message: "", onConfirm: () => {} });
   const openConfirm = (title: string, message: string, onConfirm: () => void) => setConfirmDialog({ open: true, title, message, onConfirm });
+  const [errorDialog, setErrorDialog] = useState<{ open: boolean; title: string; message: string }>({ open: false, title: "", message: "" });
+  const openError = (title: string, message: string) => setErrorDialog({ open: true, title, message });
   const [editType, setEditType] = useState<any>(null);
   const [valuerSearch, setValuerSearch] = useState("");
   const [valuerSearchDebounced, setValuerSearchDebounced] = useState("");
@@ -354,7 +356,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
   const lienMutation = useMutation({
     mutationFn: (id: string) => apiRequest("POST", `/api/organizations/${organizationId}/collateral/items/${id}/lien`, {}),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/collateral/items`] }); queryClient.invalidateQueries({ queryKey: [`/api/organizations/${organizationId}/collateral/stats`] }); toast({ title: "Lien placed — item is now locked" }); },
-    onError: (e: any) => toast({ title: "Failed", description: e.message, variant: "destructive" }),
+    onError: (e: any) => openError("Lien Could Not Be Placed", e.message ?? "An unexpected error occurred."),
   });
 
   const releaseMutation = useMutation({
@@ -874,6 +876,21 @@ export default function CollateralManagement({ organizationId }: CollateralProps
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(d => ({ ...d, open: false })); }}>
               Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Error Dialog ─────────────────────────────────────────────────────── */}
+      <AlertDialog open={errorDialog.open} onOpenChange={o => !o && setErrorDialog(d => ({ ...d, open: false }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{errorDialog.title}</AlertDialogTitle>
+            <AlertDialogDescription>{errorDialog.message}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setErrorDialog(d => ({ ...d, open: false }))}>
+              OK
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
