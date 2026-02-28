@@ -475,14 +475,14 @@ export default function LoanEligibility({ organizationId }: LoanEligibilityProps
                 <h2 className={`text-lg font-bold ${result.eligible ? "text-green-700 dark:text-green-300" : "text-red-600 dark:text-red-400"}`}>
                   {result.eligible ? "Likely Eligible for Loan" : "Not Currently Eligible"}
                 </h2>
-                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
                   {result.member.name}
                   {result.member.member_number && <span>· {result.member.member_number}</span>}
-                  · {result.product.name}
+                  <span>· {result.product.name}</span>
                   {result.is_prospect && (
-                    <Badge variant="secondary" className="text-[10px] h-4 ml-1">Prospect estimate</Badge>
+                    <Badge variant="secondary" className="text-[10px] h-4">Prospect estimate</Badge>
                   )}
-                </p>
+                </div>
               </div>
             </div>
             {result.is_prospect && (

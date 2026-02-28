@@ -6,7 +6,7 @@ import {
   Clock, CheckCircle, HardDrive, Landmark, Layers,
   Bell, LogIn, UserPlus, KeyRound, Mail, Star, Download, Printer,
   HeartHandshake, RefreshCw, DollarSign, ClipboardList, MonitorSmartphone,
-  Trash2
+  Trash2, Package, PhoneCall
 } from 'lucide-react';
 
 type SectionId =
@@ -63,7 +63,10 @@ type SectionId =
   | 'settings-danger'
   | 'my-account'
   | 'subscriptions'
-  | 'trial-system';
+  | 'trial-system'
+  | 'collateral'
+  | 'loan-eligibility'
+  | 'crm';
 
 interface NavGroup {
   label: string;
@@ -110,10 +113,12 @@ const navGroups: NavGroup[] = [
     items: [
       { id: 'loan-products', label: 'Loan Products', icon: CreditCard },
       { id: 'loan-applications', label: 'Loan Applications', icon: FileText },
+      { id: 'loan-eligibility', label: 'Loan Eligibility Checker', icon: ClipboardList },
       { id: 'guarantors', label: 'Guarantor System', icon: HeartHandshake },
       { id: 'loan-restructuring', label: 'Loan Restructuring', icon: RefreshCw },
       { id: 'repayments', label: 'Repayments', icon: Receipt },
       { id: 'defaults-collections', label: 'Defaults & Collections', icon: AlertTriangle },
+      { id: 'collateral', label: 'Collateral Management', icon: Package },
     ],
   },
   {
@@ -154,6 +159,12 @@ const navGroups: NavGroup[] = [
     label: 'Communication',
     items: [
       { id: 'sms', label: 'SMS Notifications', icon: MessageSquare },
+    ],
+  },
+  {
+    label: 'CRM & Leads',
+    items: [
+      { id: 'crm', label: 'CRM & Contact Management', icon: PhoneCall },
     ],
   },
   {
@@ -1878,6 +1889,236 @@ function TrialSystemSection() {
   );
 }
 
+function LoanEligibilitySection() {
+  return (
+    <SectionWrapper title="Loan Eligibility Checker" icon={ClipboardList}>
+      <p className="text-gray-600">The Loan Eligibility Checker is a quick field-assessment tool that lets loan officers instantly determine whether a client is likely to qualify for a loan — before a formal application is submitted.</p>
+
+      <h3 className="font-semibold text-gray-900">Two Modes</h3>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <InfoCard title="Existing Member">
+          Search your member database by name or member number. The system automatically pulls their real savings, shares, and deposits balances. All eight eligibility criteria are checked, including loan history and repayment standing.
+        </InfoCard>
+        <InfoCard title="Prospect / New Client">
+          For a client who does not yet have a member account. Enter their name (optional) and estimated savings, shares, and deposit figures manually. All product-based checks run against the entered numbers. Checks that require a member account (e.g., existing loans, good standing) are flagged as informational and will be verified at application time.
+        </InfoCard>
+      </div>
+
+      <h3 className="font-semibold text-gray-900 mt-4">How to Run a Check</h3>
+      <div className="space-y-4">
+        <Step n={1} title="Select Client Mode">
+          <p>Toggle between <strong>Existing Member</strong> and <strong>Prospect / New Client</strong> at the top of the Client card.</p>
+        </Step>
+        <Step n={2} title="Identify the Client">
+          <p>For an existing member: search by name or member number and click their record. For a prospect: enter their name and approximate savings, shares, and deposits figures.</p>
+        </Step>
+        <Step n={3} title="Pick a Loan Product">
+          <p>Select a loan product from the dropdown. The product's interest rate, amount range, and term limits are shown below the selector.</p>
+        </Step>
+        <Step n={4} title="Enter Loan Details">
+          <p>Enter the requested loan amount and term in months. If the product requires collateral, enter the estimated market value of the security the client is offering.</p>
+        </Step>
+        <Step n={5} title="Check Eligibility">
+          <p>Click <strong>Check Eligibility</strong>. Results appear instantly with a pass/fail verdict for each criterion.</p>
+        </Step>
+      </div>
+
+      <h3 className="font-semibold text-gray-900 mt-4">Checks Performed</h3>
+      <div className="grid sm:grid-cols-2 gap-3">
+        {[
+          { check: 'Member Status', desc: 'Client must be an active member (skipped for prospects)' },
+          { check: 'Loan Amount Range', desc: 'Requested amount must be within the product\'s minimum and maximum' },
+          { check: 'Loan Term', desc: 'Requested term in months must fall within the product\'s allowed range' },
+          { check: 'Shares Coverage', desc: 'Shares balance × product multiplier must cover the requested amount' },
+          { check: 'Minimum Shares', desc: 'Shares balance must meet the product\'s minimum shares requirement' },
+          { check: 'Active Loans', desc: 'If the product disallows multiple loans, no active loan on the same product may exist' },
+          { check: 'Good Standing', desc: 'No overdue repayments on any existing disbursed loan' },
+          { check: 'Collateral Coverage', desc: 'Declared security value must meet the product\'s LTV requirement' },
+        ].map(r => (
+          <div key={r.check} className="bg-gray-50 rounded-lg p-3">
+            <span className="font-medium text-gray-900">{r.check}</span>
+            <p className="text-xs text-gray-500 mt-0.5">{r.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      <h3 className="font-semibold text-gray-900 mt-4">Reading the Results</h3>
+      <FeatureList items={[
+        'Green banner: client meets all checked criteria — "Likely Eligible"',
+        'Red banner: one or more criteria failed — "Not Currently Eligible"',
+        'Each check shows Pass / Fail with a plain-English explanation',
+        'Blue info badges mark checks that were skipped for prospects (will be verified at application)',
+        'Member/Prospect Snapshot card shows the balances used for the calculation',
+        'Estimated Costs card (shown when eligible) displays monthly payment, total repayable, and itemised fees',
+        'Prospect results carry a "Prospect estimate" label to distinguish them from a formal eligibility determination',
+      ]} />
+
+      <Tip><strong>Permissions required:</strong> Any staff role with <code>loans:read</code> or <code>loans:write</code> permission can use the Eligibility Checker. It is found under <strong>Loans → Eligibility Checker</strong> in the sidebar.</Tip>
+      <Warning>The Eligibility Checker provides an estimate only. Final loan approval follows the full application process including credit review, document verification, and officer approval.</Warning>
+    </SectionWrapper>
+  );
+}
+
+function CollateralSection() {
+  return (
+    <SectionWrapper title="Collateral Management" icon={Package}>
+      <p className="text-gray-600">Collateral Management lets you record, track, and value the assets pledged as security against loans. Each item is linked to a loan application and monitored through its lifecycle from pledge to release or liquidation.</p>
+
+      <h3 className="font-semibold text-gray-900">Key Concepts</h3>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <InfoCard title="Collateral Types">
+          Asset categories your organization accepts as security (e.g., Motor Vehicle, Land Title, Machinery, Listed Shares). Types carry a default LTV ratio and depreciation schedule. Owners can create and edit types in Settings.
+        </InfoCard>
+        <InfoCard title="Collateral Items">
+          Individual assets pledged against a specific loan. Each item records the asset description, type, current valuation, valuer, insurance policy, and status.
+        </InfoCard>
+        <InfoCard title="Valuations">
+          Periodic revaluations are recorded with date, amount, valuer name, and supporting documents. The system tracks whether each loan's collateral coverage meets the product's required LTV threshold.
+        </InfoCard>
+        <InfoCard title="Insurance">
+          Insurance policies on pledged assets are tracked with insurer name, policy number, cover amount, premium, and expiry date. Expiring policies trigger alerts.
+        </InfoCard>
+      </div>
+
+      <h3 className="font-semibold text-gray-900 mt-4">Adding a Collateral Item</h3>
+      <div className="space-y-4">
+        <Step n={1} title="Open the Loan">
+          <p>Navigate to the loan application and open its Collateral tab, or go to <strong>Loans → Collateral</strong> in the sidebar.</p>
+        </Step>
+        <Step n={2} title="Add Item">
+          <p>Click <strong>Add Collateral</strong>. Select the collateral type, enter the asset description, current value, valuation date, and the name of the valuer.</p>
+        </Step>
+        <Step n={3} title="Attach Insurance (Optional)">
+          <p>Add an insurance policy by entering the insurer, policy number, cover amount, premium, start date, and expiry date.</p>
+        </Step>
+        <Step n={4} title="Save">
+          <p>The item is linked to the loan. The system immediately checks whether total collateral coverage meets the product's LTV requirement and flags the loan as collateral-deficient if not.</p>
+        </Step>
+      </div>
+
+      <h3 className="font-semibold text-gray-900 mt-4">Collateral Lifecycle Statuses</h3>
+      <div className="grid sm:grid-cols-3 gap-3">
+        {[
+          { status: 'Pledged', desc: 'Asset is actively securing the loan' },
+          { status: 'Under Lien', desc: 'A legal hold has been placed on the asset' },
+          { status: 'Released', desc: 'Asset returned to client after loan repayment' },
+          { status: 'Liquidated', desc: 'Asset sold to recover loan funds after default' },
+          { status: 'Deficient', desc: 'Loan is flagged because collateral value has fallen below the required LTV' },
+        ].map(s => (
+          <div key={s.status} className="bg-gray-50 rounded-lg p-3">
+            <span className="font-medium text-gray-900">{s.status}</span>
+            <p className="text-xs text-gray-500 mt-0.5">{s.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      <h3 className="font-semibold text-gray-900 mt-4">Recording a Revaluation</h3>
+      <FeatureList items={[
+        'Open the collateral item and click Revalue / Record Valuation',
+        'Enter the new market value, valuation date, and valuer name',
+        'Optionally attach a valuation document',
+        'The system recalculates LTV coverage and updates the loan\'s collateral-deficient flag automatically',
+        'If the loan drops below the required LTV, a notification is created for loan officers',
+      ]} />
+
+      <h3 className="font-semibold text-gray-900 mt-4">Placing and Releasing Liens</h3>
+      <FeatureList items={[
+        'Place Lien: legally freezes the asset — status changes to "Under Lien"',
+        'Release: returns the asset to the client — status changes to "Released"',
+        'Both actions are logged in the audit trail with the acting staff member and timestamp',
+      ]} />
+
+      <Tip><strong>Permissions required:</strong> Viewing collateral requires <code>collateral:read</code>. Adding, editing, and releasing collateral requires <code>collateral:write</code>. These permissions are assigned through Roles & Permissions in Settings.</Tip>
+    </SectionWrapper>
+  );
+}
+
+function CRMSection() {
+  return (
+    <SectionWrapper title="CRM & Contact Management" icon={PhoneCall}>
+      <p className="text-gray-600">The CRM (Customer Relationship Management) module helps your team manage leads, prospects, and client interactions in one place. Track contacts from first enquiry through to member conversion, log every interaction, and schedule follow-ups so no opportunity slips through.</p>
+
+      <h3 className="font-semibold text-gray-900">Core Concepts</h3>
+      <div className="grid sm:grid-cols-2 gap-4">
+        <InfoCard title="Contacts">
+          Individuals or businesses who have expressed interest or are in conversation with your institution. A contact is not yet a member — they exist in the CRM pipeline until they are formally registered.
+        </InfoCard>
+        <InfoCard title="Interactions">
+          Logged touchpoints with a contact: calls, emails, walk-ins, WhatsApp messages, etc. Each interaction records the type, notes, and the staff member responsible.
+        </InfoCard>
+        <InfoCard title="Follow-ups">
+          Scheduled reminders to reconnect with a contact. Set a date, time, and brief note. Overdue follow-ups are highlighted to prevent them being missed.
+        </InfoCard>
+        <InfoCard title="Pipeline Stats">
+          The CRM dashboard shows summary statistics: total contacts, hot leads, follow-ups due today, conversions this month, and staff performance.
+        </InfoCard>
+      </div>
+
+      <h3 className="font-semibold text-gray-900 mt-4">Adding a Contact</h3>
+      <div className="space-y-4">
+        <Step n={1} title="Go to CRM">
+          <p>Click <strong>CRM</strong> in the sidebar. You'll see the contact list and summary stats at the top.</p>
+        </Step>
+        <Step n={2} title="Add New Contact">
+          <p>Click <strong>Add Contact</strong>. Enter the contact's name, phone number, email, and any notes. Assign the contact to a staff member and set their pipeline status.</p>
+        </Step>
+        <Step n={3} title="Pipeline Status">
+          <p>Set the contact's stage in the pipeline: <strong>New Lead</strong>, <strong>In Conversation</strong>, <strong>Hot Lead</strong>, <strong>Cold</strong>, or <strong>Converted</strong>. Update this as the relationship progresses.</p>
+        </Step>
+      </div>
+
+      <h3 className="font-semibold text-gray-900 mt-4">Logging an Interaction</h3>
+      <FeatureList items={[
+        'Open a contact record and click Add Interaction',
+        'Select the interaction type: Call, Email, Meeting, Walk-in, WhatsApp, Other',
+        'Write notes summarizing what was discussed or agreed',
+        'The interaction is timestamped and attributed to the logged-in staff member',
+        'All interactions appear in the contact\'s timeline in reverse chronological order',
+      ]} />
+
+      <h3 className="font-semibold text-gray-900 mt-4">Scheduling a Follow-up</h3>
+      <FeatureList items={[
+        'Open a contact record and click Add Follow-up',
+        'Set the follow-up date and time and write a brief reminder note',
+        'Follow-ups due today are highlighted on the CRM dashboard',
+        'Mark a follow-up as complete once the action is taken',
+        'Overdue follow-ups are flagged in red to prompt action',
+      ]} />
+
+      <h3 className="font-semibold text-gray-900 mt-4">Converting a Contact to a Member</h3>
+      <div className="space-y-4">
+        <Step n={1} title="Open the Contact">
+          <p>Navigate to the contact record of the prospect you want to convert.</p>
+        </Step>
+        <Step n={2} title="Click Convert to Member">
+          <p>Click the <strong>Convert to Member</strong> button. The system pre-fills the member registration form with the contact's existing details.</p>
+        </Step>
+        <Step n={3} title="Complete Registration">
+          <p>Fill in any missing required fields (ID number, branch, date of birth, etc.) and save. The contact status is automatically updated to <strong>Converted</strong> and linked to the new member record.</p>
+        </Step>
+      </div>
+
+      <h3 className="font-semibold text-gray-900 mt-4">Contact Pipeline Statuses</h3>
+      <div className="grid sm:grid-cols-3 gap-3">
+        {[
+          { status: 'New Lead', desc: 'Initial enquiry received, not yet engaged' },
+          { status: 'In Conversation', desc: 'Active dialogue ongoing' },
+          { status: 'Hot Lead', desc: 'Strong interest shown — prioritize follow-up' },
+          { status: 'Cold', desc: 'Interest has stalled or gone quiet' },
+          { status: 'Converted', desc: 'Successfully registered as a member' },
+        ].map(s => (
+          <div key={s.status} className="bg-gray-50 rounded-lg p-3">
+            <span className="font-medium text-gray-900">{s.status}</span>
+            <p className="text-xs text-gray-500 mt-0.5">{s.desc}</p>
+          </div>
+        ))}
+      </div>
+
+      <Tip><strong>Permissions required:</strong> Viewing CRM contacts requires <code>crm:read</code>. Adding, editing, and converting contacts requires <code>crm:write</code>. These permissions are assigned through Roles & Permissions in Settings.</Tip>
+    </SectionWrapper>
+  );
+}
+
 function SectionContent({ sectionId }: { sectionId: SectionId }) {
   const sections: Record<SectionId, () => JSX.Element> = {
     'getting-started': GettingStartedSection,
@@ -1934,6 +2175,9 @@ function SectionContent({ sectionId }: { sectionId: SectionId }) {
     'my-account': MyAccountSection,
     'subscriptions': SubscriptionsSection,
     'trial-system': TrialSystemSection,
+    'collateral': CollateralSection,
+    'loan-eligibility': LoanEligibilitySection,
+    'crm': CRMSection,
   };
   const Component = sections[sectionId];
   return Component ? <Component /> : null;
