@@ -364,9 +364,26 @@ fi
 #      password, then switch back and connect via TCP. Fully automatic.
 
 _pg_hba_find() {
-    sudo -u postgres psql -w -tAc "SHOW hba_file;" 2>/dev/null | tr -d ' ' \
-    || find /etc/postgresql -name pg_hba.conf 2>/dev/null | head -1 \
-    || echo ""
+    local hba
+    # Ask PostgreSQL directly (only works when peer auth is still open)
+    hba=$(sudo -u postgres psql -w -tAc "SHOW hba_file;" 2>/dev/null | tr -d ' \n')
+    if [ -n "$hba" ] && [ -f "$hba" ]; then echo "$hba"; return; fi
+    # Search common installation paths across distros
+    for candidate in \
+        /etc/postgresql/*/main/pg_hba.conf \
+        /etc/postgresql/pg_hba.conf \
+        /var/lib/pgsql/*/data/pg_hba.conf \
+        /var/lib/pgsql/data/pg_hba.conf \
+        /usr/local/pgsql/data/pg_hba.conf \
+        /var/lib/postgresql/*/main/pg_hba.conf; do
+        # expand glob
+        for f in $candidate; do
+            [ -f "$f" ] && echo "$f" && return
+        done
+    done
+    # Last resort: recursive search
+    find /etc /var/lib/pgsql /var/lib/postgresql /usr/local/pgsql \
+        -name pg_hba.conf 2>/dev/null | head -1
 }
 
 _pg_reload() {
