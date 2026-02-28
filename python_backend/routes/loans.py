@@ -610,6 +610,240 @@ async def export_loans(org_id: str, export_type: str = "all", status: str = None
         tenant_session.close()
         tenant_ctx.close()
 
+@router.post("/{org_id}/loans/eligibility-check")
+async def check_loan_eligibility(
+    org_id: str,
+    payload: dict,
+    user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Quick field eligibility check — returns pass/fail for each criterion."""
+    from datetime import date as date_type
+    tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
+    require_any_permission(membership, ["loans:read", "loans:write"], db)
+    tenant_session = tenant_ctx.create_session()
+    try:
+        member_id = payload.get("member_id")
+        product_id = payload.get("loan_product_id")
+        amount = Decimal(str(payload.get("amount", 0)))
+        term_months = int(payload.get("term_months", 12))
+        collateral_value = Decimal(str(payload.get("collateral_value", 0)))
+
+        member = tenant_session.query(Member).filter(Member.id == member_id).first()
+        if not member:
+            raise HTTPException(status_code=404, detail="Member not found")
+
+        product = tenant_session.query(LoanProduct).filter(LoanProduct.id == product_id).first()
+        if not product:
+            raise HTTPException(status_code=404, detail="Loan product not found")
+
+        checks = []
+        all_passed = True
+
+        # 1. Member active
+        is_active = member.status == "active"
+        checks.append({
+            "key": "member_status",
+            "label": "Member Status",
+            "passed": is_active,
+            "message": "Member is active and in good standing." if is_active else f"Member status is '{member.status}'. Only active members can apply.",
+        })
+        if not is_active:
+            all_passed = False
+
+        # 2. Amount within product range
+        in_range = product.min_amount <= amount <= product.max_amount
+        checks.append({
+            "key": "amount_range",
+            "label": "Loan Amount Range",
+            "passed": in_range,
+            "message": f"Requested {float(amount):,.2f} is within the product range of {float(product.min_amount):,.2f} – {float(product.max_amount):,.2f}." if in_range
+                       else f"Requested {float(amount):,.2f} is outside the product range ({float(product.min_amount):,.2f} – {float(product.max_amount):,.2f}).",
+        })
+        if not in_range:
+            all_passed = False
+
+        # 3. Term within range
+        term_ok = product.min_term_months <= term_months <= product.max_term_months
+        checks.append({
+            "key": "term_range",
+            "label": "Loan Term",
+            "passed": term_ok,
+            "message": f"Requested term of {term_months} months is within the allowed range ({product.min_term_months}–{product.max_term_months} months)." if term_ok
+                       else f"Requested term of {term_months} months is outside the allowed range ({product.min_term_months}–{product.max_term_months} months).",
+        })
+        if not term_ok:
+            all_passed = False
+
+        # 4. Shares-based eligibility
+        shares_balance = member.shares_balance or Decimal("0")
+        shares_multiplier = product.shares_multiplier or Decimal("0")
+        min_shares_req = product.min_shares_required or Decimal("0")
+        max_from_shares = shares_balance * shares_multiplier if shares_multiplier > 0 else None
+
+        if shares_multiplier > 0:
+            shares_ok = amount <= max_from_shares
+            checks.append({
+                "key": "shares_coverage",
+                "label": "Shares Coverage",
+                "passed": shares_ok,
+                "message": f"Shares balance {float(shares_balance):,.2f} × {float(shares_multiplier)} = {float(max_from_shares):,.2f} covers the loan." if shares_ok
+                           else f"Shares balance {float(shares_balance):,.2f} × {float(shares_multiplier)} = {float(max_from_shares):,.2f} — insufficient to cover {float(amount):,.2f}.",
+            })
+            if not shares_ok:
+                all_passed = False
+        elif min_shares_req > 0:
+            shares_ok = shares_balance >= min_shares_req
+            checks.append({
+                "key": "min_shares",
+                "label": "Minimum Shares",
+                "passed": shares_ok,
+                "message": f"Shares balance {float(shares_balance):,.2f} meets the minimum requirement of {float(min_shares_req):,.2f}." if shares_ok
+                           else f"Shares balance {float(shares_balance):,.2f} is below the minimum required {float(min_shares_req):,.2f}.",
+            })
+            if not shares_ok:
+                all_passed = False
+
+        # 5. Savings balance info (informational)
+        savings_total = (member.savings_balance or Decimal("0")) + (member.deposits_balance or Decimal("0"))
+        checks.append({
+            "key": "savings_info",
+            "label": "Savings & Deposits",
+            "passed": True,
+            "message": f"Member has {float(savings_total):,.2f} in savings and deposits (shares: {float(shares_balance):,.2f}).",
+            "informational": True,
+        })
+
+        # 6. Multiple loans check
+        active_loan_statuses = ["pending", "approved", "disbursed", "defaulted", "restructured"]
+        if not product.allow_multiple_loans:
+            existing = tenant_session.query(LoanApplication).filter(
+                LoanApplication.member_id == member_id,
+                LoanApplication.loan_product_id == product_id,
+                LoanApplication.status.in_(active_loan_statuses)
+            ).first()
+            no_conflict = existing is None
+            checks.append({
+                "key": "multiple_loans",
+                "label": "Active Loans",
+                "passed": no_conflict,
+                "message": "No existing active loan for this product." if no_conflict
+                           else f"Member already has an active {product.name} loan ({existing.application_number}). This product does not allow multiple loans.",
+            })
+            if not no_conflict:
+                all_passed = False
+
+        # 7. Good standing check
+        if product.require_good_standing:
+            active_loans = tenant_session.query(LoanApplication).filter(
+                LoanApplication.member_id == member_id,
+                LoanApplication.status.in_(["disbursed", "defaulted", "restructured"])
+            ).all()
+            today = date_type.today()
+            overdue = False
+            for loan in active_loans:
+                overdue_inst = tenant_session.query(LoanInstalment).filter(
+                    LoanInstalment.loan_id == loan.id,
+                    LoanInstalment.status.in_(["pending", "partially_paid"]),
+                    LoanInstalment.due_date < today
+                ).first()
+                if overdue_inst:
+                    overdue = True
+                    break
+            checks.append({
+                "key": "good_standing",
+                "label": "Good Standing",
+                "passed": not overdue,
+                "message": "Member has no overdue loan repayments." if not overdue else "Member has overdue repayments on an existing loan. All loans must be in good standing.",
+            })
+            if overdue:
+                all_passed = False
+
+        # 8. Collateral check
+        if product.requires_collateral and float(product.min_ltv_coverage or 0) > 0:
+            min_coverage_pct = float(product.min_ltv_coverage) / 100.0
+            required_collateral_value = float(amount) * min_coverage_pct
+            provided = float(collateral_value)
+            collateral_ok = provided >= required_collateral_value
+            checks.append({
+                "key": "collateral",
+                "label": "Collateral Coverage",
+                "passed": collateral_ok,
+                "message": f"Provided collateral value {provided:,.2f} covers the required {required_collateral_value:,.2f} ({float(product.min_ltv_coverage):.0f}% of loan)." if collateral_ok
+                           else f"Collateral value {provided:,.2f} is below the required {required_collateral_value:,.2f} ({float(product.min_ltv_coverage):.0f}% of loan amount).",
+            })
+            if not collateral_ok:
+                all_passed = False
+        elif product.requires_collateral and float(collateral_value) == 0:
+            checks.append({
+                "key": "collateral",
+                "label": "Collateral Required",
+                "passed": False,
+                "message": "This product requires collateral. Please provide the estimated collateral value.",
+            })
+            all_passed = False
+
+        # Calculate estimated monthly payment (reducing balance)
+        monthly_rate = float(product.interest_rate) / 100.0
+        if product.interest_rate_period == "annual":
+            monthly_rate = monthly_rate / 12.0
+        estimated_payment = 0.0
+        if monthly_rate > 0 and term_months > 0:
+            estimated_payment = float(amount) * (monthly_rate * (1 + monthly_rate) ** term_months) / ((1 + monthly_rate) ** term_months - 1)
+        elif term_months > 0:
+            estimated_payment = float(amount) / term_months
+
+        # Fee estimates
+        processing_fee = float(amount) * float(product.processing_fee or 0) / 100.0
+        insurance_fee = float(amount) * float(product.insurance_fee or 0) / 100.0
+        appraisal_fee = float(product.appraisal_fee or 0)
+        total_fees = processing_fee + insurance_fee + appraisal_fee
+
+        # Max eligible from shares
+        max_eligible = None
+        if shares_multiplier > 0:
+            max_eligible = float(shares_balance * shares_multiplier)
+
+        return {
+            "eligible": all_passed,
+            "checks": checks,
+            "member": {
+                "id": member.id,
+                "name": f"{member.first_name} {member.last_name}",
+                "member_number": member.member_number,
+                "status": member.status,
+                "savings_balance": float(member.savings_balance or 0),
+                "shares_balance": float(shares_balance),
+                "deposits_balance": float(member.deposits_balance or 0),
+            },
+            "product": {
+                "id": product.id,
+                "name": product.name,
+                "interest_rate": float(product.interest_rate),
+                "interest_rate_period": product.interest_rate_period,
+                "requires_guarantor": product.requires_guarantor,
+                "min_guarantors": product.min_guarantors,
+                "requires_collateral": product.requires_collateral,
+            },
+            "requested": {
+                "amount": float(amount),
+                "term_months": term_months,
+                "collateral_value": float(collateral_value),
+            },
+            "estimates": {
+                "monthly_payment": round(estimated_payment, 2),
+                "processing_fee": round(processing_fee, 2),
+                "insurance_fee": round(insurance_fee, 2),
+                "appraisal_fee": round(appraisal_fee, 2),
+                "total_fees": round(total_fees, 2),
+                "total_repayable": round(estimated_payment * term_months, 2),
+            },
+            "max_eligible_amount": max_eligible,
+        }
+    finally:
+        tenant_session.close()
+        tenant_ctx.close()
+
 @router.get("/{org_id}/loans/{loan_id}")
 async def get_loan(org_id: str, loan_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
