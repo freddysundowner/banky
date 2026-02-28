@@ -467,7 +467,7 @@ function StatCard({
           {isLoading ? (
             <Skeleton className="h-5 md:h-7 w-16 md:w-20 mb-0.5 md:mb-1" />
           ) : (
-            <p className="text-base sm:text-lg md:text-2xl font-bold truncate">{value ?? 0}</p>
+            <p className="text-base sm:text-lg md:text-2xl font-bold leading-tight">{value ?? 0}</p>
           )}
           <p className="text-[11px] md:text-sm text-muted-foreground truncate">{label}</p>
         </div>
