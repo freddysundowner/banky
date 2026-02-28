@@ -1384,14 +1384,12 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
             <TabsTrigger value="guarantors">Guarantors</TabsTrigger>
             <TabsTrigger value="collateral" data-testid="tab-collateral">
               Collateral
-              {(() => {
-                const lp = products?.find((p: any) => p.id === (selectedLoan as any).loan_product_id);
-                if (!(lp as any)?.requires_collateral) return null;
+              {(selectedLoan as any).product_requires_collateral && (() => {
                 const loanAmt = parseFloat((selectedLoan as any).amount || "0");
-                const minLtv = parseFloat((lp as any).min_ltv_coverage || "0");
+                const minLtv = parseFloat((selectedLoan as any).product_min_ltv_coverage || "0");
                 const totalLtvValue = (selectedLoanCollateral || []).reduce((sum: number, item: any) => {
                   const val = parseFloat(item.appraised_value || item.declared_value || "0");
-                  const ltv = parseFloat(item.collateral_type?.ltv_percent || "0") / 100;
+                  const ltv = parseFloat(item.ltv_percent || "0") / 100;
                   return sum + val * ltv;
                 }, 0);
                 const coverage = loanAmt > 0 ? (totalLtvValue / loanAmt) * 100 : 0;
@@ -1417,14 +1415,13 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
           </TabsContent>
           <TabsContent value="collateral" className="mt-4">
             {(() => {
-              const lp = products?.find((p: any) => p.id === (selectedLoan as any).loan_product_id) as any;
-              const requiresCollateral = lp?.requires_collateral;
-              const minLtv = parseFloat(lp?.min_ltv_coverage || "0");
+              const requiresCollateral = (selectedLoan as any).product_requires_collateral;
+              const minLtv = parseFloat((selectedLoan as any).product_min_ltv_coverage || "0");
               const loanAmt = parseFloat((selectedLoan as any).amount || "0");
               const items = selectedLoanCollateral || [];
               const totalLtvValue = items.reduce((sum: number, item: any) => {
                 const val = parseFloat(item.appraised_value || item.declared_value || "0");
-                const ltv = parseFloat(item.collateral_type?.ltv_percent || "0") / 100;
+                const ltv = parseFloat(item.ltv_percent || "0") / 100;
                 return sum + val * ltv;
               }, 0);
               const coveragePct = loanAmt > 0 ? (totalLtvValue / loanAmt) * 100 : 0;
@@ -1457,7 +1454,7 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                       {items.map((item: any) => {
                         const appraisedVal = parseFloat(item.appraised_value || "0");
                         const declaredVal = parseFloat(item.declared_value || "0");
-                        const ltvPct = parseFloat(item.collateral_type?.ltv_percent || "0");
+                        const ltvPct = parseFloat(item.ltv_percent || "0");
                         const effectiveVal = appraisedVal || declaredVal;
                         const ltvVal = effectiveVal * (ltvPct / 100);
                         return (
@@ -1465,8 +1462,8 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
                             <div className="flex items-center gap-3">
                               <Shield className="h-4 w-4 text-muted-foreground shrink-0" />
                               <div>
-                                <div className="font-medium text-sm">{item.description || item.collateral_type?.name || "—"}</div>
-                                <div className="text-xs text-muted-foreground">{item.collateral_type?.name} · {item.owner_name} {item.document_ref ? `· ${item.document_ref}` : ""}</div>
+                                <div className="font-medium text-sm">{item.description || item.collateral_type_name || "—"}</div>
+                                <div className="text-xs text-muted-foreground">{item.collateral_type_name} · {item.owner_name} {item.document_ref ? `· ${item.document_ref}` : ""}</div>
                               </div>
                             </div>
                             <div className="text-right">

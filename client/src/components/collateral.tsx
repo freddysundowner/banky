@@ -653,7 +653,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
       </Tabs>
 
       {/* ── Add Collateral Item Dialog ────────────────────────────────────────── */}
-      <Dialog open={showAddItem} onOpenChange={(o) => { setShowAddItem(o); if (!o) { setLoanSearch(""); setSelectedLoanLabel(""); setLoanDropdownOpen(false); } }}>
+      <Dialog open={showAddItem} onOpenChange={(o) => { setShowAddItem(o); if (!o) { setLoanSearch(""); setSelectedLoanLabel(""); setLoanDropdownOpen(false); itemForm.reset(); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Register Collateral Item</DialogTitle></DialogHeader>
           <Form {...itemForm}>

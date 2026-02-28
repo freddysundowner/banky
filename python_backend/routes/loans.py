@@ -632,6 +632,8 @@ async def get_loan(org_id: str, loan_id: str, user=Depends(get_current_user), db
         loan_dict["member_first_name"] = member.first_name if member else ""
         loan_dict["member_last_name"] = member.last_name if member else ""
         loan_dict["product_name"] = product.name if product else ""
+        loan_dict["product_requires_collateral"] = bool(product.requires_collateral) if product else False
+        loan_dict["product_min_ltv_coverage"] = float(product.min_ltv_coverage or 0) if product else 0.0
         loan_dict["created_by_name"] = f"{created_by.first_name} {created_by.last_name}" if created_by else None
         loan_dict["reviewed_by_name"] = f"{reviewed_by.first_name} {reviewed_by.last_name}" if reviewed_by else None
         
