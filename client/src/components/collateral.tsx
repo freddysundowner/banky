@@ -15,6 +15,10 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
@@ -171,6 +175,8 @@ export default function CollateralManagement({ organizationId }: CollateralProps
   const [showItemDetail, setShowItemDetail] = useState<any>(null);
   const [showEditRevalDate, setShowEditRevalDate] = useState<any>(null);
   const [showAddType, setShowAddType] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; title: string; message: string; onConfirm: () => void }>({ open: false, title: "", message: "", onConfirm: () => {} });
+  const openConfirm = (title: string, message: string, onConfirm: () => void) => setConfirmDialog({ open: true, title, message, onConfirm });
   const [editType, setEditType] = useState<any>(null);
   const [valuerSearch, setValuerSearch] = useState("");
   const [valuerSearchDebounced, setValuerSearchDebounced] = useState("");
@@ -541,7 +547,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                                 <Clock className="h-4 w-4 mr-2" /> Edit Revaluation Date
                               </DropdownMenuItem>
                               {item.status === "registered" && (
-                                <DropdownMenuItem onClick={() => { if (confirm(`Place a lien on "${item.description}"? This will lock the asset until explicitly released.`)) lienMutation.mutate(item.id); }}>
+                                <DropdownMenuItem onClick={() => openConfirm("Place Lien", `Place a lien on "${item.description}"? This will lock the asset until explicitly released.`, () => lienMutation.mutate(item.id))}>
                                   <Lock className="h-4 w-4 mr-2" /> Place Lien
                                 </DropdownMenuItem>
                               )}
@@ -559,7 +565,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                                 <ShieldCheck className="h-4 w-4 mr-2" /> Add Insurance
                               </DropdownMenuItem>
                               {item.status !== "under_lien" && (
-                                <DropdownMenuItem className="text-destructive" onClick={() => { if (confirm(`Delete collateral: ${item.description}?`)) deleteItemMutation.mutate(item.id); }}>
+                                <DropdownMenuItem className="text-destructive" onClick={() => openConfirm("Delete Collateral", `Delete collateral item "${item.description}"? This cannot be undone.`, () => deleteItemMutation.mutate(item.id))}>
                                   <Trash2 className="h-4 w-4 mr-2" /> Delete
                                 </DropdownMenuItem>
                               )}
@@ -628,7 +634,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                               onClick={() => { setUploadingInsuranceId(p.id); insuranceFileRef.current?.click(); }}>
                               {uploadingInsuranceId === p.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
                             </Button>
-                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => { if (confirm("Delete this insurance policy?")) deleteInsuranceMutation.mutate(p.id); }}>
+                            <Button variant="ghost" size="icon" className="text-destructive" onClick={() => openConfirm("Delete Policy", `Delete insurance policy "${p.policy_number}"? This cannot be undone.`, () => deleteInsuranceMutation.mutate(p.id))}>
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
@@ -772,7 +778,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                               <Edit className="h-4 w-4 mr-2" /> Edit
                             </DropdownMenuItem>
                             {!t.is_system && (
-                              <DropdownMenuItem className="text-destructive" onClick={() => { if (confirm(`Delete type: ${t.name}?`)) deleteTypeMutation.mutate(t.id); }}>
+                              <DropdownMenuItem className="text-destructive" onClick={() => openConfirm("Delete Type", `Delete collateral type "${t.name}"? This cannot be undone.`, () => deleteTypeMutation.mutate(t.id))}>
                                 <Trash2 className="h-4 w-4 mr-2" /> Delete
                               </DropdownMenuItem>
                             )}
@@ -837,7 +843,7 @@ export default function CollateralManagement({ organizationId }: CollateralProps
                               <DropdownMenuItem onClick={() => { setEditValuer(v); valuerForm.reset({ name: v.name, license_number: v.license_number ?? "", contact_phone: v.contact_phone ?? "", contact_email: v.contact_email ?? "", location: v.location ?? "", physical_address: v.physical_address ?? "", notes: v.notes ?? "" }); }}>
                                 <Edit className="h-4 w-4 mr-2" /> Edit
                               </DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive" onClick={() => { if (confirm(`Remove "${v.name}" from the registry?`)) deleteValuerMutation.mutate(v.id); }}>
+                              <DropdownMenuItem className="text-destructive" onClick={() => openConfirm("Remove Valuer", `Remove "${v.name}" from the valuer registry? This cannot be undone.`, () => deleteValuerMutation.mutate(v.id))}>
                                 <Trash2 className="h-4 w-4 mr-2" /> Remove
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -856,6 +862,22 @@ export default function CollateralManagement({ organizationId }: CollateralProps
       {/* Hidden file input for insurance document upload */}
       <input ref={insuranceFileRef} type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
         onChange={e => { const f = e.target.files?.[0]; if (f && uploadingInsuranceId) uploadInsuranceDocument(uploadingInsuranceId, f); }} />
+
+      {/* ── Confirmation Dialog ───────────────────────────────────────────────── */}
+      <AlertDialog open={confirmDialog.open} onOpenChange={o => !o && setConfirmDialog(d => ({ ...d, open: false }))}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmDialog.title}</AlertDialogTitle>
+            <AlertDialogDescription>{confirmDialog.message}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { confirmDialog.onConfirm(); setConfirmDialog(d => ({ ...d, open: false })); }}>
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* ── Add / Edit Valuer Dialog ──────────────────────────────────────────── */}
       {(showAddValuer || !!editValuer) && (
