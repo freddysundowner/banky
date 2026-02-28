@@ -277,9 +277,12 @@ async def get_institution_health(org_id: str, user=Depends(get_current_user), db
 
         if expected_monthly > 0:
             collection_efficiency = float(rolling_repayments / expected_monthly * 100)
-        else:
-            # No monthly repayment configured — treat as unmeasurable, penalise conservatively
+        elif loans:
+            # Loans exist but none have monthly_repayment configured — penalise for missing data
             collection_efficiency = 0
+        else:
+            # No active loans at all — nothing to collect, skip the CE penalty
+            collection_efficiency = 80  # neutral: no deduction
 
         health_score = 100
         if par_ratio > 5:
