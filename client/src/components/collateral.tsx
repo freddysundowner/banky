@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -144,6 +144,11 @@ export default function CollateralManagement({ organizationId }: CollateralProps
   const [typeFilter, setTypeFilter] = useState("");
 
   const [showAddItem, setShowAddItem] = useState(false);
+  const [loanSearch, setLoanSearch] = useState("");
+  const [loanSearchDebounced, setLoanSearchDebounced] = useState("");
+  const [loanDropdownOpen, setLoanDropdownOpen] = useState(false);
+  const [selectedLoanLabel, setSelectedLoanLabel] = useState("");
+  const loanSearchRef = useRef<HTMLDivElement>(null);
   const [showValuate, setShowValuate] = useState<any>(null);
   const [showRelease, setShowRelease] = useState<any>(null);
   const [showLiquidate, setShowLiquidate] = useState<any>(null);
@@ -193,6 +198,30 @@ export default function CollateralManagement({ organizationId }: CollateralProps
     queryFn: () => fetch(`/api/organizations/${organizationId}/collateral/items/${showItemDetail?.id}`, { credentials: "include" }).then(r => r.json()),
     enabled: !!showItemDetail?.id,
   });
+
+  useEffect(() => {
+    const t = setTimeout(() => setLoanSearchDebounced(loanSearch), 300);
+    return () => clearTimeout(t);
+  }, [loanSearch]);
+
+  const loanSearchQuery = useQuery<any>({
+    queryKey: [`/api/organizations/${organizationId}/loans`, "collateral-picker", loanSearchDebounced],
+    queryFn: () =>
+      fetch(`/api/organizations/${organizationId}/loans?search=${encodeURIComponent(loanSearchDebounced)}&status=active&per_page=20`, { credentials: "include" })
+        .then(r => r.json())
+        .then(d => d.items ?? d ?? []),
+    enabled: showAddItem && loanSearchDebounced.length >= 1,
+  });
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (loanSearchRef.current && !loanSearchRef.current.contains(e.target as Node)) {
+        setLoanDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // ── Forms ─────────────────────────────────────────────────────────────────
 
@@ -619,13 +648,63 @@ export default function CollateralManagement({ organizationId }: CollateralProps
       </Tabs>
 
       {/* ── Add Collateral Item Dialog ────────────────────────────────────────── */}
-      <Dialog open={showAddItem} onOpenChange={setShowAddItem}>
+      <Dialog open={showAddItem} onOpenChange={(o) => { setShowAddItem(o); if (!o) { setLoanSearch(""); setSelectedLoanLabel(""); setLoanDropdownOpen(false); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader><DialogTitle>Register Collateral Item</DialogTitle></DialogHeader>
           <Form {...itemForm}>
             <form onSubmit={itemForm.handleSubmit(d => addItemMutation.mutate(d))} className="space-y-3">
               <FormField control={itemForm.control} name="loan_id" render={({ field }) => (
-                <FormItem><FormLabel>Loan ID</FormLabel><FormControl><Input {...field} data-testid="input-collateral-loan-id" placeholder="Paste the loan application ID" /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel>Loan</FormLabel>
+                  <div ref={loanSearchRef} className="relative">
+                    <Input
+                      data-testid="input-collateral-loan-search"
+                      placeholder="Search by member name or loan number..."
+                      value={selectedLoanLabel || loanSearch}
+                      onChange={e => {
+                        setLoanSearch(e.target.value);
+                        setSelectedLoanLabel("");
+                        field.onChange("");
+                        setLoanDropdownOpen(true);
+                      }}
+                      onFocus={() => { if (!selectedLoanLabel) setLoanDropdownOpen(true); }}
+                      className={selectedLoanLabel ? "bg-muted text-foreground font-medium" : ""}
+                    />
+                    {selectedLoanLabel && (
+                      <button type="button" className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground text-xs px-1"
+                        onClick={() => { setSelectedLoanLabel(""); setLoanSearch(""); field.onChange(""); setLoanDropdownOpen(false); }}>
+                        ✕
+                      </button>
+                    )}
+                    {loanDropdownOpen && loanSearch.length >= 1 && (
+                      <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover shadow-lg max-h-52 overflow-y-auto">
+                        {loanSearchQuery.isLoading && (
+                          <div className="px-3 py-2 text-sm text-muted-foreground">Searching...</div>
+                        )}
+                        {!loanSearchQuery.isLoading && (loanSearchQuery.data ?? []).length === 0 && (
+                          <div className="px-3 py-2 text-sm text-muted-foreground">No active loans found</div>
+                        )}
+                        {(loanSearchQuery.data ?? []).map((loan: any) => (
+                          <button
+                            key={loan.id}
+                            type="button"
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground flex flex-col"
+                            onMouseDown={() => {
+                              field.onChange(loan.id);
+                              setSelectedLoanLabel(`${loan.application_number} — ${loan.member_name}`);
+                              setLoanSearch("");
+                              setLoanDropdownOpen(false);
+                            }}
+                          >
+                            <span className="font-medium">{loan.application_number}</span>
+                            <span className="text-muted-foreground text-xs">{loan.member_name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <FormMessage />
+                </FormItem>
               )} />
               <FormField control={itemForm.control} name="collateral_type_id" render={({ field }) => (
                 <FormItem><FormLabel>Collateral Type</FormLabel>
