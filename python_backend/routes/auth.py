@@ -295,8 +295,8 @@ async def register(data: UserRegister, request: Request, response: Response, db:
         db.commit()
 
         try:
-            from services.local_tenant import local_tenant_service
-            tenant_result = await local_tenant_service.create_tenant_database(str(org.id), org_name)
+            from services.tenant_provisioner import provision_tenant_database
+            tenant_result = await provision_tenant_database(str(org.id), org_name)
             org.connection_string = tenant_result["connection_string"]
             db.commit()
         except Exception as tenant_err:

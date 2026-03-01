@@ -360,8 +360,8 @@ async def create_organization(data: dict, admin: AdminUser = Depends(require_adm
         db.commit()
 
         try:
-            from services.local_tenant import local_tenant_service
-            result = await local_tenant_service.create_tenant_database(str(org.id), name)
+            from services.tenant_provisioner import provision_tenant_database
+            result = await provision_tenant_database(str(org.id), name)
             org.connection_string = result["connection_string"]
             db.commit()
         except Exception as tenant_err:
