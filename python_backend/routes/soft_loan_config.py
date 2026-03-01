@@ -12,7 +12,7 @@ from typing import Optional
 
 from models.database import get_db
 from routes.auth import get_current_user
-from routes.common import get_tenant_session_context
+from routes.common import get_tenant_session_context, require_role
 
 router = APIRouter()
 
@@ -93,7 +93,8 @@ def get_soft_loan_config(
 ):
     from models.tenant import SoftLoanConfig
 
-    tenant_ctx, _ = get_tenant_session_context(org_id, user, db)
+    tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
+    require_role(membership, ["owner", "admin"])
     ts = tenant_ctx.session()
     try:
         config = ts.query(SoftLoanConfig).first()
@@ -116,7 +117,8 @@ def update_soft_loan_config(
 ):
     from models.tenant import SoftLoanConfig
 
-    tenant_ctx, _ = get_tenant_session_context(org_id, user, db)
+    tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
+    require_role(membership, ["owner", "admin"])
     ts = tenant_ctx.session()
     try:
         config = ts.query(SoftLoanConfig).first()

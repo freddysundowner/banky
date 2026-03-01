@@ -18,6 +18,10 @@ class SoftLoanView extends GetView<SoftLoanController> {
           return const Center(child: CircularProgressIndicator());
         }
 
+        if (controller.hasError.value) {
+          return _buildError();
+        }
+
         if (!controller.enabled.value) {
           return _buildUnavailable();
         }
@@ -50,6 +54,37 @@ class SoftLoanView extends GetView<SoftLoanController> {
           ),
         );
       }),
+    );
+  }
+
+  Widget _buildError() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.cloud_off, size: 64, color: AppColors.textSecondary.withOpacity(0.4)),
+            const SizedBox(height: 16),
+            const Text(
+              'Could not load soft loan data',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Check your connection and try again.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: 24),
+            OutlinedButton.icon(
+              onPressed: controller.loadEligibility,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -178,40 +213,56 @@ class SoftLoanView extends GetView<SoftLoanController> {
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 12),
-        Obx(() => Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  controller.formatCurrency(1000),
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+        Obx(() {
+          final sliderMin = controller.sliderMin;
+          final sliderMax = controller.limit.value;
+          if (sliderMax <= sliderMin) {
+            return Center(
+              child: Text(
+                controller.formatCurrency(sliderMax),
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
                 ),
-                Text(
-                  controller.formatCurrency(controller.limit.value),
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Slider(
-              value: controller.selectedAmount.value.clamp(1000, controller.limit.value),
-              min: 1000,
-              max: controller.limit.value,
-              divisions: ((controller.limit.value - 1000) / 500).floor().clamp(1, 200),
-              activeColor: AppColors.primary,
-              onChanged: (val) => controller.selectedAmount.value = val,
-            ),
-            Text(
-              controller.formatCurrency(controller.selectedAmount.value),
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
               ),
-            ),
-          ],
-        )),
+            );
+          }
+          return Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    controller.formatCurrency(sliderMin),
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                  ),
+                  Text(
+                    controller.formatCurrency(sliderMax),
+                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Slider(
+                value: controller.selectedAmount.value.clamp(sliderMin, sliderMax),
+                min: sliderMin,
+                max: sliderMax,
+                divisions: ((sliderMax - sliderMin) / 500).floor().clamp(1, 200),
+                activeColor: AppColors.primary,
+                onChanged: (val) => controller.selectedAmount.value = val,
+              ),
+              Text(
+                controller.formatCurrency(controller.selectedAmount.value),
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          );
+        }),
       ],
     );
   }
@@ -285,7 +336,7 @@ class SoftLoanView extends GetView<SoftLoanController> {
     return Obx(() => SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: controller.isApplying.value || controller.selectedAmount.value < 1000
+        onPressed: controller.isApplying.value || controller.selectedAmount.value <= 0
             ? null
             : _handleApply,
         style: ElevatedButton.styleFrom(
@@ -368,7 +419,7 @@ class SoftLoanView extends GetView<SoftLoanController> {
     } else {
       Get.snackbar(
         'Failed',
-        'Could not process your loan. Please try again.',
+        result?['detail'] ?? 'Could not process your loan. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColors.error.withOpacity(0.9),
         colorText: Colors.white,

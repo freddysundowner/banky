@@ -255,6 +255,16 @@ def apply_soft_loan(data: SoftLoanApplyRequest, ctx: dict = Depends(get_current_
                 detail=f"Amount exceeds your soft loan limit of {eligibility['limit']:,.2f}",
             )
 
+        # Re-check for an existing active soft loan inside the transaction
+        # (guards against concurrent requests slipping through the eligibility check)
+        duplicate = ts.query(LoanApplication).filter(
+            LoanApplication.member_id == member.id,
+            LoanApplication.is_soft_loan == True,
+            LoanApplication.status.in_(["pending", "approved", "active", "disbursed"]),
+        ).first()
+        if duplicate:
+            raise HTTPException(status_code=409, detail="You already have an active soft loan")
+
         # Find or use any active loan product — soft loans are standalone
         soft_product = ts.query(LoanProduct).filter(
             LoanProduct.is_active == True

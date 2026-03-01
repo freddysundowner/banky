@@ -9,6 +9,7 @@ class SoftLoanController extends GetxController {
 
   final isLoading = true.obs;
   final isApplying = false.obs;
+  final hasError = false.obs;
 
   final enabled = false.obs;
   final eligible = false.obs;
@@ -33,6 +34,7 @@ class SoftLoanController extends GetxController {
 
   Future<void> loadEligibility() async {
     isLoading.value = true;
+    hasError.value = false;
     try {
       final response = await _api.get(ApiConstants.softLoanEligibility);
       if (response.statusCode == 200) {
@@ -55,13 +57,17 @@ class SoftLoanController extends GetxController {
         if (eligible.value && selectedAmount.value == 0) {
           selectedAmount.value = limit.value;
         }
+      } else {
+        hasError.value = true;
       }
     } catch (e) {
-      print('Error loading soft loan eligibility: $e');
+      hasError.value = true;
     } finally {
       isLoading.value = false;
     }
   }
+
+  double get sliderMin => limit.value > 0 ? limit.value.clamp(1.0, 1000.0) : 1.0;
 
   double get totalInterest =>
       (selectedAmount.value * interestRate.value / 100) * termMonths.value;
@@ -87,7 +93,7 @@ class SoftLoanController extends GetxController {
         return Map<String, dynamic>.from(response.data);
       }
     } catch (e) {
-      print('Error applying for soft loan: $e');
+      // error surfaced by caller returning null
     } finally {
       isApplying.value = false;
     }
