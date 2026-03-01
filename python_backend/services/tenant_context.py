@@ -4,7 +4,7 @@ from models.master import Organization, OrganizationMember
 from models.tenant import TenantBase
 
 _migrated_tenants = set()
-_migration_version = 34  # Increment to force re-migration
+_migration_version = 35  # Increment to force re-migration
 
 def _get_db_migration_version(engine):
     """Check the migration version stored in the tenant database"""
@@ -959,6 +959,9 @@ def run_tenant_schema_migration(engine):
 
         # v35: Insurance policy document upload
         conn.execute(text("ALTER TABLE collateral_insurance ADD COLUMN IF NOT EXISTS document_path VARCHAR(500)"))
+
+        # v35 (continued): Soft loan support
+        conn.execute(text("ALTER TABLE loan_applications ADD COLUMN IF NOT EXISTS is_soft_loan BOOLEAN DEFAULT FALSE"))
 
         conn.commit()
     

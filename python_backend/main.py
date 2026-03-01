@@ -48,6 +48,7 @@ from routes.notifications import router as notifications_router
 from routes.exports import router as exports_router
 from routes.subscription_payments import router as subscription_payments_router
 from routes.mobile import router as mobile_router
+from routes.soft_loan_config import router as soft_loan_config_router
 from sqlalchemy import text
 from models.database import engine, Base
 from middleware.audit import AuditMiddleware
@@ -537,6 +538,7 @@ app.include_router(notifications_router, prefix="/api/organizations", tags=["Not
 app.include_router(exports_router, prefix="/api/organizations", tags=["Data Export"])
 app.include_router(subscription_payments_router, prefix="/api/organizations", tags=["Subscription Payments"])
 app.include_router(mobile_router, prefix="/api/mobile", tags=["Mobile App"])
+app.include_router(soft_loan_config_router, prefix="/api/organizations", tags=["Soft Loan Config"])
 
 @app.get("/api/health")
 async def health_check():

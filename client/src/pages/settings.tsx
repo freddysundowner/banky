@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Save, Building2, Smartphone, Users, Clock, Shield, MessageSquare, Mail, Copy, CheckCircle2, Info, Landmark, Play, BarChart3, UserCog, GitBranch, ArrowUpRight, Trash2, AlertTriangle, ChevronDown } from "lucide-react";
+import { Loader2, Save, Building2, Smartphone, Users, Clock, Shield, MessageSquare, Mail, Copy, CheckCircle2, Info, Landmark, Play, BarChart3, UserCog, GitBranch, ArrowUpRight, Trash2, AlertTriangle, ChevronDown, Zap } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import RolesManagement from "@/components/roles-management";
@@ -27,11 +27,12 @@ interface SettingsPageProps {
   isOwner?: boolean;
 }
 
-type SettingsSection = "general" | "loans" | "members" | "sms" | "email" | "mpesa" | "hours" | "roles" | "usage" | "danger";
+type SettingsSection = "general" | "loans" | "soft-loan" | "members" | "sms" | "email" | "mpesa" | "hours" | "roles" | "usage" | "danger";
 
 const navItems: { id: SettingsSection; label: string; icon: typeof Building2; destructive?: boolean; ownerOnly?: boolean }[] = [
   { id: "general", label: "General", icon: Building2 },
   { id: "loans", label: "Loans", icon: Landmark },
+  { id: "soft-loan", label: "Soft Loan", icon: Zap },
   { id: "members", label: "Members", icon: Users },
   { id: "sms", label: "SMS", icon: MessageSquare },
   { id: "email", label: "Email", icon: Mail },
@@ -452,6 +453,154 @@ function LoansSection({ getValue, getBoolValue, updateSetting, organizationId }:
   );
 }
 
+function SoftLoanSection({ organizationId }: { organizationId: string }) {
+  const { toast } = useAppDialog();
+  const [localConfig, setLocalConfig] = useState<Record<string, any> | null>(null);
+
+  const { data: config, isLoading } = useQuery<Record<string, any>>({
+    queryKey: ["/api/organizations", organizationId, "soft-loan-config"],
+    queryFn: async () => {
+      const res = await fetch(`/api/organizations/${organizationId}/soft-loan-config`, { credentials: "include" });
+      return res.json();
+    },
+    enabled: !!organizationId,
+  });
+
+  const effective = localConfig ?? config ?? {};
+
+  const set = (key: string, value: any) => {
+    setLocalConfig((prev) => ({ ...(prev ?? config ?? {}), [key]: value }));
+  };
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("PUT", `/api/organizations/${organizationId}/soft-loan-config`, effective);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "soft-loan-config"] });
+      toast({ title: "Soft loan configuration saved" });
+      setLocalConfig(null);
+    },
+    onError: () => {
+      toast({ title: "Failed to save soft loan config", variant: "destructive" });
+    },
+  });
+
+  if (isLoading) return <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
+
+  const hasChanges = localConfig !== null;
+
+  return (
+    <div className="space-y-6">
+      <SectionHeader title="Soft Loan" description="Configure instant soft loans for mobile app members" />
+
+      <SettingGroup title="Global Settings">
+        <SettingRow>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label className="text-sm font-medium">Enable Soft Loans</Label>
+              <p className="text-sm text-muted-foreground mt-0.5">Allow members to apply for instant soft loans via the mobile app</p>
+            </div>
+            <Switch checked={!!effective.is_enabled} onCheckedChange={(v) => set("is_enabled", v)} data-testid="switch-soft-loan-enabled" />
+          </div>
+        </SettingRow>
+        <SettingRow>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <Label>Maximum Limit</Label>
+              <Input type="number" value={effective.global_max_amount ?? ""} onChange={(e) => set("global_max_amount", parseFloat(e.target.value) || 0)} placeholder="50000" data-testid="input-soft-loan-max" />
+              <p className="text-xs text-muted-foreground">No member can exceed this</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Base Amount</Label>
+              <Input type="number" value={effective.base_amount ?? ""} onChange={(e) => set("base_amount", parseFloat(e.target.value) || 0)} placeholder="0" data-testid="input-soft-loan-base" />
+              <p className="text-xs text-muted-foreground">Every eligible member starts with this</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Interest Rate (% / month)</Label>
+              <Input type="number" value={effective.interest_rate ?? ""} onChange={(e) => set("interest_rate", parseFloat(e.target.value) || 0)} placeholder="10" data-testid="input-soft-loan-rate" />
+              <p className="text-xs text-muted-foreground">Term is fixed at 1 month</p>
+            </div>
+          </div>
+        </SettingRow>
+      </SettingGroup>
+
+      <SettingGroup title="Hard Gates — member must pass all enabled gates">
+        <SettingRow>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label className="text-sm font-medium">Active Account Required</Label>
+              <p className="text-sm text-muted-foreground mt-0.5">Member account must have active status</p>
+            </div>
+            <Switch checked={!!effective.gate_active_member} onCheckedChange={(v) => set("gate_active_member", v)} data-testid="switch-gate-active" />
+          </div>
+        </SettingRow>
+        <SettingRow>
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label className="text-sm font-medium">No Existing Soft Loan</Label>
+              <p className="text-sm text-muted-foreground mt-0.5">Member cannot have an unpaid soft loan</p>
+            </div>
+            <Switch checked={!!effective.gate_no_active_soft_loan} onCheckedChange={(v) => set("gate_no_active_soft_loan", v)} data-testid="switch-gate-no-soft-loan" />
+          </div>
+        </SettingRow>
+        <SettingRow>
+          <div className="space-y-1.5 max-w-xs">
+            <Label>Minimum Membership Duration (months)</Label>
+            <Input type="number" value={effective.gate_min_membership_months ?? 0} onChange={(e) => set("gate_min_membership_months", parseInt(e.target.value) || 0)} placeholder="0" data-testid="input-gate-min-months" />
+            <p className="text-xs text-muted-foreground">Set to 0 to disable this gate</p>
+          </div>
+        </SettingRow>
+      </SettingGroup>
+
+      <SettingGroup title="Scoring Formulas — each adds to the member's limit">
+        {[
+          { key: "f1", label: "Savings Balance Threshold", desc: "Member has savings ≥ minimum amount", extraFields: [{ k: "f1_min_savings", label: "Minimum Savings", placeholder: "5000" }] },
+          { key: "f2", label: "Share Capital Threshold", desc: "Member's shares ≥ minimum amount", extraFields: [{ k: "f2_min_shares", label: "Minimum Shares", placeholder: "5000" }] },
+          { key: "f3", label: "No Overdue Instalments", desc: "Member has no missed or overdue loan payments", extraFields: [] },
+          { key: "f4", label: "Good Repayment History", desc: "Member has fully repaid at least one loan", extraFields: [] },
+          { key: "f5", label: "Consistent Savings Deposits", desc: "Member has deposited savings every month for X months", extraFields: [{ k: "f5_months", label: "Months to check", placeholder: "3" }] },
+          { key: "f6", label: "Long-term Member", desc: "Member has been with the org for X+ months", extraFields: [{ k: "f6_months", label: "Months required", placeholder: "12" }] },
+          { key: "f7", label: "High Transaction Activity", desc: "Member has made X+ transactions in the last 3 months", extraFields: [{ k: "f7_min_transactions", label: "Min transactions", placeholder: "5" }] },
+        ].map(({ key, label, desc, extraFields }) => (
+          <SettingRow key={key}>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <Label className="text-sm font-medium">{label}</Label>
+                  <p className="text-sm text-muted-foreground mt-0.5">{desc}</p>
+                </div>
+                <Switch checked={!!effective[`${key}_enabled`]} onCheckedChange={(v) => set(`${key}_enabled`, v)} data-testid={`switch-${key}-enabled`} />
+              </div>
+              {!!effective[`${key}_enabled`] && (
+                <div className="pl-4 border-l-2 border-primary/20 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {extraFields.map((f) => (
+                    <div key={f.k} className="space-y-1">
+                      <Label className="text-xs">{f.label}</Label>
+                      <Input type="number" value={effective[f.k] ?? ""} onChange={(e) => set(f.k, parseFloat(e.target.value) || 0)} placeholder={f.placeholder} data-testid={`input-${f.k}`} />
+                    </div>
+                  ))}
+                  <div className="space-y-1">
+                    <Label className="text-xs">Contribution Amount</Label>
+                    <Input type="number" value={effective[`${key}_contribution`] ?? ""} onChange={(e) => set(`${key}_contribution`, parseFloat(e.target.value) || 0)} placeholder="5000" data-testid={`input-${key}-contribution`} />
+                  </div>
+                </div>
+              )}
+            </div>
+          </SettingRow>
+        ))}
+      </SettingGroup>
+
+      <div className="flex justify-end">
+        <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !hasChanges} data-testid="button-save-soft-loan">
+          {saveMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          Save Soft Loan Config
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function MembersSection({ getBoolValue, updateSetting, getValue }: any) {
   return (
     <div className="space-y-6">
@@ -848,6 +997,7 @@ export default function SettingsPage({ organizationId, isOwner }: SettingsPagePr
                 <GeneralSection {...sharedProps} staffEmailDomain={staffEmailDomain} setStaffEmailDomain={setStaffEmailDomain} orgInfoChanged={orgInfoChanged} setOrgInfoChanged={setOrgInfoChanged} updateOrgMutation={updateOrgMutation} />
               )}
               {activeSection === "loans" && <LoansSection {...sharedProps} />}
+              {activeSection === "soft-loan" && <SoftLoanSection organizationId={organizationId} />}
               {activeSection === "members" && <MembersSection {...sharedProps} />}
               {activeSection === "sms" && <SmsSection {...sharedProps} />}
               {activeSection === "email" && <EmailSection {...sharedProps} />}

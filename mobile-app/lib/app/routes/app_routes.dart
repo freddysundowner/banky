@@ -17,4 +17,5 @@ abstract class Routes {
   static const profile = '/profile';
   static const statements = '/statements';
   static const notifications = '/notifications';
+  static const softLoan = '/soft-loan';
 }

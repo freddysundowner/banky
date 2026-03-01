@@ -25,6 +25,7 @@ from .profile import router as profile_router
 from .dashboard import router as dashboard_router
 from .transactions import router as transactions_router
 from .loans import router as loans_router
+from .soft_loan import router as soft_loan_router
 from .notifications import router as notifications_router
 from .statements import router as statements_router
 
@@ -36,5 +37,6 @@ router.include_router(profile_router)
 router.include_router(dashboard_router)
 router.include_router(transactions_router)
 router.include_router(loans_router)
+router.include_router(soft_loan_router)
 router.include_router(notifications_router)
 router.include_router(statements_router)

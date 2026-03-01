@@ -28,6 +28,8 @@ import '../modules/statements/statements_binding.dart';
 import '../modules/statements/statements_view.dart';
 import '../modules/notifications/notifications_binding.dart';
 import '../modules/notifications/notifications_view.dart';
+import '../modules/soft_loan/soft_loan_binding.dart';
+import '../modules/soft_loan/soft_loan_view.dart';
 
 part 'app_routes.dart';
 
@@ -106,6 +108,11 @@ class AppPages {
       name: Routes.notifications,
       page: () => const NotificationsView(),
       binding: NotificationsBinding(),
+    ),
+    GetPage(
+      name: Routes.softLoan,
+      page: () => const SoftLoanView(),
+      binding: SoftLoanBinding(),
     ),
   ];
 }

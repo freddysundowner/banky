@@ -287,6 +287,7 @@ class LoanApplication(TenantBase):
     is_restructured = Column(Boolean, default=False)
     interest_deducted_upfront = Column(Boolean, default=False)  # Track if interest was deducted at disbursement
     collateral_deficient = Column(Boolean, default=False)
+    is_soft_loan = Column(Boolean, default=False)
     original_loan_id = Column(String, ForeignKey("loan_applications.id"))
     created_by_id = Column(String, ForeignKey("staff.id"))
     reviewed_by_id = Column(String, ForeignKey("staff.id"))
@@ -1540,3 +1541,55 @@ class CollateralInsurance(TenantBase):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     collateral_item = relationship("CollateralItem", back_populates="insurance_policies")
+
+
+class SoftLoanConfig(TenantBase):
+    """Per-organisation soft loan configuration and scoring formulas."""
+    __tablename__ = "soft_loan_configs"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+    is_enabled = Column(Boolean, default=False)
+    global_max_amount = Column(Numeric(15, 2), default=50000)
+    base_amount = Column(Numeric(15, 2), default=0)
+    interest_rate = Column(Numeric(10, 4), default=10)
+
+    # Hard gates
+    gate_active_member = Column(Boolean, default=True)
+    gate_no_active_soft_loan = Column(Boolean, default=True)
+    gate_min_membership_months = Column(Integer, default=0)
+
+    # F1: Savings balance threshold
+    f1_enabled = Column(Boolean, default=False)
+    f1_min_savings = Column(Numeric(15, 2), default=0)
+    f1_contribution = Column(Numeric(15, 2), default=0)
+
+    # F2: Share capital threshold
+    f2_enabled = Column(Boolean, default=False)
+    f2_min_shares = Column(Numeric(15, 2), default=0)
+    f2_contribution = Column(Numeric(15, 2), default=0)
+
+    # F3: No overdue instalments
+    f3_enabled = Column(Boolean, default=False)
+    f3_contribution = Column(Numeric(15, 2), default=0)
+
+    # F4: Has fully repaid at least one loan
+    f4_enabled = Column(Boolean, default=False)
+    f4_contribution = Column(Numeric(15, 2), default=0)
+
+    # F5: Consistent monthly savings deposits
+    f5_enabled = Column(Boolean, default=False)
+    f5_months = Column(Integer, default=3)
+    f5_contribution = Column(Numeric(15, 2), default=0)
+
+    # F6: Long-term member (beyond minimum gate)
+    f6_enabled = Column(Boolean, default=False)
+    f6_months = Column(Integer, default=12)
+    f6_contribution = Column(Numeric(15, 2), default=0)
+
+    # F7: High transaction activity (last 3 months)
+    f7_enabled = Column(Boolean, default=False)
+    f7_min_transactions = Column(Integer, default=5)
+    f7_contribution = Column(Numeric(15, 2), default=0)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

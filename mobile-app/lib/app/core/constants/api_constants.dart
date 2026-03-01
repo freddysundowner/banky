@@ -52,6 +52,10 @@ class ApiConstants {
   static String memberLoanSchedule(String loanId) => '$_m/me/loans/$loanId/schedule';
   static String memberLoanRepayment(String loanId) => '$_m/me/loans/$loanId/repayments';
 
+  // Soft Loan
+  static const String softLoanEligibility = '$_m/me/soft-loan/eligibility';
+  static const String softLoanApply = '$_m/me/soft-loan/apply';
+
   static const Duration connectionTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
 }
