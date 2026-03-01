@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BankyKit — Marketing Square</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:1080px; height:1080px; overflow:hidden; }
+
+.poster {
+  width:1080px; height:1080px;
+  background:#05102B;
+  font-family:'Inter', sans-serif;
+  position:relative; overflow:hidden;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:80px 90px;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* Radial glow — center */
+.poster::before {
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 40%, rgba(20,71,192,0.55) 0%, transparent 70%);
+  pointer-events:none;
+}
+
+/* Grid */
+.poster::after {
+  content:''; position:absolute; inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size:60px 60px; pointer-events:none;
+}
+
+/* Decorative arc — bottom right */
+.arc {
+  position:absolute; border-radius:50%;
+  border:60px solid rgba(20,71,192,0.18);
+  pointer-events:none;
+}
+.arc1 { width:640px; height:640px; bottom:-260px; right:-180px; }
+.arc2 { width:380px; height:380px; bottom:-60px; right:120px; border-width:40px; opacity:.6; }
+
+/* Top row */
+.top {
+  position:relative; z-index:5;
+  display:flex; align-items:center; justify-content:space-between;
+  width:100%; margin-bottom:64px;
+}
+
+.logo { display:flex; align-items:center; gap:14px; }
+.logo-icon {
+  width:52px; height:52px; border-radius:14px;
+  background:rgba(255,255,255,0.1); border:1.5px solid rgba(255,255,255,0.2);
+  display:flex; align-items:center; justify-content:center; font-size:26px;
+}
+.logo-name { font-size:26px; font-weight:800; color:#fff; letter-spacing:-0.5px; }
+.logo-name span { color:rgba(255,255,255,0.38); font-weight:500; }
+
+.top-badge {
+  font-size:11px; font-weight:600; color:rgba(255,255,255,0.55);
+  border:1px solid rgba(255,255,255,0.15); border-radius:20px;
+  padding:6px 16px; letter-spacing:0.3px;
+}
+
+/* Headline */
+.headline {
+  position:relative; z-index:5;
+  font-size:80px; font-weight:900; color:#fff;
+  text-align:center; line-height:1.0; letter-spacing:-3px;
+  margin-bottom:24px;
+}
+.headline em { font-style:normal; color:#4A8EFF; }
+
+/* Sub */
+.sub {
+  position:relative; z-index:5;
+  font-size:20px; color:rgba(255,255,255,0.58);
+  text-align:center; line-height:1.6; font-weight:400;
+  margin-bottom:52px; max-width:640px;
+}
+
+/* Pill badges */
+.pills {
+  position:relative; z-index:5;
+  display:flex; flex-wrap:wrap; gap:12px;
+  justify-content:center; margin-bottom:56px;
+}
+.pill {
+  display:flex; align-items:center; gap:8px;
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(255,255,255,0.13);
+  border-radius:100px; padding:10px 20px;
+  font-size:15px; font-weight:600; color:rgba(255,255,255,0.88);
+}
+.pill span { font-size:17px; }
+
+/* CTA row */
+.cta-row {
+  position:relative; z-index:5;
+  display:flex; align-items:center; gap:18px;
+}
+
+.btn-primary {
+  background:#1447C0; color:#fff;
+  font-size:17px; font-weight:700;
+  padding:16px 36px; border-radius:12px;
+  letter-spacing:-0.2px;
+  box-shadow:0 6px 28px rgba(20,71,192,0.5);
+}
+.btn-url {
+  font-size:16px; color:rgba(255,255,255,0.5); font-weight:500;
+  letter-spacing:0.2px;
+}
+.btn-url strong { color:#fff; font-weight:700; }
+</style>
+</head>
+<body>
+<div class="poster">
+  <div class="arc arc1"></div>
+  <div class="arc arc2"></div>
+
+  <div class="top">
+    <div class="logo">
+      <div class="logo-icon">🏦</div>
+      <div class="logo-name">Banky<span>Kit</span></div>
+    </div>
+    <div class="top-badge">Banking Management Platform</div>
+  </div>
+
+  <div class="headline">Banking<br><em>simplified.</em></div>
+  <div class="sub">
+    The all-in-one platform for SACCOs and Banks to manage<br>
+    loans, savings, members, and teller operations — effortlessly.
+  </div>
+
+  <div class="pills">
+    <div class="pill"><span>💸</span> Loan Management</div>
+    <div class="pill"><span>🏦</span> Teller Operations</div>
+    <div class="pill"><span>👥</span> Member CRM</div>
+    <div class="pill"><span>📊</span> Analytics</div>
+    <div class="pill"><span>💰</span> Savings & Deposits</div>
+    <div class="pill"><span>📱</span> Mobile App</div>
+    <div class="pill"><span>🛡️</span> Collateral</div>
+    <div class="pill"><span>🔗</span> M-Pesa</div>
+  </div>
+
+  <div class="cta-row">
+    <div class="btn-primary">Try it free</div>
+    <div class="btn-url">Visit <strong>demo.bankykit.com</strong></div>
+  </div>
+</div>
+</body>
+</html>
