@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BankyKit — Marketing WhatsApp Original</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:1080px; height:1920px; overflow:hidden; }
+
+.poster {
+  width:1080px; height:1920px;
+  background:#1447C0;
+  font-family:'Inter', sans-serif;
+  position:relative; overflow:hidden;
+  display:flex; flex-direction:column;
+  align-items:center;
+  padding:90px 80px 80px;
+  -webkit-font-smoothing:antialiased;
+}
+
+.poster::before {
+  content:''; position:absolute; inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.065) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.065) 1px, transparent 1px);
+  background-size:72px 72px; pointer-events:none;
+}
+
+.glow {
+  position:absolute;
+  width:700px; height:500px;
+  background:radial-gradient(ellipse, rgba(255,255,255,0.13) 0%, transparent 70%);
+  top:-100px; left:50%; transform:translateX(-50%);
+  pointer-events:none;
+}
+
+.glow-b {
+  position:absolute;
+  width:600px; height:400px;
+  background:radial-gradient(ellipse, rgba(80,180,255,0.12) 0%, transparent 70%);
+  bottom:-80px; left:50%; transform:translateX(-50%);
+  pointer-events:none;
+}
+
+.logo {
+  position:relative;
+  display:flex; align-items:center; gap:18px;
+  margin-bottom:52px;
+}
+.logo-icon {
+  width:68px; height:68px;
+  background:rgba(255,255,255,0.15);
+  border:2px solid rgba(255,255,255,0.28);
+  border-radius:18px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:34px;
+}
+.logo-text { font-size:38px; font-weight:800; color:#fff; letter-spacing:-1px; }
+.logo-text span { color:rgba(255,255,255,0.48); font-weight:500; }
+
+.headline {
+  position:relative;
+  font-size:72px; font-weight:900; color:#fff;
+  text-align:center; line-height:1.08; letter-spacing:-2.5px;
+  margin-bottom:24px;
+}
+
+.sub {
+  position:relative;
+  font-size:28px; color:rgba(255,255,255,0.72);
+  text-align:center; font-weight:400; line-height:1.5;
+  margin-bottom:64px; max-width:700px;
+}
+.sub strong {
+  color:#fff; font-weight:700;
+  border-bottom:2px solid rgba(255,255,255,0.4); padding-bottom:2px;
+}
+
+.panel-wrap { position:relative; width:100%; }
+
+.badge {
+  position:absolute; top:-24px; left:60px;
+  background:#16A34A; color:#fff;
+  font-size:20px; font-weight:700;
+  padding:8px 24px; border-radius:40px;
+  display:flex; align-items:center; gap:8px;
+  z-index:10;
+  box-shadow:0 6px 20px rgba(22,163,74,0.45);
+  letter-spacing:0.3px;
+}
+
+.panel {
+  background:#fff; border-radius:28px; overflow:hidden;
+  box-shadow:0 32px 80px rgba(0,0,0,0.35);
+}
+
+.row {
+  display:flex; align-items:center; gap:22px;
+  padding:26px 36px;
+  border-bottom:1.5px solid #f0f3f7;
+}
+.row:last-child { border-bottom:none; }
+
+.feat-icon {
+  width:68px; height:68px; border-radius:18px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:32px; flex-shrink:0;
+}
+.feat-name { flex:1; font-size:28px; font-weight:700; color:#111827; letter-spacing:-0.4px; }
+
+.toggle {
+  width:82px; height:46px; background:#16A34A;
+  border-radius:23px;
+  display:flex; align-items:center; justify-content:flex-end;
+  padding:5px; flex-shrink:0;
+}
+.knob {
+  width:36px; height:36px; background:#fff; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; font-weight:700; color:#16A34A;
+  box-shadow:0 2px 6px rgba(0,0,0,0.25);
+}
+
+.float {
+  position:absolute;
+  background:#fff; border-radius:22px;
+  box-shadow:0 16px 48px rgba(0,0,0,0.25);
+  padding:20px 24px;
+  display:flex; flex-direction:column; align-items:center; gap:12px;
+  z-index:20; min-width:160px;
+}
+.float-icon {
+  width:60px; height:60px; border-radius:16px;
+  display:flex; align-items:center; justify-content:center; font-size:28px;
+}
+.float-label { font-size:18px; font-weight:700; color:#111827; white-space:nowrap; }
+
+.float-left  { left:-44px; bottom:120px; transform:rotate(-5deg); }
+.float-right { right:-44px; top:80px; transform:rotate(4deg); }
+
+.cursor {
+  position:absolute; right:148px; bottom:-28px; z-index:30;
+}
+.cursor svg { width:60px; height:60px; filter:drop-shadow(0 6px 14px rgba(0,0,0,0.35)); }
+
+.cta {
+  position:relative;
+  margin-top:72px;
+  background:rgba(255,255,255,0.12);
+  border:1.5px solid rgba(255,255,255,0.22);
+  border-radius:20px;
+  padding:32px 48px;
+  text-align:center;
+  width:100%;
+}
+.cta-title { font-size:30px; font-weight:800; color:#fff; margin-bottom:8px; }
+.cta-url   { font-size:24px; color:rgba(255,255,255,0.55); font-weight:500; }
+.cta-url strong { color:#fff; font-weight:800; }
+
+.bg-sky    { background:#E0F2FE; }
+.bg-green  { background:#DCFCE7; }
+.bg-violet { background:#EDE9FE; }
+.bg-amber  { background:#FEF3C7; }
+.bg-teal   { background:#CCFBF1; }
+</style>
+</head>
+<body>
+<div class="poster">
+  <div class="glow"></div>
+  <div class="glow-b"></div>
+
+  <div class="logo">
+    <div class="logo-icon">🏦</div>
+    <div class="logo-text">Banky<span>Kit</span></div>
+  </div>
+
+  <div class="headline">Your Chama or<br>SACCO, managed<br>perfectly.</div>
+  <div class="sub">
+    Loans, savings, members & M-Pesa —<br>
+    all in one place. Built for <strong>microfinances,<br>chamas & SACCOs</strong> across East Africa.
+  </div>
+
+  <div class="panel-wrap">
+    <div class="badge">✓ &nbsp;Live Demo Available</div>
+
+    <div class="panel">
+
+      <div class="row">
+        <div class="feat-icon bg-sky">💸</div>
+        <div class="feat-name">Loan Management</div>
+        <div class="toggle"><div class="knob">✓</div></div>
+      </div>
+
+      <div class="row">
+        <div class="feat-icon bg-green">📱</div>
+        <div class="feat-name">M-Pesa Payments</div>
+        <div class="toggle"><div class="knob">✓</div></div>
+      </div>
+
+      <div class="row">
+        <div class="feat-icon bg-violet">👥</div>
+        <div class="feat-name">Member Records</div>
+        <div class="toggle"><div class="knob">✓</div></div>
+      </div>
+
+      <div class="row">
+        <div class="feat-icon bg-amber">💰</div>
+        <div class="feat-name">Savings & Deposits</div>
+        <div class="toggle"><div class="knob">✓</div></div>
+      </div>
+
+      <div class="row">
+        <div class="feat-icon bg-teal">🏧</div>
+        <div class="feat-name">Teller Operations</div>
+        <div class="toggle"><div class="knob">✓</div></div>
+      </div>
+
+    </div>
+
+    <div class="float float-left">
+      <div class="float-icon bg-sky">📲</div>
+      <div class="float-label">Mobile App</div>
+    </div>
+
+    <div class="float float-right">
+      <div class="float-icon bg-green">🚀</div>
+      <div class="float-label">Free Demo</div>
+    </div>
+
+    <div class="cursor">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 2L20 12L12 13.5L8.5 21L4 2Z" fill="#F97316" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="cta">
+    <div class="cta-title">Try it free — no sign-up needed</div>
+    <div class="cta-url"><strong>demo.bankykit.com</strong></div>
+  </div>
+
+</div>
+</body>
+</html>
