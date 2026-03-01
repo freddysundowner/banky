@@ -15,6 +15,10 @@ from .deps import get_current_member
 
 router = APIRouter()
 
+_ACTIVE_SOFT_LOAN_STATUSES = [
+    "pending", "under_review", "approved", "disbursed", "defaulted", "restructured"
+]
+
 
 def _calculate_eligibility(member, config, ts):
     from models.tenant import LoanApplication, LoanInstalment, Transaction
@@ -40,7 +44,7 @@ def _calculate_eligibility(member, config, ts):
         active_soft = ts.query(LoanApplication).filter(
             LoanApplication.member_id == member.id,
             LoanApplication.is_soft_loan == True,
-            LoanApplication.status.in_(["pending", "approved", "active", "disbursed"]),
+            LoanApplication.status.in_(_ACTIVE_SOFT_LOAN_STATUSES),
         ).first()
         if active_soft:
             result["gate_failures"].append("You already have an active soft loan")
@@ -179,8 +183,10 @@ def _calculate_eligibility(member, config, ts):
         })
         limit += contribution
 
-    # Cap at global max
-    limit = min(limit, float(config.global_max_amount or 0))
+    # Cap at global max (0 means unconfigured — treat as no cap)
+    global_max = float(config.global_max_amount or 0)
+    if global_max > 0:
+        limit = min(limit, global_max)
     result["eligible"] = limit > 0
     result["limit"] = round(limit, 2)
     return result
@@ -255,22 +261,24 @@ def apply_soft_loan(data: SoftLoanApplyRequest, ctx: dict = Depends(get_current_
                 detail=f"Amount exceeds your soft loan limit of {eligibility['limit']:,.2f}",
             )
 
-        # Re-check for an existing active soft loan inside the transaction
-        # (guards against concurrent requests slipping through the eligibility check)
+        # Re-check inside the transaction to guard against concurrent applications
         duplicate = ts.query(LoanApplication).filter(
             LoanApplication.member_id == member.id,
             LoanApplication.is_soft_loan == True,
-            LoanApplication.status.in_(["pending", "approved", "active", "disbursed"]),
+            LoanApplication.status.in_(_ACTIVE_SOFT_LOAN_STATUSES),
         ).first()
         if duplicate:
             raise HTTPException(status_code=409, detail="You already have an active soft loan")
 
-        # Find or use any active loan product — soft loans are standalone
+        # Find any active loan product (required for FK integrity; soft loans override all terms)
         soft_product = ts.query(LoanProduct).filter(
             LoanProduct.is_active == True
         ).first()
         if not soft_product:
-            raise HTTPException(status_code=400, detail="No active loan product configured")
+            raise HTTPException(
+                status_code=400,
+                detail="No active loan product configured. Ask an admin to create one.",
+            )
 
         interest_rate = float(config.interest_rate or 10)
         term_months = 1
@@ -278,7 +286,20 @@ def apply_soft_loan(data: SoftLoanApplyRequest, ctx: dict = Depends(get_current_
         total_repayment = round(data.amount + total_interest, 2)
         monthly_repayment = total_repayment
 
-        app_number = f"SL-{secrets.token_hex(4).upper()}"
+        # Collision-safe application number (retry up to 5 times)
+        app_number = None
+        for _ in range(5):
+            candidate = f"SL-{secrets.token_hex(4).upper()}"
+            if not ts.query(LoanApplication).filter(
+                LoanApplication.application_number == candidate
+            ).first():
+                app_number = candidate
+                break
+        if not app_number:
+            raise HTTPException(
+                status_code=500,
+                detail="Could not generate unique application number. Please try again.",
+            )
 
         loan = LoanApplication(
             application_number=app_number,
