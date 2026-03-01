@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BankyKit — Features Graphic</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #dde4f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 40px 20px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.card {
+  width: 580px;
+  background: #1447C0;
+  border-radius: 28px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 36px 44px 52px;
+}
+
+.grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.065) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.065) 1px, transparent 1px);
+  background-size: 44px 44px;
+  pointer-events: none;
+}
+
+.glow {
+  position: absolute;
+  width: 360px;
+  height: 260px;
+  background: radial-gradient(ellipse, rgba(255,255,255,0.12) 0%, transparent 70%);
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.logo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.logo-icon {
+  width: 34px;
+  height: 34px;
+  background: rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.28);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+}
+
+.logo-text {
+  font-size: 19px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.4px;
+}
+
+.logo-text span {
+  color: rgba(255,255,255,0.5);
+  font-weight: 500;
+}
+
+.headline {
+  position: relative;
+  font-size: 36px;
+  font-weight: 800;
+  color: #fff;
+  text-align: center;
+  line-height: 1.12;
+  letter-spacing: -1px;
+  margin-bottom: 12px;
+}
+
+.sub {
+  position: relative;
+  font-size: 14.5px;
+  color: rgba(255,255,255,0.72);
+  text-align: center;
+  font-weight: 400;
+  line-height: 1.55;
+  margin-bottom: 32px;
+  max-width: 360px;
+}
+
+.sub strong {
+  color: #fff;
+  font-weight: 700;
+  border-bottom: 1.5px solid rgba(255,255,255,0.4);
+  padding-bottom: 1px;
+}
+
+.panel-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.badge {
+  position: absolute;
+  top: -15px;
+  left: 44px;
+  background: #16A34A;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  z-index: 10;
+  box-shadow: 0 4px 14px rgba(22,163,74,0.45);
+  letter-spacing: 0.2px;
+}
+
+.panel {
+  background: #fff;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.32);
+}
+
+.feature-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 20px;
+  border-bottom: 1px solid #f1f3f6;
+}
+
+.feature-row:last-child { border-bottom: none; }
+
+.feat-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.feat-name {
+  flex: 1;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #111827;
+  letter-spacing: -0.15px;
+}
+
+.toggle {
+  width: 48px;
+  height: 27px;
+  background: #1447C0;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 3px;
+  flex-shrink: 0;
+}
+
+.knob {
+  width: 21px;
+  height: 21px;
+  background: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+}
+
+.float {
+  position: absolute;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 10px 32px rgba(0,0,0,0.22);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  z-index: 20;
+  min-width: 100px;
+}
+
+.float-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+}
+
+.float-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #111827;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.float-left {
+  left: -36px;
+  bottom: 64px;
+  transform: rotate(-5deg);
+}
+
+.float-right {
+  right: -36px;
+  top: 48px;
+  transform: rotate(4deg);
+}
+
+.cursor {
+  position: absolute;
+  right: 90px;
+  bottom: -16px;
+  z-index: 30;
+}
+
+.cursor svg {
+  width: 38px;
+  height: 38px;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.35));
+}
+
+.bg-sky    { background: #E0F2FE; }
+.bg-green  { background: #DCFCE7; }
+.bg-violet { background: #EDE9FE; }
+.bg-amber  { background: #FEF3C7; }
+.bg-teal   { background: #CCFBF1; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="grid-bg"></div>
+  <div class="glow"></div>
+
+  <div class="logo">
+    <div class="logo-icon">🏦</div>
+    <div class="logo-text">Banky<span>Kit</span></div>
+  </div>
+
+  <div class="headline">Want to grow your<br>SACCO or Bank?</div>
+  <div class="sub">
+    Upgrade to <strong>Enterprise</strong> for features that help<br>
+    you manage members and scale with confidence.
+  </div>
+
+  <div class="panel-wrap">
+
+    <div class="badge">★ &nbsp;Enterprise</div>
+
+    <div class="panel">
+
+      <div class="feature-row">
+        <div class="feat-icon bg-sky">⚡</div>
+        <div class="feat-name">Soft Loans</div>
+        <div class="toggle"><div class="knob">🔒</div></div>
+      </div>
+
+      <div class="feature-row">
+        <div class="feat-icon bg-green">📱</div>
+        <div class="feat-name">M-Pesa Integration</div>
+        <div class="toggle"><div class="knob">🔒</div></div>
+      </div>
+
+      <div class="feature-row">
+        <div class="feat-icon bg-violet">📊</div>
+        <div class="feat-name">Advanced Analytics</div>
+        <div class="toggle"><div class="knob">🔒</div></div>
+      </div>
+
+      <div class="feature-row">
+        <div class="feat-icon bg-amber">🏢</div>
+        <div class="feat-name">Multi-Branch Management</div>
+        <div class="toggle"><div class="knob">🔒</div></div>
+      </div>
+
+      <div class="feature-row">
+        <div class="feat-icon bg-teal">🛡️</div>
+        <div class="feat-name">Collateral & Valuations</div>
+        <div class="toggle"><div class="knob">🔒</div></div>
+      </div>
+
+    </div>
+
+    <div class="float float-left">
+      <div class="float-icon bg-sky">📲</div>
+      <div class="float-label">Mobile App</div>
+    </div>
+
+    <div class="float float-right">
+      <div class="float-icon bg-violet">🤝</div>
+      <div class="float-label">CRM Suite</div>
+    </div>
+
+    <div class="cursor">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 2L20 12L12 13.5L8.5 21L4 2Z" fill="#F97316" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
