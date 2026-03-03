@@ -5,7 +5,7 @@ from typing import List
 from decimal import Decimal
 from datetime import datetime, date, timedelta
 from models.database import get_db
-from models.tenant import Member, LoanApplication, LoanRepayment, LoanInstalment, Transaction, Branch, Staff, LoanDefault, CollateralItem, LoanProduct
+from models.tenant import Member, LoanApplication, LoanRepayment, LoanInstalment, Transaction, Branch, Staff, LoanDefault, CollateralItem, LoanProduct, Attendance, DisciplinaryRecord
 from routes.auth import get_current_user
 from routes.common import get_tenant_session_context, require_permission
 
@@ -130,35 +130,167 @@ async def get_branch_performance(org_id: str, user=Depends(get_current_user), db
         tenant_session.close()
         tenant_ctx.close()
 
+def _get_period_dates(period: str):
+    today = date.today()
+    if period == "this_month":
+        start = today.replace(day=1)
+        end = today
+    elif period == "last_month":
+        first_of_this_month = today.replace(day=1)
+        end = first_of_this_month - timedelta(days=1)
+        start = end.replace(day=1)
+    elif period == "this_quarter":
+        q = (today.month - 1) // 3
+        start = today.replace(month=q * 3 + 1, day=1)
+        end = today
+    elif period == "this_year":
+        start = today.replace(month=1, day=1)
+        end = today
+    else:
+        start = None
+        end = None
+    return start, end
+
+def _compute_score(role: str, loans_processed: int, loans_approved: int, loans_rejected: int,
+                   default_count: int, disbursed_loan_count: int,
+                   transactions_processed: int, attendance_rate: float,
+                   disciplinary_count: int) -> dict:
+    def clamp(v, lo=0, hi=100):
+        return max(lo, min(hi, v))
+
+    default_rate_pct = (default_count / disbursed_loan_count * 100) if disbursed_loan_count > 0 else 0
+    portfolio_quality = clamp(100 - default_rate_pct * 5)
+
+    import math
+    loan_throughput = clamp(min(100, math.log1p(loans_processed) / math.log1p(50) * 100)) if loans_processed > 0 else 0
+    txn_throughput = clamp(min(100, math.log1p(transactions_processed) / math.log1p(200) * 100)) if transactions_processed > 0 else 0
+    attendance_score = clamp(attendance_rate)
+    disciplinary_score = clamp(100 - disciplinary_count * 25)
+
+    role_lower = (role or "").lower()
+    if role_lower in ("loan_officer",):
+        weights = {"portfolio": 0.35, "loan_vol": 0.30, "txn": 0.05, "attendance": 0.20, "disciplinary": 0.10}
+    elif role_lower in ("teller",):
+        weights = {"portfolio": 0.05, "loan_vol": 0.10, "txn": 0.45, "attendance": 0.25, "disciplinary": 0.15}
+    elif role_lower in ("reviewer",):
+        weights = {"portfolio": 0.30, "loan_vol": 0.25, "txn": 0.05, "attendance": 0.25, "disciplinary": 0.15}
+    elif role_lower in ("hr", "admin",):
+        weights = {"portfolio": 0.00, "loan_vol": 0.00, "txn": 0.10, "attendance": 0.55, "disciplinary": 0.35}
+    else:
+        weights = {"portfolio": 0.15, "loan_vol": 0.15, "txn": 0.15, "attendance": 0.40, "disciplinary": 0.15}
+
+    score = (
+        portfolio_quality * weights["portfolio"] +
+        loan_throughput * weights["loan_vol"] +
+        txn_throughput * weights["txn"] +
+        attendance_score * weights["attendance"] +
+        disciplinary_score * weights["disciplinary"]
+    )
+
+    return {
+        "score": round(clamp(score), 1),
+        "breakdown": {
+            "portfolio_quality": round(portfolio_quality, 1),
+            "loan_throughput": round(loan_throughput, 1),
+            "txn_throughput": round(txn_throughput, 1),
+            "attendance": round(attendance_score, 1),
+            "disciplinary": round(disciplinary_score, 1),
+        },
+        "weights": weights,
+        "default_rate": round(default_rate_pct, 1),
+    }
+
 @router.get("/{org_id}/analytics/staff")
-async def get_staff_performance(org_id: str, user=Depends(get_current_user), db: Session = Depends(get_db)):
+async def get_staff_performance(org_id: str, period: str = "this_month", user=Depends(get_current_user), db: Session = Depends(get_db)):
     tenant_ctx, membership = get_tenant_session_context(org_id, user, db)
     require_permission(membership, "analytics:read", db)
     tenant_session = tenant_ctx.create_session()
     try:
+        start_date, end_date = _get_period_dates(period)
         staff_list = tenant_session.query(Staff).filter(Staff.is_active == True).all()
-        
+
         result = []
         for staff in staff_list:
-            created_loans = tenant_session.query(LoanApplication).filter(LoanApplication.created_by_id == staff.id).all()
-            reviewed_loans = tenant_session.query(LoanApplication).filter(LoanApplication.reviewed_by_id == staff.id).all()
-            
+            loan_q = tenant_session.query(LoanApplication).filter(LoanApplication.created_by_id == staff.id)
+            if start_date:
+                loan_q = loan_q.filter(func.date(LoanApplication.applied_at) >= start_date)
+            if end_date:
+                loan_q = loan_q.filter(func.date(LoanApplication.applied_at) <= end_date)
+            created_loans = loan_q.all()
+
+            reviewed_q = tenant_session.query(LoanApplication).filter(LoanApplication.reviewed_by_id == staff.id)
+            if start_date:
+                reviewed_q = reviewed_q.filter(func.date(LoanApplication.applied_at) >= start_date)
+            if end_date:
+                reviewed_q = reviewed_q.filter(func.date(LoanApplication.applied_at) <= end_date)
+            reviewed_loans = reviewed_q.all()
+
             loans_processed = len(created_loans)
             loans_approved = sum(1 for l in reviewed_loans if l.status in ["approved", "disbursed", "paid"])
             loans_rejected = sum(1 for l in reviewed_loans if l.status == "rejected")
-            
-            total_disbursed = sum(l.amount_disbursed or Decimal("0") for l in created_loans if l.status in ["disbursed", "paid"])
+            disbursed_by_staff = [l for l in created_loans if l.status in ["disbursed", "paid", "defaulted", "written_off"]]
+            disbursed_loan_count = len(disbursed_by_staff)
+            default_count = sum(1 for l in disbursed_by_staff if l.status in ["defaulted", "written_off"])
+            total_disbursed = sum(l.amount_disbursed or Decimal("0") for l in disbursed_by_staff)
+
             staff_loan_ids = [str(l.id) for l in created_loans]
             if staff_loan_ids:
-                staff_rep_sums = tenant_session.query(
+                rep_q = tenant_session.query(
                     func.coalesce(func.sum(LoanRepayment.principal_amount), 0),
                     func.coalesce(func.sum(LoanRepayment.interest_amount), 0),
                     func.coalesce(func.sum(LoanRepayment.penalty_amount), 0)
-                ).filter(LoanRepayment.loan_id.in_(staff_loan_ids)).first()
-                total_collected = Decimal(str(staff_rep_sums[0])) + Decimal(str(staff_rep_sums[1])) + Decimal(str(staff_rep_sums[2]))
+                ).filter(LoanRepayment.loan_id.in_(staff_loan_ids))
+                if start_date:
+                    rep_q = rep_q.filter(func.date(LoanRepayment.payment_date) >= start_date)
+                if end_date:
+                    rep_q = rep_q.filter(func.date(LoanRepayment.payment_date) <= end_date)
+                rep_sums = rep_q.first()
+                total_collected = Decimal(str(rep_sums[0])) + Decimal(str(rep_sums[1])) + Decimal(str(rep_sums[2]))
             else:
                 total_collected = Decimal("0")
-            
+
+            txn_q = tenant_session.query(Transaction).filter(Transaction.processed_by_id == staff.id)
+            if start_date:
+                txn_q = txn_q.filter(func.date(Transaction.transaction_date) >= start_date)
+            if end_date:
+                txn_q = txn_q.filter(func.date(Transaction.transaction_date) <= end_date)
+            txns = txn_q.all()
+            transactions_processed = len(txns)
+            transaction_volume = float(sum(t.amount or Decimal("0") for t in txns))
+
+            att_q = tenant_session.query(Attendance).filter(Attendance.staff_id == staff.id)
+            if start_date:
+                att_q = att_q.filter(Attendance.date >= start_date)
+            if end_date:
+                att_q = att_q.filter(Attendance.date <= end_date)
+            att_records = att_q.all()
+            attendance_days = len(att_records)
+            present_days = sum(1 for a in att_records if a.status in ("present", "late", "half_day"))
+            late_count = sum(1 for a in att_records if a.status == "late")
+            attendance_rate = round((present_days / attendance_days * 100) if attendance_days > 0 else 0, 1)
+
+            disc_q = tenant_session.query(DisciplinaryRecord).filter(
+                DisciplinaryRecord.staff_id == staff.id,
+                DisciplinaryRecord.is_resolved == False
+            )
+            if start_date:
+                disc_q = disc_q.filter(DisciplinaryRecord.incident_date >= start_date)
+            if end_date:
+                disc_q = disc_q.filter(DisciplinaryRecord.incident_date <= end_date)
+            disciplinary_count = disc_q.count()
+
+            score_data = _compute_score(
+                role=staff.role,
+                loans_processed=loans_processed,
+                loans_approved=loans_approved,
+                loans_rejected=loans_rejected,
+                default_count=default_count,
+                disbursed_loan_count=disbursed_loan_count,
+                transactions_processed=transactions_processed,
+                attendance_rate=attendance_rate,
+                disciplinary_count=disciplinary_count,
+            )
+
             result.append({
                 "staff_id": staff.id,
                 "staff_name": f"{staff.first_name} {staff.last_name}",
@@ -167,10 +299,24 @@ async def get_staff_performance(org_id: str, user=Depends(get_current_user), db:
                 "loans_processed": loans_processed,
                 "loans_approved": loans_approved,
                 "loans_rejected": loans_rejected,
+                "disbursed_loan_count": disbursed_loan_count,
+                "default_count": default_count,
                 "total_disbursed": float(total_disbursed),
-                "total_collected": float(total_collected)
+                "total_collected": float(total_collected),
+                "transactions_processed": transactions_processed,
+                "transaction_volume": transaction_volume,
+                "attendance_days": attendance_days,
+                "present_days": present_days,
+                "late_count": late_count,
+                "attendance_rate": attendance_rate,
+                "disciplinary_count": disciplinary_count,
+                "performance_score": score_data["score"],
+                "score_breakdown": score_data["breakdown"],
+                "score_weights": score_data["weights"],
+                "default_rate": score_data["default_rate"],
             })
-        
+
+        result.sort(key=lambda x: x["performance_score"], reverse=True)
         return result
     finally:
         tenant_session.close()

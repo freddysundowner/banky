@@ -78,10 +78,31 @@ interface BranchPerformance {
 interface StaffPerformance {
   staff_id: string;
   staff_name: string;
+  staff_number: string;
+  role: string;
   loans_processed: number;
   loans_approved: number;
+  loans_rejected: number;
+  disbursed_loan_count: number;
+  default_count: number;
+  default_rate: number;
   total_disbursed: number;
   total_collected: number;
+  transactions_processed: number;
+  transaction_volume: number;
+  attendance_days: number;
+  present_days: number;
+  late_count: number;
+  attendance_rate: number;
+  disciplinary_count: number;
+  performance_score: number;
+  score_breakdown: {
+    portfolio_quality: number;
+    loan_throughput: number;
+    txn_throughput: number;
+    attendance: number;
+    disciplinary: number;
+  };
 }
 
 interface TrendsData {
@@ -119,6 +140,8 @@ const CHART_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6"];
 
 export default function AnalyticsDashboard({ organizationId }: AnalyticsDashboardProps) {
   const [trendPeriod, setTrendPeriod] = useState<string>("monthly");
+  const [staffPeriod, setStaffPeriod] = useState<string>("this_month");
+  const [expandedStaff, setExpandedStaff] = useState<string | null>(null);
   const { hasFeature } = useFeatures(organizationId);
   const { currency, symbol, formatAmount } = useCurrency(organizationId);
   const canExport = hasFeature("analytics_export");
@@ -142,9 +165,9 @@ export default function AnalyticsDashboard({ organizationId }: AnalyticsDashboar
   });
 
   const { data: staffData, isLoading: staffLoading } = useQuery<StaffPerformance[]>({
-    queryKey: ["/api/organizations", organizationId, "analytics", "staff"],
+    queryKey: ["/api/organizations", organizationId, "analytics", "staff", staffPeriod],
     queryFn: async () => {
-      const res = await fetch(`/api/organizations/${organizationId}/analytics/staff`, { credentials: "include" });
+      const res = await fetch(`/api/organizations/${organizationId}/analytics/staff?period=${staffPeriod}`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch staff analytics");
       return res.json();
     },
@@ -576,39 +599,152 @@ export default function AnalyticsDashboard({ organizationId }: AnalyticsDashboar
         <TabsContent value="staff" className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>Staff Performance</CardTitle>
-              <CardDescription>Individual staff metrics</CardDescription>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <CardTitle>Staff Performance</CardTitle>
+                  <CardDescription>Data-driven scores ranked highest to lowest</CardDescription>
+                </div>
+                <Select value={staffPeriod} onValueChange={(v) => { setStaffPeriod(v); setExpandedStaff(null); }}>
+                  <SelectTrigger className="w-40" data-testid="select-staff-period">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="this_month">This Month</SelectItem>
+                    <SelectItem value="last_month">Last Month</SelectItem>
+                    <SelectItem value="this_quarter">This Quarter</SelectItem>
+                    <SelectItem value="this_year">This Year</SelectItem>
+                    <SelectItem value="all_time">All Time</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </CardHeader>
             <CardContent>
               {staffLoading ? (
-                <Skeleton className="h-48" />
+                <div className="space-y-3">
+                  {[1,2,3,4].map(i => <Skeleton key={i} className="h-14 w-full" />)}
+                </div>
               ) : staffData && staffData.length > 0 ? (
-                <div className="overflow-x-auto -mx-6 px-6">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Staff</TableHead>
-                      <TableHead className="text-right">Processed</TableHead>
-                      <TableHead className="text-right">Approved</TableHead>
-                      <TableHead className="text-right">Disbursed</TableHead>
-                      <TableHead className="text-right">Collected</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {staffData.map((staff) => (
-                      <TableRow key={staff.staff_id}>
-                        <TableCell className="font-medium">{staff.staff_name}</TableCell>
-                        <TableCell className="text-right">{staff.loans_processed}</TableCell>
-                        <TableCell className="text-right">{staff.loans_approved}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(staff.total_disbursed)}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(staff.total_collected)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="space-y-2">
+                  {staffData.map((s, idx) => {
+                    const score = s.performance_score;
+                    const isExpanded = expandedStaff === s.staff_id;
+                    const scoreColor = score >= 80 ? "text-green-600 dark:text-green-400"
+                      : score >= 60 ? "text-blue-600 dark:text-blue-400"
+                      : score >= 40 ? "text-amber-600 dark:text-amber-400"
+                      : "text-red-600 dark:text-red-400";
+                    const barColor = score >= 80 ? "bg-green-500"
+                      : score >= 60 ? "bg-blue-500"
+                      : score >= 40 ? "bg-amber-500"
+                      : "bg-red-500";
+                    const roleFmt = (r: string) => r?.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()) || "—";
+                    return (
+                      <div key={s.staff_id} className="border rounded-lg overflow-hidden">
+                        <button
+                          className="w-full text-left px-4 py-3 hover:bg-muted/40 transition-colors"
+                          onClick={() => setExpandedStaff(isExpanded ? null : s.staff_id)}
+                          data-testid={`staff-performance-row-${s.staff_id}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm font-medium text-muted-foreground w-5 shrink-0">#{idx + 1}</span>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-semibold truncate">{s.staff_name}</span>
+                                <Badge variant="outline" className="text-xs shrink-0">{roleFmt(s.role)}</Badge>
+                                {s.staff_number && <span className="text-xs text-muted-foreground shrink-0">{s.staff_number}</span>}
+                              </div>
+                              <div className="flex items-center gap-2 mt-1.5">
+                                <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                                  <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${score}%` }} />
+                                </div>
+                                <span className={`text-sm font-bold w-14 text-right shrink-0 ${scoreColor}`}>{score}/100</span>
+                              </div>
+                            </div>
+                            <div className="hidden sm:flex gap-4 text-xs text-muted-foreground shrink-0 ml-2">
+                              {s.loans_processed > 0 && <span>{s.loans_processed} loans</span>}
+                              {s.transactions_processed > 0 && <span>{s.transactions_processed} txns</span>}
+                              {s.attendance_days > 0 && <span>{s.attendance_rate}% att.</span>}
+                              {s.disciplinary_count > 0 && <span className="text-red-500">{s.disciplinary_count} disciplinary</span>}
+                            </div>
+                            <span className="text-muted-foreground text-sm ml-2">{isExpanded ? "▲" : "▼"}</span>
+                          </div>
+                        </button>
+                        {isExpanded && (
+                          <div className="border-t bg-muted/20 px-4 py-4">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                              <div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Loans Processed</p>
+                                <p className="font-semibold">{s.loans_processed}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Loans Approved</p>
+                                <p className="font-semibold">{s.loans_approved}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Loans Rejected</p>
+                                <p className="font-semibold">{s.loans_rejected}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Defaults</p>
+                                <p className={`font-semibold ${s.default_count > 0 ? "text-red-600" : ""}`}>
+                                  {s.default_count} ({s.default_rate}%)
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Total Disbursed</p>
+                                <p className="font-semibold">{formatCurrency(s.total_disbursed)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Total Collected</p>
+                                <p className="font-semibold">{formatCurrency(s.total_collected)}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Transactions</p>
+                                <p className="font-semibold">{s.transactions_processed} ({formatCurrency(s.transaction_volume)})</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Attendance</p>
+                                <p className="font-semibold">
+                                  {s.attendance_days > 0
+                                    ? `${s.present_days}/${s.attendance_days} days (${s.attendance_rate}%)`
+                                    : "No records"}
+                                  {s.late_count > 0 && <span className="text-amber-500 ml-1">· {s.late_count} late</span>}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Disciplinary</p>
+                                <p className={`font-semibold ${s.disciplinary_count > 0 ? "text-red-600" : "text-green-600"}`}>
+                                  {s.disciplinary_count > 0 ? `${s.disciplinary_count} open` : "None"}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="mt-4 pt-3 border-t">
+                              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Score Breakdown</p>
+                              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                                {[
+                                  { label: "Portfolio Quality", val: s.score_breakdown.portfolio_quality },
+                                  { label: "Loan Volume", val: s.score_breakdown.loan_throughput },
+                                  { label: "Transactions", val: s.score_breakdown.txn_throughput },
+                                  { label: "Attendance", val: s.score_breakdown.attendance },
+                                  { label: "Disciplinary", val: s.score_breakdown.disciplinary },
+                                ].map(({ label, val }) => (
+                                  <div key={label} className="text-center">
+                                    <p className="text-xs text-muted-foreground mb-1">{label}</p>
+                                    <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-1">
+                                      <div className="h-full bg-primary rounded-full" style={{ width: `${val}%` }} />
+                                    </div>
+                                    <p className="text-xs font-medium">{val}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground py-8">No staff data available</p>
+                <p className="text-center text-muted-foreground py-8">No staff data available for this period</p>
               )}
             </CardContent>
           </Card>
