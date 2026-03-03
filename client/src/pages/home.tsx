@@ -187,7 +187,7 @@ const navItems = [
   { title: "Loan Products", value: "loan-products" as NavSection, icon: CreditCard, permissions: ["loan_products:read"], feature: "loans" },
   { title: "Loan Applications", value: "loans" as NavSection, icon: FileText, permissions: ["loans:read"], feature: "loans" },
   { title: "Eligibility Checker", value: "loan-eligibility" as NavSection, icon: ClipboardList, permissions: ["loans:read"], feature: "loans" },
-  { title: "Loan Calculator", value: "loan-calculator" as NavSection, icon: Calculator, permissions: ["loans:read"], feature: "loans" },
+  { title: "Loan Calculator", value: "loan-calculator" as NavSection, icon: Calculator, permissions: [], alwaysShow: true },
   { title: "Transactions", value: "transactions" as NavSection, icon: Wallet, permissions: ["transactions:read"], feature: "savings" },
   { title: "Repayments", value: "repayments" as NavSection, icon: Receipt, permissions: ["repayments:read"], feature: "loans" },
   { title: "Fixed Deposits", value: "fixed-deposits" as NavSection, icon: Wallet, permissions: ["fixed_deposits:read"], feature: "fixed_deposits" },
