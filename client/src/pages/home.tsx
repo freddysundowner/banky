@@ -82,6 +82,7 @@ import {
   ChevronRight,
   RefreshCw,
   ClipboardList,
+  Calculator,
 } from "lucide-react";
 import Dashboard from "./dashboard";
 import BranchManagement from "@/components/branch-management";
@@ -90,6 +91,7 @@ import MemberManagement from "@/components/member-management";
 import LoanProducts from "@/components/loan-products";
 import LoanApplications from "@/components/loan-applications";
 import LoanEligibility from "@/components/loan-eligibility";
+import LoanCalculator from "@/components/loan-calculator";
 import Transactions from "@/components/transactions";
 import Repayments from "@/components/repayments";
 import Reports from "@/components/reports";
@@ -160,7 +162,7 @@ const updateOrgSchema = z.object({
 type CreateOrgFormData = z.infer<typeof createOrgSchema>;
 type UpdateOrgFormData = z.infer<typeof updateOrgSchema>;
 
-type NavSection = "dashboard" | "teller" | "teller-services" | "float-management" | "ticketing-kiosk" | "queue-display" | "branches" | "staff" | "members" | "loan-products" | "loans" | "loan-eligibility" | "transactions" | "repayments" | "fixed-deposits" | "chart-of-accounts" | "journal-entries" | "opening-balances" | "dividends" | "reports" | "analytics" | "sms" | "defaults" | "hr" | "leaves" | "expenses" | "audit" | "crm" | "collateral" | "settings" | "my-account" | "upgrade";
+type NavSection = "dashboard" | "teller" | "teller-services" | "float-management" | "ticketing-kiosk" | "queue-display" | "branches" | "staff" | "members" | "loan-products" | "loans" | "loan-eligibility" | "loan-calculator" | "transactions" | "repayments" | "fixed-deposits" | "chart-of-accounts" | "journal-entries" | "opening-balances" | "dividends" | "reports" | "analytics" | "sms" | "defaults" | "hr" | "leaves" | "expenses" | "audit" | "crm" | "collateral" | "settings" | "my-account" | "upgrade";
 
 const weekDays = [
   { value: "monday", label: "Monday" },
@@ -185,6 +187,7 @@ const navItems = [
   { title: "Loan Products", value: "loan-products" as NavSection, icon: CreditCard, permissions: ["loan_products:read"], feature: "loans" },
   { title: "Loan Applications", value: "loans" as NavSection, icon: FileText, permissions: ["loans:read"], feature: "loans" },
   { title: "Eligibility Checker", value: "loan-eligibility" as NavSection, icon: ClipboardList, permissions: ["loans:read"], feature: "loans" },
+  { title: "Loan Calculator", value: "loan-calculator" as NavSection, icon: Calculator, permissions: ["loans:read"], feature: "loans" },
   { title: "Transactions", value: "transactions" as NavSection, icon: Wallet, permissions: ["transactions:read"], feature: "savings" },
   { title: "Repayments", value: "repayments" as NavSection, icon: Receipt, permissions: ["repayments:read"], feature: "loans" },
   { title: "Fixed Deposits", value: "fixed-deposits" as NavSection, icon: Wallet, permissions: ["fixed_deposits:read"], feature: "fixed_deposits" },
@@ -1119,6 +1122,10 @@ export default function Home() {
 
             {activeSection === "loan-eligibility" && selectedOrg && (
               <LoanEligibility organizationId={selectedOrg.id} />
+            )}
+
+            {activeSection === "loan-calculator" && selectedOrg && (
+              <LoanCalculator organizationId={selectedOrg.id} />
             )}
 
             {activeSection === "transactions" && selectedOrg && (
