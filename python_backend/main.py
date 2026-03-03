@@ -214,17 +214,20 @@ def seed_default_plans():
             db.commit()
             print(f"Migrated {len(subs_on_generic)} subscriptions and removed {len(generic_plans)} generic plans")
 
-        if existing > 0:
-            print("Updating subscription plan prices to KES values...")
-            for plan in db.query(SubscriptionPlan).filter(SubscriptionPlan.business_type.isnot(None)).all():
-                if plan.business_type:
-                    bt_key = plan.plan_type
-                    bt_canonical = BUSINESS_TYPE_PLAN_FEATURES.get(bt_key)
-                    if bt_canonical:
-                        plan.features = {"enabled": list(bt_canonical)}
-            db.commit()
-
-        print("Plan prices updated.")
+        print("Syncing plan features to canonical definitions...")
+        synced = 0
+        for plan in db.query(SubscriptionPlan).filter(SubscriptionPlan.business_type.isnot(None)).all():
+            bt_key = plan.plan_type
+            bt_canonical = BUSINESS_TYPE_PLAN_FEATURES.get(bt_key)
+            if bt_canonical:
+                old_features = sorted((plan.features or {}).get("enabled", []))
+                new_features = sorted(bt_canonical)
+                if old_features != new_features:
+                    print(f"  Updating {plan.name} ({bt_key}): {len(old_features)} -> {len(new_features)} features")
+                    plan.features = {"enabled": list(bt_canonical)}
+                    synced += 1
+        db.commit()
+        print(f"Plan sync complete. {synced} plans updated.")
     except Exception as e:
         print(f"Error seeding plans: {e}")
         db.rollback()
