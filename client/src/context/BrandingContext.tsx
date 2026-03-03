@@ -59,7 +59,9 @@ async function fetchBranding(): Promise<Branding> {
   const res = await fetch('/api/public/branding');
   if (!res.ok) return defaultBranding;
   const data = await res.json();
-  return { ...defaultBranding, ...data };
+  const demoRaw = data.demo_mode;
+  const demo_mode = demoRaw === true || demoRaw === "true";
+  return { ...defaultBranding, ...data, demo_mode };
 }
 
 export function BrandingProvider({ children }: { children: ReactNode }) {

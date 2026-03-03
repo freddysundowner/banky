@@ -950,7 +950,10 @@ async def get_public_branding():
         for s in settings:
             result[s.setting_key] = s.setting_value or ""
         
-        result["deployment_mode"] = os.environ.get("DEPLOYMENT_MODE", "saas")
+        from services.feature_flags import get_deployment_mode
+        from middleware.demo_guard import is_demo_mode
+        result["deployment_mode"] = get_deployment_mode()
+        result["demo_mode"] = is_demo_mode()
         
         return result
     finally:
