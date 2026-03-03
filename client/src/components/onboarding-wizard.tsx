@@ -26,12 +26,20 @@ interface OnboardingWizardProps {
   organizationId: string;
   organizationName: string;
   organizationEmail?: string;
+  institutionType?: string;
   onComplete: () => void;
   onFinalize: (needsBranch: boolean) => void;
 }
 
 
-export function OnboardingWizard({ organizationId, organizationName, organizationEmail, onComplete, onFinalize }: OnboardingWizardProps) {
+const INSTITUTION_TYPE_OPTIONS = [
+  { value: "chama", label: "Chama / Group" },
+  { value: "sacco", label: "SACCO" },
+  { value: "mfi", label: "MFI / Microfinance" },
+  { value: "bank", label: "Bank" },
+] as const;
+
+export function OnboardingWizard({ organizationId, organizationName, organizationEmail, institutionType, onComplete, onFinalize }: OnboardingWizardProps) {
   const { toast } = useAppDialog();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
@@ -41,6 +49,7 @@ export function OnboardingWizard({ organizationId, organizationName, organizatio
     currency: "KES",
     email: organizationEmail || "",
     phone: "",
+    institutionType: institutionType || "",
   });
 
   const [branchDetails, setBranchDetails] = useState({
@@ -61,6 +70,7 @@ export function OnboardingWizard({ organizationId, organizationName, organizatio
         currency: orgDetails.currency,
         email: orgDetails.email || undefined,
         phone: orgDetails.phone || undefined,
+        institution_type: orgDetails.institutionType || undefined,
       });
     },
     onSuccess: () => {
@@ -176,6 +186,22 @@ export function OnboardingWizard({ organizationId, organizationName, organizatio
                 placeholder="+254 700 000 000"
                 data-testid="input-org-phone"
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="org-institution-type">Institution Type</Label>
+              <Select
+                value={orgDetails.institutionType}
+                onValueChange={(val) => setOrgDetails(prev => ({ ...prev, institutionType: val }))}
+              >
+                <SelectTrigger id="org-institution-type" data-testid="select-org-institution-type">
+                  <SelectValue placeholder="Select institution type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {INSTITUTION_TYPE_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value} data-testid={`institution-type-option-${opt.value}`}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center justify-between gap-3 pt-2">
               <Button

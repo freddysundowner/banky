@@ -11,7 +11,7 @@ from middleware.demo_guard import require_not_demo
 from services.tenant_provisioner import provision_tenant_database, delete_tenant_database, get_tenant_backend
 from services.tenant_context import TenantContext
 from services.feature_flags import get_deployment_mode
-from routes.admin import get_default_plan_id, get_trial_days
+from routes.admin import get_default_plan_id, get_default_plan_for_institution_type, get_trial_days
 
 router = APIRouter()
 
@@ -47,6 +47,8 @@ async def create_organization(data: OrganizationCreate, user = Depends(get_curre
     if staff_domain and '.' not in staff_domain:
         staff_domain = f"{staff_domain}.com"
 
+    institution_type = data.institutionType if data.institutionType in ("chama", "sacco", "mfi", "bank") else None
+
     org = Organization(
         name=data.name,
         code=code,
@@ -57,7 +59,8 @@ async def create_organization(data: OrganizationCreate, user = Depends(get_curre
         staff_email_domain=staff_domain,
         deployment_mode=deployment_mode,
         currency=data.currency or "KES",
-        financial_year_start="01-01"
+        financial_year_start="01-01",
+        institution_type=institution_type
     )
     db.add(org)
     db.commit()
@@ -115,7 +118,10 @@ async def create_organization(data: OrganizationCreate, user = Depends(get_curre
     db.add(membership)
     db.commit()
     
-    default_plan_id = get_default_plan_id(db)
+    if institution_type:
+        default_plan_id = get_default_plan_for_institution_type(db, institution_type)
+    else:
+        default_plan_id = get_default_plan_id(db)
     trial_days = get_trial_days(db)
     
     subscription = OrganizationSubscription(

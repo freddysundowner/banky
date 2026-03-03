@@ -83,6 +83,7 @@ import {
   RefreshCw,
   ClipboardList,
   Calculator,
+  Briefcase,
 } from "lucide-react";
 import Dashboard from "./dashboard";
 import BranchManagement from "@/components/branch-management";
@@ -146,6 +147,9 @@ const createOrgSchema = z.object({
   staffEmailDomain: z.string().min(3, "Staff email domain is required (e.g. mysacco.co.ke)"),
   deploymentMode: z.enum(["saas", "standalone"]),
   currency: z.string().default("KES"),
+  institutionType: z.enum(["chama", "sacco", "mfi", "bank"], {
+    required_error: "Please select an institution type",
+  }),
 });
 
 const updateOrgSchema = z.object({
@@ -558,6 +562,7 @@ export default function Home() {
       address: "",
       deploymentMode: "saas",
       currency: "KES",
+      institutionType: undefined as unknown as "chama" | "sacco" | "mfi" | "bank",
     },
   });
 
@@ -824,6 +829,45 @@ export default function Home() {
                     )}
                   />
 
+                  <FormField
+                    control={createForm.control}
+                    name="institutionType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Institution Type <span className="text-destructive">*</span></FormLabel>
+                        <FormControl>
+                          <div className="grid grid-cols-2 gap-2">
+                            {([
+                              { value: "chama", label: "Chama / Group", icon: Users },
+                              { value: "sacco", label: "SACCO", icon: Building2 },
+                              { value: "mfi", label: "MFI", icon: Briefcase },
+                              { value: "bank", label: "Bank", icon: Landmark },
+                            ] as const).map(({ value, label, icon: Icon }) => {
+                              const selected = field.value === value;
+                              return (
+                                <button
+                                  key={value}
+                                  type="button"
+                                  data-testid={`select-create-org-type-${value}`}
+                                  onClick={() => field.onChange(value)}
+                                  className={`flex items-center gap-2 rounded-md border p-2.5 text-left transition-colors ${
+                                    selected
+                                      ? "border-primary bg-primary/5 ring-1 ring-primary"
+                                      : "border-border hover:border-muted-foreground/30"
+                                  }`}
+                                >
+                                  <Icon className={`h-4 w-4 shrink-0 ${selected ? "text-primary" : "text-muted-foreground"}`} />
+                                  <span className={`text-sm font-medium ${selected ? "text-primary" : "text-foreground"}`}>{label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
                   <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                     <FormField
                       control={createForm.control}
@@ -1013,6 +1057,7 @@ export default function Home() {
             organizationId={selectedOrg.id}
             organizationName={selectedOrg.name}
             organizationEmail={(selectedOrg as any).email || ""}
+            institutionType={(selectedOrg as any).institution_type || ""}
             onComplete={() => setShowOnboarding(false)}
             onFinalize={handleWizardFinalize}
           />

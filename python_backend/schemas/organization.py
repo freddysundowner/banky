@@ -10,6 +10,7 @@ class OrganizationCreate(BaseModel):
     address: Optional[str] = None
     staffEmailDomain: Optional[str] = None
     currency: Optional[str] = "KES"
+    institutionType: Optional[str] = None
 
 class OrganizationUpdate(BaseModel):
     name: Optional[str] = None
