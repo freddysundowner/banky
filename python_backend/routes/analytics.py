@@ -266,12 +266,25 @@ async def get_staff_performance(org_id: str, period: str = "this_month", user=De
             reviewed_loans = reviewed_q.all()
 
             loans_processed = len(created_loans)
-            loans_approved = sum(1 for l in reviewed_loans if l.status in ["approved", "disbursed", "paid"])
+            # Bug fix A: include defaulted/written_off loans in approved count so reviewer
+            # throughput correctly counts all loans they reviewed and approved (even those
+            # that later defaulted — a decision was made, so it counts as work done).
+            loans_approved = sum(1 for l in reviewed_loans if l.status in ["approved", "disbursed", "paid", "defaulted", "written_off"])
             loans_rejected = sum(1 for l in reviewed_loans if l.status == "rejected")
             disbursed_by_staff = [l for l in created_loans if l.status in ["disbursed", "paid", "defaulted", "written_off"]]
             disbursed_loan_count = len(disbursed_by_staff)
             default_count = sum(1 for l in disbursed_by_staff if l.status in ["defaulted", "written_off"])
             total_disbursed = sum(l.amount_disbursed or Decimal("0") for l in disbursed_by_staff)
+
+            # Bug fix B: reviewer portfolio quality should reflect the quality of loans they
+            # approved, not loans they created (they create none). Use reviewed+disbursed loans
+            # as the portfolio base so defaults on approved loans lower their portfolio score.
+            if staff.role == "reviewer":
+                portfolio_disbursed_count = sum(1 for l in reviewed_loans if l.status in ["disbursed", "paid", "defaulted", "written_off"])
+                portfolio_default_count   = sum(1 for l in reviewed_loans if l.status in ["defaulted", "written_off"])
+            else:
+                portfolio_disbursed_count = disbursed_loan_count
+                portfolio_default_count   = default_count
 
             staff_loan_ids = [str(l.id) for l in created_loans]
             if staff_loan_ids:
@@ -324,8 +337,8 @@ async def get_staff_performance(org_id: str, period: str = "this_month", user=De
                 loans_processed=loans_processed,
                 loans_approved=loans_approved,
                 loans_rejected=loans_rejected,
-                default_count=default_count,
-                disbursed_loan_count=disbursed_loan_count,
+                default_count=portfolio_default_count,
+                disbursed_loan_count=portfolio_disbursed_count,
                 transactions_processed=transactions_processed,
                 attendance_days=attendance_days,
                 attendance_rate=attendance_rate,

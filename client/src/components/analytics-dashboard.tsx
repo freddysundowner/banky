@@ -684,7 +684,9 @@ export default function AnalyticsDashboard({ organizationId }: AnalyticsDashboar
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Each 1% default rate costs 5 points. A 20%+ default rate scores 0.
-                          Staff with no disbursed loans score 100 (clean portfolio).
+                          For <strong>Loan Officers</strong>: "disbursed_loans" = loans they originated.
+                          For <strong>Reviewers</strong>: "disbursed_loans" = loans they approved that were disbursed — defaults on their approvals lower their score.
+                          Staff with no disbursed/approved loans score 100 (clean portfolio).
                         </p>
                       </div>
 
