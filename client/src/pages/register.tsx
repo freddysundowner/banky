@@ -100,6 +100,7 @@ export default function Register() {
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterFormData) => {
       const { institutionType, ...rest } = data;
+      localStorage.setItem("bankykit_institution_type", institutionType);
       return apiRequest("POST", "/api/auth/register", {
         ...rest,
         institution_type: institutionType,

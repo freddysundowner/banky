@@ -552,6 +552,10 @@ export default function Home() {
     enabled: !!user,
   });
 
+  const savedInstitutionType = typeof window !== "undefined"
+    ? (localStorage.getItem("bankykit_institution_type") as "chama" | "sacco" | "mfi" | "bank" | null)
+    : null;
+
   const createForm = useForm<CreateOrgFormData>({
     resolver: zodResolver(createOrgSchema),
     defaultValues: {
@@ -562,7 +566,7 @@ export default function Home() {
       address: "",
       deploymentMode: "saas",
       currency: "KES",
-      institutionType: undefined as unknown as "chama" | "sacco" | "mfi" | "bank",
+      institutionType: savedInstitutionType || (undefined as unknown as "chama" | "sacco" | "mfi" | "bank"),
     },
   });
 
@@ -645,6 +649,7 @@ export default function Home() {
       setSelectedOrg(null);
       await queryClient.invalidateQueries({ queryKey: ["/api/organizations/my"] });
       createForm.reset();
+      localStorage.removeItem("bankykit_institution_type");
       setupReadyRef.current = true;
       setSetupReady(true);
     },

@@ -122,18 +122,19 @@ async def create_organization(data: OrganizationCreate, user = Depends(get_curre
         default_plan_id = get_default_plan_for_institution_type(db, institution_type)
     else:
         default_plan_id = get_default_plan_id(db)
-    trial_days = get_trial_days(db)
     
-    subscription = OrganizationSubscription(
-        organization_id=org.id,
-        plan_id=default_plan_id,
-        status="trial",
-        trial_ends_at=datetime.utcnow() + timedelta(days=trial_days),
-        current_period_start=datetime.utcnow(),
-        current_period_end=datetime.utcnow() + timedelta(days=30)
-    )
-    db.add(subscription)
-    db.commit()
+    if default_plan_id:
+        trial_days = get_trial_days(db)
+        subscription = OrganizationSubscription(
+            organization_id=org.id,
+            plan_id=default_plan_id,
+            status="trial",
+            trial_ends_at=datetime.utcnow() + timedelta(days=trial_days),
+            current_period_start=datetime.utcnow(),
+            current_period_end=datetime.utcnow() + timedelta(days=30)
+        )
+        db.add(subscription)
+        db.commit()
     
     return sanitize_org(org)
 
