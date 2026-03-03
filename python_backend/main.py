@@ -221,9 +221,7 @@ def seed_default_plans():
                     bt_key = plan.plan_type
                     bt_canonical = BUSINESS_TYPE_PLAN_FEATURES.get(bt_key)
                     if bt_canonical:
-                        current_enabled = (plan.features or {}).get("enabled", [])
-                        merged = list(set(current_enabled) | set(bt_canonical))
-                        plan.features = {"enabled": merged}
+                        plan.features = {"enabled": list(bt_canonical)}
             db.commit()
 
         print("Plan prices updated.")

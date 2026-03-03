@@ -12,6 +12,7 @@ interface Branding {
   deployment_mode: string;
   logo_url: string;
   favicon_url: string;
+  demo_mode: boolean;
 }
 
 const defaultBranding: Branding = {
@@ -25,6 +26,7 @@ const defaultBranding: Branding = {
   deployment_mode: 'saas',
   logo_url: '',
   favicon_url: '',
+  demo_mode: false,
 };
 
 const BrandingContext = createContext<Branding>(defaultBranding);

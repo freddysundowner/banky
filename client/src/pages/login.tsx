@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,7 +28,6 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-const IS_DEMO = import.meta.env.VITE_PRODUCTION_MODE === "demo";
 const DEMO_PASSWORD = "Demo@1234";
 
 const DEMO_INSTITUTION_TYPES = [
@@ -72,7 +71,7 @@ const FEATURES = [
 export default function Login() {
   const [, navigate] = useLocation();
   const { toast } = useAppDialog();
-  const { platform_name, guide_url } = useBranding();
+  const { platform_name, guide_url, demo_mode: IS_DEMO } = useBranding();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -81,10 +80,19 @@ export default function Login() {
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: IS_DEMO ? DEMO_INSTITUTION_TYPES[0].email : "",
-      password: IS_DEMO ? DEMO_PASSWORD : "",
+      email: "",
+      password: "",
     },
   });
+
+  const demoPrefilled = useRef(false);
+  useEffect(() => {
+    if (IS_DEMO && !demoPrefilled.current) {
+      demoPrefilled.current = true;
+      form.setValue("email", DEMO_INSTITUTION_TYPES[0].email);
+      form.setValue("password", DEMO_PASSWORD);
+    }
+  }, [IS_DEMO]);
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginFormData) => {
