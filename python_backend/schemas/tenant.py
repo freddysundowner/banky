@@ -578,9 +578,9 @@ class LoanApplicationResponse(BaseModel):
     outstanding_balance: Optional[Decimal] = None
     next_payment_date: Optional[date] = None
     last_payment_date: Optional[date] = None
-    is_restructured: bool = False
-    interest_deducted_upfront: bool = False
-    collateral_deficient: bool = False
+    is_restructured: Optional[bool] = False
+    interest_deducted_upfront: Optional[bool] = False
+    collateral_deficient: Optional[bool] = False
     applied_at: datetime
     approved_at: Optional[datetime] = None
     rejected_at: Optional[datetime] = None

@@ -78,6 +78,7 @@ import {
   Clock,
   WifiOff,
   Loader2,
+  CreditCard,
 } from "lucide-react";
 import {
   Dialog,
@@ -199,6 +200,86 @@ interface MemberDocument {
   is_verified: boolean;
   verified_at: string | null;
   created_at: string;
+}
+
+function MemberLoansSection({ organizationId, memberId }: { organizationId: string; memberId: string }) {
+  const { symbol } = useCurrency(organizationId);
+  const { data, isLoading } = useQuery<any>({
+    queryKey: ["/api/organizations", organizationId, "loans", "member", memberId],
+    queryFn: async () => {
+      const res = await fetch(`/api/organizations/${organizationId}/loans?member_id=${memberId}&page_size=100`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load loans");
+      return res.json();
+    },
+  });
+
+  const loans: any[] = data?.data ?? [];
+
+  const statusColor: Record<string, string> = {
+    pending:       "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+    approved:      "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+    disbursed:     "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+    active:        "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
+    defaulted:     "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
+    restructured:  "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+    closed:        "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
+    rejected:      "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+    written_off:   "bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400",
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <CreditCard className="h-5 w-5" />
+          Loan History
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-2">
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-10 w-full" />)}
+          </div>
+        ) : loans.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-8">No loans found for this member.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Loan #</TableHead>
+                  <TableHead>Product</TableHead>
+                  <TableHead className="text-right">Amount ({symbol})</TableHead>
+                  <TableHead className="text-right">Outstanding ({symbol})</TableHead>
+                  <TableHead>Term</TableHead>
+                  <TableHead>Disbursed</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loans.map((loan: any) => (
+                  <TableRow key={loan.id} data-testid={`row-loan-${loan.id}`}>
+                    <TableCell className="font-mono text-sm">{loan.application_number}</TableCell>
+                    <TableCell>{loan.product_name ?? "—"}</TableCell>
+                    <TableCell className="text-right">{Number(loan.amount).toLocaleString()}</TableCell>
+                    <TableCell className="text-right">{Number(loan.outstanding_balance ?? 0).toLocaleString()}</TableCell>
+                    <TableCell>{loan.term_months}m</TableCell>
+                    <TableCell>{loan.disbursed_at ? new Date(loan.disbursed_at).toLocaleDateString() : "—"}</TableCell>
+                    <TableCell>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium capitalize ${statusColor[loan.status] ?? "bg-muted text-muted-foreground"}`}
+                        data-testid={`status-loan-${loan.id}`}>
+                        {loan.status?.replace(/_/g, " ")}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 function MemberDocumentsSection({ organizationId, memberId }: { organizationId: string; memberId: string }) {
@@ -2315,6 +2396,12 @@ export default function MemberManagement({ organizationId, prefillContact, onPre
                   <FileText className="h-4 w-4 hidden sm:block" />
                   Membership
                 </TabsTrigger>
+                {viewMode === "edit" && (
+                  <TabsTrigger value="loans" className="gap-1" data-testid="tab-loans">
+                    <CreditCard className="h-4 w-4 hidden sm:block" />
+                    Loans
+                  </TabsTrigger>
+                )}
               </TabsList>
             </div>
 
@@ -2869,6 +2956,12 @@ export default function MemberManagement({ organizationId, prefillContact, onPre
                 </CardContent>
               </Card>
             </TabsContent>
+
+            {viewMode === "edit" && (
+              <TabsContent value="loans">
+                <MemberLoansSection organizationId={organizationId} memberId={selectedMember!.id} />
+              </TabsContent>
+            )}
           </Tabs>
 
           <div className="flex justify-between mt-6">
