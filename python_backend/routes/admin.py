@@ -539,6 +539,7 @@ def list_plans(admin: AdminUser = Depends(require_admin), db: Session = Depends(
         "id": p.id,
         "name": p.name,
         "plan_type": p.plan_type,
+        "business_type": p.business_type,
         "pricing_model": p.pricing_model or "saas",
         "monthly_price": float(p.monthly_price) if p.monthly_price else 0,
         "annual_price": float(p.annual_price) if p.annual_price else 0,
@@ -552,6 +553,38 @@ def list_plans(admin: AdminUser = Depends(require_admin), db: Session = Depends(
         "features": p.features,
         "is_active": p.is_active
     } for p in plans]
+
+@router.patch("/plans/{plan_id}/features")
+def update_plan_features(plan_id: str, data: dict, admin: AdminUser = Depends(require_admin), db: Session = Depends(get_db)):
+    """Toggle or update features for a plan"""
+    plan = db.query(SubscriptionPlan).filter(SubscriptionPlan.id == plan_id).first()
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+
+    current_features = plan.features or {"enabled": [], "custom": []}
+    current_enabled = set(current_features.get("enabled", []))
+    current_custom = current_features.get("custom", [])
+
+    if "enabled" in data:
+        current_enabled = set(data["enabled"])
+    if "toggle_feature" in data:
+        feature = data["toggle_feature"]
+        if feature in current_enabled:
+            current_enabled.discard(feature)
+        else:
+            current_enabled.add(feature)
+    if "add_custom" in data:
+        val = data["add_custom"].strip()
+        if val and val not in current_custom:
+            current_custom.append(val)
+    if "remove_custom" in data:
+        current_custom = [c for c in current_custom if c != data["remove_custom"]]
+    if "custom" in data:
+        current_custom = data["custom"]
+
+    plan.features = {"enabled": sorted(list(current_enabled)), "custom": current_custom}
+    db.commit()
+    return {"message": "Plan features updated", "features": plan.features}
 
 @router.post("/plans")
 def create_plan(data: dict, admin: AdminUser = Depends(require_admin), db: Session = Depends(get_db)):

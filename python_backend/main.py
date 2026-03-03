@@ -82,6 +82,96 @@ DEFAULT_PLAN_FEATURES = {
     "enterprise": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "fixed_deposits", "dividends", "analytics", "analytics_export", "sms_notifications", "bulk_sms", "expenses", "leave_management", "payroll", "accounting", "multiple_branches", "api_access", "white_label", "custom_reports", "mpesa_integration", "bank_integration", "audit_logs", "crm", "collateral"],
 }
 
+BUSINESS_TYPE_PLAN_FEATURES = {
+    "chama_small": ["members", "savings", "loans", "mpesa_integration", "sms_notifications", "audit_logs"],
+    "chama_large": ["members", "savings", "loans", "mpesa_integration", "sms_notifications", "audit_logs", "analytics", "analytics_export", "expenses", "accounting", "bulk_sms", "multiple_branches"],
+    "sacco_small": ["members", "savings", "shares", "loans", "teller_station", "float_management", "mpesa_integration", "sms_notifications", "accounting", "audit_logs"],
+    "sacco_large": ["members", "savings", "shares", "loans", "teller_station", "float_management", "mpesa_integration", "sms_notifications", "accounting", "audit_logs", "dividends", "fixed_deposits", "collateral", "analytics", "analytics_export", "multiple_branches", "crm", "bulk_sms", "leave_management", "payroll"],
+    "mfi_small": ["members", "loans", "crm", "mpesa_integration", "collateral", "sms_notifications", "expenses", "savings", "audit_logs"],
+    "mfi_large": ["members", "loans", "crm", "mpesa_integration", "collateral", "sms_notifications", "expenses", "savings", "audit_logs", "analytics", "analytics_export", "accounting", "multiple_branches", "float_management", "bulk_sms", "leave_management", "payroll", "custom_reports"],
+    "bank_small": ["members", "savings", "loans", "teller_station", "float_management", "fixed_deposits", "accounting", "mpesa_integration", "multiple_branches", "collateral", "crm", "sms_notifications", "expenses", "audit_logs"],
+    "bank_large": ["members", "savings", "loans", "teller_station", "float_management", "fixed_deposits", "accounting", "mpesa_integration", "multiple_branches", "collateral", "crm", "sms_notifications", "expenses", "audit_logs", "shares", "dividends", "analytics", "analytics_export", "leave_management", "payroll", "bulk_sms", "custom_reports"],
+    "chama_small_licence": ["members", "savings", "loans", "mpesa_integration", "sms_notifications", "audit_logs"],
+    "chama_large_licence": ["members", "savings", "loans", "mpesa_integration", "sms_notifications", "audit_logs", "analytics", "analytics_export", "expenses", "accounting", "bulk_sms", "multiple_branches"],
+    "sacco_small_licence": ["members", "savings", "shares", "loans", "teller_station", "float_management", "mpesa_integration", "sms_notifications", "accounting", "audit_logs"],
+    "sacco_large_licence": ["members", "savings", "shares", "loans", "teller_station", "float_management", "mpesa_integration", "sms_notifications", "accounting", "audit_logs", "dividends", "fixed_deposits", "collateral", "analytics", "analytics_export", "multiple_branches", "crm", "bulk_sms", "leave_management", "payroll"],
+    "mfi_small_licence": ["members", "loans", "crm", "mpesa_integration", "collateral", "sms_notifications", "expenses", "savings", "audit_logs"],
+    "mfi_large_licence": ["members", "loans", "crm", "mpesa_integration", "collateral", "sms_notifications", "expenses", "savings", "audit_logs", "analytics", "analytics_export", "accounting", "multiple_branches", "float_management", "bulk_sms", "leave_management", "payroll", "custom_reports"],
+    "bank_small_licence": ["members", "savings", "loans", "teller_station", "float_management", "fixed_deposits", "accounting", "mpesa_integration", "multiple_branches", "collateral", "crm", "sms_notifications", "expenses", "audit_logs"],
+    "bank_large_licence": ["members", "savings", "loans", "teller_station", "float_management", "fixed_deposits", "accounting", "mpesa_integration", "multiple_branches", "collateral", "crm", "sms_notifications", "expenses", "audit_logs", "shares", "dividends", "analytics", "analytics_export", "leave_management", "payroll", "bulk_sms", "custom_reports"],
+}
+
+def _seed_business_type_plans(db, KES_PLANS):
+    """Seed the 8 SaaS + 8 Enterprise business-type plans if they don't exist yet."""
+    from models.master import SubscriptionPlan
+
+    BT_KES_PLANS = {
+        "chama_small":         {"monthly_price": 999,   "annual_price": 9590},
+        "chama_large":         {"monthly_price": 2999,  "annual_price": 28790},
+        "sacco_small":         {"monthly_price": 4999,  "annual_price": 47990},
+        "sacco_large":         {"monthly_price": 12999, "annual_price": 124790},
+        "mfi_small":           {"monthly_price": 7999,  "annual_price": 76790},
+        "mfi_large":           {"monthly_price": 19999, "annual_price": 191990},
+        "bank_small":          {"monthly_price": 29999, "annual_price": 287990},
+        "bank_large":          {"monthly_price": 59999, "annual_price": 575990},
+        "chama_small_licence": {"one_time_price": 12000},
+        "chama_large_licence": {"one_time_price": 36000},
+        "sacco_small_licence": {"one_time_price": 60000},
+        "sacco_large_licence": {"one_time_price": 155000},
+        "mfi_small_licence":   {"one_time_price": 96000},
+        "mfi_large_licence":   {"one_time_price": 240000},
+        "bank_small_licence":  {"one_time_price": 360000},
+        "bank_large_licence":  {"one_time_price": 720000},
+    }
+
+    BT_DEFINITIONS = [
+        {"name": "Chama Small",    "plan_type": "chama_small",    "business_type": "chama", "pricing_model": "saas",       "sort_order": 10, "max_members": 200,  "max_staff": 2,  "max_branches": 1},
+        {"name": "Chama Large",    "plan_type": "chama_large",    "business_type": "chama", "pricing_model": "saas",       "sort_order": 11, "max_members": 1000, "max_staff": 5,  "max_branches": 3},
+        {"name": "SACCO Small",    "plan_type": "sacco_small",    "business_type": "sacco", "pricing_model": "saas",       "sort_order": 20, "max_members": 500,  "max_staff": 5,  "max_branches": 1},
+        {"name": "SACCO Large",    "plan_type": "sacco_large",    "business_type": "sacco", "pricing_model": "saas",       "sort_order": 21, "max_members": 5000, "max_staff": 30, "max_branches": 10},
+        {"name": "MFI Small",      "plan_type": "mfi_small",      "business_type": "mfi",   "pricing_model": "saas",       "sort_order": 30, "max_members": 500,  "max_staff": 10, "max_branches": 1},
+        {"name": "MFI Large",      "plan_type": "mfi_large",      "business_type": "mfi",   "pricing_model": "saas",       "sort_order": 31, "max_members": 5000, "max_staff": 50, "max_branches": 10},
+        {"name": "Bank Small",     "plan_type": "bank_small",     "business_type": "bank",  "pricing_model": "saas",       "sort_order": 40, "max_members": 2000, "max_staff": 20, "max_branches": 3},
+        {"name": "Bank Large",     "plan_type": "bank_large",     "business_type": "bank",  "pricing_model": "saas",       "sort_order": 41, "max_members": 50000,"max_staff": 200,"max_branches": 50},
+        {"name": "Chama Small Licence", "plan_type": "chama_small_licence", "business_type": "chama", "pricing_model": "enterprise", "sort_order": 50, "max_members": 200,  "max_staff": 2,  "max_branches": 1,  "support_years": 1},
+        {"name": "Chama Large Licence", "plan_type": "chama_large_licence", "business_type": "chama", "pricing_model": "enterprise", "sort_order": 51, "max_members": 1000, "max_staff": 5,  "max_branches": 3,  "support_years": 2},
+        {"name": "SACCO Small Licence", "plan_type": "sacco_small_licence", "business_type": "sacco", "pricing_model": "enterprise", "sort_order": 60, "max_members": 500,  "max_staff": 5,  "max_branches": 1,  "support_years": 1},
+        {"name": "SACCO Large Licence", "plan_type": "sacco_large_licence", "business_type": "sacco", "pricing_model": "enterprise", "sort_order": 61, "max_members": 5000, "max_staff": 30, "max_branches": 10, "support_years": 3},
+        {"name": "MFI Small Licence",   "plan_type": "mfi_small_licence",   "business_type": "mfi",   "pricing_model": "enterprise", "sort_order": 70, "max_members": 500,  "max_staff": 10, "max_branches": 1,  "support_years": 1},
+        {"name": "MFI Large Licence",   "plan_type": "mfi_large_licence",   "business_type": "mfi",   "pricing_model": "enterprise", "sort_order": 71, "max_members": 5000, "max_staff": 50, "max_branches": 10, "support_years": 3},
+        {"name": "Bank Small Licence",  "plan_type": "bank_small_licence",  "business_type": "bank",  "pricing_model": "enterprise", "sort_order": 80, "max_members": 2000, "max_staff": 20, "max_branches": 3,  "support_years": 2},
+        {"name": "Bank Large Licence",  "plan_type": "bank_large_licence",  "business_type": "bank",  "pricing_model": "enterprise", "sort_order": 81, "max_members": 50000,"max_staff": 200,"max_branches": 50, "support_years": 5},
+    ]
+
+    existing_types = {p.plan_type for p in db.query(SubscriptionPlan).all()}
+    added = 0
+    for defn in BT_DEFINITIONS:
+        if defn["plan_type"] in existing_types:
+            continue
+        prices = BT_KES_PLANS[defn["plan_type"]]
+        plan = SubscriptionPlan(
+            name=defn["name"],
+            plan_type=defn["plan_type"],
+            business_type=defn["business_type"],
+            pricing_model=defn["pricing_model"],
+            monthly_price=prices.get("monthly_price", 0),
+            annual_price=prices.get("annual_price", 0),
+            one_time_price=prices.get("one_time_price", 0),
+            max_members=defn.get("max_members"),
+            max_staff=defn.get("max_staff"),
+            max_branches=defn.get("max_branches"),
+            support_years=defn.get("support_years", 1),
+            sort_order=defn["sort_order"],
+            features={"enabled": BUSINESS_TYPE_PLAN_FEATURES[defn["plan_type"]]},
+            is_active=True,
+        )
+        db.add(plan)
+        added += 1
+    if added:
+        db.commit()
+        print(f"Seeded {added} business-type subscription plans")
+
+
 def seed_default_plans():
     """Seed default subscription plans. Prices stored directly in KES."""
     from models.database import SessionLocal
@@ -114,13 +204,24 @@ def seed_default_plans():
                         plan.annual_price  = prices["annual_price"]
                     if "one_time_price" in prices:
                         plan.one_time_price = prices["one_time_price"]
-                # Sync features: ensure all canonical features are present.
+                # Sync features for generic plans
                 canonical = DEFAULT_PLAN_FEATURES.get(plan.plan_type)
-                if canonical:
+                if canonical and not plan.business_type:
                     current_enabled = (plan.features or {}).get("enabled", [])
                     merged = list(set(current_enabled) | set(canonical))
                     plan.features = {"enabled": merged}
+                # Sync features for business-type plans
+                if plan.business_type:
+                    bt_key = plan.plan_type
+                    bt_canonical = BUSINESS_TYPE_PLAN_FEATURES.get(bt_key)
+                    if bt_canonical:
+                        current_enabled = (plan.features or {}).get("enabled", [])
+                        merged = list(set(current_enabled) | set(bt_canonical))
+                        plan.features = {"enabled": merged}
             db.commit()
+            
+            # Seed any missing business-type plans
+            _seed_business_type_plans(db, KES_PLANS)
             print("Plan prices updated.")
             return
 
@@ -221,6 +322,8 @@ def seed_default_plans():
 
         db.commit()
         print(f"Seeded {len(default_plans)} default subscription plans")
+        
+        _seed_business_type_plans(db, KES_PLANS)
     except Exception as e:
         print(f"Error seeding plans: {e}")
         db.rollback()
@@ -256,7 +359,7 @@ def run_pending_migrations_sync():
         db.close()
     print("All tenant migrations complete")
 
-_MASTER_SCHEMA_VERSION = 4
+_MASTER_SCHEMA_VERSION = 6
 
 def _get_master_migration_version():
     """Check the migration version stored in the master database"""
@@ -342,9 +445,16 @@ def run_master_migrations():
             ("neon_project_id", "VARCHAR(255)"),
             ("neon_branch_id", "VARCHAR(255)"),
             ("connection_string", "TEXT"),
+            ("institution_type", "VARCHAR(50)"),
         ]
         for col_name, col_type in org_columns:
             _add_master_column_if_not_exists(conn, "organizations", col_name, col_type)
+        
+        plan_columns = [
+            ("business_type", "VARCHAR(50)"),
+        ]
+        for col_name, col_type in plan_columns:
+            _add_master_column_if_not_exists(conn, "subscription_plans", col_name, col_type)
         
         sub_columns = [
             ("trial_ends_at", "TIMESTAMP"),
@@ -853,6 +963,43 @@ async def get_public_plans():
         def to_kes(usd_amount):
             return convert_usd_to(usd_amount, currency, rates) if usd_amount else 0
 
+        def plan_to_saas_dict(p):
+            return {
+                "name": p.name,
+                "plan_type": p.plan_type,
+                "business_type": p.business_type,
+                "monthly_price": round(float(p.monthly_price) if p.monthly_price else 0),
+                "annual_price": round(float(p.annual_price) if p.annual_price else 0),
+                "max_members": p.max_members,
+                "max_staff": p.max_staff,
+                "max_branches": p.max_branches,
+                "features": get_display_features(p)
+            }
+
+        def plan_to_enterprise_dict(p):
+            return {
+                "name": p.name,
+                "plan_type": p.plan_type,
+                "business_type": p.business_type,
+                "price": round(float(p.one_time_price) if p.one_time_price else 0),
+                "max_members": p.max_members,
+                "max_staff": p.max_staff,
+                "max_branches": p.max_branches,
+                "support_years": p.support_years or 1,
+                "features": get_display_features(p)
+            }
+
+        all_saas = [plan_to_saas_dict(p) for p in saas_plans]
+        all_enterprise = [plan_to_enterprise_dict(p) for p in enterprise_plans]
+
+        business_types = ["chama", "sacco", "mfi", "bank"]
+        by_type = {}
+        for bt in business_types:
+            by_type[bt] = {
+                "saas": [p for p in all_saas if p["business_type"] == bt],
+                "enterprise": [p for p in all_enterprise if p["business_type"] == bt],
+            }
+
         return {
             "title": settings.get('pricing_title', 'Choose Your Plan'),
             "subtitle": settings.get('pricing_subtitle', 'Flexible options for Saccos of all sizes'),
@@ -860,25 +1007,9 @@ async def get_public_plans():
             "enterprise_label": settings.get('pricing_enterprise_label', 'Enterprise (One-time)'),
             "currency": currency,
             "currency_symbol": symbol,
-            "saas": [{
-                "name": p.name,
-                "plan_type": p.plan_type,
-                "monthly_price": round(float(p.monthly_price) if p.monthly_price else 0),
-                "annual_price": round(float(p.annual_price) if p.annual_price else 0),
-                "max_members": p.max_members,
-                "max_staff": p.max_staff,
-                "max_branches": p.max_branches,
-                "features": get_display_features(p)
-            } for p in saas_plans],
-            "enterprise": [{
-                "name": p.name,
-                "price": round(float(p.one_time_price) if p.one_time_price else 0),
-                "max_members": p.max_members,
-                "max_staff": p.max_staff,
-                "max_branches": p.max_branches,
-                "support_years": p.support_years or 1,
-                "features": get_display_features(p)
-            } for p in enterprise_plans]
+            "saas": [p for p in all_saas if not p["business_type"]],
+            "enterprise": [p for p in all_enterprise if not p["business_type"]],
+            "by_type": by_type,
         }
     finally:
         db.close()

@@ -297,7 +297,14 @@ function DeleteOrganizationSection({ organizationId }: { organizationId: string 
   );
 }
 
-function GeneralSection({ getValue, updateSetting, staffEmailDomain, setStaffEmailDomain, orgInfoChanged, setOrgInfoChanged, updateOrgMutation }: any) {
+const INSTITUTION_TYPES = [
+  { value: "chama", label: "Chama", description: "Informal savings/investment group" },
+  { value: "sacco", label: "SACCO", description: "Savings and Credit Cooperative" },
+  { value: "mfi", label: "MFI / Microfinance", description: "Microfinance institution or lender" },
+  { value: "bank", label: "Bank", description: "Commercial or cooperative bank" },
+];
+
+function GeneralSection({ getValue, updateSetting, staffEmailDomain, setStaffEmailDomain, orgInfoChanged, setOrgInfoChanged, updateOrgMutation, institutionType, setInstitutionType, institutionTypeChanged, setInstitutionTypeChanged, updateInstitutionTypeMutation }: any) {
   return (
     <div className="space-y-6">
       <SectionHeader title="General" description="Your organization's core information and preferences" />
@@ -387,6 +394,51 @@ function GeneralSection({ getValue, updateSetting, staffEmailDomain, setStaffEma
             <Input id="auto_logout_minutes" type="number" value={getValue("auto_logout_minutes")} onChange={(e) => updateSetting("auto_logout_minutes", e.target.value)} placeholder="30" data-testid="input-auto-logout" />
             <p className="text-xs text-muted-foreground">Log out users after this many minutes of inactivity</p>
           </div>
+        </SettingRow>
+      </SettingGroup>
+
+      <SettingGroup title="Institution Type">
+        <SettingRow>
+          <p className="text-sm text-muted-foreground mb-3">
+            Select your institution type to see plans and features tailored for your organization. This also filters the plans shown on the upgrade page.
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2 max-w-lg">
+            {INSTITUTION_TYPES.map((t) => (
+              <button
+                key={t.value}
+                data-testid={`button-institution-type-${t.value}`}
+                onClick={() => { setInstitutionType(t.value); setInstitutionTypeChanged(true); }}
+                className={`text-left p-3 rounded-lg border-2 transition-all ${
+                  institutionType === t.value
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/50"
+                }`}
+              >
+                <div className="font-medium text-sm">{t.label}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{t.description}</div>
+              </button>
+            ))}
+          </div>
+          {institutionType && (
+            <button
+              onClick={() => { setInstitutionType(""); setInstitutionTypeChanged(true); }}
+              className="text-xs text-muted-foreground hover:text-foreground mt-2 underline"
+              data-testid="button-clear-institution-type"
+            >
+              Clear selection
+            </button>
+          )}
+          {institutionTypeChanged && (
+            <Button
+              onClick={() => updateInstitutionTypeMutation.mutate(institutionType || null)}
+              disabled={updateInstitutionTypeMutation.isPending}
+              size="sm"
+              className="mt-3"
+              data-testid="button-save-institution-type"
+            >
+              {updateInstitutionTypeMutation.isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...</> : <><Save className="mr-2 h-4 w-4" /> Save Institution Type</>}
+            </Button>
+          )}
         </SettingRow>
       </SettingGroup>
 
@@ -836,22 +888,52 @@ export default function SettingsPage({ organizationId, isOwner }: SettingsPagePr
     enabled: !!organizationId,
   });
 
-  const { data: orgData } = useQuery<{ staff_email_domain?: string; name?: string; phone?: string; email?: string; address?: string }>({
+  const [institutionType, setInstitutionType] = useState<string>("");
+  const [institutionTypeChanged, setInstitutionTypeChanged] = useState(false);
+
+  const { data: orgData } = useQuery<{ staff_email_domain?: string; name?: string; phone?: string; email?: string; address?: string; institution_type?: string }>({
     queryKey: ["/api/organizations", organizationId, "info"],
     queryFn: async () => {
       const memberships = await fetch("/api/organizations/my", { credentials: "include" }).then(r => r.json());
       const membership = memberships?.find((m: any) => m.organizationId === organizationId || m.organization?.id === organizationId);
       if (membership?.organization) {
         const org = membership.organization;
-        return { staff_email_domain: org.staff_email_domain, name: org.name, phone: org.phone, email: org.email, address: org.address };
+        return { staff_email_domain: org.staff_email_domain, name: org.name, phone: org.phone, email: org.email, address: org.address, institution_type: org.institution_type };
       }
       return {};
     },
     enabled: !!organizationId,
   });
 
+  const updateInstitutionTypeMutation = useMutation({
+    mutationFn: async (institution_type: string | null) => {
+      const res = await fetch(`/api/organizations/${organizationId}/institution-type`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ institution_type: institution_type || null }),
+      });
+      if (!res.ok) throw new Error("Failed to update institution type");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "info"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organizations/my"] });
+      queryClient.invalidateQueries({ queryKey: ["plans", organizationId] });
+      toast({ title: "Institution type updated" });
+      setInstitutionTypeChanged(false);
+    },
+    onError: () => {
+      toast({ title: "Failed to update institution type", variant: "destructive" });
+    },
+  });
+
   if (orgData?.staff_email_domain && !staffEmailDomain && !orgInfoChanged) {
     setStaffEmailDomain(orgData.staff_email_domain);
+  }
+
+  if (orgData?.institution_type !== undefined && !institutionTypeChanged && institutionType !== (orgData.institution_type || "")) {
+    setInstitutionType(orgData.institution_type || "");
   }
 
   const updateMutation = useMutation({
@@ -921,7 +1003,7 @@ export default function SettingsPage({ organizationId, isOwner }: SettingsPagePr
   const visibleNavItems = navItems.filter(item => !item.ownerOnly || isOwner);
   const currentNav = visibleNavItems.find(n => n.id === activeSection);
 
-  const sharedProps = { getValue, getBoolValue, updateSetting, organizationId, hasChanges, handleSave, updateMutation, toast };
+  const sharedProps = { getValue, getBoolValue, updateSetting, organizationId, hasChanges, handleSave, updateMutation, toast, institutionType, setInstitutionType, institutionTypeChanged, setInstitutionTypeChanged, updateInstitutionTypeMutation };
 
   return (
     <div className="flex flex-col h-full">

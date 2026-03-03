@@ -16,6 +16,7 @@ interface Plan {
   id: string;
   name: string;
   plan_type: string;
+  business_type?: string;
   pricing_model: string;
   monthly_price: number;
   annual_price: number;
@@ -53,7 +54,22 @@ const PLAN_COLORS: Record<string, { bg: string; border: string }> = {
   starter: { bg: "bg-slate-50", border: "border-slate-200" },
   growth: { bg: "bg-blue-50", border: "border-blue-200" },
   professional: { bg: "bg-purple-50", border: "border-purple-200" },
-  enterprise: { bg: "bg-amber-50", border: "border-amber-200" }
+  enterprise: { bg: "bg-amber-50", border: "border-amber-200" },
+  chama_small: { bg: "bg-green-50", border: "border-green-200" },
+  chama_large: { bg: "bg-green-50", border: "border-green-300" },
+  sacco_small: { bg: "bg-blue-50", border: "border-blue-200" },
+  sacco_large: { bg: "bg-blue-50", border: "border-blue-300" },
+  mfi_small: { bg: "bg-orange-50", border: "border-orange-200" },
+  mfi_large: { bg: "bg-orange-50", border: "border-orange-300" },
+  bank_small: { bg: "bg-purple-50", border: "border-purple-200" },
+  bank_large: { bg: "bg-purple-50", border: "border-purple-300" },
+};
+
+const BUSINESS_TYPE_LABELS: Record<string, string> = {
+  chama: "Chama",
+  sacco: "SACCO",
+  mfi: "MFI / Microfinance",
+  bank: "Bank",
 };
 
 const PAYSTACK_CHANNELS: { id: PaystackChannel; label: string; icon: typeof CreditCard; description: string }[] = [
@@ -393,6 +409,9 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
   }
 
   const saasPlans = plans?.filter(p => p.pricing_model === "saas") || plans || [];
+  const businessType = saasPlans[0]?.business_type || null;
+  const businessTypeLabel = businessType ? BUSINESS_TYPE_LABELS[businessType] : null;
+  const popularPlanType = saasPlans.length > 0 ? saasPlans[saasPlans.length - 1]?.plan_type : "growth";
   const paymentAmount = selectedPlan ? getPlanPrice(selectedPlan, gateway, billingPeriod, rates, paystackCurrency, paystackChannel) : 0;
   const showAnnual = selectedPlan ? hasAnnual(selectedPlan) : false;
 
@@ -408,13 +427,20 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
     <div className="space-y-6 overflow-x-hidden">
       <div>
         <h1 className="text-xl md:text-2xl font-bold">Subscription Plans</h1>
-        <p className="text-sm md:text-base text-muted-foreground">Choose the plan that best fits your organization's needs</p>
+        <p className="text-sm md:text-base text-muted-foreground">
+          {businessTypeLabel
+            ? `Plans tailored for ${businessTypeLabel} institutions`
+            : "Choose the plan that best fits your organization's needs"}
+        </p>
+        {!businessType && (
+          <p className="text-xs text-amber-600 mt-1">Tip: Set your institution type in Settings → General to see plans built for your specific needs.</p>
+        )}
       </div>
 
       <div className="grid gap-4 md:gap-6" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))" }}>
         {saasPlans.map((plan) => {
           const colors = PLAN_COLORS[plan.plan_type] || PLAN_COLORS.starter;
-          const isPopular = plan.plan_type === "growth";
+          const isPopular = plan.plan_type === popularPlanType;
 
           return (
             <Card

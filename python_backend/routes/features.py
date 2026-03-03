@@ -196,8 +196,20 @@ def get_available_plans(organization_id: str, auth = Depends(get_current_user), 
         if not membership:
             raise HTTPException(status_code=403, detail="Not authorized to access this organization")
     
-    plans = db.query(SubscriptionPlan).filter(SubscriptionPlan.is_active == True).all()
-    
+    institution_type = org.institution_type
+
+    if institution_type:
+        plans = db.query(SubscriptionPlan).filter(
+            SubscriptionPlan.is_active == True,
+            SubscriptionPlan.business_type == institution_type,
+            SubscriptionPlan.pricing_model != "enterprise"
+        ).order_by(SubscriptionPlan.sort_order).all()
+    else:
+        plans = db.query(SubscriptionPlan).filter(
+            SubscriptionPlan.is_active == True,
+            SubscriptionPlan.business_type == None
+        ).order_by(SubscriptionPlan.sort_order, SubscriptionPlan.monthly_price).all()
+
     subscription = db.query(OrganizationSubscription).filter(
         OrganizationSubscription.organization_id == organization_id
     ).first()
@@ -205,9 +217,15 @@ def get_available_plans(organization_id: str, auth = Depends(get_current_user), 
     current_plan_type = None
     if subscription and subscription.plan:
         current_plan_type = subscription.plan.plan_type
-    
+
+    bt_plan_order = {
+        "chama_small": 0, "chama_large": 1,
+        "sacco_small": 0, "sacco_large": 1,
+        "mfi_small": 0, "mfi_large": 1,
+        "bank_small": 0, "bank_large": 1,
+    }
     plan_order = {"starter": 0, "growth": 1, "professional": 2, "enterprise": 3}
-    current_order = plan_order.get(current_plan_type, -1)
+    current_order = bt_plan_order.get(current_plan_type, plan_order.get(current_plan_type, -1))
     
     feature_display_names = {
         "core_banking": "Core Banking",
@@ -240,7 +258,7 @@ def get_available_plans(organization_id: str, auth = Depends(get_current_user), 
     
     result = []
     for plan in plans:
-        plan_order_val = plan_order.get(plan.plan_type, 0)
+        plan_order_val = bt_plan_order.get(plan.plan_type, plan_order.get(plan.plan_type, 0))
         enabled_features = plan.features.get("enabled", []) if plan.features else []
         custom_features = plan.features.get("custom", []) if plan.features else []
         display_features = [feature_display_names.get(f, f.replace("_", " ").title()) for f in enabled_features]
@@ -249,6 +267,7 @@ def get_available_plans(organization_id: str, auth = Depends(get_current_user), 
             "id": plan.id,
             "name": plan.name,
             "plan_type": plan.plan_type,
+            "business_type": plan.business_type,
             "pricing_model": plan.pricing_model or "saas",
             "monthly_price": float(plan.monthly_price) if plan.monthly_price else 0,
             "annual_price": float(plan.annual_price) if plan.annual_price else 0,
@@ -261,8 +280,34 @@ def get_available_plans(organization_id: str, auth = Depends(get_current_user), 
             "is_downgrade": plan_order_val < current_order
         })
     
-    result.sort(key=lambda x: plan_order.get(x["plan_type"], 0))
+    result.sort(key=lambda x: bt_plan_order.get(x["plan_type"], plan_order.get(x["plan_type"], 0)))
     return result
+
+
+@router.patch("/{organization_id}/institution-type")
+def set_institution_type(organization_id: str, data: dict, auth = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Set the institution type for an organization (owner only)"""
+    org = db.query(Organization).filter(Organization.id == organization_id).first()
+    if not org:
+        raise HTTPException(status_code=404, detail="Organization not found")
+
+    if not auth.is_staff:
+        membership = db.query(OrganizationMember).filter(
+            OrganizationMember.organization_id == organization_id,
+            OrganizationMember.user_id == auth.user.id,
+            OrganizationMember.is_owner == True
+        ).first()
+        if not membership:
+            raise HTTPException(status_code=403, detail="Only organization owners can set institution type")
+
+    institution_type = data.get("institution_type")
+    allowed = ["chama", "sacco", "mfi", "bank", None]
+    if institution_type not in allowed:
+        raise HTTPException(status_code=400, detail=f"Invalid institution type. Must be one of: chama, sacco, mfi, bank")
+
+    org.institution_type = institution_type
+    db.commit()
+    return {"message": "Institution type updated", "institution_type": institution_type}
 
 @router.post("/{organization_id}/upgrade")
 def upgrade_plan(organization_id: str, data: dict, auth = Depends(get_current_user), db: Session = Depends(get_db)):

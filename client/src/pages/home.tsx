@@ -120,6 +120,7 @@ import { OrgSetupProgress } from "@/components/org-setup-progress";
 import SettingsPage from "@/pages/settings";
 import UpgradePage from "@/pages/upgrade";
 import MyAccountPage from "@/pages/my-account";
+import PlanManagerPage from "@/pages/plan-manager";
 import type { Organization } from "@shared/schema";
 import { Link } from "wouter";
 import { X, Mail, ChevronRight as ChevronRightIcon } from "lucide-react";
@@ -165,7 +166,7 @@ const updateOrgSchema = z.object({
 type CreateOrgFormData = z.infer<typeof createOrgSchema>;
 type UpdateOrgFormData = z.infer<typeof updateOrgSchema>;
 
-type NavSection = "dashboard" | "teller" | "teller-services" | "float-management" | "ticketing-kiosk" | "queue-display" | "branches" | "staff" | "members" | "loan-products" | "loans" | "loan-eligibility" | "loan-calculator" | "transactions" | "repayments" | "fixed-deposits" | "chart-of-accounts" | "journal-entries" | "opening-balances" | "dividends" | "reports" | "analytics" | "sms" | "defaults" | "hr" | "leaves" | "expenses" | "audit" | "crm" | "collateral" | "settings" | "my-account" | "upgrade";
+type NavSection = "dashboard" | "teller" | "teller-services" | "float-management" | "ticketing-kiosk" | "queue-display" | "branches" | "staff" | "members" | "loan-products" | "loans" | "loan-eligibility" | "loan-calculator" | "transactions" | "repayments" | "fixed-deposits" | "chart-of-accounts" | "journal-entries" | "opening-balances" | "dividends" | "reports" | "analytics" | "sms" | "defaults" | "hr" | "leaves" | "expenses" | "audit" | "crm" | "collateral" | "settings" | "my-account" | "upgrade" | "plan-manager";
 
 const weekDays = [
   { value: "monday", label: "Monday" },
@@ -230,6 +231,7 @@ const navItems = [
   { title: "Settings",          value: "settings" as NavSection,icon: Settings,      permissions: ["settings:read"], adminOnly: true,           group: "Administration" },
 
   { title: "My Account", value: "my-account" as NavSection, icon: UserCircle, permissions: [], alwaysShow: true },
+  { title: "Plan Manager", value: "plan-manager" as NavSection, icon: Settings, permissions: [], staffOnly: true, alwaysShow: false, group: "Administration" },
 ];
 
 function NavMenuButton({ item, activeSection, onSelect, badge }: {
@@ -445,7 +447,10 @@ export default function Home() {
   const { hasAnyPermission, isAdmin, role, workingHoursAllowed, workingHoursMessage, isLoading: permissionsLoading } = usePermissions(selectedOrg?.id || null, { deferToSession: true });
   const { hasFeature, isLoading: featuresLoading, isExpired, isTrial, trialDaysRemaining, trialMessage, plan } = useFeatures(selectedOrg?.id, { deferToSession: true });
   
+  const isStaffUser = (user as any)?.isStaff === true;
+
   const filteredNavItems = navItems.filter(item => {
+    if ((item as any).staffOnly) return isStaffUser;
     if (item.alwaysShow) return true;
     if (item.adminOnly && !isAdmin) return false;
     const featureRequired = (item as any).feature;
@@ -467,7 +472,7 @@ export default function Home() {
   // Redirect to first available section if current section is not accessible.
   // Only runs AFTER the session has loaded so filteredNavItems reflects real permissions.
   // Special sections like "upgrade" are always allowed.
-  const specialSections = ["upgrade", "settings", "my-account"];
+  const specialSections = ["upgrade", "settings", "my-account", "plan-manager"];
   useEffect(() => {
     if (selectedOrg && !sessionLoading && !permissionsLoading && !featuresLoading && filteredNavItems.length > 0) {
       const isSpecialSection = specialSections.includes(activeSection);
@@ -1237,6 +1242,10 @@ export default function Home() {
 
             {activeSection === "upgrade" && selectedOrg && (
               <UpgradePage organizationId={selectedOrg.id} />
+            )}
+
+            {activeSection === "plan-manager" && isStaffUser && (
+              <PlanManagerPage />
             )}
 
             {activeSection === "branches" && selectedOrg && (
