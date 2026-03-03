@@ -173,6 +173,8 @@ export default function DefaultsCollections({ organizationId }: DefaultsCollecti
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "defaults"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "defaults", "summary"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "defaults", "due-today"] });
       setWriteOffDefault(null);
       setWriteOffReason("");
       toast({ title: "Loan written off and posted to General Ledger" });
@@ -631,7 +633,6 @@ export default function DefaultsCollections({ organizationId }: DefaultsCollecti
                   <SelectItem value="overdue">Overdue</SelectItem>
                   <SelectItem value="in_collection">In Collection</SelectItem>
                   <SelectItem value="resolved">Resolved</SelectItem>
-                  <SelectItem value="written_off">Written Off</SelectItem>
                 </SelectContent>
               </Select>
             </div>

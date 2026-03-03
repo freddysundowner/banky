@@ -450,6 +450,11 @@ async def update_default(org_id: str, default_id: str, data: LoanDefaultUpdate, 
             raise HTTPException(status_code=404, detail="Default record not found")
         
         if data.status:
+            if data.status == "written_off":
+                raise HTTPException(
+                    status_code=400,
+                    detail="Use the dedicated write-off endpoint to write off a loan. This ensures the General Ledger is updated correctly."
+                )
             default.status = data.status
             if data.status == "resolved":
                 default.resolved_at = datetime.utcnow()
