@@ -1013,6 +1013,7 @@ export default function Home() {
           <OnboardingWizard
             organizationId={selectedOrg.id}
             organizationName={selectedOrg.name}
+            institutionType={(selectedOrg as any).institution_type || ""}
             onComplete={() => setShowOnboarding(false)}
             onFinalize={handleWizardFinalize}
           />

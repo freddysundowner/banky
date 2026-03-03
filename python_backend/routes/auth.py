@@ -266,6 +266,7 @@ async def register(data: UserRegister, request: Request, response: Response, db:
             code=code,
             email=data.email,
             staff_email_domain=data.staff_email_domain.lstrip('@') if data.staff_email_domain else None,
+            institution_type=data.institution_type if data.institution_type in ("chama", "sacco", "mfi", "bank") else None,
             is_active=True
         )
         db.add(org)
@@ -279,8 +280,11 @@ async def register(data: UserRegister, request: Request, response: Response, db:
         )
         db.add(membership)
         
-        from routes.admin import get_default_plan_id, get_trial_days
-        default_plan_id = get_default_plan_id(db)
+        from routes.admin import get_default_plan_id, get_default_plan_for_institution_type, get_trial_days
+        if data.institution_type in ("chama", "sacco", "mfi", "bank"):
+            default_plan_id = get_default_plan_for_institution_type(db, data.institution_type)
+        else:
+            default_plan_id = get_default_plan_id(db)
         trial_days = get_trial_days(db)
         
         if default_plan_id:

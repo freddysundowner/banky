@@ -72,15 +72,7 @@ def build_frontend():
     print("Frontend build complete")
     return True
 
-DEFAULT_PLAN_FEATURES = {
-    "starter": ["core_banking", "members", "savings", "shares", "loans", "audit_logs", "mpesa_integration"],
-    "growth": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "analytics", "sms_notifications", "expenses", "leave_management", "multiple_branches", "audit_logs", "accounting", "mpesa_integration", "crm", "collateral"],
-    "professional": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "fixed_deposits", "dividends", "analytics", "analytics_export", "sms_notifications", "bulk_sms", "expenses", "leave_management", "payroll", "accounting", "multiple_branches", "api_access", "white_label", "custom_reports", "mpesa_integration", "audit_logs", "crm", "collateral"],
-    "basic": ["core_banking", "members", "savings", "shares", "loans", "audit_logs", "mpesa_integration"],
-    "standard": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "analytics", "sms_notifications", "expenses", "leave_management", "multiple_branches", "audit_logs", "accounting", "mpesa_integration", "crm", "collateral"],
-    "premium": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "fixed_deposits", "dividends", "analytics", "analytics_export", "sms_notifications", "bulk_sms", "expenses", "leave_management", "payroll", "accounting", "multiple_branches", "mpesa_integration", "bank_integration", "audit_logs", "crm", "collateral"],
-    "enterprise": ["core_banking", "members", "savings", "shares", "loans", "teller_station", "float_management", "fixed_deposits", "dividends", "analytics", "analytics_export", "sms_notifications", "bulk_sms", "expenses", "leave_management", "payroll", "accounting", "multiple_branches", "api_access", "white_label", "custom_reports", "mpesa_integration", "bank_integration", "audit_logs", "crm", "collateral"],
-}
+DEFAULT_PLAN_FEATURES = {}
 
 BUSINESS_TYPE_PLAN_FEATURES = {
     "chama_small": ["members", "savings", "loans", "mpesa_integration", "sms_notifications", "audit_logs"],
@@ -173,44 +165,58 @@ def _seed_business_type_plans(db, KES_PLANS):
 
 
 def seed_default_plans():
-    """Seed default subscription plans. Prices stored directly in KES."""
+    """Seed business-type subscription plans. Prices stored directly in KES."""
     from models.database import SessionLocal
     from models.master import SubscriptionPlan
 
-    # Canonical KES prices for the Kenyan market.
-    # Annual = monthly × 12 × 0.80 (20 % discount, rounded to nearest 10).
-    KES_PLANS = {
-        "starter":      {"monthly_price": 4999,  "annual_price": 47990},
-        "growth":       {"monthly_price": 9999,  "annual_price": 95990},
-        "professional": {"monthly_price": 24999, "annual_price": 239990},
-        "basic":        {"one_time_price": 99000},
-        "standard":     {"one_time_price": 199000},
-        "premium":      {"one_time_price": 349000},
-        "enterprise":   {"one_time_price": 499000},
-    }
+    from models.master import OrganizationSubscription, Organization
+
+    GENERIC_PLAN_TYPES = {"starter", "growth", "professional", "basic", "standard", "premium", "enterprise"}
 
     db = SessionLocal()
     try:
         existing = db.query(SubscriptionPlan).count()
 
+        _seed_business_type_plans(db, {})
+
+        generic_plans = db.query(SubscriptionPlan).filter(
+            SubscriptionPlan.plan_type.in_(GENERIC_PLAN_TYPES),
+            SubscriptionPlan.business_type.is_(None)
+        ).all()
+        if generic_plans:
+            generic_ids = {gp.id for gp in generic_plans}
+            subs_on_generic = db.query(OrganizationSubscription).filter(
+                OrganizationSubscription.plan_id.in_(generic_ids)
+            ).all()
+            for sub in subs_on_generic:
+                org = db.query(Organization).filter(Organization.id == sub.organization_id).first()
+                inst_type = org.institution_type if org else None
+                if inst_type:
+                    replacement = db.query(SubscriptionPlan).filter(
+                        SubscriptionPlan.business_type == inst_type,
+                        SubscriptionPlan.pricing_model == "saas",
+                        SubscriptionPlan.is_active == True
+                    ).order_by(SubscriptionPlan.sort_order.asc()).first()
+                else:
+                    replacement = db.query(SubscriptionPlan).filter(
+                        SubscriptionPlan.business_type.isnot(None),
+                        SubscriptionPlan.pricing_model == "saas",
+                        SubscriptionPlan.is_active == True
+                    ).order_by(SubscriptionPlan.sort_order.asc()).first()
+                if replacement:
+                    sub.plan_id = replacement.id
+                    if org and not org.institution_type and replacement.business_type:
+                        org.institution_type = replacement.business_type
+            db.commit()
+
+            for gp in generic_plans:
+                db.delete(gp)
+            db.commit()
+            print(f"Migrated {len(subs_on_generic)} subscriptions and removed {len(generic_plans)} generic plans")
+
         if existing > 0:
-            # Update prices and features on every startup so they stay in sync.
             print("Updating subscription plan prices to KES values...")
-            for plan in db.query(SubscriptionPlan).all():
-                prices = KES_PLANS.get(plan.plan_type)
-                if prices:
-                    if "monthly_price" in prices:
-                        plan.monthly_price = prices["monthly_price"]
-                        plan.annual_price  = prices["annual_price"]
-                    if "one_time_price" in prices:
-                        plan.one_time_price = prices["one_time_price"]
-                # Sync features for generic plans
-                canonical = DEFAULT_PLAN_FEATURES.get(plan.plan_type)
-                if canonical and not plan.business_type:
-                    current_enabled = (plan.features or {}).get("enabled", [])
-                    merged = list(set(current_enabled) | set(canonical))
-                    plan.features = {"enabled": merged}
-                # Sync features for business-type plans
+            for plan in db.query(SubscriptionPlan).filter(SubscriptionPlan.business_type.isnot(None)).all():
                 if plan.business_type:
                     bt_key = plan.plan_type
                     bt_canonical = BUSINESS_TYPE_PLAN_FEATURES.get(bt_key)
@@ -219,111 +225,8 @@ def seed_default_plans():
                         merged = list(set(current_enabled) | set(bt_canonical))
                         plan.features = {"enabled": merged}
             db.commit()
-            
-            # Seed any missing business-type plans
-            _seed_business_type_plans(db, KES_PLANS)
-            print("Plan prices updated.")
-            return
 
-        print("Seeding default subscription plans (KES)...")
-
-        default_plans = [
-            {
-                "name": "Starter",
-                "plan_type": "starter",
-                "pricing_model": "saas",
-                "monthly_price": KES_PLANS["starter"]["monthly_price"],
-                "annual_price":  KES_PLANS["starter"]["annual_price"],
-                "max_members": 500,
-                "max_staff": 3,
-                "max_branches": 1,
-                "sms_credits_monthly": 50,
-                "sort_order": 1,
-                "features": {"enabled": DEFAULT_PLAN_FEATURES["starter"]}
-            },
-            {
-                "name": "Growth",
-                "plan_type": "growth",
-                "pricing_model": "saas",
-                "monthly_price": KES_PLANS["growth"]["monthly_price"],
-                "annual_price":  KES_PLANS["growth"]["annual_price"],
-                "max_members": 2000,
-                "max_staff": 10,
-                "max_branches": 5,
-                "sms_credits_monthly": 200,
-                "sort_order": 2,
-                "features": {"enabled": DEFAULT_PLAN_FEATURES["growth"]}
-            },
-            {
-                "name": "Professional",
-                "plan_type": "professional",
-                "pricing_model": "saas",
-                "monthly_price": KES_PLANS["professional"]["monthly_price"],
-                "annual_price":  KES_PLANS["professional"]["annual_price"],
-                "max_members": 10000,
-                "max_staff": 50,
-                "max_branches": 20,
-                "sms_credits_monthly": 1000,
-                "sort_order": 3,
-                "features": {"enabled": DEFAULT_PLAN_FEATURES["professional"]}
-            },
-            {
-                "name": "Basic",
-                "plan_type": "basic",
-                "pricing_model": "enterprise",
-                "one_time_price": KES_PLANS["basic"]["one_time_price"],
-                "support_years": 1,
-                "max_members": None,
-                "max_staff": None,
-                "max_branches": None,
-                "sort_order": 1,
-                "features": {"enabled": DEFAULT_PLAN_FEATURES["basic"]}
-            },
-            {
-                "name": "Standard",
-                "plan_type": "standard",
-                "pricing_model": "enterprise",
-                "one_time_price": KES_PLANS["standard"]["one_time_price"],
-                "support_years": 2,
-                "max_members": None,
-                "max_staff": None,
-                "max_branches": None,
-                "sort_order": 2,
-                "features": {"enabled": DEFAULT_PLAN_FEATURES["standard"]}
-            },
-            {
-                "name": "Premium",
-                "plan_type": "premium",
-                "pricing_model": "enterprise",
-                "one_time_price": KES_PLANS["premium"]["one_time_price"],
-                "support_years": 3,
-                "max_members": None,
-                "max_staff": None,
-                "max_branches": None,
-                "sort_order": 3,
-                "features": {"enabled": DEFAULT_PLAN_FEATURES["premium"]}
-            },
-            {
-                "name": "Enterprise",
-                "plan_type": "enterprise",
-                "pricing_model": "enterprise",
-                "one_time_price": KES_PLANS["enterprise"]["one_time_price"],
-                "support_years": 5,
-                "max_members": None,
-                "max_staff": None,
-                "max_branches": None,
-                "sort_order": 4,
-                "features": {"enabled": DEFAULT_PLAN_FEATURES["enterprise"]}
-            }
-        ]
-
-        for plan_data in default_plans:
-            db.add(SubscriptionPlan(**plan_data))
-
-        db.commit()
-        print(f"Seeded {len(default_plans)} default subscription plans")
-        
-        _seed_business_type_plans(db, KES_PLANS)
+        print("Plan prices updated.")
     except Exception as e:
         print(f"Error seeding plans: {e}")
         db.rollback()
@@ -965,26 +868,35 @@ async def get_public_plans():
 
         def plan_to_saas_dict(p):
             return {
+                "id": str(p.id) if hasattr(p, 'id') else p.name,
                 "name": p.name,
                 "plan_type": p.plan_type,
+                "pricing_model": p.pricing_model or "saas",
                 "business_type": p.business_type,
                 "monthly_price": round(float(p.monthly_price) if p.monthly_price else 0),
                 "annual_price": round(float(p.annual_price) if p.annual_price else 0),
+                "one_time_price": 0,
                 "max_members": p.max_members,
                 "max_staff": p.max_staff,
                 "max_branches": p.max_branches,
+                "is_popular": getattr(p, 'is_popular', False) or False,
                 "features": get_display_features(p)
             }
 
         def plan_to_enterprise_dict(p):
             return {
+                "id": str(p.id) if hasattr(p, 'id') else p.name,
                 "name": p.name,
                 "plan_type": p.plan_type,
+                "pricing_model": p.pricing_model or "enterprise",
                 "business_type": p.business_type,
-                "price": round(float(p.one_time_price) if p.one_time_price else 0),
+                "monthly_price": 0,
+                "annual_price": 0,
+                "one_time_price": round(float(p.one_time_price) if p.one_time_price else 0),
                 "max_members": p.max_members,
                 "max_staff": p.max_staff,
                 "max_branches": p.max_branches,
+                "is_popular": getattr(p, 'is_popular', False) or False,
                 "support_years": p.support_years or 1,
                 "features": get_display_features(p)
             }
@@ -1002,13 +914,13 @@ async def get_public_plans():
 
         return {
             "title": settings.get('pricing_title', 'Choose Your Plan'),
-            "subtitle": settings.get('pricing_subtitle', 'Flexible options for Saccos of all sizes'),
+            "subtitle": settings.get('pricing_subtitle', 'Flexible options for every financial institution'),
             "saas_label": settings.get('pricing_saas_label', 'SaaS (Monthly)'),
-            "enterprise_label": settings.get('pricing_enterprise_label', 'Enterprise (One-time)'),
+            "enterprise_label": settings.get('pricing_enterprise_label', 'Perpetual Licence'),
             "currency": currency,
             "currency_symbol": symbol,
-            "saas": [p for p in all_saas if not p["business_type"]],
-            "enterprise": [p for p in all_enterprise if not p["business_type"]],
+            "saas": all_saas,
+            "enterprise": all_enterprise,
             "by_type": by_type,
         }
     finally:

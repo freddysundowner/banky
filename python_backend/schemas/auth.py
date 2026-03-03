@@ -10,6 +10,7 @@ class UserRegister(BaseModel):
     phone: Optional[str] = None
     organization_name: Optional[str] = Field(None, alias="organizationName")
     staff_email_domain: Optional[str] = Field(None, alias="staffEmailDomain")
+    institution_type: Optional[str] = Field(None, alias="institutionType")
 
     class Config:
         populate_by_name = True

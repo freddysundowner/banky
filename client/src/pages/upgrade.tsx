@@ -51,18 +51,22 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
 };
 
 const PLAN_COLORS: Record<string, { bg: string; border: string }> = {
-  starter: { bg: "bg-slate-50", border: "border-slate-200" },
-  growth: { bg: "bg-blue-50", border: "border-blue-200" },
-  professional: { bg: "bg-purple-50", border: "border-purple-200" },
-  enterprise: { bg: "bg-amber-50", border: "border-amber-200" },
   chama_small: { bg: "bg-green-50", border: "border-green-200" },
+  chama_medium: { bg: "bg-green-50", border: "border-green-200" },
   chama_large: { bg: "bg-green-50", border: "border-green-300" },
+  chama_enterprise: { bg: "bg-green-50", border: "border-green-400" },
   sacco_small: { bg: "bg-blue-50", border: "border-blue-200" },
+  sacco_medium: { bg: "bg-blue-50", border: "border-blue-200" },
   sacco_large: { bg: "bg-blue-50", border: "border-blue-300" },
+  sacco_enterprise: { bg: "bg-blue-50", border: "border-blue-400" },
   mfi_small: { bg: "bg-orange-50", border: "border-orange-200" },
+  mfi_medium: { bg: "bg-orange-50", border: "border-orange-200" },
   mfi_large: { bg: "bg-orange-50", border: "border-orange-300" },
+  mfi_enterprise: { bg: "bg-orange-50", border: "border-orange-400" },
   bank_small: { bg: "bg-purple-50", border: "border-purple-200" },
+  bank_medium: { bg: "bg-purple-50", border: "border-purple-200" },
   bank_large: { bg: "bg-purple-50", border: "border-purple-300" },
+  bank_enterprise: { bg: "bg-purple-50", border: "border-purple-400" },
 };
 
 const BUSINESS_TYPE_LABELS: Record<string, string> = {
@@ -411,7 +415,7 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
   const saasPlans = plans?.filter(p => p.pricing_model === "saas") || plans || [];
   const businessType = saasPlans[0]?.business_type || null;
   const businessTypeLabel = businessType ? BUSINESS_TYPE_LABELS[businessType] : null;
-  const popularPlanType = saasPlans.length > 0 ? saasPlans[saasPlans.length - 1]?.plan_type : "growth";
+  const popularPlanType = saasPlans.length > 0 ? saasPlans[saasPlans.length - 1]?.plan_type : null;
   const paymentAmount = selectedPlan ? getPlanPrice(selectedPlan, gateway, billingPeriod, rates, paystackCurrency, paystackChannel) : 0;
   const showAnnual = selectedPlan ? hasAnnual(selectedPlan) : false;
 
@@ -437,9 +441,25 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
         )}
       </div>
 
+      {saasPlans.length === 0 && (
+        <Card>
+          <CardContent className="flex flex-col items-center py-8 gap-3">
+            <Sparkles className="h-10 w-10 text-muted-foreground" />
+            <div className="text-center">
+              <h3 className="text-lg font-semibold" data-testid="text-no-plans">No Plans Available</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                {!businessType
+                  ? "Set your institution type in Settings to see available plans."
+                  : "No plans are currently available for your institution type. Please contact support."}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-4 md:gap-6" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))" }}>
         {saasPlans.map((plan) => {
-          const colors = PLAN_COLORS[plan.plan_type] || PLAN_COLORS.starter;
+          const colors = PLAN_COLORS[plan.plan_type] || { bg: "bg-slate-50", border: "border-slate-200" };
           const isPopular = plan.plan_type === popularPlanType;
 
           return (

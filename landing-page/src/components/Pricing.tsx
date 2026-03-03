@@ -162,7 +162,7 @@ function PlanCard({
 export default function Pricing() {
   const [pricingModel, setPricingModel] = useState<'saas' | 'enterprise'>('saas');
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly');
-  const [activeType, setActiveType] = useState('all');
+  const [activeType, setActiveType] = useState('chama');
   const [allPlans, setAllPlans] = useState<Plan[]>([]);
   const [byType, setByType] = useState<Record<string, { saas: Plan[]; enterprise: Plan[] }>>({});
   const [title, setTitle] = useState('Choose Your Plan');
@@ -285,7 +285,7 @@ export default function Pricing() {
           </div>
         )}
 
-        {!loading && !error && activeType !== 'all' && (
+        {!loading && !error && activeType !== 'all' && TYPE_DESCRIPTIONS[activeType] && (
           <p className="text-center text-gray-500 text-sm mb-8">{TYPE_DESCRIPTIONS[activeType]}</p>
         )}
 
@@ -306,6 +306,38 @@ export default function Pricing() {
           </div>
         ) : plansToShow.length === 0 ? (
           <div className="text-center py-16 text-gray-500">No plans available for this selection.</div>
+        ) : activeType === 'all' ? (
+          <div className="space-y-12">
+            {BUSINESS_TYPES.filter(t => t.id !== 'all').map(t => {
+              const group = byType[t.id];
+              const groupPlans = group ? (pricingModel === 'saas' ? group.saas : group.enterprise) || [] : [];
+              if (groupPlans.length === 0) return null;
+              return (
+                <div key={t.id}>
+                  <div className="mb-4">
+                    <h3 className="text-xl font-semibold text-gray-900">{t.label}</h3>
+                    <p className="text-sm text-gray-500">{TYPE_DESCRIPTIONS[t.id]}</p>
+                  </div>
+                  <div className={`grid gap-8 ${
+                    groupPlans.length === 1 ? 'max-w-sm mx-auto' :
+                    groupPlans.length === 2 ? 'md:grid-cols-2 max-w-2xl mx-auto' :
+                    groupPlans.length === 4 ? 'md:grid-cols-2 lg:grid-cols-4' :
+                    'md:grid-cols-3'
+                  }`}>
+                    {groupPlans.map((plan) => (
+                      <PlanCard
+                        key={plan.id || plan.name}
+                        plan={plan}
+                        currencySymbol={currencySymbol}
+                        billingPeriod={billingPeriod}
+                        mode={pricingModel}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         ) : (
           <div className={`grid gap-8 ${
             plansToShow.length === 1 ? 'max-w-sm mx-auto' :

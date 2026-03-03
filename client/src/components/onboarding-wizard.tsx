@@ -19,18 +19,26 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Building2, CheckCircle2, Users, CreditCard, UserPlus } from "lucide-react";
+import { Building2, CheckCircle2, Users, CreditCard, UserPlus, Landmark, Briefcase } from "lucide-react";
 import { CURRENCIES } from "@/lib/currency";
+
+const INSTITUTION_TYPES = [
+  { value: "chama", label: "Chama / Group", description: "Savings groups, investment clubs, welfare groups", icon: Users },
+  { value: "sacco", label: "SACCO", description: "Savings and credit cooperative societies", icon: Building2 },
+  { value: "mfi", label: "MFI / Microfinance", description: "Microfinance institutions and lending companies", icon: Briefcase },
+  { value: "bank", label: "Bank", description: "Community banks and financial institutions", icon: Landmark },
+] as const;
 
 interface OnboardingWizardProps {
   organizationId: string;
   organizationName: string;
+  institutionType?: string;
   onComplete: () => void;
   onFinalize: (needsBranch: boolean) => void;
 }
 
 
-export function OnboardingWizard({ organizationId, organizationName, onComplete, onFinalize }: OnboardingWizardProps) {
+export function OnboardingWizard({ organizationId, organizationName, institutionType, onComplete, onFinalize }: OnboardingWizardProps) {
   const { toast } = useAppDialog();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
@@ -40,6 +48,7 @@ export function OnboardingWizard({ organizationId, organizationName, onComplete,
     currency: "KES",
     email: "",
     phone: "",
+    institutionType: institutionType || "",
   });
 
   const [branchDetails, setBranchDetails] = useState({
@@ -60,6 +69,7 @@ export function OnboardingWizard({ organizationId, organizationName, onComplete,
         currency: orgDetails.currency,
         email: orgDetails.email || undefined,
         phone: orgDetails.phone || undefined,
+        institution_type: orgDetails.institutionType || undefined,
       });
     },
     onSuccess: () => {
@@ -154,6 +164,32 @@ export function OnboardingWizard({ organizationId, organizationName, onComplete,
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Institution Type</Label>
+              <Select
+                value={orgDetails.institutionType}
+                onValueChange={(val) => setOrgDetails(prev => ({ ...prev, institutionType: val }))}
+              >
+                <SelectTrigger data-testid="select-institution-type">
+                  <SelectValue placeholder="Select institution type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {INSTITUTION_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value} data-testid={`institution-type-option-${type.value}`}>
+                      <span className="flex items-center gap-2">
+                        <type.icon className="h-4 w-4 shrink-0" />
+                        <span>{type.label}</span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {orgDetails.institutionType && (
+                <p className="text-xs text-muted-foreground" data-testid="text-institution-description">
+                  {INSTITUTION_TYPES.find(t => t.value === orgDetails.institutionType)?.description}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="org-email">Organization Email</Label>

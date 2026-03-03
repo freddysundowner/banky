@@ -27,7 +27,8 @@ def sanitize_org(org: Organization) -> dict:
         "staff_email_domain": org.staff_email_domain,
         "currency": org.currency or "KES",
         "is_active": org.is_active,
-        "created_at": org.created_at
+        "created_at": org.created_at,
+        "institution_type": getattr(org, "institution_type", None)
     }
 
 def generate_org_code(db: Session) -> str:
@@ -228,6 +229,10 @@ async def update_organization(org_id: str, data: OrganizationUpdate, user = Depe
         if domain and '.' not in domain:
             domain = f"{domain}.com"
         update_data["staff_email_domain"] = domain
+    if "institution_type" in update_data and update_data["institution_type"]:
+        allowed = ["chama", "sacco", "mfi", "bank"]
+        if update_data["institution_type"] not in allowed:
+            raise HTTPException(status_code=400, detail=f"Invalid institution type. Must be one of: {', '.join(allowed)}")
     for key, value in update_data.items():
         setattr(org, key, value)
     

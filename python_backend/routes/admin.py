@@ -1127,8 +1127,22 @@ def get_default_plan_id(db: Session) -> Optional[str]:
     setting = db.query(PlatformSettings).filter(PlatformSettings.setting_key == "default_plan_id").first()
     if setting and setting.setting_value:
         return setting.setting_value
-    professional = db.query(SubscriptionPlan).filter(SubscriptionPlan.plan_type == "professional").first()
-    return professional.id if professional else None
+    fallback = db.query(SubscriptionPlan).filter(
+        SubscriptionPlan.pricing_model == "saas",
+        SubscriptionPlan.business_type.isnot(None),
+        SubscriptionPlan.is_active == True
+    ).order_by(SubscriptionPlan.sort_order.asc()).first()
+    return fallback.id if fallback else None
+
+def get_default_plan_for_institution_type(db: Session, institution_type: str) -> Optional[str]:
+    plan = db.query(SubscriptionPlan).filter(
+        SubscriptionPlan.business_type == institution_type,
+        SubscriptionPlan.pricing_model == "saas",
+        SubscriptionPlan.is_active == True
+    ).order_by(SubscriptionPlan.sort_order.asc()).first()
+    if plan:
+        return plan.id
+    return get_default_plan_id(db)
 
 def get_trial_days(db: Session) -> int:
     setting = db.query(PlatformSettings).filter(PlatformSettings.setting_key == "trial_days").first()
