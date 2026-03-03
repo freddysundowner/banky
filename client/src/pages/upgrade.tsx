@@ -95,7 +95,7 @@ function getGatewayCurrency(gateway: Gateway, paystackCurrency: string, paystack
   if (gateway === "stripe") return "USD";
   if (gateway === "mpesa") return "KES";
   if (paystackChannel === "card") return "USD";
-  return paystackCurrency || "NGN";
+  return paystackCurrency || "KES";
 }
 
 function getPlanPrice(plan: Plan, gateway: Gateway, period: "monthly" | "annual", rates: Record<string, number>, paystackCurrency: string, paystackChannel?: PaystackChannel): number {
@@ -205,14 +205,14 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
     queryKey: ["exchange-rates"],
     queryFn: async () => {
       const res = await fetch("/api/exchange-rates");
-      if (!res.ok) return { base: "USD", rates: { USD: 1, KES: 130, NGN: 1550 }, paystack_currency: "NGN" };
+      if (!res.ok) return { base: "USD", rates: { USD: 1, KES: 130, NGN: 1550 }, paystack_currency: "KES" };
       return res.json();
     },
     staleTime: 1000 * 60 * 30,
   });
 
   const rates = exchangeRates?.rates || { USD: 1, KES: 130, NGN: 1550 };
-  const paystackCurrency = exchangeRates?.paystack_currency || "NGN";
+  const paystackCurrency = exchangeRates?.paystack_currency || "KES";
 
   const { data: enabledGateways } = useQuery<{ mpesa: boolean; stripe: boolean; paystack: boolean }>({
     queryKey: ["enabled-gateways"],

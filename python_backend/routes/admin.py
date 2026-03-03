@@ -1042,7 +1042,7 @@ DEFAULT_PLATFORM_SETTINGS = [
     {"key": "gateway_mpesa_enabled", "value": "true", "type": "boolean", "description": "Enable M-Pesa (KES) as a subscription payment gateway"},
     {"key": "gateway_stripe_enabled", "value": "true", "type": "boolean", "description": "Enable Stripe (USD) as a subscription payment gateway"},
     {"key": "gateway_paystack_enabled", "value": "true", "type": "boolean", "description": "Enable Paystack as a subscription payment gateway"},
-    {"key": "paystack_currency", "value": "NGN", "type": "string", "description": "Currency for Paystack payments (NGN, KES, GHS, ZAR, USD) - must match your Paystack account currency"},
+    {"key": "paystack_currency", "value": "KES", "type": "string", "description": "Currency for Paystack payments (KES, NGN, GHS, ZAR, USD) - must match your Paystack account currency"},
     {"key": "stripe_secret_key", "value": "", "type": "string", "description": "Stripe secret API key for processing card payments"},
     {"key": "stripe_publishable_key", "value": "", "type": "string", "description": "Stripe publishable key for frontend checkout"},
     {"key": "paystack_secret_key", "value": "", "type": "string", "description": "Paystack secret key for processing payments"},

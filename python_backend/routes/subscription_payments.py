@@ -439,9 +439,9 @@ async def initiate_paystack_payment(organization_id: str, data: dict, auth=Depen
         paystack_currency_setting = db.query(PlatformSettings).filter(
             PlatformSettings.setting_key == "paystack_currency"
         ).first()
-        currency = (paystack_currency_setting.setting_value if paystack_currency_setting else "NGN").upper()
+        currency = (paystack_currency_setting.setting_value if paystack_currency_setting else "KES").upper()
         if currency not in ("NGN", "KES", "GHS", "ZAR", "USD"):
-            currency = "NGN"
+            currency = "KES"
 
     if not plan_id or not email:
         raise HTTPException(status_code=400, detail="plan_id and email are required")

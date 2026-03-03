@@ -973,7 +973,7 @@ async def get_exchange_rates():
         paystack_setting = db.query(PlatformSettings).filter(
             PlatformSettings.setting_key == "paystack_currency"
         ).first()
-        paystack_currency = paystack_setting.setting_value if paystack_setting else "NGN"
+        paystack_currency = paystack_setting.setting_value if paystack_setting else "KES"
     finally:
         db.close()
 
