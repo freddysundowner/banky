@@ -174,65 +174,126 @@ const weekDays = [
   { value: "sunday", label: "Sunday" },
 ];
 
+const NAV_GROUPS = [
+  "Operations",
+  "Members & CRM",
+  "Loans",
+  "Savings & Deposits",
+  "Accounting",
+  "Reports & Analytics",
+  "People",
+  "Administration",
+] as const;
+
 const navItems = [
   { title: "Dashboard", value: "dashboard" as NavSection, icon: LayoutDashboard, permissions: ["dashboard:read"], feature: "core_banking" },
-  { title: "Teller Station", value: "teller" as NavSection, icon: Banknote, permissions: ["teller_station:read"], feature: "teller_station" },
-  { title: "Float Management", value: "float-management" as NavSection, icon: Wallet, permissions: ["float_management:read"], feature: "float_management" },
-  { title: "Teller Services", value: "teller-services" as NavSection, icon: Receipt, permissions: ["teller_station:read"], feature: "teller_station" },
-  { title: "Ticketing Kiosk", value: "ticketing-kiosk" as NavSection, icon: Receipt, permissions: ["ticketing:access"], feature: "teller_station" },
-  { title: "Queue Display", value: "queue-display" as NavSection, icon: Receipt, permissions: ["ticketing:display"], feature: "teller_station" },
-  { title: "Branches", value: "branches" as NavSection, icon: Building2, permissions: ["branches:read"], feature: "core_banking" },
-  { title: "Staff", value: "staff" as NavSection, icon: Users, permissions: ["staff:read"], feature: "core_banking" },
-  { title: "Members", value: "members" as NavSection, icon: Users, permissions: ["members:read"], feature: "members" },
-  { title: "Loan Products", value: "loan-products" as NavSection, icon: CreditCard, permissions: ["loan_products:read"], feature: "loans" },
-  { title: "Loan Applications", value: "loans" as NavSection, icon: FileText, permissions: ["loans:read"], feature: "loans" },
-  { title: "Eligibility Checker", value: "loan-eligibility" as NavSection, icon: ClipboardList, permissions: ["loans:read"], feature: "loans" },
-  { title: "Loan Calculator", value: "loan-calculator" as NavSection, icon: Calculator, permissions: [], alwaysShow: true },
-  { title: "Transactions", value: "transactions" as NavSection, icon: Wallet, permissions: ["transactions:read"], feature: "savings" },
-  { title: "Repayments", value: "repayments" as NavSection, icon: Receipt, permissions: ["repayments:read"], feature: "loans" },
-  { title: "Fixed Deposits", value: "fixed-deposits" as NavSection, icon: Wallet, permissions: ["fixed_deposits:read"], feature: "fixed_deposits" },
-  { title: "Dividends", value: "dividends" as NavSection, icon: Wallet, permissions: ["dividends:read"], feature: "dividends" },
-  { title: "Chart of Accounts", value: "chart-of-accounts" as NavSection, icon: FileText, permissions: ["chart_of_accounts:read"], feature: "accounting" },
-  { title: "Journal Entries", value: "journal-entries" as NavSection, icon: ScrollText, permissions: ["journal_entries:read"], feature: "accounting" },
-  { title: "Opening Balances", value: "opening-balances" as NavSection, icon: ScrollText, permissions: ["settings:write"], feature: "accounting" },
-  { title: "Reports", value: "reports" as NavSection, icon: BarChart3, permissions: ["reports:read"], feature: "analytics" },
-  { title: "Analytics", value: "analytics" as NavSection, icon: BarChart3, permissions: ["analytics:read"], feature: "analytics" },
-  { title: "SMS Notifications", value: "sms" as NavSection, icon: MessageSquare, permissions: ["sms:read"], feature: "sms_notifications" },
-  { title: "Defaults & Collections", value: "defaults" as NavSection, icon: AlertTriangle, permissions: ["defaults:read"], feature: "loans" },
-  { title: "HR Management", value: "hr" as NavSection, icon: Users, permissions: ["hr:read"], feature: "payroll" },
-  { title: "Leave Management", value: "leaves" as NavSection, icon: Calendar, permissions: ["leave:read"], feature: "leave_management" },
-  { title: "Expenses", value: "expenses" as NavSection, icon: Receipt, permissions: ["expenses:read"], feature: "expenses" },
-  { title: "Audit Logs", value: "audit" as NavSection, icon: ScrollText, permissions: ["audit:read"], feature: "audit_logs" },
-  { title: "CRM", value: "crm" as NavSection, icon: Users, permissions: ["crm:read"], feature: "crm" },
-  { title: "Collateral & Insurance", value: "collateral" as NavSection, icon: Shield, permissions: ["collateral:read"], feature: "collateral" },
-  { title: "Settings", value: "settings" as NavSection, icon: Settings, permissions: ["settings:read"], adminOnly: true },
+
+  { title: "Teller Station",   value: "teller" as NavSection,          icon: Banknote,       permissions: ["teller_station:read"],  feature: "teller_station",   group: "Operations" },
+  { title: "Teller Services",  value: "teller-services" as NavSection,  icon: Receipt,        permissions: ["teller_station:read"],  feature: "teller_station",   group: "Operations" },
+  { title: "Float Management", value: "float-management" as NavSection, icon: Wallet,         permissions: ["float_management:read"],feature: "float_management", group: "Operations" },
+  { title: "Ticketing Kiosk",  value: "ticketing-kiosk" as NavSection,  icon: Receipt,        permissions: ["ticketing:access"],     feature: "teller_station",   group: "Operations" },
+  { title: "Queue Display",    value: "queue-display" as NavSection,    icon: Receipt,        permissions: ["ticketing:display"],    feature: "teller_station",   group: "Operations" },
+
+  { title: "Members", value: "members" as NavSection, icon: Users, permissions: ["members:read"], feature: "members", group: "Members & CRM" },
+  { title: "CRM",     value: "crm" as NavSection,     icon: Users, permissions: ["crm:read"],     feature: "crm",     group: "Members & CRM" },
+
+  { title: "Loan Products",        value: "loan-products" as NavSection,   icon: CreditCard,    permissions: ["loan_products:read"], feature: "loans",      group: "Loans" },
+  { title: "Loan Applications",    value: "loans" as NavSection,           icon: FileText,      permissions: ["loans:read"],         feature: "loans",      group: "Loans" },
+  { title: "Eligibility Checker",  value: "loan-eligibility" as NavSection,icon: ClipboardList, permissions: ["loans:read"],         feature: "loans",      group: "Loans" },
+  { title: "Loan Calculator",      value: "loan-calculator" as NavSection, icon: Calculator,    permissions: [], alwaysShow: true,                          group: "Loans" },
+  { title: "Repayments",           value: "repayments" as NavSection,      icon: Receipt,       permissions: ["repayments:read"],    feature: "loans",      group: "Loans" },
+  { title: "Defaults & Collections",value: "defaults" as NavSection,       icon: AlertTriangle, permissions: ["defaults:read"],      feature: "loans",      group: "Loans" },
+  { title: "Collateral & Insurance",value: "collateral" as NavSection,     icon: Shield,        permissions: ["collateral:read"],    feature: "collateral", group: "Loans" },
+
+  { title: "Transactions",   value: "transactions" as NavSection,   icon: Wallet, permissions: ["transactions:read"],   feature: "savings",         group: "Savings & Deposits" },
+  { title: "Fixed Deposits", value: "fixed-deposits" as NavSection, icon: Wallet, permissions: ["fixed_deposits:read"], feature: "fixed_deposits",  group: "Savings & Deposits" },
+  { title: "Dividends",      value: "dividends" as NavSection,      icon: Wallet, permissions: ["dividends:read"],      feature: "dividends",       group: "Savings & Deposits" },
+
+  { title: "Chart of Accounts", value: "chart-of-accounts" as NavSection, icon: FileText,   permissions: ["chart_of_accounts:read"], feature: "accounting", group: "Accounting" },
+  { title: "Journal Entries",   value: "journal-entries" as NavSection,   icon: ScrollText, permissions: ["journal_entries:read"],   feature: "accounting", group: "Accounting" },
+  { title: "Opening Balances",  value: "opening-balances" as NavSection,  icon: ScrollText, permissions: ["settings:write"],         feature: "accounting", group: "Accounting" },
+
+  { title: "Reports",    value: "reports" as NavSection,   icon: BarChart3, permissions: ["reports:read"],   feature: "analytics", group: "Reports & Analytics" },
+  { title: "Analytics",  value: "analytics" as NavSection, icon: BarChart3, permissions: ["analytics:read"], feature: "analytics", group: "Reports & Analytics" },
+
+  { title: "Staff",            value: "staff" as NavSection,   icon: Users,     permissions: ["staff:read"],   feature: "core_banking",     group: "People" },
+  { title: "Branches",         value: "branches" as NavSection, icon: Building2, permissions: ["branches:read"],feature: "core_banking",     group: "People" },
+  { title: "HR Management",    value: "hr" as NavSection,       icon: Users,     permissions: ["hr:read"],      feature: "payroll",          group: "People" },
+  { title: "Leave Management", value: "leaves" as NavSection,   icon: Calendar,  permissions: ["leave:read"],   feature: "leave_management", group: "People" },
+  { title: "Expenses",         value: "expenses" as NavSection,  icon: Receipt,   permissions: ["expenses:read"],feature: "expenses",         group: "People" },
+
+  { title: "SMS Notifications", value: "sms" as NavSection,   icon: MessageSquare, permissions: ["sms:read"],   feature: "sms_notifications", group: "Administration" },
+  { title: "Audit Logs",        value: "audit" as NavSection,  icon: ScrollText,    permissions: ["audit:read"], feature: "audit_logs",        group: "Administration" },
+  { title: "Settings",          value: "settings" as NavSection,icon: Settings,      permissions: ["settings:read"], adminOnly: true,           group: "Administration" },
+
   { title: "My Account", value: "my-account" as NavSection, icon: UserCircle, permissions: [], alwaysShow: true },
 ];
 
-function SidebarNavMenu({ items, activeSection, onSelect }: { 
-  items: typeof navItems, 
-  activeSection: NavSection, 
-  onSelect: (value: NavSection) => void 
+function NavMenuButton({ item, activeSection, onSelect }: {
+  item: typeof navItems[number];
+  activeSection: NavSection;
+  onSelect: (value: NavSection) => void;
 }) {
   const { setOpenMobile } = useSidebar();
   return (
-    <SidebarMenu>
-      {items.map((item) => (
-        <SidebarMenuItem key={item.value}>
-          <SidebarMenuButton
-            isActive={activeSection === item.value}
-            onClick={() => {
-              onSelect(item.value);
-              setOpenMobile(false);
-            }}
-            data-testid={`nav-${item.value}`}
-          >
-            <item.icon className="h-4 w-4" />
-            <span>{item.title}</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+    <SidebarMenuItem key={item.value}>
+      <SidebarMenuButton
+        isActive={activeSection === item.value}
+        onClick={() => { onSelect(item.value); setOpenMobile(false); }}
+        data-testid={`nav-${item.value}`}
+      >
+        <item.icon className="h-4 w-4" />
+        <span>{item.title}</span>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
+
+function SidebarGroupedNav({ items, activeSection, onSelect }: {
+  items: typeof navItems;
+  activeSection: NavSection;
+  onSelect: (value: NavSection) => void;
+}) {
+  const dashboard = items.find(i => i.value === "dashboard");
+  const myAccount  = items.find(i => i.value === "my-account");
+  const grouped    = NAV_GROUPS.map(group => ({
+    group,
+    items: items.filter(i => (i as any).group === group),
+  })).filter(g => g.items.length > 0);
+
+  return (
+    <>
+      {dashboard && (
+        <SidebarGroup className="py-0">
+          <SidebarMenu>
+            <NavMenuButton item={dashboard} activeSection={activeSection} onSelect={onSelect} />
+          </SidebarMenu>
+        </SidebarGroup>
+      )}
+
+      {grouped.map(({ group, items: groupItems }) => (
+        <SidebarGroup key={group} className="py-0">
+          <SidebarGroupLabel className="text-[10px] uppercase tracking-widest text-muted-foreground/60 px-3 pt-3 pb-0.5">
+            {group}
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {groupItems.map(item => (
+                <NavMenuButton key={item.value} item={item} activeSection={activeSection} onSelect={onSelect} />
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       ))}
-    </SidebarMenu>
+
+      {myAccount && (
+        <SidebarGroup className="py-0 mt-auto border-t">
+          <SidebarMenu>
+            <NavMenuButton item={myAccount} activeSection={activeSection} onSelect={onSelect} />
+          </SidebarMenu>
+        </SidebarGroup>
+      )}
+    </>
   );
 }
 
@@ -884,8 +945,8 @@ export default function Home() {
         )}
         <div className="flex flex-1 overflow-hidden">
         <Sidebar>
-          <SidebarContent>
-            <SidebarGroup>
+          <SidebarContent className="flex flex-col">
+            <SidebarGroup className="shrink-0 pb-0">
               <div className="flex items-center gap-3 p-4">
                 <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
                   <Landmark className="h-6 w-6 text-primary-foreground" />
@@ -895,7 +956,7 @@ export default function Home() {
             </SidebarGroup>
 
             {memberships.length > 1 && (
-              <SidebarGroup>
+              <SidebarGroup className="shrink-0">
                 <SidebarGroupLabel>Organization</SidebarGroupLabel>
                 <SidebarGroupContent>
                   <Select
@@ -920,16 +981,13 @@ export default function Home() {
               </SidebarGroup>
             )}
 
-            <SidebarGroup>
-              <SidebarGroupLabel>Menu</SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarNavMenu 
-                  items={filteredNavItems} 
-                  activeSection={activeSection} 
-                  onSelect={setActiveSection} 
-                />
-              </SidebarGroupContent>
-            </SidebarGroup>
+            <div className="flex flex-col flex-1 overflow-y-auto min-h-0">
+              <SidebarGroupedNav
+                items={filteredNavItems}
+                activeSection={activeSection}
+                onSelect={setActiveSection}
+              />
+            </div>
 
           </SidebarContent>
           
