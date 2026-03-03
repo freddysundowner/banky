@@ -16,41 +16,11 @@ import {
 } from "@/components/ui/form";
 import { useAppDialog } from "@/hooks/use-app-dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Landmark, Eye, EyeOff, ShieldCheck, Users, CreditCard, BarChart3, Lock, Building, Briefcase } from "lucide-react";
+import { Landmark, Eye, EyeOff, ShieldCheck, Users, CreditCard, BarChart3, Lock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useBranding } from "@/context/BrandingContext";
 
-const INSTITUTION_TYPES = [
-  {
-    value: "chama",
-    label: "Chama / Group",
-    description: "Savings groups, investment clubs, welfare groups",
-    icon: Users,
-  },
-  {
-    value: "sacco",
-    label: "SACCO",
-    description: "Savings and credit cooperative societies",
-    icon: Building,
-  },
-  {
-    value: "mfi",
-    label: "MFI / Microfinance",
-    description: "Microfinance institutions and lending companies",
-    icon: Briefcase,
-  },
-  {
-    value: "bank",
-    label: "Bank",
-    description: "Community banks and financial institutions",
-    icon: Landmark,
-  },
-] as const;
-
 const registerSchema = z.object({
-  institutionType: z.enum(["chama", "sacco", "mfi", "bank"], {
-    required_error: "Please select an institution type",
-  }),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
@@ -86,7 +56,6 @@ export default function Register() {
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      institutionType: undefined as unknown as "chama" | "sacco" | "mfi" | "bank",
       email: "",
       password: "",
       confirmPassword: "",
@@ -99,12 +68,7 @@ export default function Register() {
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterFormData) => {
-      const { institutionType, ...rest } = data;
-      localStorage.setItem("bankykit_institution_type", institutionType);
-      return apiRequest("POST", "/api/auth/register", {
-        ...rest,
-        institution_type: institutionType,
-      });
+      return apiRequest("POST", "/api/auth/register", data);
     },
     onSuccess: async () => {
       setIsSigningUp(true);
@@ -202,43 +166,6 @@ export default function Register() {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit((data) => registerMutation.mutate(data))} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="institutionType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">Institution Type</FormLabel>
-                    <FormControl>
-                      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-2.5">
-                        {INSTITUTION_TYPES.map(({ value, label, description, icon: Icon }) => {
-                          const selected = field.value === value;
-                          return (
-                            <button
-                              key={value}
-                              type="button"
-                              data-testid={`select-institution-${value}`}
-                              onClick={() => field.onChange(value)}
-                              className={`flex items-start gap-3 min-[480px]:flex-col min-[480px]:gap-1.5 rounded-md border p-3 text-left transition-colors ${
-                                selected
-                                  ? "border-primary bg-primary/5 ring-1 ring-primary"
-                                  : "border-border hover-elevate"
-                              }`}
-                            >
-                              <div className="flex items-center gap-2 shrink-0">
-                                <Icon className={`h-4 w-4 shrink-0 ${selected ? "text-primary" : "text-muted-foreground"}`} />
-                                <span className={`text-sm font-medium ${selected ? "text-primary" : "text-foreground"}`}>{label}</span>
-                              </div>
-                              <span className="text-xs text-muted-foreground leading-snug">{description}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <div className="grid gap-4 sm:grid-cols-2">
                 <FormField
                   control={form.control}
