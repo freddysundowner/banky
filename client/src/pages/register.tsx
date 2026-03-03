@@ -185,17 +185,17 @@ export default function Register() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center px-6 sm:px-10 py-8 bg-background overflow-y-auto">
-        <div className="w-full max-w-[540px] py-8">
-          <div className="lg:hidden flex items-center gap-2.5 mb-8">
+      <div className="flex-1 flex flex-col items-center px-4 sm:px-8 md:px-10 py-6 sm:py-8 bg-background overflow-y-auto">
+        <div className="w-full max-w-[540px] py-4 sm:py-8">
+          <div className="lg:hidden flex items-center gap-2.5 mb-6 sm:mb-8">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
               <Landmark className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="font-bold text-lg">{platform_name}</span>
           </div>
 
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-foreground mb-1">Create your account</h1>
+          <div className="mb-6 sm:mb-8">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-1">Create your account</h1>
             <p className="text-muted-foreground text-sm">Get started with {platform_name} in minutes</p>
           </div>
 
@@ -208,7 +208,7 @@ export default function Register() {
                   <FormItem>
                     <FormLabel className="text-sm font-medium">Institution Type</FormLabel>
                     <FormControl>
-                      <div className="grid grid-cols-2 gap-2.5">
+                      <div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-2.5">
                         {INSTITUTION_TYPES.map(({ value, label, description, icon: Icon }) => {
                           const selected = field.value === value;
                           return (
@@ -217,13 +217,13 @@ export default function Register() {
                               type="button"
                               data-testid={`select-institution-${value}`}
                               onClick={() => field.onChange(value)}
-                              className={`flex flex-col items-start gap-1.5 rounded-md border p-3 text-left transition-colors ${
+                              className={`flex items-start gap-3 min-[480px]:flex-col min-[480px]:gap-1.5 rounded-md border p-3 text-left transition-colors ${
                                 selected
                                   ? "border-primary bg-primary/5 ring-1 ring-primary"
                                   : "border-border hover-elevate"
                               }`}
                             >
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-2 shrink-0">
                                 <Icon className={`h-4 w-4 shrink-0 ${selected ? "text-primary" : "text-muted-foreground"}`} />
                                 <span className={`text-sm font-medium ${selected ? "text-primary" : "text-foreground"}`}>{label}</span>
                               </div>
