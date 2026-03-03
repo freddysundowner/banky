@@ -2,6 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+[data-sidebar] {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--sidebar-border)) transparent;
+}
+
+[data-sidebar]::-webkit-scrollbar {
+  width: 4px;
+}
+
+[data-sidebar]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-sidebar]::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--sidebar-border));
+  border-radius: 9999px;
+}
+
+[data-sidebar]::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--sidebar-primary));
+}
+
 /* LIGHT MODE - Professional Banking Theme */
 :root {
   --button-outline: rgba(0,0,0, .10);
