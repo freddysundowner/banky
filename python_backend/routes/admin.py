@@ -749,15 +749,15 @@ def list_features(admin: AdminUser = Depends(require_admin), db: Session = Depen
 
 @router.post("/plans/reset-features")
 def reset_plan_features_to_defaults(admin: AdminUser = Depends(require_admin), db: Session = Depends(get_db)):
-    from main import DEFAULT_PLAN_FEATURES
+    from main import DEFAULT_PLAN_FEATURES, BUSINESS_TYPE_PLAN_FEATURES
     
     plans = db.query(SubscriptionPlan).all()
     updated = 0
     for plan in plans:
-        default_features = DEFAULT_PLAN_FEATURES.get(plan.plan_type)
-        if default_features:
+        canonical = BUSINESS_TYPE_PLAN_FEATURES.get(plan.plan_type) or DEFAULT_PLAN_FEATURES.get(plan.plan_type)
+        if canonical:
             existing_custom = plan.features.get("custom", []) if plan.features else []
-            plan.features = {"enabled": list(default_features), "custom": existing_custom}
+            plan.features = {"enabled": list(canonical), "custom": existing_custom}
             updated += 1
     
     db.commit()
