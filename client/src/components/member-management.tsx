@@ -2270,6 +2270,8 @@ export default function MemberManagement({ organizationId, prefillContact, onPre
           </CardContent>
         </Card>
 
+        <MemberLoansSection organizationId={organizationId} memberId={member.id} />
+
         <MemberDocumentsSection organizationId={organizationId} memberId={member.id} />
 
         <AlertDialog open={showMobileActivateDialog} onOpenChange={setShowMobileActivateDialog}>
@@ -2396,12 +2398,6 @@ export default function MemberManagement({ organizationId, prefillContact, onPre
                   <FileText className="h-4 w-4 hidden sm:block" />
                   Membership
                 </TabsTrigger>
-                {viewMode === "edit" && (
-                  <TabsTrigger value="loans" className="gap-1" data-testid="tab-loans">
-                    <CreditCard className="h-4 w-4 hidden sm:block" />
-                    Loans
-                  </TabsTrigger>
-                )}
               </TabsList>
             </div>
 
@@ -2957,11 +2953,6 @@ export default function MemberManagement({ organizationId, prefillContact, onPre
               </Card>
             </TabsContent>
 
-            {viewMode === "edit" && (
-              <TabsContent value="loans">
-                <MemberLoansSection organizationId={organizationId} memberId={selectedMember!.id} />
-              </TabsContent>
-            )}
           </Tabs>
 
           <div className="flex justify-between mt-6">
