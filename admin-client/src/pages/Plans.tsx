@@ -341,23 +341,23 @@ export default function Plans() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {plans.map((plan) => (
-            <div key={plan.id} className={`bg-white rounded-lg shadow overflow-hidden ${plan.plan_type === 'professional' || plan.plan_type === 'premium' ? 'ring-2 ring-primary-500' : ''}`}>
+            <div key={plan.id} className="bg-white rounded-lg shadow overflow-hidden">
               {editing === plan.id ? (
                 <div className="p-6 space-y-4">
                   <input type="text" value={editData.name ?? plan.name} onChange={(e) => setEditData({ ...editData, name: e.target.value })} className="w-full px-3 py-2 border rounded-lg" placeholder="Plan name" />
                   {activeTab === 'saas' ? (
                     <>
-                      <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Pricing (USD)</p>
+                      <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Pricing (KES)</p>
                       <div className="grid grid-cols-2 gap-2">
-                        <div><label className="text-xs text-gray-500">Monthly (USD)</label><input type="number" step="0.01" value={editData.monthly_price ?? plan.monthly_price} onChange={(e) => setEditData({ ...editData, monthly_price: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-lg" /></div>
-                        <div><label className="text-xs text-gray-500">Annual (USD)</label><input type="number" step="0.01" value={editData.annual_price ?? plan.annual_price} onChange={(e) => setEditData({ ...editData, annual_price: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-lg" /></div>
+                        <div><label className="text-xs text-gray-500">Monthly (KES)</label><input type="number" step="1" value={editData.monthly_price ?? plan.monthly_price} onChange={(e) => setEditData({ ...editData, monthly_price: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-lg" /></div>
+                        <div><label className="text-xs text-gray-500">Annual (KES)</label><input type="number" step="1" value={editData.annual_price ?? plan.annual_price} onChange={(e) => setEditData({ ...editData, annual_price: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-lg" /></div>
                       </div>
-                      <p className="text-xs text-gray-400 italic">Other currencies are auto-converted from USD at payment time</p>
+                      <p className="text-xs text-gray-400 italic">Other currencies are auto-converted from KES at payment time</p>
                       <div><label className="text-xs text-gray-500">SMS Credits/mo</label><input type="number" value={editData.sms_credits_monthly ?? plan.sms_credits_monthly} onChange={(e) => setEditData({ ...editData, sms_credits_monthly: parseInt(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-lg" /></div>
                     </>
                   ) : (
                     <>
-                      <div><label className="text-xs text-gray-500">One-time Price $</label><input type="number" value={editData.one_time_price ?? plan.one_time_price} onChange={(e) => setEditData({ ...editData, one_time_price: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-lg" /></div>
+                      <div><label className="text-xs text-gray-500">One-time Price (KES)</label><input type="number" value={editData.one_time_price ?? plan.one_time_price} onChange={(e) => setEditData({ ...editData, one_time_price: parseFloat(e.target.value) })} className="w-full px-3 py-2 border rounded-lg" /></div>
                       <div><label className="text-xs text-gray-500">Support Years</label><input type="number" value={editData.support_years ?? plan.support_years} onChange={(e) => setEditData({ ...editData, support_years: parseInt(e.target.value) || 1 })} className="w-full px-3 py-2 border rounded-lg" /></div>
                     </>
                   )}
@@ -382,13 +382,13 @@ export default function Plans() {
                     </div>
                     {activeTab === 'saas' ? (
                       <div className="mb-4 space-y-1">
-                        <div className="text-2xl font-bold text-primary-600">${plan.monthly_price?.toLocaleString()}<span className="text-sm text-gray-500">/mo</span></div>
-                        {plan.annual_price > 0 && <div className="text-xs text-gray-500">${plan.annual_price?.toLocaleString()}/yr</div>}
+                        <div className="text-2xl font-bold text-primary-600">KES {plan.monthly_price?.toLocaleString()}<span className="text-sm text-gray-500">/mo</span></div>
+                        {plan.annual_price > 0 && <div className="text-xs text-gray-500">KES {plan.annual_price?.toLocaleString()}/yr</div>}
                         <div className="text-xs text-gray-400">Other currencies auto-converted</div>
                       </div>
                     ) : (
                       <div className="mb-4">
-                        <div className="text-3xl font-bold text-primary-600">${plan.one_time_price?.toLocaleString()}</div>
+                        <div className="text-3xl font-bold text-primary-600">KES {plan.one_time_price?.toLocaleString()}</div>
                         <div className="text-sm text-gray-500">One-time license</div>
                       </div>
                     )}
@@ -425,16 +425,16 @@ export default function Plans() {
               <div><label className="block text-sm font-medium text-gray-700 mb-1">Plan Type (slug)</label><input type="text" value={newPlan.plan_type} onChange={(e) => setNewPlan({ ...newPlan, plan_type: e.target.value.toLowerCase().replace(/\s/g, '_') })} className="w-full px-3 py-2 border rounded-lg" placeholder="e.g. professional" /></div>
               {activeTab === 'saas' ? (
                 <div className="space-y-3">
-                  <p className="text-xs font-semibold text-gray-600 uppercase">Pricing (USD)</p>
+                  <p className="text-xs font-semibold text-gray-600 uppercase">Pricing (KES)</p>
                   <div className="grid grid-cols-2 gap-4">
-                    <div><label className="block text-sm font-medium text-gray-700 mb-1">Monthly (USD)</label><input type="number" step="0.01" value={newPlan.monthly_price} onChange={(e) => setNewPlan({ ...newPlan, monthly_price: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-lg" /></div>
-                    <div><label className="block text-sm font-medium text-gray-700 mb-1">Annual (USD)</label><input type="number" step="0.01" value={newPlan.annual_price} onChange={(e) => setNewPlan({ ...newPlan, annual_price: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-lg" /></div>
+                    <div><label className="block text-sm font-medium text-gray-700 mb-1">Monthly (KES)</label><input type="number" step="1" value={newPlan.monthly_price} onChange={(e) => setNewPlan({ ...newPlan, monthly_price: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-lg" /></div>
+                    <div><label className="block text-sm font-medium text-gray-700 mb-1">Annual (KES)</label><input type="number" step="1" value={newPlan.annual_price} onChange={(e) => setNewPlan({ ...newPlan, annual_price: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-lg" /></div>
                   </div>
-                  <p className="text-xs text-gray-400 italic">M-Pesa, Paystack prices auto-converted from USD at payment time</p>
+                  <p className="text-xs text-gray-400 italic">Other currencies (USD, NGN, etc.) are auto-converted from KES at payment time</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-4">
-                  <div><label className="block text-sm font-medium text-gray-700 mb-1">One-time Price ($)</label><input type="number" value={newPlan.one_time_price} onChange={(e) => setNewPlan({ ...newPlan, one_time_price: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-lg" /></div>
+                  <div><label className="block text-sm font-medium text-gray-700 mb-1">One-time Price (KES)</label><input type="number" value={newPlan.one_time_price} onChange={(e) => setNewPlan({ ...newPlan, one_time_price: parseFloat(e.target.value) || 0 })} className="w-full px-3 py-2 border rounded-lg" /></div>
                   <div><label className="block text-sm font-medium text-gray-700 mb-1">Support Years</label><input type="number" value={newPlan.support_years} onChange={(e) => setNewPlan({ ...newPlan, support_years: parseInt(e.target.value) || 1 })} className="w-full px-3 py-2 border rounded-lg" /></div>
                 </div>
               )}
