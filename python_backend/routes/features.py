@@ -198,11 +198,21 @@ def get_available_plans(organization_id: str, auth = Depends(get_current_user), 
     
     institution_type = org.institution_type
 
+    subscription = db.query(OrganizationSubscription).filter(
+        OrganizationSubscription.organization_id == organization_id
+    ).first()
+
+    if not institution_type:
+        if subscription and subscription.plan and subscription.plan.business_type:
+            institution_type = subscription.plan.business_type
+            org.institution_type = institution_type
+            db.commit()
+
     if institution_type:
         plans = db.query(SubscriptionPlan).filter(
             SubscriptionPlan.is_active == True,
             SubscriptionPlan.business_type == institution_type,
-            SubscriptionPlan.pricing_model != "enterprise"
+            SubscriptionPlan.pricing_model == "saas"
         ).order_by(SubscriptionPlan.sort_order).all()
     else:
         plans = db.query(SubscriptionPlan).filter(
@@ -210,10 +220,6 @@ def get_available_plans(organization_id: str, auth = Depends(get_current_user), 
             SubscriptionPlan.pricing_model == "saas",
             SubscriptionPlan.business_type.isnot(None)
         ).order_by(SubscriptionPlan.sort_order, SubscriptionPlan.monthly_price).all()
-
-    subscription = db.query(OrganizationSubscription).filter(
-        OrganizationSubscription.organization_id == organization_id
-    ).first()
     
     current_plan_type = None
     if subscription and subscription.plan:
