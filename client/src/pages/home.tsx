@@ -331,12 +331,11 @@ function SidebarUpgradeFooter({ plan, isTrial, trialDaysRemaining, onUpgrade }: 
       >
         <div className="flex items-center gap-2">
           <span className={`px-2 py-0.5 text-xs rounded font-semibold ${
-            plan === 'professional' ? 'bg-purple-500 text-white' :
-            plan === 'growth' ? 'bg-blue-500 text-white' :
-            plan === 'enterprise' ? 'bg-amber-500 text-white' :
+            plan?.includes('large') ? 'bg-blue-500 text-white' :
+            plan?.includes('enterprise') || plan?.includes('licence') ? 'bg-amber-500 text-white' :
             'bg-primary text-primary-foreground'
           }`}>
-            {plan ? plan.charAt(0).toUpperCase() + plan.slice(1) : 'Starter'}
+            {plan ? plan.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) : 'Free'}
           </span>
           {isTrial && trialDaysRemaining > 0 && (
             <span className="text-xs font-medium text-primary">

@@ -1275,8 +1275,9 @@ def _get_features_for_org(org_id: str, db: Session) -> dict:
             "subscription_status": status_info
         }
 
-    plan_type = "starter"
-    limits = PLAN_LIMITS.get("starter", {})
+    from services.feature_flags import DEFAULT_PLAN_LIMITS
+    plan_type = "none"
+    limits = DEFAULT_PLAN_LIMITS.copy()
 
     if subscription and subscription.plan:
         plan_type = subscription.plan.plan_type

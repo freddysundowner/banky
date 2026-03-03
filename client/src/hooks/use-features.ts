@@ -90,7 +90,7 @@ export function useFeatures(organizationId: string | undefined, options?: { defe
     error,
     hasFeature,
     checkLimit,
-    plan: data?.plan_or_edition || "starter",
+    plan: data?.plan_or_edition || "",
     mode: data?.mode || "saas",
     subscriptionStatus: data?.subscription_status,
     isExpired: data?.subscription_status?.is_expired || false,

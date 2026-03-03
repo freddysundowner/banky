@@ -9,10 +9,14 @@ def generate_uuid():
     return str(uuid.uuid4())
 
 class PlanType(str, enum.Enum):
-    STARTER = "starter"
-    GROWTH = "growth"
-    PROFESSIONAL = "professional"
-    ENTERPRISE = "enterprise"
+    CHAMA_SMALL = "chama_small"
+    CHAMA_LARGE = "chama_large"
+    SACCO_SMALL = "sacco_small"
+    SACCO_LARGE = "sacco_large"
+    MFI_SMALL = "mfi_small"
+    MFI_LARGE = "mfi_large"
+    BANK_SMALL = "bank_small"
+    BANK_LARGE = "bank_large"
 
 class LicenseEdition(str, enum.Enum):
     BASIC = "basic"

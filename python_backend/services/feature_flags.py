@@ -87,11 +87,17 @@ def get_all_edition_features_from_db(db) -> Dict[str, list]:
     return result
 
 PLAN_LIMITS: Dict[str, Dict] = {
-    "starter": {"max_members": 500, "max_staff": 3, "max_branches": 1, "sms_monthly": 0},
-    "growth": {"max_members": 2000, "max_staff": 10, "max_branches": 5, "sms_monthly": 500},
-    "professional": {"max_members": 10000, "max_staff": 50, "max_branches": 20, "sms_monthly": 2000},
-    "enterprise": {"max_members": None, "max_staff": None, "max_branches": None, "sms_monthly": None}
+    "chama_small": {"max_members": 200, "max_staff": 2, "max_branches": 1, "sms_monthly": 0},
+    "chama_large": {"max_members": 1000, "max_staff": 5, "max_branches": 3, "sms_monthly": 500},
+    "sacco_small": {"max_members": 500, "max_staff": 5, "max_branches": 1, "sms_monthly": 0},
+    "sacco_large": {"max_members": 5000, "max_staff": 30, "max_branches": 10, "sms_monthly": 2000},
+    "mfi_small": {"max_members": 500, "max_staff": 10, "max_branches": 1, "sms_monthly": 0},
+    "mfi_large": {"max_members": 5000, "max_staff": 50, "max_branches": 10, "sms_monthly": 2000},
+    "bank_small": {"max_members": 2000, "max_staff": 20, "max_branches": 3, "sms_monthly": 500},
+    "bank_large": {"max_members": 50000, "max_staff": 200, "max_branches": 50, "sms_monthly": None},
 }
+
+DEFAULT_PLAN_LIMITS: Dict = {"max_members": 200, "max_staff": 2, "max_branches": 1, "sms_monthly": 0}
 
 EDITION_LIMITS: Dict[str, Dict] = {
     "basic": {"max_members": 1000, "max_staff": 5, "max_branches": 1},
@@ -148,9 +154,9 @@ def validate_license_key(license_key: str, db=None) -> Optional[Dict]:
         "limits": limits
     }
 
-def get_feature_access_for_saas(plan_type: str = "starter", db=None) -> FeatureAccess:
+def get_feature_access_for_saas(plan_type: str = "none", db=None) -> FeatureAccess:
     plan = plan_type.lower()
-    limits = PLAN_LIMITS.get(plan, PLAN_LIMITS["starter"])
+    limits = PLAN_LIMITS.get(plan, DEFAULT_PLAN_LIMITS)
     features = _get_plan_features_from_db(plan, db)
     
     return FeatureAccess(
@@ -192,9 +198,9 @@ def get_feature_access(organization_subscription: Optional[Dict] = None, db=None
         license_key = get_license_key()
         return get_feature_access_for_enterprise(license_key, db)
     else:
-        plan_type = "starter"
+        plan_type = "none"
         if organization_subscription and organization_subscription.get("plan"):
-            plan_type = organization_subscription["plan"].get("plan_type", "starter")
+            plan_type = organization_subscription["plan"].get("plan_type", "none")
         return get_feature_access_for_saas(plan_type, db)
 
 def is_feature_enabled(feature: str, feature_access: FeatureAccess) -> bool:
@@ -292,10 +298,9 @@ def get_org_limits(organization_id: str, db) -> Dict:
         OrganizationSubscription.organization_id == organization_id
     ).first()
     
-    plan_type = "starter"
     if subscription and subscription.plan:
         plan_type = subscription.plan.plan_type
-        default_limits = PLAN_LIMITS.get(plan_type, PLAN_LIMITS["starter"])
+        default_limits = PLAN_LIMITS.get(plan_type, DEFAULT_PLAN_LIMITS)
         return {
             "max_members": subscription.plan.max_members if subscription.plan.max_members is not None else default_limits.get("max_members"),
             "max_staff": subscription.plan.max_staff if subscription.plan.max_staff is not None else default_limits.get("max_staff"),
@@ -303,7 +308,7 @@ def get_org_limits(organization_id: str, db) -> Dict:
             "sms_monthly": subscription.plan.sms_credits_monthly if subscription.plan.sms_credits_monthly is not None else default_limits.get("sms_monthly")
         }
     
-    return PLAN_LIMITS.get(plan_type, PLAN_LIMITS["starter"])
+    return DEFAULT_PLAN_LIMITS.copy()
 
 
 class FeatureNotEnabledError(Exception):

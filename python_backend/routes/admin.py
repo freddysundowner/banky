@@ -1012,16 +1012,8 @@ def initial_setup(data: dict, db: Session = Depends(get_db)):
     
     existing_plans = db.query(SubscriptionPlan).count()
     if existing_plans == 0:
-        default_plans = [
-            {"name": "Starter", "plan_type": "starter", "monthly_price": 50, "annual_price": 500, "max_members": 500, "max_staff": 3, "max_branches": 1, "sms_credits_monthly": 0},
-            {"name": "Growth", "plan_type": "growth", "monthly_price": 150, "annual_price": 1500, "max_members": 2000, "max_staff": 10, "max_branches": 5, "sms_credits_monthly": 500},
-            {"name": "Professional", "plan_type": "professional", "monthly_price": 400, "annual_price": 4000, "max_members": 10000, "max_staff": 50, "max_branches": 20, "sms_credits_monthly": 2000},
-            {"name": "Enterprise", "plan_type": "enterprise", "monthly_price": 0, "annual_price": 0, "max_members": None, "max_staff": None, "max_branches": None, "sms_credits_monthly": None}
-        ]
-        
-        for plan_data in default_plans:
-            plan = SubscriptionPlan(**plan_data)
-            db.add(plan)
+        from main import _seed_business_type_plans
+        _seed_business_type_plans(db, {})
     
     db.commit()
     

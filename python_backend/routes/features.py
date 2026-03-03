@@ -7,8 +7,8 @@ from models.database import get_db
 from models.master import Organization, OrganizationSubscription, SubscriptionPlan, OrganizationMember
 from services.feature_flags import (
     get_deployment_mode, get_license_key, get_feature_access_for_enterprise,
-    get_feature_access_for_saas, Feature, PLAN_LIMITS, BASELINE_FEATURES,
-    get_org_limits
+    get_feature_access_for_saas, Feature, PLAN_LIMITS, DEFAULT_PLAN_LIMITS,
+    BASELINE_FEATURES, get_org_limits
 )
 from routes.auth import get_current_user
 
@@ -118,8 +118,8 @@ def get_organization_features(organization_id: str, db: Session = Depends(get_db
             "subscription_status": status_info
         }
     
-    plan_type = "starter"
-    limits = PLAN_LIMITS.get("starter", {})
+    plan_type = "none"
+    limits = DEFAULT_PLAN_LIMITS.copy()
     
     if subscription and subscription.plan:
         plan_type = subscription.plan.plan_type
@@ -171,7 +171,7 @@ def check_feature(organization_id: str, feature_name: str, db: Session = Depends
     
     from services.feature_flags import get_org_features
     features = get_org_features(organization_id, db)
-    plan_type = "starter"
+    plan_type = "none"
     if subscription and subscription.plan:
         plan_type = subscription.plan.plan_type
     
@@ -207,7 +207,8 @@ def get_available_plans(organization_id: str, auth = Depends(get_current_user), 
     else:
         plans = db.query(SubscriptionPlan).filter(
             SubscriptionPlan.is_active == True,
-            SubscriptionPlan.business_type == None
+            SubscriptionPlan.pricing_model == "saas",
+            SubscriptionPlan.business_type.isnot(None)
         ).order_by(SubscriptionPlan.sort_order, SubscriptionPlan.monthly_price).all()
 
     subscription = db.query(OrganizationSubscription).filter(
@@ -224,8 +225,7 @@ def get_available_plans(organization_id: str, auth = Depends(get_current_user), 
         "mfi_small": 0, "mfi_large": 1,
         "bank_small": 0, "bank_large": 1,
     }
-    plan_order = {"starter": 0, "growth": 1, "professional": 2, "enterprise": 3}
-    current_order = bt_plan_order.get(current_plan_type, plan_order.get(current_plan_type, -1))
+    current_order = bt_plan_order.get(current_plan_type, -1)
     
     feature_display_names = {
         "core_banking": "Core Banking",
@@ -258,7 +258,7 @@ def get_available_plans(organization_id: str, auth = Depends(get_current_user), 
     
     result = []
     for plan in plans:
-        plan_order_val = bt_plan_order.get(plan.plan_type, plan_order.get(plan.plan_type, 0))
+        plan_order_val = bt_plan_order.get(plan.plan_type, 0)
         enabled_features = plan.features.get("enabled", []) if plan.features else []
         custom_features = plan.features.get("custom", []) if plan.features else []
         display_features = [feature_display_names.get(f, f.replace("_", " ").title()) for f in enabled_features]
@@ -280,7 +280,7 @@ def get_available_plans(organization_id: str, auth = Depends(get_current_user), 
             "is_downgrade": plan_order_val < current_order
         })
     
-    result.sort(key=lambda x: bt_plan_order.get(x["plan_type"], plan_order.get(x["plan_type"], 0)))
+    result.sort(key=lambda x: bt_plan_order.get(x["plan_type"], 0))
     return result
 
 
@@ -373,7 +373,7 @@ def get_organization_usage(
     ).first()
     status_info = get_subscription_status_info(subscription)
     plan_name = subscription.plan.name if subscription and subscription.plan else "No Plan"
-    plan_type = subscription.plan.plan_type if subscription and subscription.plan else "starter"
+    plan_type = subscription.plan.plan_type if subscription and subscription.plan else "none"
 
     tenant_ctx = get_tenant_context_simple(organization_id, db)
     members_count = 0
