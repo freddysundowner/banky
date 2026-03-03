@@ -6,6 +6,7 @@ import { useAppDialog } from "@/hooks/use-app-dialog";
 import { useResourcePermissions, RESOURCES } from "@/hooks/use-resource-permissions";
 import { useCurrency } from "@/hooks/use-currency";
 import { PageHeader } from "@/components/page-header";
+import { PageHelp } from "@/components/page-help";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -232,7 +233,20 @@ export default function ChartOfAccounts({ organizationId }: ChartOfAccountsProps
       <PageHeader
         title="Chart of Accounts"
         description="Manage your organization's general ledger accounts and view financial reports"
-        action={<RefreshButton organizationId={organizationId} />}
+        action={
+          <div className="flex items-center gap-2">
+            <PageHelp
+              title="Chart of Accounts"
+              content={[
+                { heading: "Overview", body: "The Chart of Accounts (CoA) is the foundation of your double-entry accounting system. Every financial transaction is recorded against one or more accounts." },
+                { heading: "Account Types", body: "Assets represent what you own (cash, receivables). Liabilities are what you owe. Equity is the net worth. Income records revenue earned. Expenses track costs incurred." },
+                { heading: "Trial Balance", body: "The Trial Balance verifies that total debits equal total credits across all accounts, ensuring your books balance at any given point in time." },
+                { heading: "Financial Reports", body: "The Income Statement shows profit/loss over a period. The Balance Sheet shows financial position (assets vs liabilities+equity) at a specific date." },
+              ]}
+            />
+            <RefreshButton organizationId={organizationId} />
+          </div>
+        }
       />
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>

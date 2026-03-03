@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { RefreshButton } from "@/components/refresh-button";
+import { PageHelp } from "@/components/page-help";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useAppDialog } from "@/hooks/use-app-dialog";
 import { useResourcePermissions, RESOURCES } from "@/hooks/use-resource-permissions";
@@ -245,6 +246,15 @@ export default function JournalEntries({ organizationId }: JournalEntriesProps) 
           <p className="text-muted-foreground">View and create accounting journal entries</p>
         </div>
         <div className="flex items-center gap-2">
+          <PageHelp
+            title="Journal Entries"
+            content={[
+              { heading: "What are Journal Entries?", body: "Journal entries are the individual records that make up your accounting ledger. Every financial transaction is recorded as a journal entry with equal debits and credits." },
+              { heading: "Double-Entry Accounting", body: "Each entry must have at least one debit and one credit, and the total debits must equal total credits. This ensures your accounts always balance." },
+              { heading: "Status", body: "Draft entries can still be edited. Posted entries are final and locked. Voided entries are reversed and excluded from financial reports." },
+              { heading: "Reversal", body: "To correct a posted entry, create a reversal rather than editing it. This creates an equal and opposite entry, preserving the audit trail." },
+            ]}
+          />
           <RefreshButton organizationId={organizationId} />
           {canWrite && (
             <Button onClick={() => setShowCreateDialog(true)}>

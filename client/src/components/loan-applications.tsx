@@ -2365,6 +2365,22 @@ export default function LoanApplications({ organizationId }: LoanApplicationsPro
         </div>
       </div>
 
+      {pagination && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { label: "Total", value: pagination.total, color: "text-foreground" },
+            { label: "Pending", value: applications?.filter(a => a.status === "pending" || a.status === "under_review").length ?? 0, color: "text-amber-600" },
+            { label: "Active", value: applications?.filter(a => a.status === "disbursed").length ?? 0, color: "text-blue-600" },
+            { label: "Closed", value: applications?.filter(a => a.status === "paid" || a.status === "closed" || a.status === "written_off").length ?? 0, color: "text-muted-foreground" },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="bg-muted/50 rounded-lg px-4 py-2.5 border">
+              <p className={`text-lg font-bold leading-tight ${color}`}>{value}</p>
+              <p className="text-xs text-muted-foreground">{label}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">

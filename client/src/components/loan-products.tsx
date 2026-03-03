@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { RefreshButton } from "@/components/refresh-button";
+import { PageHelp } from "@/components/page-help";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -667,6 +668,15 @@ export default function LoanProducts({ organizationId }: LoanProductsProps) {
           <p className="text-muted-foreground">Configure loan products for your organization</p>
         </div>
         <div className="flex items-center gap-2">
+          <PageHelp
+            title="Loan Products"
+            content={[
+              { heading: "What are Loan Products?", body: "Loan products define the terms under which your organization offers loans — including interest rates, fees, repayment schedules, and eligibility rules." },
+              { heading: "Interest Types", body: "Flat rate applies interest on the original principal. Reducing balance recalculates interest on the outstanding balance each period. Choose based on your regulatory requirements." },
+              { heading: "Fees", body: "You can configure processing, insurance, appraisal, credit life insurance, and late payment penalty fees as a percentage of the loan amount." },
+              { heading: "Collateral & Guarantors", body: "Enable 'Requires Collateral' or 'Requires Guarantor' to enforce these conditions during loan application. Members must satisfy these before approval." },
+            ]}
+          />
           <RefreshButton organizationId={organizationId} />
           {canWrite && (
             <Button onClick={openNewForm} data-testid="button-add-product" className="shrink-0">

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -122,7 +122,10 @@ import UpgradePage from "@/pages/upgrade";
 import MyAccountPage from "@/pages/my-account";
 import type { Organization } from "@shared/schema";
 import { Link } from "wouter";
-import { X, Mail } from "lucide-react";
+import { X, Mail, ChevronRight as ChevronRightIcon } from "lucide-react";
+import { GlobalSearch } from "@/components/global-search";
+import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
+import { Badge } from "@/components/ui/badge";
 
 interface OrganizationMembership {
   id: string;
@@ -229,10 +232,11 @@ const navItems = [
   { title: "My Account", value: "my-account" as NavSection, icon: UserCircle, permissions: [], alwaysShow: true },
 ];
 
-function NavMenuButton({ item, activeSection, onSelect }: {
+function NavMenuButton({ item, activeSection, onSelect, badge }: {
   item: typeof navItems[number];
   activeSection: NavSection;
   onSelect: (value: NavSection) => void;
+  badge?: number;
 }) {
   const { setOpenMobile } = useSidebar();
   return (
@@ -243,16 +247,22 @@ function NavMenuButton({ item, activeSection, onSelect }: {
         data-testid={`nav-${item.value}`}
       >
         <item.icon className="h-4 w-4" />
-        <span>{item.title}</span>
+        <span className="flex-1">{item.title}</span>
+        {badge && badge > 0 ? (
+          <Badge className="ml-auto h-4 min-w-4 px-1 py-0 text-[10px] leading-none bg-destructive text-destructive-foreground border-0">
+            {badge > 99 ? "99+" : badge}
+          </Badge>
+        ) : null}
       </SidebarMenuButton>
     </SidebarMenuItem>
   );
 }
 
-function SidebarGroupedNav({ items, activeSection, onSelect }: {
+function SidebarGroupedNav({ items, activeSection, onSelect, badges }: {
   items: typeof navItems;
   activeSection: NavSection;
   onSelect: (value: NavSection) => void;
+  badges?: Partial<Record<NavSection, number>>;
 }) {
   const dashboard = items.find(i => i.value === "dashboard");
   const myAccount  = items.find(i => i.value === "my-account");
@@ -266,7 +276,7 @@ function SidebarGroupedNav({ items, activeSection, onSelect }: {
       {dashboard && (
         <SidebarGroup className="py-0">
           <SidebarMenu>
-            <NavMenuButton item={dashboard} activeSection={activeSection} onSelect={onSelect} />
+            <NavMenuButton item={dashboard} activeSection={activeSection} onSelect={onSelect} badge={badges?.[dashboard.value]} />
           </SidebarMenu>
         </SidebarGroup>
       )}
@@ -279,7 +289,7 @@ function SidebarGroupedNav({ items, activeSection, onSelect }: {
           <SidebarGroupContent>
             <SidebarMenu>
               {groupItems.map(item => (
-                <NavMenuButton key={item.value} item={item} activeSection={activeSection} onSelect={onSelect} />
+                <NavMenuButton key={item.value} item={item} activeSection={activeSection} onSelect={onSelect} badge={badges?.[item.value]} />
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -469,6 +479,65 @@ export default function Home() {
       setIsSectionInitialized(true);
     }
   }, [selectedOrg, sessionLoading, permissionsLoading, featuresLoading, filteredNavItems, activeSection]);
+
+  // Role-aware landing: redirect from generic dashboard to a role-specific starting section
+  const hasAppliedRoleRedirect = useRef(false);
+  useEffect(() => {
+    if (!isSectionInitialized || hasAppliedRoleRedirect.current) return;
+    hasAppliedRoleRedirect.current = true;
+    if (activeSection !== "dashboard") return;
+    const roleDefaults: Partial<Record<string, NavSection>> = {
+      teller:            "teller",
+      loan_officer:      "loans",
+      hr_officer:        "hr",
+      kiosk_attendant:   "ticketing-kiosk",
+    };
+    const preferred = roleDefaults[role ?? ""];
+    if (preferred && filteredNavItems.some(item => item.value === preferred)) {
+      setActiveSection(preferred);
+    }
+  }, [isSectionInitialized]);
+
+  // Reset role redirect flag when org changes so the next org also gets a role-aware landing
+  useEffect(() => {
+    hasAppliedRoleRedirect.current = false;
+  }, [selectedOrg?.id]);
+
+  // Nav badge counts — pulled from dashboard analytics (same query as the Dashboard component, react-query deduplicates)
+  interface NavBadgeAnalytics { pending_loans: number; default_count: number; approved_loans: number; }
+  const { data: navBadgeData } = useQuery<NavBadgeAnalytics>({
+    queryKey: ["/api/organizations", selectedOrg?.id, "analytics", "dashboard"],
+    queryFn: async () => {
+      const res = await fetch(`/api/organizations/${selectedOrg!.id}/analytics/dashboard`, { credentials: "include" });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!selectedOrg,
+    staleTime: 60_000,
+  });
+
+  const navBadges = useMemo<Partial<Record<NavSection, number>>>(() => {
+    if (!navBadgeData) return {};
+    const badges: Partial<Record<NavSection, number>> = {};
+    if (navBadgeData.pending_loans > 0) badges["loans"] = navBadgeData.pending_loans;
+    if (navBadgeData.default_count > 0) badges["defaults"] = navBadgeData.default_count;
+    return badges;
+  }, [navBadgeData]);
+
+  const currentSectionTitle = useMemo(() => {
+    return navItems.find(i => i.value === activeSection)?.title ?? "";
+  }, [activeSection]);
+
+  useKeyboardShortcuts([
+    { sequence: ["g", "m"], action: () => setActiveSection("members") },
+    { sequence: ["g", "l"], action: () => setActiveSection("loans") },
+    { sequence: ["g", "t"], action: () => setActiveSection("transactions") },
+    { sequence: ["g", "a"], action: () => setActiveSection("analytics") },
+    { sequence: ["g", "r"], action: () => setActiveSection("repayments") },
+    { sequence: ["g", "s"], action: () => setActiveSection("staff") },
+    { sequence: ["g", "d"], action: () => setActiveSection("dashboard") },
+    { sequence: ["g", "h"], action: () => setActiveSection("hr") },
+  ]);
 
   const { data: memberships, isLoading: orgsLoading } = useQuery<OrganizationMembership[]>({
     queryKey: ["/api/organizations/my"],
@@ -986,6 +1055,7 @@ export default function Home() {
                 items={filteredNavItems}
                 activeSection={activeSection}
                 onSelect={setActiveSection}
+                badges={navBadges}
               />
             </div>
 
@@ -1036,7 +1106,16 @@ export default function Home() {
             </div>
           )}
           <header className="flex h-12 items-center justify-between border-b bg-card px-4">
-            <SidebarTrigger data-testid="button-sidebar-toggle" />
+            <div className="flex items-center gap-2 min-w-0">
+              <SidebarTrigger data-testid="button-sidebar-toggle" />
+              {currentSectionTitle && activeSection !== "dashboard" && (
+                <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+                  <span>Dashboard</span>
+                  <ChevronRightIcon className="h-3 w-3 shrink-0" />
+                  <span className="font-medium text-foreground truncate">{currentSectionTitle}</span>
+                </div>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               {selectedOrg && attendanceStatus?.require_clock_in && !attendanceStatus.clocked_in && (
                 <Button
@@ -1051,6 +1130,12 @@ export default function Home() {
                   <span className="hidden sm:inline">{clockInMutation.isPending ? "Clocking in..." : "Clock In"}</span>
                   <span className="sm:hidden">In</span>
                 </Button>
+              )}
+              {selectedOrg && (
+                <GlobalSearch
+                  organizationId={selectedOrg.id}
+                  onNavigate={(section) => setActiveSection(section as NavSection)}
+                />
               )}
               {(user as any)?.branchName && (
                 <div className="hidden md:flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-medium">

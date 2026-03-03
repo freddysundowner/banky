@@ -20,6 +20,11 @@ import {
   ChevronRight,
   Users,
   UserPlus,
+  UserRoundPlus,
+  FilePlus,
+  CreditCard,
+  Wallet,
+  MessageSquare,
 } from "lucide-react";
 import { useCurrency } from "@/hooks/use-currency";
 import { formatDistanceToNow } from "date-fns";
@@ -261,6 +266,31 @@ export default function Dashboard({ organizationId, organizationName, onNavigate
           <p className="text-sm text-muted-foreground">Overview of {organizationName}</p>
         </div>
         <RefreshButton organizationId={organizationId} />
+      </div>
+
+      <div>
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Quick Actions</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+          {[
+            { label: "New Member", icon: UserRoundPlus, section: "members", color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-950/40" },
+            { label: "New Loan", icon: FilePlus, section: "loans", color: "text-green-600", bg: "bg-green-50 dark:bg-green-950/40" },
+            { label: "Repayment", icon: CreditCard, section: "repayments", color: "text-purple-600", bg: "bg-purple-50 dark:bg-purple-950/40" },
+            { label: "Transaction", icon: Wallet, section: "transactions", color: "text-orange-600", bg: "bg-orange-50 dark:bg-orange-950/40" },
+            { label: "Send SMS", icon: MessageSquare, section: "sms", color: "text-pink-600", bg: "bg-pink-50 dark:bg-pink-950/40" },
+          ].map(({ label, icon: Icon, section, color, bg }) => (
+            <button
+              key={section}
+              onClick={() => onNavigate?.(section)}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border bg-card hover:bg-accent transition-colors py-4 px-2 text-center group"
+              data-testid={`quick-action-${section}`}
+            >
+              <div className={`rounded-full p-2.5 ${bg} transition-transform group-hover:scale-105`}>
+                <Icon className={`h-4 w-4 ${color}`} />
+              </div>
+              <span className="text-xs font-medium text-foreground">{label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {healthData && (
