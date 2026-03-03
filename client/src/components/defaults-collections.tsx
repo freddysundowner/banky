@@ -32,7 +32,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAppDialog } from "@/hooks/use-app-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { RefreshButton } from "@/components/refresh-button";
-import { AlertTriangle, Phone, Calendar, FileWarning, AlertCircle, Clock, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, Phone, Calendar, FileWarning, AlertCircle, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { useResourcePermissions, RESOURCES } from "@/hooks/use-resource-permissions";
 import { useCurrency } from "@/hooks/use-currency";
 
@@ -104,6 +104,8 @@ export default function DefaultsCollections({ organizationId }: DefaultsCollecti
   const [collectionNotes, setCollectionNotes] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
   const [assignedTo, setAssignedTo] = useState("");
+  const [writeOffDefault, setWriteOffDefault] = useState<LoanDefault | null>(null);
+  const [writeOffReason, setWriteOffReason] = useState("");
   const { canWrite } = useResourcePermissions(organizationId, RESOURCES.DEFAULTS);
 
   const { data: dueTodayData, isLoading: isDueTodayLoading } = useQuery<DueTodayResponse>({
@@ -164,6 +166,26 @@ export default function DefaultsCollections({ organizationId }: DefaultsCollecti
       toast({ title: "Failed to update record", variant: "destructive" });
     },
   });
+
+  const writeOffMutation = useMutation({
+    mutationFn: async (data: { id: string; reason: string }) => {
+      return apiRequest("POST", `/api/organizations/${organizationId}/defaults/${data.id}/write-off`, { reason: data.reason });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "defaults"] });
+      setWriteOffDefault(null);
+      setWriteOffReason("");
+      toast({ title: "Loan written off and posted to General Ledger" });
+    },
+    onError: () => {
+      toast({ title: "Failed to write off loan", variant: "destructive" });
+    },
+  });
+
+  const handleWriteOff = () => {
+    if (!writeOffDefault || !writeOffReason.trim()) return;
+    writeOffMutation.mutate({ id: writeOffDefault.id, reason: writeOffReason.trim() });
+  };
 
   const formatCurrency = (amount: number) => {
     return formatAmount(amount || 0);
@@ -444,6 +466,18 @@ export default function DefaultsCollections({ organizationId }: DefaultsCollecti
                             Update
                           </Button>
                         )}
+                        {canWrite && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => { setWriteOffDefault(def); setWriteOffReason(""); }}
+                            data-testid={`button-writeoff-${def.id}`}
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Write Off
+                          </Button>
+                        )}
                         {def.loan?.member?.phone && (
                           <Button variant="ghost" size="icon" asChild>
                             <a href={`tel:${def.loan.member.phone}`}>
@@ -538,6 +572,45 @@ export default function DefaultsCollections({ organizationId }: DefaultsCollecti
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={!!writeOffDefault} onOpenChange={(open) => !open && setWriteOffDefault(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <XCircle className="h-5 w-5" />
+              Write Off Loan
+            </DialogTitle>
+            <DialogDescription>
+              This will mark <strong>{writeOffDefault?.loan?.application_number}</strong> as written off
+              and post the outstanding balance to the General Ledger. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium">Reason for Write Off <span className="text-destructive">*</span></label>
+              <Textarea
+                value={writeOffReason}
+                onChange={(e) => setWriteOffReason(e.target.value)}
+                placeholder="e.g. Member untraceable, debt deemed irrecoverable..."
+                className="resize-none mt-1.5"
+                rows={3}
+                data-testid="input-writeoff-reason"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setWriteOffDefault(null)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={handleWriteOff}
+              disabled={writeOffMutation.isPending || !writeOffReason.trim()}
+              data-testid="button-confirm-writeoff"
+            >
+              {writeOffMutation.isPending ? "Writing off..." : "Confirm Write Off"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!selectedDefault} onOpenChange={(open) => !open && setSelectedDefault(null)}>
         <DialogContent>
