@@ -33,11 +33,11 @@ const DEMO_PASSWORD = "Demo@1234";
 
 const DEMO_INSTITUTION_TYPES = [
   {
-    id: "chama",
-    label: "Chama",
-    icon: Users,
-    email: "chama@demo.bankykit",
-    description: "Savings groups & investment clubs",
+    id: "mfi",
+    label: "MFI",
+    icon: Briefcase,
+    email: "mfi@demo.bankykit",
+    description: "Microfinance institutions",
   },
   {
     id: "sacco",
@@ -47,18 +47,18 @@ const DEMO_INSTITUTION_TYPES = [
     description: "Cooperative societies",
   },
   {
-    id: "mfi",
-    label: "MFI",
-    icon: Briefcase,
-    email: "mfi@demo.bankykit",
-    description: "Microfinance institutions",
-  },
-  {
     id: "bank",
     label: "Bank",
     icon: Landmark,
     email: "bank@demo.bankykit",
     description: "Community banks",
+  },
+  {
+    id: "chama",
+    label: "Chama",
+    icon: Users,
+    email: "chama@demo.bankykit",
+    description: "Savings groups & investment clubs",
   },
 ];
 
@@ -76,7 +76,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [activeDemoType, setActiveDemoType] = useState("chama");
+  const [activeDemoType, setActiveDemoType] = useState("mfi");
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
