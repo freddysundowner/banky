@@ -16,9 +16,10 @@ import {
 } from "@/components/ui/form";
 import { useAppDialog } from "@/hooks/use-app-dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Landmark, Eye, EyeOff, ShieldCheck, Users, CreditCard, BarChart3, Lock } from "lucide-react";
+import { Landmark, Eye, EyeOff, ShieldCheck, Users, CreditCard, BarChart3, Lock, Building, Briefcase } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useBranding } from "@/context/BrandingContext";
+import { cn } from "@/lib/utils";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -29,13 +30,36 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 const IS_DEMO = import.meta.env.VITE_PRODUCTION_MODE === "demo";
 const DEMO_PASSWORD = "Demo@1234";
-const DEMO_ACCOUNTS = [
-  { role: "Owner", email: "demo@demo.bankykit" },
-  { role: "Admin", email: "alice@demo.bankykit" },
-  { role: "Loan Officer", email: "bob@demo.bankykit" },
-  { role: "Teller", email: "carol@demo.bankykit" },
-  { role: "HR Officer", email: "dave@demo.bankykit" },
-  { role: "Kiosk / Queue", email: "eve@demo.bankykit" },
+
+const DEMO_INSTITUTION_TYPES = [
+  {
+    id: "chama",
+    label: "Chama",
+    icon: Users,
+    email: "chama@demo.bankykit",
+    description: "Savings groups & investment clubs",
+  },
+  {
+    id: "sacco",
+    label: "SACCO",
+    icon: Building,
+    email: "sacco@demo.bankykit",
+    description: "Cooperative societies",
+  },
+  {
+    id: "mfi",
+    label: "MFI",
+    icon: Briefcase,
+    email: "mfi@demo.bankykit",
+    description: "Microfinance institutions",
+  },
+  {
+    id: "bank",
+    label: "Bank",
+    icon: Landmark,
+    email: "bank@demo.bankykit",
+    description: "Community banks",
+  },
 ];
 
 const FEATURES = [
@@ -52,11 +76,12 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [activeDemoType, setActiveDemoType] = useState("chama");
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: IS_DEMO ? DEMO_ACCOUNTS[0].email : "",
+      email: IS_DEMO ? DEMO_INSTITUTION_TYPES[0].email : "",
       password: IS_DEMO ? DEMO_PASSWORD : "",
     },
   });
@@ -102,6 +127,12 @@ export default function Login() {
       </div>
     );
   }
+
+  const handleDemoTypeSelect = (type: typeof DEMO_INSTITUTION_TYPES[0]) => {
+    setActiveDemoType(type.id);
+    form.setValue("email", type.email);
+    form.setValue("password", DEMO_PASSWORD);
+  };
 
   return (
     <div className="min-h-screen flex">
@@ -160,6 +191,55 @@ export default function Login() {
             <h1 className="text-2xl font-bold text-foreground mb-1">Sign in to your account</h1>
             <p className="text-muted-foreground text-sm">Enter your credentials to access the dashboard</p>
           </div>
+
+          {IS_DEMO && (
+            <div className="mb-6 border border-border rounded-xl overflow-hidden">
+              <div className="bg-muted/50 px-4 py-3 border-b border-border">
+                <p className="text-sm font-semibold text-foreground">Choose business type</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Password: <span className="font-mono font-semibold text-foreground" data-testid="text-demo-password">{DEMO_PASSWORD}</span>
+                </p>
+              </div>
+              <div className="grid grid-cols-4">
+                {DEMO_INSTITUTION_TYPES.map((type) => {
+                  const Icon = type.icon;
+                  const isActive = activeDemoType === type.id;
+                  return (
+                    <button
+                      key={type.id}
+                      type="button"
+                      data-testid={`button-demo-${type.id}`}
+                      className={cn(
+                        "flex flex-col items-center gap-1.5 px-3 py-4 text-center transition-colors border-b-2",
+                        isActive
+                          ? "border-b-primary bg-primary/5"
+                          : "border-b-transparent"
+                      )}
+                      onClick={() => handleDemoTypeSelect(type)}
+                    >
+                      <div className={cn(
+                        "flex h-9 w-9 items-center justify-center rounded-lg transition-colors",
+                        isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                      )}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <div className={cn(
+                          "text-xs font-semibold",
+                          isActive ? "text-primary" : "text-foreground"
+                        )}>
+                          {type.label}
+                        </div>
+                        <div className="text-[10px] leading-tight text-muted-foreground mt-0.5 hidden sm:block">
+                          {type.description}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit((data) => loginMutation.mutate(data))} className="space-y-4">
@@ -238,42 +318,6 @@ export default function Login() {
               Create one
             </Link>
           </p>
-
-          {IS_DEMO && (
-            <div className="mt-6 border border-border rounded-xl overflow-hidden">
-              <div className="bg-muted/50 px-4 py-3 border-b border-border">
-                <p className="text-sm font-semibold text-foreground">Try a demo account</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Click any role below · Password: <span className="font-mono font-semibold text-foreground" data-testid="text-demo-password">{DEMO_PASSWORD}</span>
-                </p>
-              </div>
-              <div className="grid grid-cols-2">
-                {DEMO_ACCOUNTS.map((account, i) => (
-                  <button
-                    key={account.email}
-                    type="button"
-                    data-testid={`button-demo-${account.role.toLowerCase().replace(/[\s/]+/g, "-")}`}
-                    className={`flex flex-col items-start px-4 py-3 text-left hover:bg-muted/70 transition-colors
-                      ${i % 2 === 0 ? "border-r border-border" : ""}
-                      ${i < DEMO_ACCOUNTS.length - 2 ? "border-b border-border" : ""}
-                    `}
-                    onClick={() => {
-                      form.setValue("email", account.email);
-                      form.setValue("password", DEMO_PASSWORD);
-                    }}
-                  >
-                    <span className="text-sm font-medium text-foreground">{account.role}</span>
-                    <span
-                      className="font-mono text-xs text-muted-foreground truncate w-full mt-0.5"
-                      data-testid={`text-demo-email-${account.role.toLowerCase().replace(/[\s/]+/g, "-")}`}
-                    >
-                      {account.email}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
 
           <div className="mt-8 flex flex-col items-center gap-3">
             <div className="flex items-center gap-1.5 text-muted-foreground text-xs">

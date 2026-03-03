@@ -22,9 +22,62 @@ from models.master import AdminUser
 
 router = APIRouter(prefix="/admin/demo-data", tags=["admin"])
 
-DEMO_CODE = "DEMO"
-DEMO_OWNER_EMAIL = "demo@demo.bankykit"
-DEMO_OWNER_PASSWORD = "Demo@1234"
+DEMO_PASSWORD = "Demo@1234"
+DEMO_EMAIL_DOMAIN = "@demo.bankykit"
+DEMO_MOBILE_PIN = "123456"
+
+DEMO_ORGS = [
+    {
+        "code": "DEMO-CHAMA",
+        "name": "Demo Chama",
+        "institution_type": "chama",
+        "owner_email": "chama@demo.bankykit",
+        "owner_first": "Chama",
+        "owner_last": "Owner",
+        "org_email": "demo@demochama.com",
+        "currency": "KES",
+        "currency_symbol": "KSh",
+    },
+    {
+        "code": "DEMO-SACCO",
+        "name": "Demo SACCO",
+        "institution_type": "sacco",
+        "owner_email": "sacco@demo.bankykit",
+        "owner_first": "SACCO",
+        "owner_last": "Owner",
+        "org_email": "demo@demosacco.com",
+        "currency": "KES",
+        "currency_symbol": "KSh",
+    },
+    {
+        "code": "DEMO-MFI",
+        "name": "Demo MFI",
+        "institution_type": "mfi",
+        "owner_email": "mfi@demo.bankykit",
+        "owner_first": "MFI",
+        "owner_last": "Owner",
+        "org_email": "demo@demomfi.com",
+        "currency": "KES",
+        "currency_symbol": "KSh",
+    },
+    {
+        "code": "DEMO-BANK",
+        "name": "Demo Bank",
+        "institution_type": "bank",
+        "owner_email": "bank@demo.bankykit",
+        "owner_first": "Bank",
+        "owner_last": "Owner",
+        "org_email": "demo@demobank.com",
+        "currency": "KES",
+        "currency_symbol": "KSh",
+    },
+]
+
+DEMO_CODES = [d["code"] for d in DEMO_ORGS]
+DEMO_OWNER_EMAILS = [d["owner_email"] for d in DEMO_ORGS]
+
+LEGACY_DEMO_CODE = "DEMO"
+LEGACY_DEMO_EMAIL = "demo@demo.bankykit"
 
 
 def _hash(password: str) -> str:
@@ -35,24 +88,17 @@ def _uid() -> str:
     return str(uuid.uuid4())
 
 
-def _get_demo_org(db: Session):
-    return db.query(Organization).filter(Organization.code == DEMO_CODE).first()
-
-
 def _get_connection_string() -> str:
     return os.environ.get("DATABASE_URL", "")
 
 
-DEMO_BRANCH_CODE  = "DEMO"
-DEMO_STAFF_PREFIX = "DMS"
-DEMO_MEMBER_PREFIX = "DMB"
-DEMO_TXN_PREFIX   = "DTXN"
-DEMO_LOAN_PREFIX  = "DLN"
-DEMO_REP_PREFIX   = "DREP"
-DEMO_PROD_CODES   = ("DDEV", "DEMG")
-DEMO_EMAIL_DOMAIN = "@demo.bankykit"
-DEMO_MOBILE_ID_NUMBER = "DEMO000001"
-DEMO_MOBILE_PIN = "123456"
+def _get_demo_orgs(db: Session):
+    return db.query(Organization).filter(Organization.code.in_(DEMO_CODES)).all()
+
+
+def _get_legacy_demo_org(db: Session):
+    return db.query(Organization).filter(Organization.code == LEGACY_DEMO_CODE).first()
+
 
 _PBKDF2_ITERATIONS = 260000
 _PBKDF2_HASH = "sha256"
@@ -64,41 +110,54 @@ def _hash_pin(pin: str) -> str:
     return f"{salt}:{dk.hex()}"
 
 
-def _seed_tenant(conn_str: str):
+def _get_best_plan_for_type(db: Session, institution_type: str):
+    return (
+        db.query(SubscriptionPlan)
+        .filter(
+            SubscriptionPlan.business_type == institution_type,
+            SubscriptionPlan.is_active == True,
+        )
+        .order_by(SubscriptionPlan.sort_order.desc(), SubscriptionPlan.max_members.desc())
+        .first()
+    )
+
+
+def _seed_tenant(conn_str: str, org_config: dict):
     from sqlalchemy import create_engine
     from sqlalchemy.orm import sessionmaker
 
     engine = create_engine(conn_str, pool_pre_ping=True)
     TenantBase.metadata.create_all(bind=engine)
-    Session = sessionmaker(bind=engine)
-    tdb = Session()
+    TSession = sessionmaker(bind=engine)
+    tdb = TSession()
+
+    itype = org_config["institution_type"]
+    prefix = itype.upper()[:3]
 
     try:
-        # Branch
         branch_id = _uid()
         branch = Branch(
             id=branch_id,
-            name="Demo Head Office",
-            code=DEMO_BRANCH_CODE,
-            address="123 Main Street",
-            phone="+1 555 000 0000",
-            email=f"headoffice{DEMO_EMAIL_DOMAIN}",
+            name=f"{org_config['name']} Head Office",
+            code=f"{prefix}HQ",
+            address="123 Main Street, Nairobi",
+            phone="+254 700 000 000",
+            email=f"headoffice.{itype}{DEMO_EMAIL_DOMAIN}",
             is_active=True,
         )
         tdb.add(branch)
 
-        # Staff
         manager_id = _uid()
         manager = Staff(
             id=manager_id,
-            staff_number=f"{DEMO_STAFF_PREFIX}001",
+            staff_number=f"{prefix}S001",
             first_name="Alice",
             last_name="Manager",
-            email=f"alice{DEMO_EMAIL_DOMAIN}",
-            phone="+1 555 000 0001",
+            email=f"alice.{itype}{DEMO_EMAIL_DOMAIN}",
+            phone=f"+254 700 {itype[:3].upper()} 001",
             role="admin",
             branch_id=branch_id,
-            password_hash=_hash("Demo@1234"),
+            password_hash=_hash(DEMO_PASSWORD),
             is_active=True,
         )
         tdb.add(manager)
@@ -106,14 +165,14 @@ def _seed_tenant(conn_str: str):
         officer_id = _uid()
         officer = Staff(
             id=officer_id,
-            staff_number=f"{DEMO_STAFF_PREFIX}002",
+            staff_number=f"{prefix}S002",
             first_name="Bob",
             last_name="Officer",
-            email=f"bob{DEMO_EMAIL_DOMAIN}",
-            phone="+1 555 000 0002",
+            email=f"bob.{itype}{DEMO_EMAIL_DOMAIN}",
+            phone=f"+254 700 {itype[:3].upper()} 002",
             role="loan_officer",
             branch_id=branch_id,
-            password_hash=_hash("Demo@1234"),
+            password_hash=_hash(DEMO_PASSWORD),
             is_active=True,
         )
         tdb.add(officer)
@@ -121,56 +180,28 @@ def _seed_tenant(conn_str: str):
         teller_id = _uid()
         teller = Staff(
             id=teller_id,
-            staff_number=f"{DEMO_STAFF_PREFIX}003",
+            staff_number=f"{prefix}S003",
             first_name="Carol",
             last_name="Teller",
-            email=f"carol{DEMO_EMAIL_DOMAIN}",
-            phone="+1 555 000 0003",
+            email=f"carol.{itype}{DEMO_EMAIL_DOMAIN}",
+            phone=f"+254 700 {itype[:3].upper()} 003",
             role="teller",
             branch_id=branch_id,
-            password_hash=_hash("Demo@1234"),
+            password_hash=_hash(DEMO_PASSWORD),
             is_active=True,
         )
         tdb.add(teller)
 
-        hr_id = _uid()
-        hr_staff = Staff(
-            id=hr_id,
-            staff_number=f"{DEMO_STAFF_PREFIX}004",
-            first_name="Dave",
-            last_name="HR",
-            email=f"dave{DEMO_EMAIL_DOMAIN}",
-            phone="+1 555 000 0004",
-            role="hr",
-            branch_id=branch_id,
-            password_hash=_hash("Demo@1234"),
-            is_active=True,
-        )
-        tdb.add(hr_staff)
-
-        kiosk_id = _uid()
-        kiosk_staff = Staff(
-            id=kiosk_id,
-            staff_number=f"{DEMO_STAFF_PREFIX}005",
-            first_name="Eve",
-            last_name="Kiosk",
-            email=f"eve{DEMO_EMAIL_DOMAIN}",
-            phone="+1 555 000 0005",
-            role="kiosk_operator",
-            branch_id=branch_id,
-            password_hash=_hash("Demo@1234"),
-            is_active=True,
-        )
-        tdb.add(kiosk_staff)
-
         tdb.flush()
 
-        # Loan Products
+        prod_code_1 = f"{prefix}DEV"
+        prod_code_2 = f"{prefix}EMG"
+
         prod1_id = _uid()
         prod1 = LoanProduct(
             id=prod1_id,
-            name="Demo Development Loan",
-            code=DEMO_PROD_CODES[0],
+            name=f"{org_config['name']} Development Loan",
+            code=prod_code_1,
             description="General-purpose development loan for members.",
             interest_rate=1.5,
             interest_rate_period="monthly",
@@ -189,8 +220,8 @@ def _seed_tenant(conn_str: str):
         prod2_id = _uid()
         prod2 = LoanProduct(
             id=prod2_id,
-            name="Demo Emergency Loan",
-            code=DEMO_PROD_CODES[1],
+            name=f"{org_config['name']} Emergency Loan",
+            code=prod_code_2,
             description="Quick-access emergency loan disbursed within 24 hours.",
             interest_rate=2.0,
             interest_rate_period="monthly",
@@ -208,7 +239,6 @@ def _seed_tenant(conn_str: str):
 
         tdb.flush()
 
-        # Members
         member_data = [
             ("James",   "Anderson",  12000, 5000),
             ("Sarah",   "Mitchell",   8500, 3200),
@@ -234,21 +264,21 @@ def _seed_tenant(conn_str: str):
             slug = f"{fn.lower()}.{ln.lower()}"
             m = Member(
                 id=mid,
-                member_number=f"{DEMO_MEMBER_PREFIX}{str(idx+1).zfill(3)}",
+                member_number=f"{prefix}M{str(idx+1).zfill(3)}",
                 first_name=fn,
                 last_name=ln,
-                email=f"{slug}{DEMO_EMAIL_DOMAIN}",
-                phone=f"+1 555 100 {str(idx+1).zfill(4)}",
-                id_number=f"DEMO{str(10000 + idx + 1)}",
+                email=f"{slug}.{itype}{DEMO_EMAIL_DOMAIN}",
+                phone=f"+254 710 {str(idx+1).zfill(4)}",
+                id_number=f"{prefix}{str(10000 + idx + 1)}",
                 id_type="national_id",
                 gender="male" if fn in ("James","David","Michael","Robert","William","Charles","Joseph","Thomas") else "female",
                 date_of_birth=date(1985, 6, 15),
-                nationality="US",
-                address="456 Example Avenue",
-                city="Springfield",
-                country="USA",
+                nationality="KE",
+                address="456 Kenyatta Avenue",
+                city="Nairobi",
+                country="Kenya",
                 employment_status="employed",
-                monthly_income=5000,
+                monthly_income=75000,
                 branch_id=branch_id,
                 membership_type="ordinary",
                 savings_balance=savings,
@@ -264,17 +294,14 @@ def _seed_tenant(conn_str: str):
         tdb.flush()
 
         demo_mobile_id = _uid()
-        demo_mobile_savings = 25000
-        demo_mobile_shares = 10000
-        demo_mobile_deposits = 5000
         demo_mobile = Member(
             id=demo_mobile_id,
-            member_number=f"{DEMO_MEMBER_PREFIX}016",
+            member_number=f"{prefix}M016",
             first_name="Demo",
             last_name="User",
-            email=f"demo.user{DEMO_EMAIL_DOMAIN}",
+            email=f"demo.user.{itype}{DEMO_EMAIL_DOMAIN}",
             phone="+254700000000",
-            id_number=DEMO_MOBILE_ID_NUMBER,
+            id_number=f"{prefix}MOB001",
             id_type="national_id",
             gender="male",
             date_of_birth=date(1990, 1, 15),
@@ -286,27 +313,26 @@ def _seed_tenant(conn_str: str):
             monthly_income=75000,
             branch_id=branch_id,
             membership_type="ordinary",
-            savings_balance=demo_mobile_savings,
-            shares_balance=demo_mobile_shares,
-            deposits_balance=demo_mobile_deposits,
+            savings_balance=25000,
+            shares_balance=10000,
+            deposits_balance=5000,
             status="active",
             is_active=True,
             mobile_banking_active=True,
             pin_hash=_hash_pin(DEMO_MOBILE_PIN),
-            mobile_device_id="demo-device",
+            mobile_device_id=f"demo-device-{itype}",
             joined_at=datetime.utcnow() - timedelta(days=400),
             created_by_id=manager_id,
         )
         tdb.add(demo_mobile)
         member_ids.append(demo_mobile_id)
-        member_data.append(("Demo", "User", demo_mobile_savings, demo_mobile_shares))
+        member_data.append(("Demo", "User", 25000, 10000))
         tdb.flush()
 
-        # Transactions — savings deposits for each member
         for idx, (mid, (fn, ln, savings, shares)) in enumerate(zip(member_ids, member_data)):
             tdb.add(Transaction(
                 id=_uid(),
-                transaction_number=f"{DEMO_TXN_PREFIX}{str(idx+1).zfill(4)}",
+                transaction_number=f"{prefix}TXN{str(idx+1).zfill(4)}",
                 member_id=mid,
                 transaction_type="deposit",
                 account_type="savings",
@@ -314,14 +340,14 @@ def _seed_tenant(conn_str: str):
                 balance_before=0,
                 balance_after=savings,
                 payment_method="cash",
-                reference=f"DEMO-SAV-{idx+1}",
+                reference=f"{prefix}-SAV-{idx+1}",
                 description="Opening savings deposit",
                 processed_by_id=teller_id,
                 created_at=datetime.utcnow() - timedelta(days=300),
             ))
             tdb.add(Transaction(
                 id=_uid(),
-                transaction_number=f"{DEMO_TXN_PREFIX}{str(idx+100).zfill(4)}",
+                transaction_number=f"{prefix}TXN{str(idx+100).zfill(4)}",
                 member_id=mid,
                 transaction_type="deposit",
                 account_type="shares",
@@ -329,7 +355,7 @@ def _seed_tenant(conn_str: str):
                 balance_before=0,
                 balance_after=shares,
                 payment_method="cash",
-                reference=f"DEMO-SHR-{idx+1}",
+                reference=f"{prefix}-SHR-{idx+1}",
                 description="Opening shares purchase",
                 processed_by_id=teller_id,
                 created_at=datetime.utcnow() - timedelta(days=300),
@@ -337,9 +363,7 @@ def _seed_tenant(conn_str: str):
 
         tdb.flush()
 
-        # Loans — various statuses
         loan_scenarios = [
-            # (member_idx, product_id, amount, term, status, months_ago)
             (0,  prod1_id, 10000, 12, "disbursed", 8),
             (1,  prod2_id,  2000,  6, "disbursed", 5),
             (2,  prod1_id, 20000, 24, "disbursed", 12),
@@ -363,7 +387,7 @@ def _seed_tenant(conn_str: str):
 
             loan = LoanApplication(
                 id=loan_id,
-                application_number=f"{DEMO_LOAN_PREFIX}{str(i+1).zfill(4)}",
+                application_number=f"{prefix}LN{str(i+1).zfill(4)}",
                 member_id=member_ids[midx],
                 loan_product_id=prod_id,
                 amount=amt,
@@ -395,121 +419,24 @@ def _seed_tenant(conn_str: str):
                 for mo in range(min(months_paid, 6)):
                     tdb.add(LoanRepayment(
                         id=_uid(),
-                        repayment_number=f"{DEMO_REP_PREFIX}-{i+1}-{mo+1}",
+                        repayment_number=f"{prefix}REP-{i+1}-{mo+1}",
                         loan_id=loan_id,
                         amount=monthly_payment,
                         principal_amount=round(monthly_payment * 0.7, 2),
                         interest_amount=round(monthly_payment * 0.3, 2),
                         penalty_amount=0,
                         payment_method="cash",
-                        reference=f"DEMO-REF-{i+1}-{mo+1}",
+                        reference=f"{prefix}-REF-{i+1}-{mo+1}",
                         notes="Monthly repayment",
                         payment_date=disbursed_at + timedelta(days=30 * (mo + 1)),
                         received_by_id=teller_id,
                     ))
 
-        # Extra transactions for demo mobile user (realistic history)
-        demo_txn_base = 200
-        demo_txn_history = [
-            ("deposit",    "savings",  5000,  0,     5000,  "cash",   "Initial savings deposit",    350),
-            ("deposit",    "savings",  3000,  5000,  8000,  "mpesa",  "M-Pesa savings top-up",      320),
-            ("withdrawal", "savings",  2000,  8000,  6000,  "cash",   "Cash withdrawal",            290),
-            ("deposit",    "savings",  7000,  6000,  13000, "bank",   "Bank transfer deposit",      260),
-            ("deposit",    "shares",   4000,  0,     4000,  "cash",   "Shares purchase",            340),
-            ("deposit",    "shares",   3000,  4000,  7000,  "mpesa",  "M-Pesa shares purchase",     280),
-            ("deposit",    "shares",   3000,  7000,  10000, "bank",   "Additional shares",          200),
-            ("deposit",    "savings",  5000,  13000, 18000, "mpesa",  "Monthly savings",            180),
-            ("withdrawal", "savings",  3000,  18000, 15000, "mpesa",  "M-Pesa withdrawal",          150),
-            ("deposit",    "savings",  8000,  15000, 23000, "bank",   "Salary deposit",             120),
-            ("deposit",    "deposits", 5000,  0,     5000,  "cash",   "Fixed deposit placement",    300),
-            ("deposit",    "savings",  2000,  23000, 25000, "mpesa",  "Monthly savings",            60),
-        ]
-        for t_idx, (t_type, acct, amt, bal_before, bal_after, method, desc, days_ago) in enumerate(demo_txn_history):
-            tdb.add(Transaction(
-                id=_uid(),
-                transaction_number=f"{DEMO_TXN_PREFIX}{str(demo_txn_base + t_idx).zfill(4)}",
-                member_id=demo_mobile_id,
-                transaction_type=t_type,
-                account_type=acct,
-                amount=amt,
-                balance_before=bal_before,
-                balance_after=bal_after,
-                payment_method=method,
-                reference=f"DEMO-MOB-{t_idx+1}",
-                description=desc,
-                processed_by_id=teller_id,
-                created_at=datetime.utcnow() - timedelta(days=days_ago),
-            ))
         tdb.flush()
 
-        # Loans for demo mobile user
-        demo_mobile_idx = len(member_ids) - 1
-        demo_loan_scenarios = [
-            (demo_mobile_idx, prod1_id, 15000, 12, "disbursed", 6),
-            (demo_mobile_idx, prod2_id,  3000,  6, "closed",     9),
-        ]
-        for di, (midx, prod_id, amt, term, status, months_ago) in enumerate(demo_loan_scenarios):
-            loan_id = _uid()
-            li = len(loan_scenarios) + di
-            applied = datetime.utcnow() - timedelta(days=months_ago * 30)
-            disbursed_at = applied + timedelta(days=3) if status in ("disbursed", "closed") else None
-            approved_at = applied + timedelta(days=1) if status in ("approved", "disbursed", "closed") else None
-
-            monthly_payment = round((amt * 0.015 * (1.015 ** term)) / ((1.015 ** term) - 1), 2)
-            months_paid = months_ago if status == "disbursed" else term if status == "closed" else 0
-            amount_repaid = round(monthly_payment * months_paid, 2)
-            outstanding = max(0, round(amt - amount_repaid, 2))
-
-            loan = LoanApplication(
-                id=loan_id,
-                application_number=f"{DEMO_LOAN_PREFIX}{str(li+1).zfill(4)}",
-                member_id=member_ids[midx],
-                loan_product_id=prod_id,
-                amount=amt,
-                term_months=term,
-                interest_rate=1.5,
-                total_interest=round(amt * 0.015 * term, 2),
-                total_repayment=round(amt + amt * 0.015 * term, 2),
-                monthly_repayment=monthly_payment,
-                processing_fee=round(amt * 0.02, 2),
-                status=status,
-                purpose="Business expansion" if di % 2 == 0 else "Emergency medical expenses",
-                disbursement_method="bank" if status in ("disbursed", "closed") else None,
-                amount_disbursed=amt if status in ("disbursed", "closed") else None,
-                amount_repaid=amount_repaid,
-                outstanding_balance=outstanding,
-                next_payment_date=date.today() + timedelta(days=15) if status == "disbursed" else None,
-                last_payment_date=date.today() - timedelta(days=15) if amount_repaid > 0 else None,
-                created_by_id=officer_id,
-                reviewed_by_id=manager_id,
-                applied_at=applied,
-                approved_at=approved_at,
-                disbursed_at=disbursed_at,
-                closed_at=applied + timedelta(days=term * 30) if status == "closed" else None,
-            )
-            tdb.add(loan)
-            tdb.flush()
-
-            if status in ("disbursed", "closed") and months_paid > 0:
-                for mo in range(min(months_paid, 6)):
-                    tdb.add(LoanRepayment(
-                        id=_uid(),
-                        repayment_number=f"{DEMO_REP_PREFIX}-M{di+1}-{mo+1}",
-                        loan_id=loan_id,
-                        amount=monthly_payment,
-                        principal_amount=round(monthly_payment * 0.7, 2),
-                        interest_amount=round(monthly_payment * 0.3, 2),
-                        penalty_amount=0,
-                        payment_method="cash" if mo % 2 == 0 else "mpesa",
-                        reference=f"DEMO-MREP-{di+1}-{mo+1}",
-                        notes="Monthly repayment",
-                        payment_date=disbursed_at + timedelta(days=30 * (mo + 1)),
-                        received_by_id=teller_id,
-                    ))
-        tdb.flush()
-
-        # Organization settings — currency and timezone
-        for key, value in [("currency", "USD"), ("currency_symbol", "$"), ("timezone", "Africa/Nairobi")]:
+        currency = org_config.get("currency", "KES")
+        currency_symbol = org_config.get("currency_symbol", "KSh")
+        for key, value in [("currency", currency), ("currency_symbol", currency_symbol), ("timezone", "Africa/Nairobi")]:
             existing = tdb.query(OrganizationSettings).filter(OrganizationSettings.setting_key == key).first()
             if existing:
                 existing.setting_value = value
@@ -569,107 +496,161 @@ def _cascade_delete(conn, table: str, where_clause: str, skip_tables=None):
     conn.execute(text(f"DELETE FROM {table} WHERE id IN ({ids})"))
 
 
-def _truncate_tenant(conn_str: str):
-    """Delete only demo-specific records — safe on shared and dedicated databases."""
+def _truncate_tenant(conn_str: str, prefixes: list[str]):
     from sqlalchemy import create_engine
 
     engine = create_engine(conn_str, pool_pre_ping=True)
 
     with engine.connect() as conn:
         with conn.begin():
-            _cascade_delete(conn, "members", f"member_number LIKE '{DEMO_MEMBER_PREFIX}%' OR member_number LIKE 'DEMO-MOBILE-%' OR id_number = '{DEMO_MOBILE_ID_NUMBER}'")
-            _cascade_delete(conn, "staff", f"staff_number LIKE '{DEMO_STAFF_PREFIX}%'")
-            _cascade_delete(conn, "branches", f"code = '{DEMO_BRANCH_CODE}'")
-            prod_codes = ",".join(f"'{c}'" for c in DEMO_PROD_CODES)
-            _cascade_delete(conn, "loan_products", f"code IN ({prod_codes})")
+            for prefix in prefixes:
+                if _table_exists(conn, "members"):
+                    _cascade_delete(conn, "members", f"member_number LIKE '{prefix}M%' OR id_number LIKE '{prefix}%'")
+                if _table_exists(conn, "staff"):
+                    _cascade_delete(conn, "staff", f"staff_number LIKE '{prefix}S%'")
+                if _table_exists(conn, "branches"):
+                    _cascade_delete(conn, "branches", f"code = '{prefix}HQ'")
+                if _table_exists(conn, "loan_products"):
+                    _cascade_delete(conn, "loan_products", f"code LIKE '{prefix}%'")
+
+
+def _truncate_legacy_tenant(conn_str: str):
+    from sqlalchemy import create_engine
+
+    engine = create_engine(conn_str, pool_pre_ping=True)
+
+    with engine.connect() as conn:
+        with conn.begin():
+            old_prefixes = ["DMS", "DMB", "DEMO"]
+            for tbl, col, patterns in [
+                ("members", "member_number", ["DMB%"]),
+                ("members", "id_number", ["DEMO%"]),
+                ("staff", "staff_number", ["DMS%"]),
+                ("branches", "code", ["DEMO"]),
+                ("loan_products", "code", ["DDEV", "DEMG"]),
+            ]:
+                if _table_exists(conn, tbl):
+                    for pat in patterns:
+                        if "%" in pat:
+                            _cascade_delete(conn, tbl, f"{col} LIKE '{pat}'")
+                        else:
+                            _cascade_delete(conn, tbl, f"{col} = '{pat}'")
 
 
 @router.get("/status")
 def demo_status(admin: AdminUser = Depends(require_admin), db: Session = Depends(get_db)):
-    org = _get_demo_org(db)
-    if not org:
-        return {"exists": False, "member_count": 0, "loan_count": 0, "staff_count": 0}
+    orgs = _get_demo_orgs(db)
+    if not orgs:
+        return {"exists": False, "orgs": [], "member_count": 0, "loan_count": 0, "staff_count": 0}
 
-    member_count = loan_count = staff_count = 0
-    if org.connection_string:
-        try:
-            tdb = get_tenant_session(org.connection_string)
-            member_count = tdb.execute(text("SELECT COUNT(*) FROM members")).scalar() or 0
-            loan_count = tdb.execute(text("SELECT COUNT(*) FROM loan_applications")).scalar() or 0
-            staff_count = tdb.execute(text("SELECT COUNT(*) FROM staff")).scalar() or 0
-            tdb.close()
-        except Exception:
-            pass
+    total_members = 0
+    total_loans = 0
+    total_staff = 0
+    org_list = []
+
+    for org in orgs:
+        m_count = l_count = s_count = 0
+        if org.connection_string:
+            try:
+                tdb = get_tenant_session(org.connection_string)
+                prefix = org.institution_type.upper()[:3] if org.institution_type else "DEM"
+                m_count = tdb.execute(text(f"SELECT COUNT(*) FROM members WHERE member_number LIKE '{prefix}M%'")).scalar() or 0
+                l_count = tdb.execute(text(f"SELECT COUNT(*) FROM loan_applications WHERE application_number LIKE '{prefix}LN%'")).scalar() or 0
+                s_count = tdb.execute(text(f"SELECT COUNT(*) FROM staff WHERE staff_number LIKE '{prefix}S%'")).scalar() or 0
+                tdb.close()
+            except Exception:
+                pass
+        total_members += m_count
+        total_loans += l_count
+        total_staff += s_count
+        org_list.append({
+            "org_id": org.id,
+            "code": org.code,
+            "name": org.name,
+            "institution_type": org.institution_type,
+            "member_count": m_count,
+            "loan_count": l_count,
+            "staff_count": s_count,
+        })
 
     return {
         "exists": True,
-        "org_id": org.id,
-        "member_count": member_count,
-        "loan_count": loan_count,
-        "staff_count": staff_count,
+        "orgs": org_list,
+        "member_count": total_members,
+        "loan_count": total_loans,
+        "staff_count": total_staff,
     }
 
 
 @router.post("/populate")
 def populate_demo(admin: AdminUser = Depends(require_admin), db: Session = Depends(get_db)):
-    org = _get_demo_org(db)
-    if org:
-        raise HTTPException(status_code=400, detail="Demo organization already exists. Use reset to refresh it.")
+    existing = _get_demo_orgs(db)
+    if existing:
+        raise HTTPException(status_code=400, detail="Demo organizations already exist. Use reset to refresh them.")
 
     conn_str = _get_connection_string()
     if not conn_str:
         raise HTTPException(status_code=500, detail="No database connection string available.")
 
-    plan = (
-        db.query(SubscriptionPlan)
-        .filter(SubscriptionPlan.is_active == True)
-        .order_by(SubscriptionPlan.sort_order.desc(), SubscriptionPlan.max_members.desc())
-        .first()
-    )
+    _clean_legacy(db)
 
     try:
-        org = Organization(
-            name="Demo Sacco",
-            code=DEMO_CODE,
-            email="demo@demosacco.com",
-            phone="+1 555 000 0000",
-            is_active=True,
-            connection_string=conn_str,
-        )
-        db.add(org)
-        db.flush()
+        created = []
+        for org_config in DEMO_ORGS:
+            plan = _get_best_plan_for_type(db, org_config["institution_type"])
 
-        user = User(
-            email=DEMO_OWNER_EMAIL,
-            password=_hash(DEMO_OWNER_PASSWORD),
-            first_name="Demo",
-            last_name="Owner",
-        )
-        db.add(user)
-        db.flush()
+            org = Organization(
+                name=org_config["name"],
+                code=org_config["code"],
+                email=org_config["org_email"],
+                phone="+254 700 000 000",
+                institution_type=org_config["institution_type"],
+                is_active=True,
+                connection_string=conn_str,
+            )
+            db.add(org)
+            db.flush()
 
-        db.add(OrganizationMember(
-            organization_id=org.id,
-            user_id=user.id,
-            is_owner=True,
-            role="owner",
-        ))
+            user = User(
+                email=org_config["owner_email"],
+                password=_hash(DEMO_PASSWORD),
+                first_name=org_config["owner_first"],
+                last_name=org_config["owner_last"],
+            )
+            db.add(user)
+            db.flush()
 
-        if plan:
-            db.add(OrganizationSubscription(
+            db.add(OrganizationMember(
                 organization_id=org.id,
-                plan_id=plan.id,
-                status="active",
-                trial_ends_at=None,
-                current_period_start=datetime.utcnow(),
-                current_period_end=datetime(2099, 12, 31),
+                user_id=user.id,
+                is_owner=True,
+                role="owner",
             ))
+
+            if plan:
+                db.add(OrganizationSubscription(
+                    organization_id=org.id,
+                    plan_id=plan.id,
+                    status="active",
+                    trial_ends_at=None,
+                    current_period_start=datetime.utcnow(),
+                    current_period_end=datetime(2099, 12, 31),
+                ))
+
+            db.flush()
+            created.append(org_config["institution_type"])
 
         db.commit()
 
-        _seed_tenant(conn_str)
+        for org_config in DEMO_ORGS:
+            _seed_tenant(conn_str, org_config)
 
-        return {"success": True, "message": "Demo organization created with sample data.", "login_email": DEMO_OWNER_EMAIL, "login_password": DEMO_OWNER_PASSWORD}
+        return {
+            "success": True,
+            "message": f"Created {len(created)} demo organizations: {', '.join(created)}.",
+            "orgs": [{"type": c["institution_type"], "email": c["owner_email"]} for c in DEMO_ORGS],
+            "password": DEMO_PASSWORD,
+        }
 
     except Exception as e:
         db.rollback()
@@ -680,47 +661,101 @@ def populate_demo(admin: AdminUser = Depends(require_admin), db: Session = Depen
 
 @router.post("/reset")
 def reset_demo(admin: AdminUser = Depends(require_admin), db: Session = Depends(get_db)):
-    org = _get_demo_org(db)
+    orgs = _get_demo_orgs(db)
     conn_str = _get_connection_string()
 
-    if org:
-        _truncate_tenant(org.connection_string or conn_str)
-        _seed_tenant(org.connection_string or conn_str)
+    if orgs:
+        prefixes = []
+        for org in orgs:
+            prefix = org.institution_type.upper()[:3] if org.institution_type else "DEM"
+            prefixes.append(prefix)
+        actual_conn = orgs[0].connection_string or conn_str
+        _truncate_tenant(actual_conn, prefixes)
+        for org_config in DEMO_ORGS:
+            _seed_tenant(actual_conn, org_config)
         return {"success": True, "message": "Demo data has been reset with fresh sample data."}
     else:
         return populate_demo(admin=admin, db=db)
 
 
+def _clean_legacy(db: Session):
+    legacy = _get_legacy_demo_org(db)
+    if not legacy:
+        return
+
+    conn_str = legacy.connection_string or _get_connection_string()
+    try:
+        _truncate_legacy_tenant(conn_str)
+    except Exception:
+        pass
+
+    db.query(OrganizationSubscription).filter(
+        OrganizationSubscription.organization_id == legacy.id
+    ).delete()
+    db.query(OrganizationMember).filter(
+        OrganizationMember.organization_id == legacy.id
+    ).delete()
+    try:
+        db.query(MobileDeviceRegistry).filter(
+            MobileDeviceRegistry.org_id == legacy.id
+        ).delete()
+    except Exception:
+        pass
+
+    legacy_owner = db.query(User).filter(User.email == LEGACY_DEMO_EMAIL).first()
+    if legacy_owner:
+        db.query(UserSession).filter(UserSession.user_id == legacy_owner.id).delete()
+        db.delete(legacy_owner)
+
+    db.delete(legacy)
+    db.flush()
+
+
 @router.post("/clean")
 def clean_demo(admin: AdminUser = Depends(require_admin), db: Session = Depends(get_db)):
-    org = _get_demo_org(db)
-    if not org:
-        raise HTTPException(status_code=404, detail="Demo organization does not exist.")
+    orgs = _get_demo_orgs(db)
+    if not orgs:
+        raise HTTPException(status_code=404, detail="Demo organizations do not exist.")
 
-    conn_str = org.connection_string or _get_connection_string()
+    conn_str = _get_connection_string()
 
     try:
-        _truncate_tenant(conn_str)
+        prefixes = []
+        actual_conn = conn_str
+        for org in orgs:
+            prefix = org.institution_type.upper()[:3] if org.institution_type else "DEM"
+            prefixes.append(prefix)
+            if org.connection_string:
+                actual_conn = org.connection_string
 
-        db.query(OrganizationSubscription).filter(
-            OrganizationSubscription.organization_id == org.id
-        ).delete()
-        db.query(OrganizationMember).filter(
-            OrganizationMember.organization_id == org.id
-        ).delete()
-        db.query(MobileDeviceRegistry).filter(
-            MobileDeviceRegistry.org_id == org.id
-        ).delete()
+        _truncate_tenant(actual_conn, prefixes)
 
-        owner = db.query(User).filter(User.email == DEMO_OWNER_EMAIL).first()
-        if owner:
-            db.query(UserSession).filter(UserSession.user_id == owner.id).delete()
-            db.delete(owner)
+        for org in orgs:
+            db.query(OrganizationSubscription).filter(
+                OrganizationSubscription.organization_id == org.id
+            ).delete()
+            db.query(OrganizationMember).filter(
+                OrganizationMember.organization_id == org.id
+            ).delete()
+            try:
+                db.query(MobileDeviceRegistry).filter(
+                    MobileDeviceRegistry.org_id == org.id
+                ).delete()
+            except Exception:
+                pass
+            db.delete(org)
 
-        db.delete(org)
+        for email in DEMO_OWNER_EMAILS:
+            owner = db.query(User).filter(User.email == email).first()
+            if owner:
+                db.query(UserSession).filter(UserSession.user_id == owner.id).delete()
+                db.delete(owner)
+
+        _clean_legacy(db)
+
         db.commit()
 
-        return {"success": True, "message": "Demo organization and all its data have been removed."}
+        return {"success": True, "message": "All demo organizations and their data have been removed."}
 
     except Exception as e:
         db.rollback()
