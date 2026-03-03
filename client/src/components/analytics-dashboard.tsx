@@ -161,7 +161,7 @@ const CHART_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#8b5cf6"];
 
 export default function AnalyticsDashboard({ organizationId }: AnalyticsDashboardProps) {
   const [trendPeriod, setTrendPeriod] = useState<string>("monthly");
-  const [staffPeriod, setStaffPeriod] = useState<string>("this_month");
+  const [staffPeriod, setStaffPeriod] = useState<string>("this_quarter");
   const [expandedStaff, setExpandedStaff] = useState<string | null>(null);
   const [showFormula, setShowFormula] = useState(false);
   const { hasFeature } = useFeatures(organizationId);
@@ -691,11 +691,13 @@ export default function AnalyticsDashboard({ organizationId }: AnalyticsDashboar
                       <div className="border rounded-md p-3 space-y-1">
                         <p className="font-medium">2. Loan Volume (0–100)</p>
                         <p className="font-mono text-xs bg-muted rounded px-2 py-1">
-                          ln(1 + loans_processed) ÷ ln(1 + 50) × 100
+                          ln(1 + loans) ÷ ln(1 + 50) × 100
                         </p>
                         <p className="text-xs text-muted-foreground">
                           Logarithmic scale — 50 loans = 100 pts. Diminishing returns reward
                           consistent volume without penalising new staff too heavily.
+                          For <strong>Loan Officers</strong> "loans" = loans originated.
+                          For <strong>Reviewers</strong> "loans" = loans reviewed (approved + rejected).
                         </p>
                       </div>
 

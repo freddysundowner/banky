@@ -169,7 +169,10 @@ def _compute_score(role: str, loans_processed: int, loans_approved: int, loans_r
 
     # Loan Throughput: logarithmic scale benchmarked at 50 loans = 100 points.
     # Formula: ln(1 + loans) / ln(1 + 50) × 100, clamped 0–100.
-    loan_throughput = clamp(math.log1p(loans_processed) / math.log1p(50) * 100) if loans_processed > 0 else 0
+    # For reviewers, "loans" = loans reviewed (approved + rejected), not loans created.
+    role_lower_pre = (role or "").lower()
+    effective_loan_count = (loans_approved + loans_rejected) if role_lower_pre == "reviewer" else loans_processed
+    loan_throughput = clamp(math.log1p(effective_loan_count) / math.log1p(50) * 100) if effective_loan_count > 0 else 0
 
     # Transaction Throughput: logarithmic scale benchmarked at 200 txns = 100 pts.
     # Formula: ln(1 + txns) / ln(1 + 200) × 100, clamped 0–100.
