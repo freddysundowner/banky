@@ -12,7 +12,7 @@ function DemoDataPanel() {
     queryFn: async () => {
       const res = await fetch('/api/admin/demo-data/status', { credentials: 'include' })
       if (!res.ok) throw new Error('Failed')
-      return res.json() as Promise<{ exists: boolean; member_count: number; loan_count: number; staff_count: number }>
+      return res.json() as Promise<{ exists: boolean; orgs?: { code: string; name: string; institution_type: string; member_count: number; loan_count: number; staff_count: number }[]; member_count: number; loan_count: number; staff_count: number }>
     },
     refetchOnWindowFocus: false,
   })
@@ -37,7 +37,7 @@ function DemoDataPanel() {
       <div className="flex items-start justify-between gap-4 mb-4">
         <div>
           <h3 className="text-base font-semibold text-gray-900">Demo Data</h3>
-          <p className="text-sm text-gray-500 mt-0.5">Populate the system with one demo organization, 15 members, loans, and transactions for testing or showcasing.</p>
+          <p className="text-sm text-gray-500 mt-0.5">Populate the system with 4 demo organizations (MFI, SACCO, Bank, Chama), each with members, loans, and transactions for testing.</p>
         </div>
         {!statusLoading && status?.exists && (
           <span className="flex-shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-50 text-green-700 text-xs font-medium rounded-full border border-green-200">
@@ -47,17 +47,28 @@ function DemoDataPanel() {
       </div>
 
       {!statusLoading && status?.exists && (
-        <div className="flex gap-6 mb-4 text-sm text-gray-600">
-          <span><strong className="text-gray-900">{status.staff_count}</strong> staff</span>
-          <span><strong className="text-gray-900">{status.member_count}</strong> members</span>
-          <span><strong className="text-gray-900">{status.loan_count}</strong> loans</span>
+        <div className="mb-4">
+          <div className="flex gap-6 mb-3 text-sm text-gray-600">
+            <span><strong className="text-gray-900">{status.orgs?.length || 0}</strong> orgs</span>
+            <span><strong className="text-gray-900">{status.staff_count}</strong> staff</span>
+            <span><strong className="text-gray-900">{status.member_count}</strong> members</span>
+            <span><strong className="text-gray-900">{status.loan_count}</strong> loans</span>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {status.orgs?.map((org) => (
+              <div key={org.code} className="bg-gray-50 rounded-lg px-3 py-2 text-xs">
+                <span className="font-medium text-gray-900 capitalize">{org.institution_type}</span>
+                <div className="text-gray-500 mt-0.5">{org.institution_type}@demo.bankykit</div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       {msg && (
         <div className={`mb-4 px-3 py-2 rounded-lg text-sm ${msg.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
           {msg.text}
-          {msg.ok && status?.exists && <span className="ml-2 text-xs">Login: <code>demo@demo.bankykit</code> / <code>Demo@1234</code></span>}
+          {msg.ok && status?.exists && <span className="ml-2 text-xs">Password: <code>Demo@1234</code></span>}
         </div>
       )}
 
