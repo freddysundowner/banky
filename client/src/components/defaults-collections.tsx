@@ -175,12 +175,14 @@ export default function DefaultsCollections({ organizationId }: DefaultsCollecti
       queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "defaults"] });
       queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "defaults", "summary"] });
       queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "defaults", "due-today"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/organizations", organizationId, "loans"] });
       setWriteOffDefault(null);
       setWriteOffReason("");
       toast({ title: "Loan written off and posted to General Ledger" });
     },
-    onError: () => {
-      toast({ title: "Failed to write off loan", variant: "destructive" });
+    onError: (err: any) => {
+      const detail = err?.message || "Failed to write off loan";
+      toast({ title: detail, variant: "destructive" });
     },
   });
 
@@ -468,7 +470,7 @@ export default function DefaultsCollections({ organizationId }: DefaultsCollecti
                             Update
                           </Button>
                         )}
-                        {canWrite && (
+                        {canWrite && def.status !== "written_off" && (
                           <Button
                             variant="ghost"
                             size="sm"

@@ -14,28 +14,25 @@ from routes.common import get_tenant_session_context, require_permission
 router = APIRouter()
 
 def post_write_off_to_gl(tenant_session, loan, amount: Decimal, reason: str):
-    """Post loan write-off to General Ledger"""
-    try:
-        from accounting.service import AccountingService
-        
-        svc = AccountingService(tenant_session)
-        svc.seed_default_accounts()
-        
-        lines = [
-            {"account_code": "5030", "debit": amount, "credit": Decimal("0"), "loan_id": str(loan.id), "memo": "Bad debt expense"},
-            {"account_code": "1100", "debit": Decimal("0"), "credit": amount, "loan_id": str(loan.id), "memo": "Loan written off"}
-        ]
-        
-        svc.create_journal_entry(
-            entry_date=date.today(),
-            description=f"Loan write-off - {loan.application_number} - {reason}",
-            source_type="loan_write_off",
-            source_id=str(loan.id),
-            lines=lines
-        )
-        print(f"[GL] Posted loan write-off to GL: {loan.application_number}")
-    except Exception as e:
-        print(f"[GL] Failed to post loan write-off to GL: {e}")
+    """Post loan write-off to General Ledger. Raises on failure so caller can rollback."""
+    from accounting.service import AccountingService
+
+    svc = AccountingService(tenant_session)
+    svc.seed_default_accounts()
+
+    lines = [
+        {"account_code": "5030", "debit": amount, "credit": Decimal("0"), "loan_id": str(loan.id), "memo": "Bad debt expense"},
+        {"account_code": "1100", "debit": Decimal("0"), "credit": amount, "loan_id": str(loan.id), "memo": "Loan written off"}
+    ]
+
+    svc.create_journal_entry(
+        entry_date=date.today(),
+        description=f"Loan write-off - {loan.application_number} - {reason}",
+        source_type="loan_write_off",
+        source_id=str(loan.id),
+        lines=lines
+    )
+    print(f"[GL] Posted loan write-off to GL: {loan.application_number}")
 
 def calculate_overdue_for_loan(loan):
     """Calculate overdue using stored data: instalment minus partial payments.
@@ -515,19 +512,26 @@ async def write_off_loan(org_id: str, default_id: str, data: WriteOffRequest, us
             raise HTTPException(status_code=400, detail="Loan has already been written off")
         
         write_off_amount = Decimal(str(loan.outstanding_balance or 0))
-        
+
         default.status = "written_off"
         existing_notes = str(default.collection_notes or "")
         default.collection_notes = f"{existing_notes}\n[Write-off] {data.reason}".strip()
         default.resolved_at = datetime.utcnow()
-        
+
         loan.status = "written_off"
         loan.outstanding_balance = Decimal("0")
-        
+
+        try:
+            post_write_off_to_gl(tenant_session, loan, write_off_amount, data.reason)
+        except Exception as gl_err:
+            tenant_session.rollback()
+            raise HTTPException(
+                status_code=500,
+                detail=f"GL posting failed — write-off was not saved: {str(gl_err)}"
+            )
+
         tenant_session.commit()
-        
-        post_write_off_to_gl(tenant_session, loan, write_off_amount, data.reason)
-        
+
         return {
             "message": f"Loan {loan.application_number} written off successfully",
             "write_off_amount": float(write_off_amount)
