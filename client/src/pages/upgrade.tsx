@@ -427,24 +427,28 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
   const gw = enabledGateways || { mpesa: true, stripe: true, paystack: true };
   const availableGateways = allGateways.filter(g => gw[g.id]);
 
+  const allFeatureKeys = Array.from(
+    new Set(saasPlans.flatMap(p => [...(p.features?.enabled || []), ...(p.features?.custom || [])]))
+  );
+
   return (
-    <div className="space-y-6 overflow-x-hidden">
-      <div>
-        <h1 className="text-xl md:text-2xl font-bold">Subscription Plans</h1>
-        <p className="text-sm md:text-base text-muted-foreground">
+    <div className="space-y-8 overflow-x-hidden">
+      <div className="text-center max-w-2xl mx-auto">
+        <h1 className="text-2xl md:text-3xl font-bold" data-testid="text-upgrade-title">Subscription Plans</h1>
+        <p className="text-sm md:text-base text-muted-foreground mt-2">
           {businessTypeLabel
             ? `Plans tailored for ${businessTypeLabel} institutions`
             : "Choose the plan that best fits your organization's needs"}
         </p>
         {!businessType && (
-          <p className="text-xs text-amber-600 mt-1">Tip: Set your institution type in Settings → General to see plans built for your specific needs.</p>
+          <p className="text-xs text-amber-600 mt-2">Tip: Set your institution type in Settings → General to see plans built for your specific needs.</p>
         )}
       </div>
 
       {saasPlans.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center py-8 gap-3">
-            <Sparkles className="h-10 w-10 text-muted-foreground" />
+        <Card className="max-w-lg mx-auto">
+          <CardContent className="flex flex-col items-center py-12 gap-4">
+            <Sparkles className="h-12 w-12 text-muted-foreground" />
             <div className="text-center">
               <h3 className="text-lg font-semibold" data-testid="text-no-plans">No Plans Available</h3>
               <p className="text-sm text-muted-foreground mt-1">
@@ -457,102 +461,174 @@ export default function UpgradePage({ organizationId }: UpgradePageProps) {
         </Card>
       )}
 
-      <div className="grid gap-4 md:gap-6" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 260px), 1fr))" }}>
-        {saasPlans.map((plan) => {
-          const colors = PLAN_COLORS[plan.plan_type] || { bg: "bg-slate-50", border: "border-slate-200" };
-          const isPopular = plan.plan_type === popularPlanType;
+      {saasPlans.length > 0 && (
+        <div className={`grid gap-6 md:gap-8 ${saasPlans.length === 2 ? "grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto" : saasPlans.length === 3 ? "grid-cols-1 md:grid-cols-3" : "grid-cols-1 md:grid-cols-2 lg:grid-cols-4"}`}>
+          {saasPlans.map((plan) => {
+            const colors = PLAN_COLORS[plan.plan_type] || { bg: "bg-slate-50", border: "border-slate-200" };
+            const isPopular = plan.plan_type === popularPlanType;
+            const features = getAllPlanFeatures(plan);
 
-          return (
-            <Card
-              key={plan.id}
-              className={`relative flex flex-col mt-4 ${plan.is_current ? "ring-2 ring-primary shadow-lg" : "hover:shadow-md transition-shadow"}`}
-            >
-              {plan.is_current && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                  <Badge className="bg-primary text-primary-foreground shadow-sm whitespace-nowrap">
-                    <Crown className="w-3 h-3 mr-1" />Current Plan
-                  </Badge>
-                </div>
-              )}
-              {isPopular && !plan.is_current && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                  <Badge className="bg-blue-600 text-white shadow-sm whitespace-nowrap">
-                    <Sparkles className="w-3 h-3 mr-1" />Popular
-                  </Badge>
-                </div>
-              )}
-
-              <CardHeader className={`${colors.bg} rounded-t-lg border-b ${colors.border} p-4 md:p-6`}>
-                <CardTitle className="text-base md:text-lg capitalize">{plan.name}</CardTitle>
-                <CardDescription className="pt-2">
-                  <span className="text-2xl md:text-3xl font-bold text-foreground">
-                    KES {plan.monthly_price.toLocaleString()}
-                  </span>
-                  <span className="text-muted-foreground text-sm">/month</span>
-                </CardDescription>
-                {plan.annual_price > 0 && (
-                  <span className="text-xs text-muted-foreground mt-1">KES {plan.annual_price.toLocaleString()}/year</span>
+            return (
+              <Card
+                key={plan.id}
+                data-testid={`card-plan-${plan.plan_type}`}
+                className={`relative flex flex-col mt-4 ${plan.is_current ? "ring-2 ring-primary shadow-lg" : isPopular ? "ring-1 ring-blue-300 shadow-md" : "hover:shadow-md transition-shadow"}`}
+              >
+                {plan.is_current && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                    <Badge className="bg-primary text-primary-foreground shadow-sm whitespace-nowrap" data-testid="badge-current-plan">
+                      <Crown className="w-3 h-3 mr-1" />Current Plan
+                    </Badge>
+                  </div>
                 )}
-              </CardHeader>
+                {isPopular && !plan.is_current && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
+                    <Badge className="bg-blue-600 text-white shadow-sm whitespace-nowrap" data-testid="badge-popular">
+                      <Sparkles className="w-3 h-3 mr-1" />Recommended
+                    </Badge>
+                  </div>
+                )}
 
-              <CardContent className="flex-1 pt-4 md:pt-6 p-4 md:p-6">
-                <div className="space-y-4 md:space-y-6">
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-muted-foreground">Limits</h4>
-                    <div className="grid grid-cols-1 gap-1.5 text-sm">
-                      <div className="flex justify-between py-1 px-2 bg-muted/50 rounded">
-                        <span className="text-muted-foreground text-xs md:text-sm">Members</span>
-                        <span className="font-medium text-xs md:text-sm">{plan.max_members >= 999999 ? "Unlimited" : plan.max_members.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between py-1 px-2 bg-muted/50 rounded">
-                        <span className="text-muted-foreground text-xs md:text-sm">Staff</span>
-                        <span className="font-medium text-xs md:text-sm">{plan.max_staff >= 999999 ? "Unlimited" : plan.max_staff}</span>
-                      </div>
-                      <div className="flex justify-between py-1 px-2 bg-muted/50 rounded">
-                        <span className="text-muted-foreground text-xs md:text-sm">Branches</span>
-                        <span className="font-medium text-xs md:text-sm">{plan.max_branches >= 999999 ? "Unlimited" : plan.max_branches}</span>
+                <CardHeader className={`${colors.bg} rounded-t-lg border-b ${colors.border} px-6 py-8`}>
+                  <CardTitle className="text-lg md:text-xl capitalize">{plan.name}</CardTitle>
+                  <div className="pt-4">
+                    <span className="text-3xl md:text-4xl font-bold text-foreground" data-testid={`text-price-${plan.plan_type}`}>
+                      KES {plan.monthly_price.toLocaleString()}
+                    </span>
+                    <span className="text-muted-foreground text-sm">/month</span>
+                  </div>
+                  {plan.annual_price > 0 && (
+                    <p className="text-sm text-muted-foreground mt-2">
+                      or KES {plan.annual_price.toLocaleString()}/year
+                      {plan.monthly_price > 0 && (
+                        <span className="text-green-600 font-medium ml-1">
+                          (save {Math.round((1 - plan.annual_price / (plan.monthly_price * 12)) * 100)}%)
+                        </span>
+                      )}
+                    </p>
+                  )}
+                </CardHeader>
+
+                <CardContent className="flex-1 pt-6 px-6 pb-4">
+                  <div className="space-y-6">
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Limits</h4>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="text-center p-3 bg-muted/50 rounded-lg">
+                          <div className="text-lg font-bold" data-testid={`text-members-${plan.plan_type}`}>{plan.max_members >= 999999 ? "∞" : plan.max_members.toLocaleString()}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5">Members</div>
+                        </div>
+                        <div className="text-center p-3 bg-muted/50 rounded-lg">
+                          <div className="text-lg font-bold" data-testid={`text-staff-${plan.plan_type}`}>{plan.max_staff >= 999999 ? "∞" : plan.max_staff}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5">Staff</div>
+                        </div>
+                        <div className="text-center p-3 bg-muted/50 rounded-lg">
+                          <div className="text-lg font-bold" data-testid={`text-branches-${plan.plan_type}`}>{plan.max_branches >= 999999 ? "∞" : plan.max_branches}</div>
+                          <div className="text-xs text-muted-foreground mt-0.5">Branches</div>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-muted-foreground">Features</h4>
-                    <ul className="space-y-1.5">
-                      {getAllPlanFeatures(plan).slice(0, 8).map((feature: string, i: number) => (
-                        <li key={i} className="flex items-start gap-1.5 text-xs md:text-sm">
-                          <Check className="h-3.5 w-3.5 text-green-500 mt-0.5 flex-shrink-0" />
-                          <span className="break-words min-w-0">{feature}</span>
-                        </li>
-                      ))}
-                      {getAllPlanFeatures(plan).length > 8 && (
-                        <li className="text-xs text-muted-foreground pl-5">+{getAllPlanFeatures(plan).length - 8} more</li>
-                      )}
-                    </ul>
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Features</h4>
+                      <ul className="space-y-2">
+                        {features.map((feature: string, i: number) => (
+                          <li key={i} className="flex items-start gap-2 text-sm" data-testid={`text-feature-${plan.plan_type}-${i}`}>
+                            <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                            <span className="break-words min-w-0">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
+                </CardContent>
+
+                <div className="px-6 pb-6 mt-auto">
+                  {plan.is_current ? (
+                    <Button className="w-full" size="lg" variant="outline" disabled data-testid={`button-current-${plan.plan_type}`}>Current Plan</Button>
+                  ) : (
+                    <Button
+                      className="w-full"
+                      size="lg"
+                      variant={isPopular ? "default" : plan.is_upgrade ? "default" : "secondary"}
+                      onClick={() => openPaymentDialog(plan)}
+                      data-testid={`button-select-${plan.plan_type}`}
+                    >
+                      {plan.is_upgrade ? "Upgrade Now" : plan.is_downgrade ? "Switch Plan" : "Select Plan"}
+                    </Button>
+                  )}
                 </div>
-              </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
-              <div className="p-4 md:p-6 pt-0 mt-auto">
-                {plan.is_current ? (
-                  <Button className="w-full" size="lg" variant="outline" disabled>Current Plan</Button>
-                ) : (
-                  <Button className="w-full" size="lg" variant={plan.is_upgrade ? "default" : "secondary"} onClick={() => openPaymentDialog(plan)}>
-                    {plan.is_upgrade ? "Upgrade Now" : plan.is_downgrade ? "Switch Plan" : "Select Plan"}
-                  </Button>
-                )}
+      {saasPlans.length === 2 && (
+        <div className="max-w-4xl mx-auto">
+          <Card className="border-dashed">
+            <CardContent className="px-6 py-5">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">Plan Comparison</h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm" data-testid="table-comparison">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Feature</th>
+                      {saasPlans.map(p => (
+                        <th key={p.id} className="text-center py-2 px-4 font-semibold capitalize">{p.name}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b">
+                      <td className="py-2.5 pr-4 text-muted-foreground">Members</td>
+                      {saasPlans.map(p => (
+                        <td key={p.id} className="text-center py-2.5 px-4 font-medium">{p.max_members >= 999999 ? "Unlimited" : p.max_members.toLocaleString()}</td>
+                      ))}
+                    </tr>
+                    <tr className="border-b">
+                      <td className="py-2.5 pr-4 text-muted-foreground">Staff</td>
+                      {saasPlans.map(p => (
+                        <td key={p.id} className="text-center py-2.5 px-4 font-medium">{p.max_staff >= 999999 ? "Unlimited" : p.max_staff}</td>
+                      ))}
+                    </tr>
+                    <tr className="border-b">
+                      <td className="py-2.5 pr-4 text-muted-foreground">Branches</td>
+                      {saasPlans.map(p => (
+                        <td key={p.id} className="text-center py-2.5 px-4 font-medium">{p.max_branches >= 999999 ? "Unlimited" : p.max_branches}</td>
+                      ))}
+                    </tr>
+                    {allFeatureKeys.map(fk => {
+                      const label = typeof fk === 'string' ? getFeatureLabel(fk) : fk;
+                      return (
+                        <tr key={fk} className="border-b last:border-0">
+                          <td className="py-2.5 pr-4 text-muted-foreground">{label}</td>
+                          {saasPlans.map(p => {
+                            const hasIt = (p.features?.enabled || []).includes(fk) || (p.features?.custom || []).includes(fk);
+                            return (
+                              <td key={p.id} className="text-center py-2.5 px-4">
+                                {hasIt ? <Check className="h-4 w-4 text-green-500 mx-auto" /> : <span className="text-muted-foreground/40">—</span>}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            </Card>
-          );
-        })}
-      </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-      <Card className="bg-gradient-to-r from-slate-900 to-slate-800 text-white">
-        <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-3 p-4 md:py-6">
+      <Card className="bg-gradient-to-r from-slate-900 to-slate-800 text-white max-w-4xl mx-auto">
+        <CardContent className="flex flex-col sm:flex-row items-center justify-between gap-4 p-6 md:py-8">
           <div className="text-center sm:text-left">
-            <h3 className="text-base md:text-lg font-semibold">Need a custom solution?</h3>
-            <p className="text-slate-300 text-xs md:text-sm">Contact our sales team for Enterprise pricing and custom development options.</p>
+            <h3 className="text-lg md:text-xl font-semibold">Need a custom solution?</h3>
+            <p className="text-slate-300 text-sm mt-1">Contact our sales team for Enterprise pricing and custom development options.</p>
           </div>
-          <Button variant="secondary" className="whitespace-nowrap w-full sm:w-auto" onClick={() => setShowContactDialog(true)}>
+          <Button variant="secondary" size="lg" className="whitespace-nowrap w-full sm:w-auto" onClick={() => setShowContactDialog(true)} data-testid="button-contact-sales">
             <Mail className="h-4 w-4 mr-2" />Contact Sales
           </Button>
         </CardContent>
