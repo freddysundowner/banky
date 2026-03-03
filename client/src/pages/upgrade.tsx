@@ -52,21 +52,21 @@ const CURRENCY_SYMBOLS: Record<string, string> = {
 
 const PLAN_COLORS: Record<string, { bg: string; border: string }> = {
   chama_small: { bg: "bg-green-50", border: "border-green-200" },
-  chama_medium: { bg: "bg-green-50", border: "border-green-200" },
   chama_large: { bg: "bg-green-50", border: "border-green-300" },
-  chama_enterprise: { bg: "bg-green-50", border: "border-green-400" },
+  chama_small_licence: { bg: "bg-green-50", border: "border-green-300" },
+  chama_large_licence: { bg: "bg-green-50", border: "border-green-400" },
   sacco_small: { bg: "bg-blue-50", border: "border-blue-200" },
-  sacco_medium: { bg: "bg-blue-50", border: "border-blue-200" },
   sacco_large: { bg: "bg-blue-50", border: "border-blue-300" },
-  sacco_enterprise: { bg: "bg-blue-50", border: "border-blue-400" },
+  sacco_small_licence: { bg: "bg-blue-50", border: "border-blue-300" },
+  sacco_large_licence: { bg: "bg-blue-50", border: "border-blue-400" },
   mfi_small: { bg: "bg-orange-50", border: "border-orange-200" },
-  mfi_medium: { bg: "bg-orange-50", border: "border-orange-200" },
   mfi_large: { bg: "bg-orange-50", border: "border-orange-300" },
-  mfi_enterprise: { bg: "bg-orange-50", border: "border-orange-400" },
+  mfi_small_licence: { bg: "bg-orange-50", border: "border-orange-300" },
+  mfi_large_licence: { bg: "bg-orange-50", border: "border-orange-400" },
   bank_small: { bg: "bg-purple-50", border: "border-purple-200" },
-  bank_medium: { bg: "bg-purple-50", border: "border-purple-200" },
   bank_large: { bg: "bg-purple-50", border: "border-purple-300" },
-  bank_enterprise: { bg: "bg-purple-50", border: "border-purple-400" },
+  bank_small_licence: { bg: "bg-purple-50", border: "border-purple-300" },
+  bank_large_licence: { bg: "bg-purple-50", border: "border-purple-400" },
 };
 
 const BUSINESS_TYPE_LABELS: Record<string, string> = {
