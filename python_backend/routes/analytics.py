@@ -153,38 +153,73 @@ def _get_period_dates(period: str):
 
 def _compute_score(role: str, loans_processed: int, loans_approved: int, loans_rejected: int,
                    default_count: int, disbursed_loan_count: int,
-                   transactions_processed: int, attendance_rate: float,
+                   transactions_processed: int, attendance_days: int, attendance_rate: float,
                    disciplinary_count: int) -> dict:
+    import math
+
     def clamp(v, lo=0, hi=100):
         return max(lo, min(hi, v))
 
+    # ── Sub-metric scores (each 0–100) ─────────────────────────────────────────
+    # Portfolio Quality: penalises 5 points per 1% default rate.
+    # Formula: 100 − (defaults / disbursed_loans × 100) × 5, clamped 0–100.
+    # If no disbursed loans exist the officer has a clean (100) portfolio.
     default_rate_pct = (default_count / disbursed_loan_count * 100) if disbursed_loan_count > 0 else 0
     portfolio_quality = clamp(100 - default_rate_pct * 5)
 
-    import math
-    loan_throughput = clamp(min(100, math.log1p(loans_processed) / math.log1p(50) * 100)) if loans_processed > 0 else 0
-    txn_throughput = clamp(min(100, math.log1p(transactions_processed) / math.log1p(200) * 100)) if transactions_processed > 0 else 0
-    attendance_score = clamp(attendance_rate)
+    # Loan Throughput: logarithmic scale benchmarked at 50 loans = 100 points.
+    # Formula: ln(1 + loans) / ln(1 + 50) × 100, clamped 0–100.
+    loan_throughput = clamp(math.log1p(loans_processed) / math.log1p(50) * 100) if loans_processed > 0 else 0
+
+    # Transaction Throughput: logarithmic scale benchmarked at 200 txns = 100 pts.
+    # Formula: ln(1 + txns) / ln(1 + 200) × 100, clamped 0–100.
+    txn_throughput = clamp(math.log1p(transactions_processed) / math.log1p(200) * 100) if transactions_processed > 0 else 0
+
+    # Attendance: direct percentage — present+late+half_day days / total recorded days × 100.
+    # If no attendance records exist the component is treated as "not tracked" and
+    # its weight is redistributed to the remaining components proportionally.
+    has_attendance = attendance_days > 0
+    attendance_score = clamp(attendance_rate) if has_attendance else None
+
+    # Disciplinary: 25-point deduction per open (unresolved) incident.
+    # Formula: 100 − (open_incidents × 25), clamped 0–100.
     disciplinary_score = clamp(100 - disciplinary_count * 25)
 
+    # ── Role-based weights (must sum to 1.00) ──────────────────────────────────
     role_lower = (role or "").lower()
-    if role_lower in ("loan_officer",):
-        weights = {"portfolio": 0.35, "loan_vol": 0.30, "txn": 0.05, "attendance": 0.20, "disciplinary": 0.10}
-    elif role_lower in ("teller",):
-        weights = {"portfolio": 0.05, "loan_vol": 0.10, "txn": 0.45, "attendance": 0.25, "disciplinary": 0.15}
-    elif role_lower in ("reviewer",):
-        weights = {"portfolio": 0.30, "loan_vol": 0.25, "txn": 0.05, "attendance": 0.25, "disciplinary": 0.15}
-    elif role_lower in ("hr", "admin",):
-        weights = {"portfolio": 0.00, "loan_vol": 0.00, "txn": 0.10, "attendance": 0.55, "disciplinary": 0.35}
+    if role_lower == "loan_officer":
+        base_weights = {"portfolio": 0.35, "loan_vol": 0.30, "txn": 0.05, "attendance": 0.20, "disciplinary": 0.10}
+    elif role_lower == "teller":
+        base_weights = {"portfolio": 0.05, "loan_vol": 0.10, "txn": 0.45, "attendance": 0.25, "disciplinary": 0.15}
+    elif role_lower == "reviewer":
+        base_weights = {"portfolio": 0.30, "loan_vol": 0.25, "txn": 0.05, "attendance": 0.25, "disciplinary": 0.15}
+    elif role_lower in ("hr", "admin"):
+        base_weights = {"portfolio": 0.00, "loan_vol": 0.00, "txn": 0.10, "attendance": 0.55, "disciplinary": 0.35}
     else:
-        weights = {"portfolio": 0.15, "loan_vol": 0.15, "txn": 0.15, "attendance": 0.40, "disciplinary": 0.15}
+        base_weights = {"portfolio": 0.15, "loan_vol": 0.15, "txn": 0.15, "attendance": 0.40, "disciplinary": 0.15}
 
+    # Redistribute the attendance weight if attendance is not tracked this period
+    if not has_attendance and base_weights["attendance"] > 0:
+        freed = base_weights["attendance"]
+        remaining_keys = [k for k in base_weights if k != "attendance"]
+        remaining_total = sum(base_weights[k] for k in remaining_keys)
+        weights = {}
+        for k in base_weights:
+            if k == "attendance":
+                weights[k] = 0.0
+            else:
+                # Distribute freed weight proportionally among remaining components
+                weights[k] = round(base_weights[k] + freed * (base_weights[k] / remaining_total) if remaining_total > 0 else base_weights[k], 4)
+    else:
+        weights = base_weights
+
+    # ── Final weighted score ────────────────────────────────────────────────────
     score = (
-        portfolio_quality * weights["portfolio"] +
-        loan_throughput * weights["loan_vol"] +
-        txn_throughput * weights["txn"] +
-        attendance_score * weights["attendance"] +
-        disciplinary_score * weights["disciplinary"]
+        portfolio_quality   * weights["portfolio"] +
+        loan_throughput     * weights["loan_vol"] +
+        txn_throughput      * weights["txn"] +
+        (attendance_score if attendance_score is not None else 0) * weights["attendance"] +
+        disciplinary_score  * weights["disciplinary"]
     )
 
     return {
@@ -193,10 +228,12 @@ def _compute_score(role: str, loans_processed: int, loans_approved: int, loans_r
             "portfolio_quality": round(portfolio_quality, 1),
             "loan_throughput": round(loan_throughput, 1),
             "txn_throughput": round(txn_throughput, 1),
-            "attendance": round(attendance_score, 1),
+            "attendance": round(attendance_score, 1) if attendance_score is not None else None,
             "disciplinary": round(disciplinary_score, 1),
         },
-        "weights": weights,
+        "weights": {k: round(v * 100) for k, v in weights.items()},
+        "base_weights": {k: round(v * 100) for k, v in base_weights.items()},
+        "attendance_tracked": has_attendance,
         "default_rate": round(default_rate_pct, 1),
     }
 
@@ -251,9 +288,9 @@ async def get_staff_performance(org_id: str, period: str = "this_month", user=De
 
             txn_q = tenant_session.query(Transaction).filter(Transaction.processed_by_id == staff.id)
             if start_date:
-                txn_q = txn_q.filter(func.date(Transaction.transaction_date) >= start_date)
+                txn_q = txn_q.filter(func.date(Transaction.created_at) >= start_date)
             if end_date:
-                txn_q = txn_q.filter(func.date(Transaction.transaction_date) <= end_date)
+                txn_q = txn_q.filter(func.date(Transaction.created_at) <= end_date)
             txns = txn_q.all()
             transactions_processed = len(txns)
             transaction_volume = float(sum(t.amount or Decimal("0") for t in txns))
@@ -287,6 +324,7 @@ async def get_staff_performance(org_id: str, period: str = "this_month", user=De
                 default_count=default_count,
                 disbursed_loan_count=disbursed_loan_count,
                 transactions_processed=transactions_processed,
+                attendance_days=attendance_days,
                 attendance_rate=attendance_rate,
                 disciplinary_count=disciplinary_count,
             )
@@ -313,6 +351,8 @@ async def get_staff_performance(org_id: str, period: str = "this_month", user=De
                 "performance_score": score_data["score"],
                 "score_breakdown": score_data["breakdown"],
                 "score_weights": score_data["weights"],
+                "base_weights": score_data["base_weights"],
+                "attendance_tracked": score_data["attendance_tracked"],
                 "default_rate": score_data["default_rate"],
             })
 

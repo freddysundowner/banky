@@ -23,8 +23,14 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   BarChart3, Building2, Users, TrendingUp, TrendingDown, Activity, AlertCircle, 
-  FileText, DollarSign, Clock, Download, ArrowUp, ArrowDown, Minus
+  FileText, DollarSign, Clock, Download, ArrowUp, ArrowDown, Minus, Info
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   BarChart,
   Bar,
@@ -96,10 +102,25 @@ interface StaffPerformance {
   attendance_rate: number;
   disciplinary_count: number;
   performance_score: number;
+  attendance_tracked: boolean;
   score_breakdown: {
     portfolio_quality: number;
     loan_throughput: number;
     txn_throughput: number;
+    attendance: number | null;
+    disciplinary: number;
+  };
+  score_weights: {
+    portfolio: number;
+    loan_vol: number;
+    txn: number;
+    attendance: number;
+    disciplinary: number;
+  };
+  base_weights: {
+    portfolio: number;
+    loan_vol: number;
+    txn: number;
     attendance: number;
     disciplinary: number;
   };
@@ -142,6 +163,7 @@ export default function AnalyticsDashboard({ organizationId }: AnalyticsDashboar
   const [trendPeriod, setTrendPeriod] = useState<string>("monthly");
   const [staffPeriod, setStaffPeriod] = useState<string>("this_month");
   const [expandedStaff, setExpandedStaff] = useState<string | null>(null);
+  const [showFormula, setShowFormula] = useState(false);
   const { hasFeature } = useFeatures(organizationId);
   const { currency, symbol, formatAmount } = useCurrency(organizationId);
   const canExport = hasFeature("analytics_export");
@@ -600,9 +622,19 @@ export default function AnalyticsDashboard({ organizationId }: AnalyticsDashboar
           <Card>
             <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <CardTitle>Staff Performance</CardTitle>
-                  <CardDescription>Data-driven scores ranked highest to lowest</CardDescription>
+                <div className="flex items-center gap-2">
+                  <div>
+                    <CardTitle>Staff Performance</CardTitle>
+                    <CardDescription>Data-driven scores ranked highest to lowest</CardDescription>
+                  </div>
+                  <button
+                    onClick={() => setShowFormula(true)}
+                    className="text-muted-foreground hover:text-foreground transition-colors mt-0.5"
+                    title="View scoring formula"
+                    data-testid="button-show-formula"
+                  >
+                    <Info className="h-4 w-4" />
+                  </button>
                 </div>
                 <Select value={staffPeriod} onValueChange={(v) => { setStaffPeriod(v); setExpandedStaff(null); }}>
                   <SelectTrigger className="w-40" data-testid="select-staff-period">
@@ -617,6 +649,144 @@ export default function AnalyticsDashboard({ organizationId }: AnalyticsDashboar
                   </SelectContent>
                 </Select>
               </div>
+
+              <Dialog open={showFormula} onOpenChange={setShowFormula}>
+                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Scoring Formula</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-5 text-sm">
+                    <p className="text-muted-foreground">
+                      Each staff member receives a score from 0–100 computed as a weighted sum of five
+                      sub-metrics. Weights vary by role to reflect what each role is actually responsible for.
+                    </p>
+
+                    <div>
+                      <p className="font-semibold mb-2">Final Score</p>
+                      <div className="bg-muted rounded-md px-4 py-3 font-mono text-xs leading-relaxed">
+                        Score = (Portfolio Quality × w₁) + (Loan Volume × w₂)<br />
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (Txn Throughput × w₃) + (Attendance × w₄)<br />
+                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ (Disciplinary × w₅)
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        If attendance is not recorded for the period, its weight (w₄) is redistributed
+                        proportionally across the remaining four components.
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <p className="font-semibold">Sub-metric Formulas</p>
+
+                      <div className="border rounded-md p-3 space-y-1">
+                        <p className="font-medium">1. Portfolio Quality (0–100)</p>
+                        <p className="font-mono text-xs bg-muted rounded px-2 py-1">
+                          100 − (defaults ÷ disbursed_loans × 100) × 5
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Each 1% default rate costs 5 points. A 20%+ default rate scores 0.
+                          Staff with no disbursed loans score 100 (clean portfolio).
+                        </p>
+                      </div>
+
+                      <div className="border rounded-md p-3 space-y-1">
+                        <p className="font-medium">2. Loan Volume (0–100)</p>
+                        <p className="font-mono text-xs bg-muted rounded px-2 py-1">
+                          ln(1 + loans_processed) ÷ ln(1 + 50) × 100
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Logarithmic scale — 50 loans = 100 pts. Diminishing returns reward
+                          consistent volume without penalising new staff too heavily.
+                        </p>
+                      </div>
+
+                      <div className="border rounded-md p-3 space-y-1">
+                        <p className="font-medium">3. Transaction Throughput (0–100)</p>
+                        <p className="font-mono text-xs bg-muted rounded px-2 py-1">
+                          ln(1 + transactions) ÷ ln(1 + 200) × 100
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Logarithmic scale — 200 teller transactions = 100 pts.
+                        </p>
+                      </div>
+
+                      <div className="border rounded-md p-3 space-y-1">
+                        <p className="font-medium">4. Attendance (0–100)</p>
+                        <p className="font-mono text-xs bg-muted rounded px-2 py-1">
+                          (present + late + half_day days) ÷ total_recorded_days × 100
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Direct percentage of days marked present, late, or half_day out of all
+                          attendance records. If no attendance records exist this component is
+                          excluded and its weight is redistributed.
+                        </p>
+                      </div>
+
+                      <div className="border rounded-md p-3 space-y-1">
+                        <p className="font-medium">5. Disciplinary (0–100)</p>
+                        <p className="font-mono text-xs bg-muted rounded px-2 py-1">
+                          100 − (open_incidents × 25)
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Counts only unresolved disciplinary records in the selected period.
+                          4 or more open incidents results in a score of 0.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="font-semibold mb-2">Role Weights (%)</p>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs border-collapse">
+                          <thead>
+                            <tr className="bg-muted">
+                              <th className="text-left px-3 py-2 border">Role</th>
+                              <th className="text-right px-3 py-2 border">Portfolio</th>
+                              <th className="text-right px-3 py-2 border">Loan Vol.</th>
+                              <th className="text-right px-3 py-2 border">Transactions</th>
+                              <th className="text-right px-3 py-2 border">Attendance</th>
+                              <th className="text-right px-3 py-2 border">Disciplinary</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[
+                              { role: "Loan Officer", p: 35, l: 30, t: 5, a: 20, d: 10 },
+                              { role: "Teller",       p: 5,  l: 10, t: 45, a: 25, d: 15 },
+                              { role: "Reviewer",     p: 30, l: 25, t: 5,  a: 25, d: 15 },
+                              { role: "HR / Admin",   p: 0,  l: 0,  t: 10, a: 55, d: 35 },
+                              { role: "All Others",   p: 15, l: 15, t: 15, a: 40, d: 15 },
+                            ].map(r => (
+                              <tr key={r.role} className="border-b">
+                                <td className="px-3 py-2 border font-medium">{r.role}</td>
+                                <td className="px-3 py-2 border text-right">{r.p}%</td>
+                                <td className="px-3 py-2 border text-right">{r.l}%</td>
+                                <td className="px-3 py-2 border text-right">{r.t}%</td>
+                                <td className="px-3 py-2 border text-right">{r.a}%</td>
+                                <td className="px-3 py-2 border text-right">{r.d}%</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="font-semibold mb-2">Score Bands</p>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        {[
+                          { range: "80–100", label: "Excellent", color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400" },
+                          { range: "60–79",  label: "Good",      color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
+                          { range: "40–59",  label: "Average",   color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400" },
+                          { range: "0–39",   label: "Needs Improvement", color: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400" },
+                        ].map(b => (
+                          <div key={b.range} className={`rounded px-3 py-2 ${b.color}`}>
+                            <span className="font-semibold">{b.range}</span> — {b.label}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </CardHeader>
             <CardContent>
               {staffLoading ? (
@@ -718,23 +888,46 @@ export default function AnalyticsDashboard({ organizationId }: AnalyticsDashboar
                               </div>
                             </div>
                             <div className="mt-4 pt-3 border-t">
-                              <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Score Breakdown</p>
+                              <div className="flex items-center gap-1.5 mb-3">
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide">Score Breakdown</p>
+                                {!s.attendance_tracked && (
+                                  <span className="text-xs text-amber-600 dark:text-amber-400 italic">· attendance not tracked — weight redistributed</span>
+                                )}
+                              </div>
                               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                                 {[
-                                  { label: "Portfolio Quality", val: s.score_breakdown.portfolio_quality },
-                                  { label: "Loan Volume", val: s.score_breakdown.loan_throughput },
-                                  { label: "Transactions", val: s.score_breakdown.txn_throughput },
-                                  { label: "Attendance", val: s.score_breakdown.attendance },
-                                  { label: "Disciplinary", val: s.score_breakdown.disciplinary },
-                                ].map(({ label, val }) => (
-                                  <div key={label} className="text-center">
-                                    <p className="text-xs text-muted-foreground mb-1">{label}</p>
-                                    <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-1">
-                                      <div className="h-full bg-primary rounded-full" style={{ width: `${val}%` }} />
+                                  { label: "Portfolio Quality", val: s.score_breakdown.portfolio_quality, wKey: "portfolio" },
+                                  { label: "Loan Volume",       val: s.score_breakdown.loan_throughput,   wKey: "loan_vol" },
+                                  { label: "Transactions",      val: s.score_breakdown.txn_throughput,    wKey: "txn" },
+                                  { label: "Attendance",        val: s.score_breakdown.attendance,        wKey: "attendance" },
+                                  { label: "Disciplinary",      val: s.score_breakdown.disciplinary,      wKey: "disciplinary" },
+                                ].map(({ label, val, wKey }) => {
+                                  const weight = s.score_weights?.[wKey as keyof typeof s.score_weights] ?? 0;
+                                  const baseWeight = s.base_weights?.[wKey as keyof typeof s.base_weights] ?? 0;
+                                  const notTracked = val === null;
+                                  const displayVal = notTracked ? 0 : (val ?? 0);
+                                  return (
+                                    <div key={label} className={`text-center ${notTracked ? "opacity-40" : ""}`}>
+                                      <p className="text-xs text-muted-foreground mb-0.5">{label}</p>
+                                      <p className="text-xs text-muted-foreground mb-1">
+                                        {notTracked ? (
+                                          <span className="italic">not tracked</span>
+                                        ) : (
+                                          <>
+                                            <span className="font-medium text-foreground">{weight}%</span>
+                                            {weight !== baseWeight && (
+                                              <span className="text-amber-500 ml-0.5">(was {baseWeight}%)</span>
+                                            )}
+                                          </>
+                                        )}
+                                      </p>
+                                      <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-1">
+                                        <div className="h-full bg-primary rounded-full" style={{ width: `${displayVal}%` }} />
+                                      </div>
+                                      <p className="text-xs font-semibold">{notTracked ? "—" : displayVal}</p>
                                     </div>
-                                    <p className="text-xs font-medium">{val}</p>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             </div>
                           </div>
