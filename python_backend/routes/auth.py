@@ -235,6 +235,9 @@ def get_optional_user(request: Request, db: Session = Depends(get_db)):
 @router.post("/register", response_model=UserResponse)
 async def register(data: UserRegister, request: Request, response: Response, db: Session = Depends(get_db)):
     from middleware.rate_limit import check_register_rate_limit
+    from services.feature_flags import get_deployment_mode
+    if get_deployment_mode() == "enterprise":
+        raise HTTPException(status_code=403, detail="Self-registration is disabled in enterprise mode. Contact your administrator.")
     check_register_rate_limit(request)
     from models.master import Organization, OrganizationMember, OrganizationSubscription, SubscriptionPlan
     
