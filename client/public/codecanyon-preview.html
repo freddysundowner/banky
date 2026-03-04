@@ -18,8 +18,8 @@ p.subtitle { text-align: center; color: #94a3b8; margin-bottom: 40px; font-size:
 .tip { text-align: center; color: #64748b; font-size: 12px; margin-bottom: 40px; }
 
 .preview {
-  width: 1180px;
-  height: 600px;
+  width: 590px;
+  height: 300px;
   position: relative;
   overflow: hidden;
   border-radius: 8px;
@@ -37,143 +37,143 @@ p.subtitle { text-align: center; color: #94a3b8; margin-bottom: 40px; font-size:
 
 .content {
   position: relative; z-index: 10;
-  display: flex; height: 100%; padding: 48px 56px;
+  display: flex; height: 100%; padding: 24px 28px;
 }
 
 .left {
   flex: 1; display: flex; flex-direction: column;
-  justify-content: center; padding-right: 40px;
+  justify-content: center; padding-right: 16px;
 }
 
 .badge {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 11px; font-weight: 600; letter-spacing: 0.5px;
-  padding: 6px 14px; border-radius: 20px; margin-bottom: 20px;
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 7px; font-weight: 600; letter-spacing: 0.4px;
+  padding: 3px 8px; border-radius: 10px; margin-bottom: 8px;
   text-transform: uppercase; width: fit-content;
 }
 
 .logo-area {
-  display: flex; align-items: center; gap: 14px; margin-bottom: 24px;
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
 }
 
 .logo-icon {
-  width: 52px; height: 52px; border-radius: 14px;
+  width: 28px; height: 28px; border-radius: 8px;
   display: flex; align-items: center; justify-content: center;
 }
 
-.logo-icon svg { width: 30px; height: 30px; fill: white; }
+.logo-icon svg { width: 16px; height: 16px; fill: white; }
 
-.logo-text { font-size: 36px; font-weight: 900; color: white; letter-spacing: -1px; }
+.logo-text { font-size: 20px; font-weight: 900; color: white; letter-spacing: -0.5px; }
 
-h2 { font-size: 21px; font-weight: 600; line-height: 1.4; margin-bottom: 28px; max-width: 440px; }
+h2 { font-size: 11px; font-weight: 600; line-height: 1.4; margin-bottom: 12px; max-width: 240px; }
 
-.features-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; }
+.features-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; }
 
 .feature-item {
-  display: flex; align-items: center; gap: 10px;
-  font-size: 13px; font-weight: 500;
+  display: flex; align-items: center; gap: 5px;
+  font-size: 7.5px; font-weight: 500;
 }
 
 .feature-icon {
-  width: 28px; height: 28px; border-radius: 7px;
+  width: 16px; height: 16px; border-radius: 4px;
   display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
 
-.feature-icon svg { width: 15px; height: 15px; }
+.feature-icon svg { width: 9px; height: 9px; }
 
-.tech-stack { display: flex; align-items: center; gap: 8px; margin-top: 24px; flex-wrap: wrap; }
+.tech-stack { display: flex; align-items: center; gap: 4px; margin-top: 10px; flex-wrap: wrap; }
 
 .tech-tag {
-  font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 4px;
-  letter-spacing: 0.3px;
+  font-size: 6px; font-weight: 600; padding: 2px 5px; border-radius: 3px;
+  letter-spacing: 0.2px;
 }
 
 .right {
-  width: 480px; display: flex; align-items: center;
+  width: 240px; display: flex; align-items: center;
   justify-content: center; position: relative;
 }
 
 .dashboard-mockup {
-  width: 460px; background: #ffffff; border-radius: 16px;
-  box-shadow: 0 25px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1);
+  width: 230px; background: #ffffff; border-radius: 8px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.1);
   overflow: hidden;
   transform: perspective(800px) rotateY(-5deg) rotateX(2deg);
 }
 
 .mockup-header {
-  padding: 10px 16px; display: flex; align-items: center; gap: 8px;
+  padding: 5px 8px; display: flex; align-items: center; gap: 4px;
 }
 
-.mockup-dots { display: flex; gap: 5px; }
-.mockup-dots span { width: 8px; height: 8px; border-radius: 50%; }
+.mockup-dots { display: flex; gap: 3px; }
+.mockup-dots span { width: 4px; height: 4px; border-radius: 50%; }
 .mockup-dots span:nth-child(1) { background: #ef4444; }
 .mockup-dots span:nth-child(2) { background: #f59e0b; }
 .mockup-dots span:nth-child(3) { background: #22c55e; }
 
 .mockup-url {
-  flex: 1; border-radius: 4px; padding: 4px 10px; font-size: 10px;
+  flex: 1; border-radius: 2px; padding: 2px 5px; font-size: 5px;
 }
 
-.mockup-body { padding: 16px; }
+.mockup-body { padding: 8px; }
 
-.mockup-sidebar { display: flex; gap: 12px; }
+.mockup-sidebar { display: flex; gap: 6px; }
 
-.mock-side { width: 100px; flex-shrink: 0; }
+.mock-side { width: 50px; flex-shrink: 0; }
 
 .mock-side-item {
-  display: flex; align-items: center; gap: 6px;
-  padding: 6px 8px; border-radius: 6px; font-size: 9px; margin-bottom: 2px;
+  display: flex; align-items: center; gap: 3px;
+  padding: 3px 4px; border-radius: 3px; font-size: 5px; margin-bottom: 1px;
 }
 
-.mock-side-item .dot { width: 6px; height: 6px; border-radius: 2px; background: currentColor; opacity: 0.5; }
+.mock-side-item .dot { width: 3px; height: 3px; border-radius: 1px; background: currentColor; opacity: 0.5; }
 
 .mock-main { flex: 1; }
-.mock-title { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+.mock-title { font-size: 7px; font-weight: 700; margin-bottom: 5px; }
 
-.mock-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.mock-stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-bottom: 6px; }
 
-.mock-stat { border-radius: 8px; padding: 10px; }
-.mock-stat-label { font-size: 8px; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px; }
-.mock-stat-value { font-size: 16px; font-weight: 800; }
+.mock-stat { border-radius: 4px; padding: 5px; }
+.mock-stat-label { font-size: 4px; text-transform: uppercase; letter-spacing: 0.2px; margin-bottom: 2px; }
+.mock-stat-value { font-size: 8px; font-weight: 800; }
 
 .mock-chart {
-  border-radius: 8px; padding: 10px; height: 90px;
-  display: flex; align-items: flex-end; gap: 6px; padding-bottom: 12px;
+  border-radius: 4px; padding: 5px; height: 45px;
+  display: flex; align-items: flex-end; gap: 3px; padding-bottom: 6px;
 }
 
-.mock-bar { flex: 1; border-radius: 3px 3px 0 0; min-height: 10px; }
+.mock-bar { flex: 1; border-radius: 2px 2px 0 0; min-height: 4px; }
 
-.institution-types { display: flex; gap: 8px; margin-top: 12px; }
+.institution-types { display: flex; gap: 4px; margin-top: 6px; }
 
-.inst-type { flex: 1; border-radius: 8px; padding: 8px; text-align: center; }
+.inst-type { flex: 1; border-radius: 4px; padding: 4px; text-align: center; }
 
 .inst-type-icon {
-  width: 24px; height: 24px; margin: 0 auto 4px; border-radius: 6px;
+  width: 14px; height: 14px; margin: 0 auto 2px; border-radius: 3px;
   display: flex; align-items: center; justify-content: center;
 }
-.inst-type-icon svg { width: 14px; height: 14px; }
+.inst-type-icon svg { width: 8px; height: 8px; }
 
-.inst-type-label { font-size: 8px; font-weight: 600; }
+.inst-type-label { font-size: 5px; font-weight: 600; }
 
 .floating-card {
-  position: absolute; border-radius: 10px; padding: 10px 14px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.2); z-index: 20;
+  position: absolute; border-radius: 6px; padding: 5px 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 20;
 }
 
-.floating-card.top-right { top: 20px; right: -10px; }
-.floating-card.bottom-left { bottom: 30px; left: -15px; }
+.floating-card.top-right { top: 8px; right: -5px; }
+.floating-card.bottom-left { bottom: 12px; left: -8px; }
 
-.float-label { font-size: 8px; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px; }
-.float-value { font-size: 14px; font-weight: 800; }
-.float-row { display: flex; align-items: center; gap: 6px; }
+.float-label { font-size: 5px; text-transform: uppercase; letter-spacing: 0.2px; margin-bottom: 1px; }
+.float-value { font-size: 8px; font-weight: 800; }
+.float-row { display: flex; align-items: center; gap: 3px; }
 
 .float-indicator {
-  width: 8px; height: 8px; border-radius: 50%; background: #22c55e;
+  width: 5px; height: 5px; border-radius: 50%; background: #22c55e;
 }
 
 .version-badge {
-  position: absolute; bottom: 16px; right: 20px;
-  font-size: 11px; font-weight: 600; z-index: 10;
+  position: absolute; bottom: 8px; right: 10px;
+  font-size: 6px; font-weight: 600; z-index: 10;
 }
 
 /* ========== VARIANT 1: Deep Blue (Original) ========== */
@@ -220,9 +220,9 @@ h2 { font-size: 21px; font-weight: 600; line-height: 1.4; margin-bottom: 28px; m
   width: 80%; height: 200%;
   background: radial-gradient(ellipse, rgba(59,130,246,0.15) 0%, transparent 70%);
 }
-.v1 .g1 { width: 300px; height: 300px; background: rgba(37,99,235,0.3); top: -80px; right: 200px; }
-.v1 .g2 { width: 200px; height: 200px; background: rgba(16,185,129,0.15); bottom: 50px; left: 100px; }
-.v1 .g3 { width: 250px; height: 250px; background: rgba(99,102,241,0.2); top: 150px; right: -50px; }
+.v1 .g1 { width: 150px; height: 150px; background: rgba(37,99,235,0.3); top: -40px; right: 100px; }
+.v1 .g2 { width: 100px; height: 100px; background: rgba(16,185,129,0.15); bottom: 25px; left: 50px; }
+.v1 .g3 { width: 125px; height: 125px; background: rgba(99,102,241,0.2); top: 75px; right: -25px; }
 
 /* ========== VARIANT 2: Emerald Green ========== */
 .v2 {
@@ -263,9 +263,9 @@ h2 { font-size: 21px; font-weight: 600; line-height: 1.4; margin-bottom: 28px; m
 .v2 .float-value { color: #047857; }
 .v2 .version-badge { color: rgba(255,255,255,0.3); }
 
-.v2 .g1 { width: 300px; height: 300px; background: rgba(16,185,129,0.3); top: -80px; right: 200px; }
-.v2 .g2 { width: 200px; height: 200px; background: rgba(59,130,246,0.15); bottom: 50px; left: 100px; }
-.v2 .g3 { width: 250px; height: 250px; background: rgba(52,211,153,0.2); top: 150px; right: -50px; }
+.v2 .g1 { width: 150px; height: 150px; background: rgba(16,185,129,0.3); top: -40px; right: 100px; }
+.v2 .g2 { width: 100px; height: 100px; background: rgba(59,130,246,0.15); bottom: 25px; left: 50px; }
+.v2 .g3 { width: 125px; height: 125px; background: rgba(52,211,153,0.2); top: 75px; right: -25px; }
 
 /* ========== VARIANT 3: Royal Purple ========== */
 .v3 {
@@ -306,9 +306,9 @@ h2 { font-size: 21px; font-weight: 600; line-height: 1.4; margin-bottom: 28px; m
 .v3 .float-value { color: #7c3aed; }
 .v3 .version-badge { color: rgba(255,255,255,0.3); }
 
-.v3 .g1 { width: 300px; height: 300px; background: rgba(139,92,246,0.3); top: -80px; right: 200px; }
-.v3 .g2 { width: 200px; height: 200px; background: rgba(251,191,36,0.15); bottom: 50px; left: 100px; }
-.v3 .g3 { width: 250px; height: 250px; background: rgba(167,139,250,0.2); top: 150px; right: -50px; }
+.v3 .g1 { width: 150px; height: 150px; background: rgba(139,92,246,0.3); top: -40px; right: 100px; }
+.v3 .g2 { width: 100px; height: 100px; background: rgba(251,191,36,0.15); bottom: 25px; left: 50px; }
+.v3 .g3 { width: 125px; height: 125px; background: rgba(167,139,250,0.2); top: 75px; right: -25px; }
 
 /* ========== VARIANT 4: Midnight Dark ========== */
 .v4 {
@@ -349,9 +349,9 @@ h2 { font-size: 21px; font-weight: 600; line-height: 1.4; margin-bottom: 28px; m
 .v4 .float-value { color: #34d399; }
 .v4 .version-badge { color: rgba(255,255,255,0.2); }
 
-.v4 .g1 { width: 300px; height: 300px; background: rgba(14,165,233,0.15); top: -80px; right: 200px; }
-.v4 .g2 { width: 200px; height: 200px; background: rgba(52,211,153,0.08); bottom: 50px; left: 100px; }
-.v4 .g3 { width: 250px; height: 250px; background: rgba(99,102,241,0.1); top: 150px; right: -50px; }
+.v4 .g1 { width: 150px; height: 150px; background: rgba(14,165,233,0.15); top: -40px; right: 100px; }
+.v4 .g2 { width: 100px; height: 100px; background: rgba(52,211,153,0.08); bottom: 25px; left: 50px; }
+.v4 .g3 { width: 125px; height: 125px; background: rgba(99,102,241,0.1); top: 75px; right: -25px; }
 
 .mock-bar:nth-child(1) { height: 45%; }
 .mock-bar:nth-child(2) { height: 65%; }
@@ -378,13 +378,13 @@ h2 { font-size: 21px; font-weight: 600; line-height: 1.4; margin-bottom: 28px; m
 <p class="subtitle">Pick your favorite variant. Right-click any image and "Save as" or use the instructions below to capture at full resolution.</p>
 
 <div class="instructions">
-  <h3>How to save as high-resolution image (1180x600):</h3>
+  <h3>How to save as high-resolution image (590x300):</h3>
   <ol>
     <li>Right-click on the variant you like</li>
     <li>Click <strong>Inspect Element</strong> to open DevTools</li>
     <li>Right-click the <code>&lt;div class="preview ..."&gt;</code> element in the Elements panel</li>
     <li>Select <strong>Capture node screenshot</strong></li>
-    <li>The image saves as a crisp 1180x600 PNG</li>
+    <li>The image saves as a crisp 590x300 PNG</li>
   </ol>
 </div>
 
