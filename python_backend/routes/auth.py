@@ -235,9 +235,6 @@ def get_optional_user(request: Request, db: Session = Depends(get_db)):
 @router.post("/register", response_model=UserResponse)
 async def register(data: UserRegister, request: Request, response: Response, db: Session = Depends(get_db)):
     from middleware.rate_limit import check_register_rate_limit
-    from services.feature_flags import get_deployment_mode
-    if get_deployment_mode() == "enterprise":
-        raise HTTPException(status_code=403, detail="Self-registration is disabled in enterprise mode. Contact your administrator.")
     check_register_rate_limit(request)
     from models.master import Organization, OrganizationMember, OrganizationSubscription, SubscriptionPlan
     
@@ -283,21 +280,23 @@ async def register(data: UserRegister, request: Request, response: Response, db:
         )
         db.add(membership)
         
-        from routes.admin import get_default_plan_id, get_default_plan_for_institution_type, get_trial_days
-        if data.institution_type in ("chama", "sacco", "mfi", "bank"):
-            default_plan_id = get_default_plan_for_institution_type(db, data.institution_type)
-        else:
-            default_plan_id = get_default_plan_id(db)
-        trial_days = get_trial_days(db)
-        
-        if default_plan_id:
-            subscription = OrganizationSubscription(
-                organization_id=org.id,
-                plan_id=default_plan_id,
-                status="trial",
-                trial_ends_at=datetime.utcnow() + timedelta(days=trial_days)
-            )
-            db.add(subscription)
+        from services.feature_flags import get_deployment_mode
+        if get_deployment_mode() != "enterprise":
+            from routes.admin import get_default_plan_id, get_default_plan_for_institution_type, get_trial_days
+            if data.institution_type in ("chama", "sacco", "mfi", "bank"):
+                default_plan_id = get_default_plan_for_institution_type(db, data.institution_type)
+            else:
+                default_plan_id = get_default_plan_id(db)
+            trial_days = get_trial_days(db)
+
+            if default_plan_id:
+                subscription = OrganizationSubscription(
+                    organization_id=org.id,
+                    plan_id=default_plan_id,
+                    status="trial",
+                    trial_ends_at=datetime.utcnow() + timedelta(days=trial_days)
+                )
+                db.add(subscription)
         
         db.commit()
 

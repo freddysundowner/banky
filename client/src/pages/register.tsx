@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -78,7 +78,7 @@ const FEATURES = [
 export default function Register() {
   const [, navigate] = useLocation();
   const { toast } = useAppDialog();
-  const { platform_name, guide_url, deployment_mode } = useBranding();
+  const { platform_name, guide_url } = useBranding();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
@@ -97,12 +97,6 @@ export default function Register() {
       acceptTerms: false,
     },
   });
-
-  useEffect(() => {
-    if (deployment_mode === "enterprise") {
-      navigate("/login");
-    }
-  }, [deployment_mode]);
 
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterFormData) => {

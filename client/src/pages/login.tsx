@@ -71,8 +71,7 @@ const FEATURES = [
 export default function Login() {
   const [, navigate] = useLocation();
   const { toast } = useAppDialog();
-  const { platform_name, guide_url, demo_mode: IS_DEMO, deployment_mode } = useBranding();
-  const isEnterprise = deployment_mode === "enterprise";
+  const { platform_name, guide_url, demo_mode: IS_DEMO } = useBranding();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
@@ -321,14 +320,12 @@ export default function Login() {
             </form>
           </Form>
 
-          {!isEnterprise && (
-            <p className="mt-5 text-center text-sm text-muted-foreground">
-              Don't have an account?{" "}
-              <Link href="/register" className="text-primary font-medium hover:underline" data-testid="link-register">
-                Create one
-              </Link>
-            </p>
-          )}
+          <p className="mt-5 text-center text-sm text-muted-foreground">
+            Don't have an account?{" "}
+            <Link href="/register" className="text-primary font-medium hover:underline" data-testid="link-register">
+              Create one
+            </Link>
+          </p>
 
           <div className="mt-8 flex flex-col items-center gap-3">
             <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
