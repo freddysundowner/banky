@@ -140,6 +140,9 @@ export default function Login() {
     setActiveDemoType(type.id);
     form.setValue("email", type.email);
     form.setValue("password", DEMO_PASSWORD);
+    setTimeout(() => {
+      form.handleSubmit((data) => loginMutation.mutate(data))();
+    }, 80);
   };
 
   return (

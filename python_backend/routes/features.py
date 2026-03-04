@@ -111,7 +111,7 @@ def get_organization_features(organization_id: str, db: Session = Depends(get_db
     
     status_info = get_subscription_status_info(subscription)
     
-    if status_info["is_expired"]:
+    if status_info["is_expired"] and subscription is not None:
         return {
             "mode": "saas",
             "plan_or_edition": "expired",
@@ -165,7 +165,7 @@ def check_feature(organization_id: str, feature_name: str, db: Session = Depends
     
     status_info = get_subscription_status_info(subscription)
     
-    if status_info["is_expired"]:
+    if status_info["is_expired"] and subscription is not None:
         return {
             "feature": feature_name,
             "enabled": False,
