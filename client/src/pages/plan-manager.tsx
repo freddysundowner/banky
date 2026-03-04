@@ -245,12 +245,10 @@ export default function PlanManagerPage() {
     { id: "sacco", label: "SACCO" },
     { id: "mfi", label: "MFI" },
     { id: "bank", label: "Bank" },
-    { id: "generic", label: "Generic" },
   ];
 
   const filteredPlans = (plans || []).filter((p) => {
     if (activeType === "all") return true;
-    if (activeType === "generic") return !p.business_type;
     return p.business_type === activeType;
   });
 
@@ -296,7 +294,7 @@ export default function PlanManagerPage() {
             {tab.label}
             {tab.id !== "all" && (
               <span className="ml-1.5 text-xs opacity-70">
-                ({(plans || []).filter(p => tab.id === "generic" ? !p.business_type : p.business_type === tab.id).length})
+                ({(plans || []).filter(p => p.business_type === tab.id).length})
               </span>
             )}
           </button>

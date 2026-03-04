@@ -307,7 +307,7 @@ export default function SMSNotifications({ organizationId }: SMSNotificationsPro
                 <h3 className="text-lg font-semibold mb-2">Bulk SMS Not Available</h3>
                 <p className="text-muted-foreground max-w-md">
                   Bulk SMS functionality is not included in your current plan. 
-                  Please upgrade to the Professional plan or higher to access this feature.
+                  Please upgrade your plan to access this feature.
                 </p>
               </CardContent>
             </Card>

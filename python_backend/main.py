@@ -171,16 +171,11 @@ def seed_default_plans():
 
     from models.master import OrganizationSubscription, Organization
 
-    GENERIC_PLAN_TYPES = {"starter", "growth", "professional", "basic", "standard", "premium", "enterprise"}
-
     db = SessionLocal()
     try:
-        existing = db.query(SubscriptionPlan).count()
-
         _seed_business_type_plans(db, {})
 
         generic_plans = db.query(SubscriptionPlan).filter(
-            SubscriptionPlan.plan_type.in_(GENERIC_PLAN_TYPES),
             SubscriptionPlan.business_type.is_(None)
         ).all()
         if generic_plans:
@@ -212,7 +207,7 @@ def seed_default_plans():
             for gp in generic_plans:
                 db.delete(gp)
             db.commit()
-            print(f"Migrated {len(subs_on_generic)} subscriptions and removed {len(generic_plans)} generic plans")
+            print(f"Migrated {len(subs_on_generic)} subscriptions and removed {len(generic_plans)} legacy plans without business_type")
 
         print("Syncing plan features to canonical definitions...")
         synced = 0
