@@ -320,12 +320,14 @@ export default function Login() {
             </form>
           </Form>
 
-          <p className="mt-5 text-center text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <Link href="/register" className="text-primary font-medium hover:underline" data-testid="link-register">
-              Create one
-            </Link>
-          </p>
+          {!IS_DEMO && (
+            <p className="mt-5 text-center text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <Link href="/register" className="text-primary font-medium hover:underline" data-testid="link-register">
+                Create one
+              </Link>
+            </p>
+          )}
 
           <div className="mt-8 flex flex-col items-center gap-3">
             <div className="flex items-center gap-1.5 text-muted-foreground text-xs">

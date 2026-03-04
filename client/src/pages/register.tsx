@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -78,11 +78,17 @@ const FEATURES = [
 export default function Register() {
   const [, navigate] = useLocation();
   const { toast } = useAppDialog();
-  const { platform_name, guide_url } = useBranding();
+  const { platform_name, guide_url, demo_mode: IS_DEMO } = useBranding();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
+
+  useEffect(() => {
+    if (IS_DEMO) {
+      navigate("/login");
+    }
+  }, [IS_DEMO]);
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
