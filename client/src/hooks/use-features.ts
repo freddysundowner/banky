@@ -21,6 +21,7 @@ export interface FeatureAccess {
     sms_monthly: number | null;
   };
   subscription_status?: SubscriptionStatus;
+  license_required?: boolean;
 }
 
 export const FEATURES = {
@@ -92,6 +93,7 @@ export function useFeatures(organizationId: string | undefined, options?: { defe
     checkLimit,
     plan: data?.plan_or_edition || "",
     mode: data?.mode || "saas",
+    licenseRequired: data?.license_required === true,
     subscriptionStatus: data?.subscription_status,
     isExpired: data?.subscription_status?.is_expired || false,
     isTrial: data?.subscription_status?.is_trial || false,

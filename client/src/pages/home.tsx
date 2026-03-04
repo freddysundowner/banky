@@ -84,6 +84,7 @@ import {
   ClipboardList,
   Calculator,
   Briefcase,
+  KeyRound,
 } from "lucide-react";
 import Dashboard from "./dashboard";
 import BranchManagement from "@/components/branch-management";
@@ -379,6 +380,8 @@ export default function Home() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [crmPrefill, setCrmPrefill] = useState<{ first_name: string; last_name: string; phone?: string; email?: string } | null>(null);
   const [showSetupProgress, setShowSetupProgress] = useState(false);
+  const [licenseKeyInput, setLicenseKeyInput] = useState("");
+  const [licenseError, setLicenseError] = useState("");
   const [setupOrgName, setSetupOrgName] = useState("");
   const [setupMode, setSetupMode] = useState<"full" | "finalize">("full");
   const [finalizeReady, setFinalizeReady] = useState(false);
@@ -447,8 +450,21 @@ export default function Home() {
     },
   });
 
+  const activateLicenseMutation = useMutation({
+    mutationFn: async (key: string) => {
+      return apiRequest("POST", "/api/auth/activate-license", { license_key: key });
+    },
+    onSuccess: () => {
+      setLicenseError("");
+      queryClient.invalidateQueries({ queryKey: ["/api/organizations", selectedOrg?.id, "features"] });
+    },
+    onError: (err: any) => {
+      setLicenseError(err?.message || "Invalid license key. Please check and try again.");
+    },
+  });
+
   const { hasAnyPermission, isAdmin, role, workingHoursAllowed, workingHoursMessage, isLoading: permissionsLoading } = usePermissions(selectedOrg?.id || null, { deferToSession: true });
-  const { hasFeature, isLoading: featuresLoading, isExpired, isTrial, trialDaysRemaining, trialMessage, plan } = useFeatures(selectedOrg?.id, { deferToSession: true });
+  const { hasFeature, isLoading: featuresLoading, isExpired, isTrial, trialDaysRemaining, trialMessage, plan, licenseRequired, mode: featureMode } = useFeatures(selectedOrg?.id, { deferToSession: true });
   
   const isStaffUser = (user as any)?.isStaff === true;
 
@@ -726,6 +742,65 @@ export default function Home() {
         </p>
         <div className="w-56 h-1.5 bg-muted rounded-full overflow-hidden">
           <div className="h-full w-2/3 bg-primary rounded-full animate-pulse" />
+        </div>
+      </div>
+    );
+  }
+
+  if (licenseRequired && deployment_mode === "enterprise") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg mx-auto mb-4">
+              <Landmark className="h-9 w-9 text-primary-foreground" />
+            </div>
+            <h1 className="text-2xl font-bold">{platformName || "BankyKit"}</h1>
+            <p className="text-muted-foreground text-sm mt-1">Enterprise Edition</p>
+          </div>
+          <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                <KeyRound className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-base">License Required</h2>
+                <p className="text-muted-foreground text-xs">Enter your license key to activate this installation</p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <input
+                type="text"
+                placeholder="BANKYKIT-XXX-XXXX-XXXXXXXX"
+                value={licenseKeyInput}
+                onChange={(e) => { setLicenseKeyInput(e.target.value); setLicenseError(""); }}
+                className="w-full px-3 py-2.5 rounded-lg border border-input bg-background text-sm font-mono placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                data-testid="input-license-key"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && licenseKeyInput.trim()) {
+                    activateLicenseMutation.mutate(licenseKeyInput.trim());
+                  }
+                }}
+              />
+              {licenseError && (
+                <p className="text-destructive text-xs flex items-center gap-1.5" data-testid="text-license-error">
+                  <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+                  {licenseError}
+                </p>
+              )}
+              <Button
+                className="w-full"
+                onClick={() => activateLicenseMutation.mutate(licenseKeyInput.trim())}
+                disabled={!licenseKeyInput.trim() || activateLicenseMutation.isPending}
+                data-testid="button-activate-license"
+              >
+                {activateLicenseMutation.isPending ? "Activating..." : "Activate License"}
+              </Button>
+            </div>
+            <p className="text-muted-foreground text-xs text-center mt-4">
+              Contact your system administrator or vendor to obtain your license key.
+            </p>
+          </div>
         </div>
       </div>
     );

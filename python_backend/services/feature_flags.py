@@ -283,6 +283,16 @@ def generate_license_key(edition: str, org_name: str, perpetual: bool = False) -
     return f"BANKYKIT-{edition_code}-{time_segment}-{unique}"
 
 
+def get_platform_license_key(db) -> Optional[str]:
+    """Look up the platform-level license key (stored in DB, not env var)."""
+    from models.master import LicenseKey
+    lic = db.query(LicenseKey).filter(
+        LicenseKey.organization_id.is_(None),
+        LicenseKey.is_active == True,
+    ).order_by(LicenseKey.issued_at.desc()).first()
+    return lic.license_key if lic else None
+
+
 def get_org_license_key(organization_id: str, db) -> Optional[str]:
     """Look up the license key assigned directly to this organization."""
     from models.master import LicenseKey
@@ -299,8 +309,7 @@ def get_org_features(organization_id: str, db) -> Set[str]:
     mode = get_deployment_mode()
     
     if mode == "enterprise":
-        # Per-org license takes priority, then fall back to global LICENSE_KEY env var
-        license_key = get_org_license_key(organization_id, db) or get_license_key()
+        license_key = get_org_license_key(organization_id, db) or get_platform_license_key(db)
         if license_key:
             access = get_feature_access_for_enterprise(license_key, db)
             return access.enabled_features
@@ -329,8 +338,7 @@ def get_org_limits(organization_id: str, db) -> Dict:
     mode = get_deployment_mode()
     
     if mode == "enterprise":
-        # Per-org license takes priority, then fall back to global LICENSE_KEY env var
-        license_key = get_org_license_key(organization_id, db) or get_license_key()
+        license_key = get_org_license_key(organization_id, db) or get_platform_license_key(db)
         if license_key:
             access = get_feature_access_for_enterprise(license_key, db)
             return access.limits

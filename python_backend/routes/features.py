@@ -88,19 +88,40 @@ def get_organization_features(organization_id: str, db: Session = Depends(get_db
     mode = get_deployment_mode()
     
     if mode == "enterprise":
-        from services.feature_flags import get_org_license_key
-        license_key = get_org_license_key(organization_id, db) or get_license_key()
+        from services.feature_flags import get_org_license_key, get_platform_license_key
+        license_key = get_org_license_key(organization_id, db) or get_platform_license_key(db)
+        if not license_key:
+            return {
+                "mode": "enterprise",
+                "plan_or_edition": "unlicensed",
+                "features": [],
+                "limits": {"max_members": 0, "max_staff": 0, "max_branches": 0, "sms_monthly": 0},
+                "license_required": True,
+                "subscription_status": {
+                    "status": "unlicensed",
+                    "is_active": False,
+                    "is_trial": False,
+                    "is_expired": False,
+                    "trial_days_remaining": 0,
+                    "trial_ends_at": None,
+                    "message": "No license key found. Please activate your license to continue."
+                }
+            }
         access = get_feature_access_for_enterprise(license_key, db)
         return {
             "mode": access.mode,
             "plan_or_edition": access.plan_or_edition,
             "features": list(access.enabled_features),
             "limits": access.limits,
+            "license_required": False,
             "subscription_status": {
                 "status": "active",
                 "is_active": True,
                 "is_trial": False,
-                "is_expired": False
+                "is_expired": False,
+                "trial_days_remaining": 0,
+                "trial_ends_at": None,
+                "message": None
             }
         }
     

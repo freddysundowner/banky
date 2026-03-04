@@ -1126,6 +1126,50 @@ async def get_user_permissions(org_id: str, auth = Depends(get_current_user), db
         tenant_ctx.close()
 
 
+@router.post("/activate-license")
+async def activate_license(request: Request, auth = Depends(get_current_user), db: Session = Depends(get_db)):
+    from services.feature_flags import validate_license_key, get_deployment_mode, get_platform_license_key
+    from models.master import LicenseKey as LicenseKeyModel
+    import uuid as _uuid
+
+    if get_deployment_mode() != "enterprise":
+        raise HTTPException(status_code=400, detail="License activation is only available in enterprise mode.")
+
+    body = await request.json()
+    key = (body.get("license_key") or "").strip()
+    if not key:
+        raise HTTPException(status_code=400, detail="License key is required.")
+
+    info = validate_license_key(key, db)
+    if not info:
+        raise HTTPException(status_code=400, detail="Invalid license key. Please check the key and try again.")
+
+    existing = db.query(LicenseKeyModel).filter(LicenseKeyModel.license_key == key).first()
+    if existing:
+        existing.is_active = True
+        db.commit()
+        return {"success": True, "edition": existing.edition, "message": "License activated successfully."}
+
+    platform_license = db.query(LicenseKeyModel).filter(
+        LicenseKeyModel.organization_id.is_(None),
+        LicenseKeyModel.is_active == True,
+    ).first()
+    if platform_license:
+        platform_license.is_active = False
+
+    new_license = LicenseKeyModel(
+        id=str(_uuid.uuid4()),
+        license_key=key,
+        edition=info.get("edition", "basic"),
+        organization_id=None,
+        features={"enabled": list(info.get("features", set()))},
+        is_active=True,
+    )
+    db.add(new_license)
+    db.commit()
+    return {"success": True, "edition": info.get("edition", "basic"), "message": "License activated successfully."}
+
+
 @router.get("/session/{org_id}")
 async def get_session_bundle(org_id: str, auth = Depends(get_current_user), db: Session = Depends(get_db)):
     from models.master import OrganizationMember, Organization
@@ -1252,17 +1296,26 @@ def _get_features_for_org(org_id: str, db: Session) -> dict:
     mode = get_deployment_mode()
 
     if mode == "enterprise":
-        from services.feature_flags import get_org_license_key
-        license_key = get_org_license_key(org_id, db) or get_license_key()
-        if license_key:
-            access = get_feature_access_for_enterprise(license_key, db)
+        from services.feature_flags import get_org_license_key, get_platform_license_key
+        license_key = get_org_license_key(org_id, db) or get_platform_license_key(db)
+        if not license_key:
             return {
-                "mode": access.mode,
-                "plan_or_edition": access.plan_or_edition,
-                "features": list(access.enabled_features),
-                "limits": access.limits,
-                "subscription_status": {"status": "active", "is_active": True, "is_trial": False, "is_expired": False}
+                "mode": "enterprise",
+                "plan_or_edition": "unlicensed",
+                "features": [],
+                "limits": {"max_members": 0, "max_staff": 0, "max_branches": 0, "sms_monthly": 0},
+                "license_required": True,
+                "subscription_status": {"status": "unlicensed", "is_active": False, "is_trial": False, "is_expired": False, "trial_days_remaining": 0, "trial_ends_at": None, "message": None}
             }
+        access = get_feature_access_for_enterprise(license_key, db)
+        return {
+            "mode": access.mode,
+            "plan_or_edition": access.plan_or_edition,
+            "features": list(access.enabled_features),
+            "limits": access.limits,
+            "license_required": False,
+            "subscription_status": {"status": "active", "is_active": True, "is_trial": False, "is_expired": False, "trial_days_remaining": 0, "trial_ends_at": None, "message": None}
+        }
 
     subscription = db.query(OrganizationSubscription).filter(
         OrganizationSubscription.organization_id == org_id
