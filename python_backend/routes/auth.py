@@ -1250,15 +1250,17 @@ def _get_features_for_org(org_id: str, db: Session) -> dict:
     mode = get_deployment_mode()
 
     if mode == "enterprise":
-        license_key = get_license_key()
-        access = get_feature_access_for_enterprise(license_key, db)
-        return {
-            "mode": access.mode,
-            "plan_or_edition": access.plan_or_edition,
-            "features": list(access.enabled_features),
-            "limits": access.limits,
-            "subscription_status": {"status": "active", "is_active": True, "is_trial": False, "is_expired": False}
-        }
+        from services.feature_flags import get_org_license_key
+        license_key = get_org_license_key(org_id, db) or get_license_key()
+        if license_key:
+            access = get_feature_access_for_enterprise(license_key, db)
+            return {
+                "mode": access.mode,
+                "plan_or_edition": access.plan_or_edition,
+                "features": list(access.enabled_features),
+                "limits": access.limits,
+                "subscription_status": {"status": "active", "is_active": True, "is_trial": False, "is_expired": False}
+            }
 
     subscription = db.query(OrganizationSubscription).filter(
         OrganizationSubscription.organization_id == org_id

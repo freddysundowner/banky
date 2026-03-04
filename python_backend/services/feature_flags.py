@@ -138,6 +138,32 @@ def validate_license_key(license_key: str, db=None) -> Optional[Dict]:
     
     perpetual = parts[2].upper() == "PERP"
     
+    # If a DB session is available, check for a stored license record first.
+    # This lets us honour exact features/limits set at license-creation time
+    # (e.g. demo licenses auto-generated with institution-specific plans).
+    if db is not None:
+        from models.master import LicenseKey as LicenseKeyModel
+        record = db.query(LicenseKeyModel).filter(
+            LicenseKeyModel.license_key == license_key,
+            LicenseKeyModel.is_active == True,
+        ).first()
+        if record:
+            stored_features = record.features.get("enabled") if record.features else None
+            features = set(stored_features) if stored_features else (ALL_FEATURES if perpetual else BASELINE_FEATURES)
+            limits = {
+                "max_members": record.max_members,
+                "max_staff": record.max_staff,
+                "max_branches": record.max_branches,
+                "sms_monthly": None,
+            }
+            return {
+                "edition": record.edition,
+                "valid": True,
+                "perpetual": perpetual,
+                "features": features,
+                "limits": limits,
+            }
+    
     if perpetual:
         features = ALL_FEATURES
         limits = UNLIMITED_LIMITS
@@ -196,12 +222,13 @@ def get_feature_access(organization_subscription: Optional[Dict] = None, db=None
     
     if mode == "enterprise":
         license_key = get_license_key()
-        return get_feature_access_for_enterprise(license_key, db)
-    else:
-        plan_type = "none"
-        if organization_subscription and organization_subscription.get("plan"):
-            plan_type = organization_subscription["plan"].get("plan_type", "none")
-        return get_feature_access_for_saas(plan_type, db)
+        if license_key:
+            return get_feature_access_for_enterprise(license_key, db)
+
+    plan_type = "none"
+    if organization_subscription and organization_subscription.get("plan"):
+        plan_type = organization_subscription["plan"].get("plan_type", "none")
+    return get_feature_access_for_saas(plan_type, db)
 
 def is_feature_enabled(feature: str, feature_access: FeatureAccess) -> bool:
     return feature in feature_access.enabled_features
@@ -256,15 +283,27 @@ def generate_license_key(edition: str, org_name: str, perpetual: bool = False) -
     return f"BANKYKIT-{edition_code}-{time_segment}-{unique}"
 
 
+def get_org_license_key(organization_id: str, db) -> Optional[str]:
+    """Look up the license key assigned directly to this organization."""
+    from models.master import LicenseKey
+    lic = db.query(LicenseKey).filter(
+        LicenseKey.organization_id == organization_id,
+        LicenseKey.is_active == True,
+    ).first()
+    return lic.license_key if lic else None
+
+
 def get_org_features(organization_id: str, db) -> Set[str]:
     from models.master import OrganizationSubscription
     
     mode = get_deployment_mode()
     
     if mode == "enterprise":
-        license_key = get_license_key()
-        access = get_feature_access_for_enterprise(license_key, db)
-        return access.enabled_features
+        # Per-org license takes priority, then fall back to global LICENSE_KEY env var
+        license_key = get_org_license_key(organization_id, db) or get_license_key()
+        if license_key:
+            access = get_feature_access_for_enterprise(license_key, db)
+            return access.enabled_features
     
     subscription = db.query(OrganizationSubscription).filter(
         OrganizationSubscription.organization_id == organization_id
@@ -290,9 +329,11 @@ def get_org_limits(organization_id: str, db) -> Dict:
     mode = get_deployment_mode()
     
     if mode == "enterprise":
-        license_key = get_license_key()
-        access = get_feature_access_for_enterprise(license_key)
-        return access.limits
+        # Per-org license takes priority, then fall back to global LICENSE_KEY env var
+        license_key = get_org_license_key(organization_id, db) or get_license_key()
+        if license_key:
+            access = get_feature_access_for_enterprise(license_key, db)
+            return access.limits
     
     subscription = db.query(OrganizationSubscription).filter(
         OrganizationSubscription.organization_id == organization_id

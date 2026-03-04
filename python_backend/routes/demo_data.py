@@ -9,7 +9,7 @@ import uuid
 from models.database import get_db, get_tenant_session
 from models.master import (
     Organization, OrganizationMember, User, OrganizationSubscription, SubscriptionPlan,
-    Session as UserSession, MobileDeviceRegistry
+    LicenseKey, Session as UserSession, MobileDeviceRegistry
 )
 from models.tenant import (
     TenantBase, Branch, Staff, Member, LoanProduct, LoanApplication,
@@ -637,6 +637,28 @@ def populate_demo(admin: AdminUser = Depends(require_admin), db: Session = Depen
                     current_period_end=datetime(2099, 12, 31),
                 ))
 
+            # Generate and assign a demo license key for this org
+            from services.feature_flags import generate_license_key
+            demo_license_key = generate_license_key(
+                plan.plan_type if plan else org_config["institution_type"],
+                org_config["name"],
+                perpetual=False,
+            )
+            features = plan.features.get("enabled", []) if (plan and plan.features) else []
+            db.add(LicenseKey(
+                license_key=demo_license_key,
+                edition=plan.plan_type if plan else org_config["institution_type"],
+                organization_name=org_config["name"],
+                organization_id=org.id,
+                features={"enabled": features},
+                max_members=plan.max_members if plan else None,
+                max_staff=plan.max_staff if plan else None,
+                max_branches=plan.max_branches if plan else None,
+                expires_at=datetime(2099, 12, 31),
+                is_active=True,
+                notes="Auto-generated demo license",
+            ))
+
             db.flush()
             created.append(org_config["institution_type"])
 
@@ -689,6 +711,9 @@ def _clean_legacy(db: Session):
     except Exception:
         pass
 
+    db.query(LicenseKey).filter(
+        LicenseKey.organization_id == legacy.id
+    ).delete()
     db.query(OrganizationSubscription).filter(
         OrganizationSubscription.organization_id == legacy.id
     ).delete()
@@ -731,6 +756,9 @@ def clean_demo(admin: AdminUser = Depends(require_admin), db: Session = Depends(
         _truncate_tenant(actual_conn, prefixes)
 
         for org in orgs:
+            db.query(LicenseKey).filter(
+                LicenseKey.organization_id == org.id
+            ).delete()
             db.query(OrganizationSubscription).filter(
                 OrganizationSubscription.organization_id == org.id
             ).delete()

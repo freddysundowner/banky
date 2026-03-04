@@ -258,7 +258,7 @@ def run_pending_migrations_sync():
         db.close()
     print("All tenant migrations complete")
 
-_MASTER_SCHEMA_VERSION = 6
+_MASTER_SCHEMA_VERSION = 7
 
 def _get_master_migration_version():
     """Check the migration version stored in the master database"""
@@ -374,6 +374,12 @@ def run_master_migrations():
         ]
         for col_name, col_type in platform_columns:
             _add_master_column_if_not_exists(conn, "platform_settings", col_name, col_type)
+
+        license_columns = [
+            ("organization_id", "VARCHAR REFERENCES organizations(id) ON DELETE SET NULL"),
+        ]
+        for col_name, col_type in license_columns:
+            _add_master_column_if_not_exists(conn, "license_keys", col_name, col_type)
 
     _set_master_migration_version(_MASTER_SCHEMA_VERSION)
 

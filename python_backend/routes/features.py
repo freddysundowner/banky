@@ -88,20 +88,22 @@ def get_organization_features(organization_id: str, db: Session = Depends(get_db
     mode = get_deployment_mode()
     
     if mode == "enterprise":
-        license_key = get_license_key()
-        access = get_feature_access_for_enterprise(license_key, db)
-        return {
-            "mode": access.mode,
-            "plan_or_edition": access.plan_or_edition,
-            "features": list(access.enabled_features),
-            "limits": access.limits,
-            "subscription_status": {
-                "status": "active",
-                "is_active": True,
-                "is_trial": False,
-                "is_expired": False
+        from services.feature_flags import get_org_license_key
+        license_key = get_org_license_key(organization_id, db) or get_license_key()
+        if license_key:
+            access = get_feature_access_for_enterprise(license_key, db)
+            return {
+                "mode": access.mode,
+                "plan_or_edition": access.plan_or_edition,
+                "features": list(access.enabled_features),
+                "limits": access.limits,
+                "subscription_status": {
+                    "status": "active",
+                    "is_active": True,
+                    "is_trial": False,
+                    "is_expired": False
+                }
             }
-        }
     
     subscription = db.query(OrganizationSubscription).filter(
         OrganizationSubscription.organization_id == organization_id
@@ -146,14 +148,16 @@ def check_feature(organization_id: str, feature_name: str, db: Session = Depends
     mode = get_deployment_mode()
     
     if mode == "enterprise":
-        license_key = get_license_key()
-        access = get_feature_access_for_enterprise(license_key, db)
-        is_enabled = feature_name in access.enabled_features
-        return {
-            "feature": feature_name,
-            "enabled": is_enabled,
-            "plan": access.plan_or_edition
-        }
+        from services.feature_flags import get_org_license_key
+        license_key = get_org_license_key(organization_id, db) or get_license_key()
+        if license_key:
+            access = get_feature_access_for_enterprise(license_key, db)
+            is_enabled = feature_name in access.enabled_features
+            return {
+                "feature": feature_name,
+                "enabled": is_enabled,
+                "plan": access.plan_or_edition
+            }
     
     subscription = db.query(OrganizationSubscription).filter(
         OrganizationSubscription.organization_id == organization_id

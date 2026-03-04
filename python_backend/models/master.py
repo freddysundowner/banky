@@ -81,6 +81,7 @@ class LicenseKey(Base):
     license_key = Column(String(100), unique=True, nullable=False)
     edition = Column(String(50), nullable=False)
     organization_name = Column(String(255))
+    organization_id = Column(String, ForeignKey("organizations.id"), nullable=True)
     contact_email = Column(String(255))
     features = Column(JSON, default=dict)
     max_members = Column(Integer)
