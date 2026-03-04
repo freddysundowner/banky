@@ -39,7 +39,7 @@ def generate_org_code(db: Session) -> str:
 @router.post("", response_model=OrganizationResponse)
 async def create_organization(data: OrganizationCreate, user = Depends(get_current_user), db: Session = Depends(get_db)):
     deployment_mode = get_deployment_mode()
-    backend = get_tenant_backend() if deployment_mode != "enterprise" else "shared"
+    backend = get_tenant_backend()
 
     code = generate_org_code(db)
 
