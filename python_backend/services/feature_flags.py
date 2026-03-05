@@ -41,6 +41,21 @@ ALL_FEATURES: Set[str] = {f.value for f in Feature}
 
 UNLIMITED_LIMITS: Dict = {"max_members": None, "max_staff": None, "max_branches": None, "sms_monthly": None}
 
+# Maps short codes in license keys to enterprise plan_type values in the DB
+PLAN_CODE_MAP: Dict[str, str] = {
+    "CHAS": "chama_small_licence",
+    "CHAL": "chama_large_licence",
+    "SACS": "sacco_small_licence",
+    "SACL": "sacco_large_licence",
+    "MFIS": "mfi_small_licence",
+    "MFIL": "mfi_large_licence",
+    "BNKS": "bank_small_licence",
+    "BNKL": "bank_large_licence",
+}
+
+# Reverse: plan_type → key code
+PLAN_CODE_REVERSE_MAP: Dict[str, str] = {v: k for k, v in PLAN_CODE_MAP.items()}
+
 def _get_plan_features_from_db(plan_type: str, db=None) -> Set[str]:
     if db is None:
         return BASELINE_FEATURES
@@ -52,17 +67,22 @@ def _get_plan_features_from_db(plan_type: str, db=None) -> Set[str]:
         return set(plan.features["enabled"])
     return BASELINE_FEATURES
 
-def _get_edition_features_from_db(edition: str, db=None) -> Set[str]:
+def _get_enterprise_plan_limits_from_db(plan_type: str, db=None) -> Dict:
     if db is None:
-        return BASELINE_FEATURES
+        return UNLIMITED_LIMITS.copy()
     from models.master import SubscriptionPlan
     plan = db.query(SubscriptionPlan).filter(
-        SubscriptionPlan.plan_type == edition,
+        SubscriptionPlan.plan_type == plan_type,
         SubscriptionPlan.pricing_model == "enterprise"
     ).first()
-    if plan and plan.features and plan.features.get("enabled"):
-        return set(plan.features["enabled"])
-    return BASELINE_FEATURES
+    if plan:
+        return {
+            "max_members": plan.max_members,
+            "max_staff": plan.max_staff,
+            "max_branches": plan.max_branches,
+            "sms_monthly": plan.sms_credits_monthly,
+        }
+    return UNLIMITED_LIMITS.copy()
 
 def get_all_plan_features_from_db(db) -> Dict[str, list]:
     from models.master import SubscriptionPlan
@@ -75,7 +95,7 @@ def get_all_plan_features_from_db(db) -> Dict[str, list]:
         result[plan.plan_type] = features
     return result
 
-def get_all_edition_features_from_db(db) -> Dict[str, list]:
+def get_all_enterprise_plan_features_from_db(db) -> Dict[str, list]:
     from models.master import SubscriptionPlan
     plans = db.query(SubscriptionPlan).filter(
         SubscriptionPlan.pricing_model == "enterprise"
@@ -99,13 +119,6 @@ PLAN_LIMITS: Dict[str, Dict] = {
 
 DEFAULT_PLAN_LIMITS: Dict = {"max_members": 200, "max_staff": 2, "max_branches": 1, "sms_monthly": 0}
 
-EDITION_LIMITS: Dict[str, Dict] = {
-    "basic": {"max_members": 1000, "max_staff": 5, "max_branches": 1},
-    "standard": {"max_members": 5000, "max_staff": 20, "max_branches": 10},
-    "premium": {"max_members": 20000, "max_staff": 100, "max_branches": 50},
-    "enterprise": {"max_members": None, "max_staff": None, "max_branches": None}
-}
-
 @dataclass
 class FeatureAccess:
     enabled_features: Set[str]
@@ -128,63 +141,52 @@ def is_perpetual_license(license_key: str) -> bool:
 def validate_license_key(license_key: str, db=None) -> Optional[Dict]:
     if not license_key or not license_key.startswith("BANKYKIT-"):
         return None
-    
+
     parts = license_key.split("-")
     if len(parts) < 4:
         return None
-    
-    edition_map = {"BAS": "basic", "STD": "standard", "PRE": "premium", "ENT": "enterprise", "FUL": "enterprise"}
-    edition = edition_map.get(parts[1].upper(), "basic")
-    
+
+    plan_code = parts[1].upper()
+    plan_type = PLAN_CODE_MAP.get(plan_code)
+    if not plan_type:
+        return None
+
     perpetual = parts[2].upper() == "PERP"
-    
-    # If a DB session is available, check for a stored license record first.
-    # This lets us honour exact features/limits set at license-creation time
-    # (e.g. demo licenses auto-generated with institution-specific plans).
+
+    # Check the DB record for is_active and expires_at
     if db is not None:
         from models.master import LicenseKey as LicenseKeyModel
+        from datetime import datetime
         record = db.query(LicenseKeyModel).filter(
             LicenseKeyModel.license_key == license_key,
-            LicenseKeyModel.is_active == True,
         ).first()
         if record:
-            stored_features = record.features.get("enabled") if record.features else None
-            features = set(stored_features) if stored_features else (ALL_FEATURES if perpetual else BASELINE_FEATURES)
-            limits = {
-                "max_members": record.max_members,
-                "max_staff": record.max_staff,
-                "max_branches": record.max_branches,
-                "sms_monthly": None,
-            }
-            return {
-                "edition": record.edition,
-                "valid": True,
-                "perpetual": perpetual,
-                "features": features,
-                "limits": limits,
-            }
-    
-    if perpetual:
-        features = ALL_FEATURES
-        limits = UNLIMITED_LIMITS
-    else:
-        db_features = _get_edition_features_from_db(edition, db)
-        features = db_features if db_features != BASELINE_FEATURES else ALL_FEATURES if edition == "enterprise" else db_features
-        limits = EDITION_LIMITS.get(edition, EDITION_LIMITS["basic"])
-    
+            if not record.is_active:
+                return None
+            if not perpetual and record.expires_at and record.expires_at < datetime.utcnow():
+                return None
+
+    # Always resolve features live from the enterprise plan in the DB
+    features = _get_plan_features_from_db(plan_type, db)
+    if not features or features == BASELINE_FEATURES:
+        # Fallback: if plan has no features configured yet, use ALL_FEATURES for perpetual
+        features = ALL_FEATURES if perpetual else BASELINE_FEATURES
+
+    limits = _get_enterprise_plan_limits_from_db(plan_type, db)
+
     return {
-        "edition": edition,
+        "plan_type": plan_type,
         "valid": True,
         "perpetual": perpetual,
         "features": features,
-        "limits": limits
+        "limits": limits,
     }
 
 def get_feature_access_for_saas(plan_type: str = "none", db=None) -> FeatureAccess:
     plan = plan_type.lower()
     limits = PLAN_LIMITS.get(plan, DEFAULT_PLAN_LIMITS)
     features = _get_plan_features_from_db(plan, db)
-    
+
     return FeatureAccess(
         enabled_features=features,
         limits=limits,
@@ -195,21 +197,21 @@ def get_feature_access_for_saas(plan_type: str = "none", db=None) -> FeatureAcce
 def get_feature_access_for_enterprise(license_key: Optional[str] = None, db=None) -> FeatureAccess:
     import logging
     logger = logging.getLogger("bankykit.license")
-    
+
     if license_key:
         license_info = validate_license_key(license_key, db)
         if license_info:
-            logger.info(f"License validated: edition={license_info['edition']}, perpetual={license_info.get('perpetual', False)}")
+            logger.info(f"License validated: plan_type={license_info['plan_type']}, perpetual={license_info.get('perpetual', False)}")
             return FeatureAccess(
                 enabled_features=license_info["features"],
                 limits=license_info["limits"],
                 mode="enterprise",
-                plan_or_edition=license_info["edition"]
+                plan_or_edition=license_info["plan_type"]
             )
         else:
-            logger.warning(f"Invalid license key format: {license_key[:10]}...")
-    
-    logger.info("Enterprise mode: all features unlocked (no license key required)")
+            logger.warning(f"Invalid or expired license key: {license_key[:10]}...")
+
+    logger.info("Enterprise mode: all features unlocked (no valid license key)")
     return FeatureAccess(
         enabled_features=ALL_FEATURES,
         limits=UNLIMITED_LIMITS,
@@ -219,7 +221,7 @@ def get_feature_access_for_enterprise(license_key: Optional[str] = None, db=None
 
 def get_feature_access(organization_subscription: Optional[Dict] = None, db=None) -> FeatureAccess:
     mode = get_deployment_mode()
-    
+
     if mode == "enterprise":
         license_key = get_license_key()
         if license_key:
@@ -261,30 +263,28 @@ def get_feature_category(feature: Feature) -> str:
         "crm": [Feature.CRM],
         "collateral": [Feature.COLLATERAL]
     }
-    
+
     for category, features in categories.items():
         if feature in features:
             return category
     return "other"
 
-def generate_license_key(edition: str, org_name: str, perpetual: bool = False) -> str:
-    edition_codes = {"basic": "BAS", "standard": "STD", "premium": "PRE", "enterprise": "ENT"}
-    edition_code = edition_codes.get(edition.lower(), "BAS")
-    
+def generate_license_key(plan_type: str, org_name: str, perpetual: bool = False) -> str:
+    plan_code = PLAN_CODE_REVERSE_MAP.get(plan_type, "CHAS")
+
     if perpetual:
         time_segment = "PERP"
     else:
         from datetime import datetime
         time_segment = datetime.now().strftime("%Y")
-    
+
     import uuid
     unique = str(uuid.uuid4())[:8].upper()
-    
-    return f"BANKYKIT-{edition_code}-{time_segment}-{unique}"
+
+    return f"BANKYKIT-{plan_code}-{time_segment}-{unique}"
 
 
 def get_platform_license_key(db) -> Optional[str]:
-    """Look up the platform-level license key (stored in DB, not env var)."""
     from models.master import LicenseKey
     lic = db.query(LicenseKey).filter(
         LicenseKey.organization_id.is_(None),
@@ -294,7 +294,6 @@ def get_platform_license_key(db) -> Optional[str]:
 
 
 def get_org_license_key(organization_id: str, db) -> Optional[str]:
-    """Look up the license key assigned directly to this organization."""
     from models.master import LicenseKey
     lic = db.query(LicenseKey).filter(
         LicenseKey.organization_id == organization_id,
@@ -305,24 +304,24 @@ def get_org_license_key(organization_id: str, db) -> Optional[str]:
 
 def get_org_features(organization_id: str, db) -> Set[str]:
     from models.master import OrganizationSubscription
-    
+
     mode = get_deployment_mode()
-    
+
     if mode == "enterprise":
         license_key = get_org_license_key(organization_id, db) or get_platform_license_key(db)
         if license_key:
             access = get_feature_access_for_enterprise(license_key, db)
             return access.enabled_features
-    
+
     subscription = db.query(OrganizationSubscription).filter(
         OrganizationSubscription.organization_id == organization_id
     ).first()
-    
+
     if subscription and subscription.plan:
         if subscription.plan.features and subscription.plan.features.get("enabled"):
             return set(subscription.plan.features.get("enabled"))
         return _get_plan_features_from_db(subscription.plan.plan_type, db)
-    
+
     return BASELINE_FEATURES
 
 
@@ -332,21 +331,20 @@ def check_org_feature(organization_id: str, feature: str, db) -> bool:
 
 
 def get_org_limits(organization_id: str, db) -> Dict:
-    """Get limits for an organization based on deployment mode and subscription/license."""
     from models.master import OrganizationSubscription
-    
+
     mode = get_deployment_mode()
-    
+
     if mode == "enterprise":
         license_key = get_org_license_key(organization_id, db) or get_platform_license_key(db)
         if license_key:
             access = get_feature_access_for_enterprise(license_key, db)
             return access.limits
-    
+
     subscription = db.query(OrganizationSubscription).filter(
         OrganizationSubscription.organization_id == organization_id
     ).first()
-    
+
     if subscription and subscription.plan:
         plan_type = subscription.plan.plan_type
         default_limits = PLAN_LIMITS.get(plan_type, DEFAULT_PLAN_LIMITS)
@@ -356,7 +354,7 @@ def get_org_limits(organization_id: str, db) -> Dict:
             "max_branches": subscription.plan.max_branches if subscription.plan.max_branches is not None else default_limits.get("max_branches"),
             "sms_monthly": subscription.plan.sms_credits_monthly if subscription.plan.sms_credits_monthly is not None else default_limits.get("sms_monthly")
         }
-    
+
     return DEFAULT_PLAN_LIMITS.copy()
 
 
@@ -377,40 +375,26 @@ class PlanLimitExceededError(Exception):
 
 
 def check_plan_limit(master_db, org_id: str, tenant_session, resource_type: str):
-    """
-    Check if adding a new resource would exceed plan limits.
-    Works for both SaaS (subscription-based) and enterprise (license-based) deployments.
-    Uses the centralized get_org_limits function for consistent limit resolution.
-    
-    Args:
-        master_db: Master database session
-        org_id: Organization ID
-        tenant_session: Tenant database session
-        resource_type: One of 'members', 'staff', 'branches'
-    
-    Raises:
-        PlanLimitExceededError if limit would be exceeded
-    """
     from models.tenant import Member, Staff, Branch
-    
+
     resource_map = {
         'members': {'model': Member, 'limit_key': 'max_members', 'display': 'Member'},
         'staff': {'model': Staff, 'limit_key': 'max_staff', 'display': 'Staff'},
         'branches': {'model': Branch, 'limit_key': 'max_branches', 'display': 'Branch'}
     }
-    
+
     if resource_type not in resource_map:
         return
-    
+
     config = resource_map[resource_type]
-    
+
     limits = get_org_limits(org_id, master_db)
     limit = limits.get(config['limit_key'])
-    
+
     if limit is None:
         return
-    
+
     current_count = tenant_session.query(config['model']).count()
-    
+
     if current_count >= limit:
         raise PlanLimitExceededError(config['display'], current_count, limit)

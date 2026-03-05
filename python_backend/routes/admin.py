@@ -16,10 +16,9 @@ from models.master import (
     Session as UserSession, PasswordResetToken, EmailVerificationToken
 )
 from services.feature_flags import (
-    get_all_features, PLAN_LIMITS, 
-    EDITION_LIMITS, generate_license_key,
-    get_all_plan_features_from_db, get_all_edition_features_from_db,
-    _get_edition_features_from_db
+    get_all_features, PLAN_LIMITS,
+    generate_license_key, PLAN_CODE_MAP,
+    get_all_plan_features_from_db, get_all_enterprise_plan_features_from_db
 )
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -643,14 +642,10 @@ def list_licenses(admin: AdminUser = Depends(require_admin), db: Session = Depen
     return [{
         "id": l.id,
         "license_key": l.license_key,
-        "edition": l.edition,
+        "plan_type": l.edition,
         "perpetual": is_perpetual_license(l.license_key),
         "organization_name": l.organization_name,
         "contact_email": l.contact_email,
-        "features": l.features,
-        "max_members": l.max_members,
-        "max_staff": l.max_staff,
-        "max_branches": l.max_branches,
         "issued_at": l.issued_at.isoformat() if l.issued_at else None,
         "expires_at": l.expires_at.isoformat() if l.expires_at else None,
         "is_active": l.is_active,
@@ -659,66 +654,47 @@ def list_licenses(admin: AdminUser = Depends(require_admin), db: Session = Depen
 
 @router.post("/licenses")
 def create_license(data: dict, admin: AdminUser = Depends(require_admin), db: Session = Depends(get_db)):
-    plan_id = data.get("plan_id")
-    edition = data.get("edition", "basic")
+    plan_type = data.get("plan_type")
     org_name = data.get("organization_name", "")
-    
-    plan = None
-    if plan_id:
-        plan = db.query(SubscriptionPlan).filter(
-            SubscriptionPlan.id == plan_id,
-            SubscriptionPlan.pricing_model == "enterprise"
-        ).first()
-    
+
+    if not plan_type or plan_type not in PLAN_CODE_MAP.values():
+        raise HTTPException(status_code=400, detail="Invalid or missing plan_type. Must be a valid enterprise plan type.")
+
+    plan = db.query(SubscriptionPlan).filter(
+        SubscriptionPlan.plan_type == plan_type,
+        SubscriptionPlan.pricing_model == "enterprise"
+    ).first()
+
     if not plan:
-        plan = db.query(SubscriptionPlan).filter(
-            SubscriptionPlan.plan_type == edition,
-            SubscriptionPlan.pricing_model == "enterprise"
-        ).first()
-    
-    if plan:
-        max_members = data.get("max_members") or plan.max_members
-        max_staff = data.get("max_staff") or plan.max_staff
-        max_branches = data.get("max_branches") or plan.max_branches
-        features = plan.features.get("enabled", []) if plan.features else []
-        support_years = plan.support_years or 1
-        edition = plan.plan_type
-    else:
-        limits = EDITION_LIMITS.get(edition, EDITION_LIMITS["basic"])
-        max_members = data.get("max_members") or limits.get("max_members")
-        max_staff = data.get("max_staff") or limits.get("max_staff")
-        max_branches = data.get("max_branches") or limits.get("max_branches")
-        features = list(_get_edition_features_from_db(edition, db))
-        support_years = 1
-    
+        raise HTTPException(status_code=404, detail=f"Enterprise plan '{plan_type}' not found in database.")
+
+    support_years = plan.support_years or 1
     is_perpetual = data.get("perpetual", False)
-    license_key = generate_license_key(edition, org_name, perpetual=is_perpetual)
-    
+
+    license_key = generate_license_key(plan_type, org_name, perpetual=is_perpetual)
+
     expires_at = None
     if not is_perpetual:
         expires_in_years = data.get("expires_in_years") or support_years
         if expires_in_years:
             expires_at = datetime.utcnow() + timedelta(days=365 * int(expires_in_years))
-    
+
     license = LicenseKey(
         license_key=license_key,
-        edition=edition,
+        edition=plan_type,
         organization_name=org_name,
         contact_email=data.get("contact_email"),
-        features={"enabled": features},
-        max_members=max_members,
-        max_staff=max_staff,
-        max_branches=max_branches,
+        features={},
         expires_at=expires_at,
         notes=data.get("notes")
     )
     db.add(license)
     db.commit()
-    
+
     return {
         "id": license.id,
         "license_key": license.license_key,
-        "edition": edition,
+        "plan_type": plan_type,
         "perpetual": is_perpetual,
         "expires_at": expires_at.isoformat() if expires_at else None,
         "message": "License created"
@@ -742,9 +718,8 @@ def list_features(admin: AdminUser = Depends(require_admin), db: Session = Depen
     return {
         "features": get_all_features(),
         "plan_features": get_all_plan_features_from_db(db),
-        "edition_features": get_all_edition_features_from_db(db),
+        "enterprise_plan_features": get_all_enterprise_plan_features_from_db(db),
         "plan_limits": PLAN_LIMITS,
-        "edition_limits": EDITION_LIMITS
     }
 
 @router.post("/plans/reset-features")

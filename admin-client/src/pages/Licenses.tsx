@@ -8,11 +8,42 @@ async function fetchBranding() {
   return res.json()
 }
 
+function formatPlanType(planType: string): string {
+  const labels: Record<string, string> = {
+    chama_small_licence: 'Chama Small',
+    chama_large_licence: 'Chama Large',
+    sacco_small_licence: 'SACCO Small',
+    sacco_large_licence: 'SACCO Large',
+    mfi_small_licence: 'MFI Small',
+    mfi_large_licence: 'MFI Large',
+    bank_small_licence: 'Bank Small',
+    bank_large_licence: 'Bank Large',
+  }
+  return labels[planType] || planType
+}
+
+function planBadgeClass(planType: string): string {
+  if (planType?.startsWith('chama')) return 'bg-green-100 text-green-800'
+  if (planType?.startsWith('sacco')) return 'bg-blue-100 text-blue-800'
+  if (planType?.startsWith('mfi')) return 'bg-purple-100 text-purple-800'
+  if (planType?.startsWith('bank')) return 'bg-yellow-100 text-yellow-800'
+  return 'bg-gray-100 text-gray-800'
+}
+
+function licenseStatus(license: any): { label: string; className: string } {
+  if (!license.is_active) return { label: 'Revoked', className: 'bg-red-100 text-red-800' }
+  if (!license.perpetual && license.expires_at && new Date(license.expires_at) < new Date()) {
+    return { label: 'Expired', className: 'bg-orange-100 text-orange-800' }
+  }
+  return { label: 'Active', className: 'bg-green-100 text-green-800' }
+}
+
 export default function Licenses() {
   const queryClient = useQueryClient()
   const [showCreate, setShowCreate] = useState(false)
+  const [isPerpetual, setIsPerpetual] = useState(false)
   const [formData, setFormData] = useState({
-    edition: 'standard',
+    plan_type: 'sacco_small_licence',
     organization_name: '',
     contact_email: '',
     expires_in_years: 1,
@@ -26,6 +57,15 @@ export default function Licenses() {
 
   const platformName = branding?.platform_name || 'BANKYKIT'
 
+  const { data: enterprisePlans } = useQuery({
+    queryKey: ['enterprise-plans'],
+    queryFn: async () => {
+      const res = await fetch('/api/admin/enterprise-plans', { credentials: 'include' })
+      if (!res.ok) throw new Error('Failed to load enterprise plans')
+      return res.json()
+    }
+  })
+
   const { data: licenses, isLoading } = useQuery({
     queryKey: ['licenses'],
     queryFn: async () => {
@@ -37,20 +77,32 @@ export default function Licenses() {
 
   const createLicense = useMutation({
     mutationFn: async () => {
+      const payload = {
+        ...formData,
+        perpetual: isPerpetual,
+        expires_in_years: isPerpetual ? null : formData.expires_in_years
+      }
       const res = await fetch('/api/admin/licenses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       })
-      if (!res.ok) throw new Error('Failed to create license')
+      if (!res.ok) {
+        const err = await res.json()
+        throw new Error(err.detail || 'Failed to create license')
+      }
       return res.json()
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['licenses'] })
       setShowCreate(false)
-      setFormData({ edition: 'standard', organization_name: '', contact_email: '', expires_in_years: 1, notes: '' })
+      setFormData({ plan_type: 'sacco_small_licence', organization_name: '', contact_email: '', expires_in_years: 1, notes: '' })
+      setIsPerpetual(false)
       toast.success(`License created: ${data.license_key}`)
+    },
+    onError: (err: any) => {
+      toast.error(err.message || 'Failed to create license')
     }
   })
 
@@ -91,30 +143,49 @@ export default function Licenses() {
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Generate New License</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Edition</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Institution Plan</label>
               <select
-                value={formData.edition}
-                onChange={(e) => setFormData({ ...formData, edition: e.target.value })}
+                value={formData.plan_type}
+                onChange={(e) => setFormData({ ...formData, plan_type: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
-                <option value="basic">Basic ($10,000)</option>
-                <option value="standard">Standard ($20,000)</option>
-                <option value="premium">Premium ($35,000)</option>
-                <option value="enterprise">Enterprise ($50,000+)</option>
+                {enterprisePlans ? enterprisePlans.map((p: any) => (
+                  <option key={p.plan_type} value={p.plan_type}>
+                    {p.name} {p.price ? `(KES ${p.price.toLocaleString()})` : ''}
+                  </option>
+                )) : (
+                  <>
+                    <option value="chama_small_licence">Chama Small</option>
+                    <option value="chama_large_licence">Chama Large</option>
+                    <option value="sacco_small_licence">SACCO Small</option>
+                    <option value="sacco_large_licence">SACCO Large</option>
+                    <option value="mfi_small_licence">MFI Small</option>
+                    <option value="mfi_large_licence">MFI Large</option>
+                    <option value="bank_small_licence">Bank Small</option>
+                    <option value="bank_large_licence">Bank Large</option>
+                  </>
+                )}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Expires In (Years)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
               <select
-                value={formData.expires_in_years}
-                onChange={(e) => setFormData({ ...formData, expires_in_years: parseInt(e.target.value) })}
+                value={isPerpetual ? 'perpetual' : formData.expires_in_years}
+                onChange={(e) => {
+                  if (e.target.value === 'perpetual') {
+                    setIsPerpetual(true)
+                  } else {
+                    setIsPerpetual(false)
+                    setFormData({ ...formData, expires_in_years: parseInt(e.target.value) })
+                  }
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
                 <option value={1}>1 Year</option>
                 <option value={2}>2 Years</option>
                 <option value={3}>3 Years</option>
                 <option value={5}>5 Years</option>
-                <option value={99}>Perpetual</option>
+                <option value="perpetual">Perpetual</option>
               </select>
             </div>
             <div>
@@ -171,7 +242,7 @@ export default function Licenses() {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">License Key</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Edition</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Plan</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Organization</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Issued</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Expires</th>
@@ -180,48 +251,47 @@ export default function Licenses() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {licenses?.map((license: any) => (
-              <tr key={license.id} className="hover:bg-gray-50">
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <code className="bg-gray-100 px-2 py-1 rounded text-sm">{license.license_key}</code>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 text-xs rounded-full font-medium capitalize ${
-                    license.edition === 'enterprise' ? 'bg-yellow-100 text-yellow-800' :
-                    license.edition === 'premium' ? 'bg-purple-100 text-purple-800' :
-                    license.edition === 'standard' ? 'bg-blue-100 text-blue-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {license.edition}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{license.organization_name || '-'}</div>
-                  <div className="text-sm text-gray-500">{license.contact_email || '-'}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {license.issued_at ? new Date(license.issued_at).toLocaleDateString() : '-'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {license.expires_at ? new Date(license.expires_at).toLocaleDateString() : 'Never'}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 py-1 text-xs rounded-full font-medium ${
-                    license.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}>
-                    {license.is_active ? 'Active' : 'Revoked'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                  <button
-                    onClick={() => toggleLicense.mutate({ id: license.id, is_active: !license.is_active })}
-                    className={`text-sm ${license.is_active ? 'text-red-600 hover:text-red-800' : 'text-green-600 hover:text-green-800'}`}
-                  >
-                    {license.is_active ? 'Revoke' : 'Activate'}
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {licenses?.map((license: any) => {
+              const status = licenseStatus(license)
+              return (
+                <tr key={license.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <code className="bg-gray-100 px-2 py-1 rounded text-sm">{license.license_key}</code>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${planBadgeClass(license.plan_type)}`}>
+                      {formatPlanType(license.plan_type)}
+                    </span>
+                    {license.perpetual && (
+                      <span className="ml-1 px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-600">Perpetual</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{license.organization_name || '-'}</div>
+                    <div className="text-sm text-gray-500">{license.contact_email || '-'}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {license.issued_at ? new Date(license.issued_at).toLocaleDateString() : '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {license.perpetual ? 'Never' : license.expires_at ? new Date(license.expires_at).toLocaleDateString() : '-'}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs rounded-full font-medium ${status.className}`}>
+                      {status.label}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                    <button
+                      onClick={() => toggleLicense.mutate({ id: license.id, is_active: !license.is_active })}
+                      className={`text-sm ${license.is_active ? 'text-red-600 hover:text-red-800' : 'text-green-600 hover:text-green-800'}`}
+                    >
+                      {license.is_active ? 'Revoke' : 'Activate'}
+                    </button>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
 
@@ -235,11 +305,12 @@ export default function Licenses() {
       <div className="mt-8 bg-blue-50 rounded-lg p-6">
         <h3 className="font-semibold text-blue-800 mb-2">How Enterprise Licenses Work</h3>
         <ul className="text-sm text-blue-700 space-y-1">
-          <li>1. Generate a license key for your customer</li>
+          <li>1. Generate a license key for your customer, selecting the institution type and plan size</li>
           <li>2. Customer installs {platformName} on their own server</li>
-          <li>3. Customer sets LICENSE_KEY={platformName.toUpperCase()}-XXX-XXXX-XXXX in their environment</li>
-          <li>4. Customer sets DEPLOYMENT_MODE=enterprise in their environment</li>
-          <li>5. The system validates the license and enables features based on edition</li>
+          <li>3. Customer sets DEPLOYMENT_MODE=enterprise in their environment</li>
+          <li>4. Customer enters the license key in the app on first login</li>
+          <li>5. The system validates the key and enables features based on the institution plan</li>
+          <li>6. Features always reflect the current plan definition — no stale snapshots</li>
         </ul>
       </div>
     </div>
