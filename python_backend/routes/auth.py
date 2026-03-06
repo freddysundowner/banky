@@ -1148,7 +1148,7 @@ async def activate_license(request: Request, auth = Depends(get_current_user), d
     if existing:
         existing.is_active = True
         db.commit()
-        return {"success": True, "edition": existing.edition, "message": "License activated successfully."}
+        return {"success": True, "plan_type": existing.edition, "message": "License activated successfully."}
 
     platform_license = db.query(LicenseKeyModel).filter(
         LicenseKeyModel.organization_id.is_(None),
@@ -1157,17 +1157,18 @@ async def activate_license(request: Request, auth = Depends(get_current_user), d
     if platform_license:
         platform_license.is_active = False
 
+    plan_type = info.get("plan_type", "unknown")
     new_license = LicenseKeyModel(
         id=str(_uuid.uuid4()),
         license_key=key,
-        edition=info.get("edition", "basic"),
+        edition=plan_type,
         organization_id=None,
-        features={"enabled": list(info.get("features", set()))},
+        features={},
         is_active=True,
     )
     db.add(new_license)
     db.commit()
-    return {"success": True, "edition": info.get("edition", "basic"), "message": "License activated successfully."}
+    return {"success": True, "plan_type": plan_type, "message": "License activated successfully."}
 
 
 @router.get("/session/{org_id}")

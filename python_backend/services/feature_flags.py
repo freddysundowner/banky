@@ -2,8 +2,6 @@ import os
 from enum import Enum
 from typing import Dict, List, Optional, Set
 from dataclasses import dataclass
-import hashlib
-import base64
 
 class Feature(str, Enum):
     CORE_BANKING = "core_banking"

@@ -168,8 +168,8 @@ def check_feature(organization_id: str, feature_name: str, db: Session = Depends
     mode = get_deployment_mode()
     
     if mode == "enterprise":
-        from services.feature_flags import get_org_license_key
-        license_key = get_org_license_key(organization_id, db) or get_license_key()
+        from services.feature_flags import get_org_license_key, get_platform_license_key
+        license_key = get_org_license_key(organization_id, db) or get_platform_license_key(db)
         access = get_feature_access_for_enterprise(license_key, db)
         return {
             "feature": feature_name,

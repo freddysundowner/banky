@@ -638,22 +638,26 @@ def populate_demo(admin: AdminUser = Depends(require_admin), db: Session = Depen
                 ))
 
             # Generate and assign a demo license key for this org
+            # Map SaaS plan_type to the corresponding enterprise plan_type
             from services.feature_flags import generate_license_key
+            saas_plan_type = plan.plan_type if plan else None
+            if saas_plan_type and not saas_plan_type.endswith("_licence"):
+                enterprise_plan_type = saas_plan_type + "_licence"
+            elif saas_plan_type:
+                enterprise_plan_type = saas_plan_type
+            else:
+                enterprise_plan_type = org_config["institution_type"] + "_small_licence"
             demo_license_key = generate_license_key(
-                plan.plan_type if plan else org_config["institution_type"],
+                enterprise_plan_type,
                 org_config["name"],
                 perpetual=False,
             )
-            features = plan.features.get("enabled", []) if (plan and plan.features) else []
             db.add(LicenseKey(
                 license_key=demo_license_key,
-                edition=plan.plan_type if plan else org_config["institution_type"],
+                edition=enterprise_plan_type,
                 organization_name=org_config["name"],
                 organization_id=org.id,
-                features={"enabled": features},
-                max_members=plan.max_members if plan else None,
-                max_staff=plan.max_staff if plan else None,
-                max_branches=plan.max_branches if plan else None,
+                features={},
                 expires_at=datetime(2099, 12, 31),
                 is_active=True,
                 notes="Auto-generated demo license",
