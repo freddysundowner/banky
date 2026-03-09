@@ -146,13 +146,13 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex">
-      <div className="hidden lg:flex lg:w-[42%] bg-primary flex-col justify-between p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-[42%] xl:w-[38%] bg-primary flex-col justify-between p-10 xl:p-14 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-blue-800 opacity-100" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
         <div className="absolute bottom-0 left-0 w-72 h-72 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/2" />
 
         <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15 backdrop-blur-sm border border-white/20">
               <Landmark className="h-6 w-6 text-white" />
             </div>
@@ -161,14 +161,14 @@ export default function Register() {
         </div>
 
         <div className="relative z-10 flex-1 flex flex-col justify-center">
-          <h2 className="text-white text-4xl font-bold leading-tight mb-4">
+          <h2 className="text-white text-3xl xl:text-4xl font-bold leading-tight mb-4">
             Get started in<br />minutes
           </h2>
-          <p className="text-blue-100 text-base mb-10 leading-relaxed max-w-sm">
+          <p className="text-blue-100 text-sm xl:text-base mb-10 leading-relaxed max-w-sm">
             Set up your organization and start managing members, loans, and finances — all from one powerful platform.
           </p>
 
-          <div className="space-y-4">
+          <div className="space-y-3.5">
             {FEATURES.map(({ icon: Icon, text }) => (
               <div key={text} className="flex items-center gap-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 shrink-0">
@@ -182,28 +182,28 @@ export default function Register() {
 
         <div className="relative z-10">
           <div className="flex items-center gap-2 text-blue-200 text-xs">
-            <ShieldCheck className="h-3.5 w-3.5" />
+            <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
             <span>Bank-grade security · Multi-tenant architecture · Role-based access</span>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center px-4 sm:px-8 md:px-10 py-6 sm:py-8 bg-background overflow-y-auto">
-        <div className="w-full max-w-[540px] py-4 sm:py-8">
-          <div className="lg:hidden flex items-center gap-2.5 mb-6 sm:mb-8">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+      <div className="flex-1 flex flex-col items-center px-4 sm:px-8 lg:px-10 py-6 sm:py-10 bg-background overflow-y-auto">
+        <div className="w-full max-w-lg">
+          <div className="lg:hidden flex items-center gap-2.5 mb-6">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary shrink-0">
               <Landmark className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="font-bold text-lg">{platform_name}</span>
           </div>
 
-          <div className="mb-6 sm:mb-8">
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-1">Create your account</h1>
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold text-foreground mb-1">Create your account</h1>
             <p className="text-muted-foreground text-sm">Get started with {platform_name} in minutes</p>
           </div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit((data) => registerMutation.mutate(data))} className="space-y-5">
+            <form onSubmit={form.handleSubmit((data) => registerMutation.mutate(data))} className="space-y-4">
               <FormField
                 control={form.control}
                 name="institutionType"
@@ -211,7 +211,7 @@ export default function Register() {
                   <FormItem>
                     <FormLabel className="text-sm font-medium">What type of institution are you?</FormLabel>
                     <FormControl>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                         {INSTITUTION_TYPES.map((type) => {
                           const Icon = type.icon;
                           const isSelected = field.value === type.id;
@@ -221,27 +221,27 @@ export default function Register() {
                               type="button"
                               onClick={() => field.onChange(type.id)}
                               className={cn(
-                                "flex flex-col items-start gap-1.5 rounded-xl border-2 p-3.5 text-left transition-all cursor-pointer",
+                                "flex items-center gap-3 rounded-xl border-2 p-3 sm:p-3.5 text-left transition-all cursor-pointer",
                                 isSelected
                                   ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                                  : "border-border bg-background"
+                                  : "border-border bg-background hover:border-primary/40 hover:bg-muted/40"
                               )}
                               data-testid={`card-institution-${type.id}`}
                             >
                               <div className={cn(
-                                "flex h-9 w-9 items-center justify-center rounded-lg transition-colors",
+                                "flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg transition-colors shrink-0",
                                 isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                               )}>
-                                <Icon className="h-5 w-5" />
+                                <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
                               </div>
-                              <div>
+                              <div className="min-w-0">
                                 <div className={cn(
-                                  "text-sm font-semibold",
+                                  "text-sm font-semibold truncate",
                                   isSelected ? "text-primary" : "text-foreground"
                                 )}>
                                   {type.label}
                                 </div>
-                                <div className="text-[11px] leading-tight text-muted-foreground mt-0.5">
+                                <div className="text-[11px] leading-tight text-muted-foreground mt-0.5 hidden sm:block line-clamp-2">
                                   {type.description}
                                 </div>
                               </div>
@@ -255,7 +255,7 @@ export default function Register() {
                 )}
               />
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-3">
                 <FormField
                   control={form.control}
                   name="firstName"
@@ -263,7 +263,7 @@ export default function Register() {
                     <FormItem>
                       <FormLabel className="text-sm font-medium">First Name</FormLabel>
                       <FormControl>
-                        <Input className="h-11" placeholder="John" {...field} data-testid="input-firstname" />
+                        <Input className="h-10 sm:h-11" placeholder="John" {...field} data-testid="input-firstname" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -276,7 +276,7 @@ export default function Register() {
                     <FormItem>
                       <FormLabel className="text-sm font-medium">Last Name</FormLabel>
                       <FormControl>
-                        <Input className="h-11" placeholder="Doe" {...field} data-testid="input-lastname" />
+                        <Input className="h-10 sm:h-11" placeholder="Doe" {...field} data-testid="input-lastname" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -291,7 +291,7 @@ export default function Register() {
                   <FormItem>
                     <FormLabel className="text-sm font-medium">Email address</FormLabel>
                     <FormControl>
-                      <Input className="h-11" type="email" placeholder="you@example.com" {...field} data-testid="input-email" />
+                      <Input className="h-10 sm:h-11" type="email" placeholder="you@example.com" {...field} data-testid="input-email" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -307,14 +307,14 @@ export default function Register() {
                       Phone <span className="text-muted-foreground font-normal">(optional)</span>
                     </FormLabel>
                     <FormControl>
-                      <Input className="h-11" placeholder="+254 700 000 000" {...field} data-testid="input-phone" />
+                      <Input className="h-10 sm:h-11" placeholder="+254 700 000 000" {...field} data-testid="input-phone" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <FormField
                   control={form.control}
                   name="password"
@@ -326,7 +326,7 @@ export default function Register() {
                           <Input
                             type={showPassword ? "text" : "password"}
                             placeholder="Min. 8 characters"
-                            className="h-11 pr-10"
+                            className="h-10 sm:h-11 pr-10"
                             {...field}
                             data-testid="input-password"
                           />
@@ -356,7 +356,7 @@ export default function Register() {
                           <Input
                             type={showConfirmPassword ? "text" : "password"}
                             placeholder="Repeat password"
-                            className="h-11 pr-10"
+                            className="h-10 sm:h-11 pr-10"
                             {...field}
                             data-testid="input-confirm-password"
                           />
@@ -409,7 +409,7 @@ export default function Register() {
 
               <Button
                 type="submit"
-                className="w-full h-11 font-semibold"
+                className="w-full h-10 sm:h-11 font-semibold"
                 disabled={registerMutation.isPending}
                 data-testid="button-register"
               >
@@ -425,9 +425,9 @@ export default function Register() {
             </Link>
           </p>
 
-          <div className="mt-8 flex flex-col items-center gap-3">
+          <div className="mt-6 pb-6 flex flex-col items-center gap-3">
             <div className="flex items-center gap-1.5 text-muted-foreground text-xs">
-              <Lock className="h-3 w-3" />
+              <Lock className="h-3 w-3 shrink-0" />
               <span>Secured with end-to-end encryption</span>
             </div>
             {guide_url && (
