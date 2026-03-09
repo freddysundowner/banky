@@ -89,3 +89,6 @@ build = ["npm", "run", "build"]
 [userenv.shared]
 VITE_PRODUCTION_MODE = "demo"
 PRODUCTION_MODE = "demo"
+
+[userenv.development]
+DEPLOYMENT_MODE = "enterprise"
