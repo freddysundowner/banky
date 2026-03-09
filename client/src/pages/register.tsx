@@ -16,42 +16,11 @@ import {
 } from "@/components/ui/form";
 import { useAppDialog } from "@/hooks/use-app-dialog";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Landmark, Eye, EyeOff, ShieldCheck, Users, CreditCard, BarChart3, Lock, Building, Briefcase } from "lucide-react";
+import { Landmark, Eye, EyeOff, ShieldCheck, Users, CreditCard, BarChart3, Lock } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useBranding } from "@/context/BrandingContext";
-import { cn } from "@/lib/utils";
-
-const INSTITUTION_TYPES = [
-  {
-    id: "chama" as const,
-    label: "Chama / Group",
-    description: "Savings groups, investment clubs, welfare groups",
-    icon: Users,
-  },
-  {
-    id: "sacco" as const,
-    label: "SACCO",
-    description: "Savings and credit cooperative societies",
-    icon: Building,
-  },
-  {
-    id: "mfi" as const,
-    label: "Microfinance",
-    description: "Microfinance institutions and lending companies",
-    icon: Briefcase,
-  },
-  {
-    id: "bank" as const,
-    label: "Bank",
-    description: "Community banks and financial institutions",
-    icon: Landmark,
-  },
-];
 
 const registerSchema = z.object({
-  institutionType: z.enum(["chama", "sacco", "mfi", "bank"], {
-    required_error: "Please select your institution type",
-  }),
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
@@ -93,7 +62,6 @@ export default function Register() {
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      institutionType: undefined as unknown as "chama" | "sacco" | "mfi" | "bank",
       email: "",
       password: "",
       confirmPassword: "",
@@ -204,57 +172,6 @@ export default function Register() {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit((data) => registerMutation.mutate(data))} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="institutionType"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-sm font-medium">What type of institution are you?</FormLabel>
-                    <FormControl>
-                      <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-                        {INSTITUTION_TYPES.map((type) => {
-                          const Icon = type.icon;
-                          const isSelected = field.value === type.id;
-                          return (
-                            <button
-                              key={type.id}
-                              type="button"
-                              onClick={() => field.onChange(type.id)}
-                              className={cn(
-                                "flex items-center gap-3 rounded-xl border-2 p-3 sm:p-3.5 text-left transition-all cursor-pointer",
-                                isSelected
-                                  ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                                  : "border-border bg-background hover:border-primary/40 hover:bg-muted/40"
-                              )}
-                              data-testid={`card-institution-${type.id}`}
-                            >
-                              <div className={cn(
-                                "flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-lg transition-colors shrink-0",
-                                isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                              )}>
-                                <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
-                              </div>
-                              <div className="min-w-0">
-                                <div className={cn(
-                                  "text-sm font-semibold truncate",
-                                  isSelected ? "text-primary" : "text-foreground"
-                                )}>
-                                  {type.label}
-                                </div>
-                                <div className="text-[11px] leading-tight text-muted-foreground mt-0.5 hidden sm:block line-clamp-2">
-                                  {type.description}
-                                </div>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
               <div className="grid grid-cols-2 gap-3">
                 <FormField
                   control={form.control}
